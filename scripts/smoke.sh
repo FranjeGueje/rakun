@@ -20,7 +20,8 @@ call() { # channel [json args]
     status=${reply##*$'\n'}
     printf '%s\n' "${reply%$'\n'*}"
     if [ "$status" != 200 ]; then
-        echo "HTTP $status (args must be valid JSON: strings need double quotes, e.g. '[\"gog\"]')" >&2
+        echo "HTTP $status" >&2
+        [ "$status" = 400 ] && echo "(args must be valid JSON: strings need double quotes, e.g. '[\"gog\"]')" >&2
         return 1
     fi
 }
