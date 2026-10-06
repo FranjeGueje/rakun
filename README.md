@@ -227,7 +227,7 @@ systemd-run --user --unit=relicd ~/.local/opt/relicd/relicd   # background, tran
 systemctl --user stop relicd                     # stop the background one
 ```
 
-Check it with `scripts/smoke.sh` (or `curl http://127.0.0.1:17370/health`).
+Check it with `relicctl status` (or `scripts/smoke.sh`, or `curl http://127.0.0.1:17370/health`).
 
 ### Requirements
 

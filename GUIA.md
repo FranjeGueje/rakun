@@ -1,6 +1,8 @@
 # Guía de pruebas de relicd
 
-Todo se prueba con `curl` y `scripts/smoke.sh`, desde la raíz del repositorio.
+Todo se prueba con `relicctl`, `curl` y `scripts/smoke.sh`. Las secciones usan
+`smoke.sh` porque enseña el canal y los argumentos exactos; `relicctl` hace lo
+mismo con comandos (ver la tabla siguiente). Desde la raíz del repositorio.
 El script lee el puerto y el token de `~/.config/relicd/api.json`. El contrato
 completo está en [API.md](API.md).
 
@@ -26,6 +28,31 @@ Para probar sin tocar tu `$HOME` real:
 HOME=$(mktemp -d) RELICD_PORT=17999 relicd
 HOME=<ese mismo directorio> RELICD_API_FILE=<ese>/.config/relicd/api.json scripts/smoke.sh
 ```
+
+## relicctl
+
+Con relicd instalado, `relicctl` (o `node build/relicctl.cjs` desde el
+repositorio) evita escribir el JSON a mano. Usa el mismo `api.json` y la misma
+variable `RELICD_API_FILE`.
+
+| Quieres…                    | `relicctl`                                      |
+| --------------------------- | ----------------------------------------------- |
+| ver si está vivo y sesiones | `relicctl status`                               |
+| iniciar sesión              | `relicctl login gog` (epic, gog, amazon, zoom)  |
+| traer las sesiones de Relic | `relicctl import-relic`                         |
+| listar la biblioteca        | `relicctl library [tienda] [--installed]`       |
+| refrescarla y esperar       | `relicctl refresh [tienda]`                     |
+| instalar                    | `relicctl install gog <appName> [--path DIR]`   |
+| actualizar o reparar        | `relicctl update` / `repair <tienda> <appName>` |
+| desinstalar                 | `relicctl uninstall <tienda> <appName>`         |
+| ver la cola                 | `relicctl queue`                                |
+| seguir los eventos          | `relicctl events`                               |
+| cualquier otro canal        | `relicctl call <canal> '[args]'`                |
+
+`install`, `update`, `repair` y `uninstall` esperan a que acabe y devuelven un
+código distinto de 0 si falla (`--no-wait` para no esperar). `--json` da la
+salida para scripts. `uninstall` borra los ficheros del juego y su
+configuración.
 
 ## Formato de los argumentos
 

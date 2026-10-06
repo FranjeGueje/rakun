@@ -60,10 +60,11 @@ mv "$WORK/relicd" "$PREFIX.new"
 rm -rf "$PREFIX"
 mv "$PREFIX.new" "$PREFIX"
 ln -sf "$PREFIX/relicd" "$BIN_DIR/relicd"
+ln -sf "$PREFIX/relicctl" "$BIN_DIR/relicctl"
 
 cat <<MSG
 
-relicd instalado en $PREFIX (enlace: $BIN_DIR/relicd).
+relicd instalado en $PREFIX (enlaces: $BIN_DIR/relicd y $BIN_DIR/relicctl).
 
 Arrancarlo, cuando lo necesites:
   relicd                                    en primer plano (Ctrl+C lo para)
@@ -71,5 +72,5 @@ Arrancarlo, cuando lo necesites:
                                             (systemctl --user stop relicd lo para)
 
 Comprobarlo:
-  scripts/smoke.sh        (o: curl http://127.0.0.1:17370/health)
+  relicctl status         (o: curl http://127.0.0.1:17370/health)
 MSG

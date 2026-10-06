@@ -18,7 +18,9 @@
   "packageManager": "pnpm@11.15.1",
   "scripts": {
     "start": "node build/relicd.cjs",
-    "build": "esbuild src/backend/relic/main.ts --bundle --platform=node --format=cjs --target=node24 --alias:i18next-fs-backend=./node_modules/i18next-fs-backend/cjs/index.js --outfile=build/relicd.cjs --log-level=warning",
+    "build": "pnpm build:daemon && pnpm build:ctl",
+    "build:daemon": "esbuild src/backend/relic/main.ts --bundle --platform=node --format=cjs --target=node24 --alias:i18next-fs-backend=./node_modules/i18next-fs-backend/cjs/index.js --outfile=build/relicd.cjs --log-level=warning",
+    "build:ctl": "esbuild src/relicctl/main.ts --bundle --platform=node --format=cjs --target=node24 --outfile=build/relicctl.cjs --log-level=warning",
     "package": "bash scripts/package.sh",
     "codecheck": "tsc --noEmit",
     "test": "jest",

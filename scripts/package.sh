@@ -3,6 +3,7 @@
 #   relicd/relicd        launcher
 #   relicd/node          Node runtime (SteamOS does not ship one)
 #   relicd/relicd.cjs    the bundled daemon
+#   relicd/relicctl      launcher of the command line client (relicctl.cjs)
 #   relicd/public/       helper binaries (bin/) and translations (locales/)
 #
 # Usage: scripts/package.sh
@@ -59,21 +60,26 @@ pnpm build
 echo "[2/4] Staging $STAGE..."
 rm -rf "$STAGE"
 mkdir -p "$STAGE/public/bin"
-cp build/relicd.cjs "$STAGE/relicd.cjs"
+cp build/relicd.cjs build/relicctl.cjs "$STAGE/"
 cp -r public/locales "$STAGE/public/locales"
 # x64 only: the arm64 helper binaries are not part of this release
 cp -r public/bin/x64 public/bin/umu public/bin/zoom public/bin/legendary.LICENSE "$STAGE/public/bin/"
 cp COPYING API.md "$STAGE/"
 fetch_node
 
-cat >"$STAGE/relicd" <<'LAUNCHER'
-#!/bin/bash
 # Steam's runtime environment can break the bundled Node, so start clean.
-DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+make_launcher() { # name of the launcher and of the bundle it runs
+    cat >"$STAGE/$1" <<LAUNCHER
+#!/bin/bash
+DIR="\$(cd "\$(dirname "\$(readlink -f "\$0")")" && pwd)"
 unset LD_PRELOAD LD_LIBRARY_PATH
-exec "$DIR/node" "$DIR/relicd.cjs" "$@"
+exec "\$DIR/node" "\$DIR/$1.cjs" "\$@"
 LAUNCHER
-chmod +x "$STAGE/relicd" "$STAGE/node"
+    chmod +x "$STAGE/$1"
+}
+make_launcher relicd
+make_launcher relicctl
+chmod +x "$STAGE/node"
 
 echo "[3/4] Creating $TARBALL..."
 rm -f "$TARBALL" "$TARBALL.sha256"
