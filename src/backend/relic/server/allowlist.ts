@@ -55,6 +55,8 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   'requestGameSettings',
   'writeConfig',
   'setSetting',
+  'steamgriddb.hasApiKey',
+  'steamgriddb.setApiKey',
   'getRelicVersion',
   'getEpicGamesStatus',
   'get-connectivity-status',

@@ -64,6 +64,11 @@ shows up in Steam. `uninstall(appName, runner, removePrefix, removeSetting)`,
 `getZoomUserInfo`, `logoutLegendary`, `logoutGOG`, `logoutAmazon`,
 `logoutZoom`, and the two-step login below.
 
+**Artwork:** `steamgriddb.hasApiKey` → boolean and `steamgriddb.setApiKey(key)`.
+Without a SteamGridDB key relicd skips the grid images when it adds a game to
+Steam (it is stored in `config.json`, so a game installed before setting it has
+to be reinstalled to get them).
+
 **Settings and status:** `requestAppSettings`, `requestGameSettings(appName)`,
 `writeConfig({appName, config})`, `setSetting({appName, key, value})`,
 `getRelicVersion`, `getEpicGamesStatus`, `get-connectivity-status`,

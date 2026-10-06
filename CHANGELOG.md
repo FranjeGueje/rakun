@@ -24,6 +24,8 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
   plano, une las peticiones de una tienda que ya se está refrescando y avisa con
   el evento `refreshLibrary` al terminar; `getRefreshingLibraries` dice qué
   tiendas están refrescando.
+- **`steamgriddb.hasApiKey` y `steamgriddb.setApiKey`** expuestos en la API:
+  sin clave de SteamGridDB no se descargan las portadas al añadir un juego.
 - **Login sin ventana**: `getLoginInfo` da la URL de login y `submitLogin`
   acepta la dirección final, el JSON de Epic o el código suelto.
 - **`scripts/package.sh`**: tarball `relicd-<v>-linux-x64.tar.gz` (+ `.sha256`)
@@ -67,6 +69,9 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
   background, joins requests for a store that is already refreshing and fires
   the `refreshLibrary` event when done; `getRefreshingLibraries` tells which
   stores are refreshing.
+- **`steamgriddb.hasApiKey` and `steamgriddb.setApiKey`** exposed in the API:
+  without a SteamGridDB key no artwork is downloaded when a game is added to
+  Steam.
 - **Window-less login**: `getLoginInfo` returns the login URL and `submitLogin`
   takes the final address, Epic's JSON or the bare code.
 - **`scripts/package.sh`**: `relicd-<v>-linux-x64.tar.gz` (+ `.sha256`) with the

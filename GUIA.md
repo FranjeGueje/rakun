@@ -134,6 +134,19 @@ scripts/smoke.sh getDMQueueInformation      # estado de la cola
 Al terminar, el juego debe aparecer en Steam con su nombre y en el log debe
 salir `Saved shortcut`.
 
+## Portadas de Steam (SteamGridDB)
+
+Sin clave de SteamGridDB relicd no descarga las imágenes al añadir un juego a
+Steam (la clave es de relicd, no se hereda de Relic).
+
+```bash
+scripts/smoke.sh steamgriddb.hasApiKey                  # {"result":false} si falta
+scripts/smoke.sh steamgriddb.setApiKey '["TU_CLAVE"]'
+```
+
+Un juego instalado antes de poner la clave hay que reinstalarlo para que las
+baje.
+
 ## 6. Desinstalar, reparar y otras acciones
 
 ```bash
