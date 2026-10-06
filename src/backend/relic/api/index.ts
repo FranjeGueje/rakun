@@ -1,0 +1,10 @@
+// Registers every API handler (importing a module is what registers it)
+import './system'
+import './accounts'
+import './settings'
+import './games'
+import 'backend/logger/ipc_handler'
+import 'backend/downloadmanager/ipc_handler'
+import 'backend/utils/ipc_handler'
+import 'backend/recent_games/ipc_handler'
+import 'backend/steamgrid/ipc_handler'

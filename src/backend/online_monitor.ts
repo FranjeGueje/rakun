@@ -1,5 +1,4 @@
 import { ConnectivityStatus } from 'common/types'
-import { net } from 'electron'
 import { addListener, addHandler, sendFrontendMessage } from 'backend/ipc'
 import { logInfo, LogPrefix } from './logger'
 import axios from 'axios'
@@ -105,12 +104,8 @@ export const initOnlineMonitor = () => {
     }
   )
 
-  if (net.isOnline()) {
-    // set initial status and ping external sites
-    setStatus('check-online')
-  } else {
-    setStatus('offline')
-  }
+  // set initial status and ping external sites
+  setStatus('check-online')
 
   // listen to the frontend asking for current status
   addHandler(

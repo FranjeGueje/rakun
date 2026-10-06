@@ -2,7 +2,6 @@ import { callAllAbortControllers } from './utils/aborthandler/aborthandler'
 import { Runner, GameInfo, GameSettings, GameStatus } from 'common/types'
 import axios from 'axios'
 import https from 'node:https'
-import { app } from 'electron'
 import { exec, spawn, SpawnOptions, spawnSync } from 'child_process'
 import { existsSync, mkdirSync, rmSync } from 'fs'
 import { promisify } from 'util'
@@ -28,7 +27,6 @@ import {
 import { formatBytes } from 'common/formatBytes'
 import { showDialogBoxModalAuto, askQuestion } from './dialog/dialog'
 import { openExternal } from './utils/open_external'
-import { getMainWindow } from './main_window'
 import { sendFrontendMessage } from './ipc'
 import { GlobalConfig } from './config'
 import { GameConfig } from './game_config'
@@ -148,24 +146,14 @@ async function isEpicServiceOffline(
   }
 }
 
-async function handleExit() {
+/**
+ * Stops the daemon. If there are pending operations, the child processes that
+ * run them (legendary, gogdl, nile) are killed first.
+ */
+function handleExit() {
   const isLocked = existsSync(join(gamesConfigPath, 'lock'))
-  const mainWindow = getMainWindow()
 
-  if ((isLocked || isRunning()) && mainWindow) {
-    const response = await askQuestion({
-      title: i18next.t('box.quit.title', 'Exit'),
-      message: i18next.t(
-        'box.quit.message',
-        'There are pending operations, are you sure?'
-      ),
-      buttons: [i18next.t('box.no'), i18next.t('box.yes')]
-    })
-
-    if (response === 0) {
-      return
-    }
-
+  if (isLocked || isRunning()) {
     // This is very hacky and can be removed if bineries handle SIGTERM and SIGKILL
     // FIXME: we should keep track of what we are doing and kill just that
     // this is really dangerous cause we can be killing other processes unrelated
@@ -183,8 +171,7 @@ async function handleExit() {
     callAllAbortControllers()
   }
 
-  mainWindow?.hide()
-  app.exit()
+  process.exit(0)
 }
 
 export async function askForceUninstall(game: Game) {
@@ -316,11 +303,8 @@ function resetRelic() {
   appFolders.forEach((folder) => {
     rmSync(folder, { recursive: true, force: true })
   })
-  // wait a sec to avoid racing conditions
-  setTimeout(() => {
-    app.relaunch()
-    app.quit()
-  }, 1000)
+  // wait a sec to avoid racing conditions; the service manager restarts us
+  setTimeout(() => process.exit(0), 1000)
 }
 
 function splitPathAndName(fullPath: string): { dir: string; bin: string } {

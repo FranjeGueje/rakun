@@ -101,7 +101,7 @@ async function getSystemInfo(cache = true): Promise<SystemInformation> {
     GPUs: gpus,
     OS: {
       platform: process.platform,
-      version: process.getSystemVersion(),
+      version: os.release(),
       ...detailedOsInfo
     },
     steamDeckInfo: deckInfo,

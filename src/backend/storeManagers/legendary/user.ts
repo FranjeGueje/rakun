@@ -4,7 +4,6 @@ import { UserInfo } from 'common/types'
 import { clearCache } from '../../utils'
 import { logError, LogPrefix } from 'backend/logger'
 import { userInfo as user } from 'os'
-import { session } from 'electron'
 import { libraryManagerMap } from '..'
 import { LegendaryCommand } from './commands'
 import { NonEmptyString } from './commands/base'
@@ -68,12 +67,6 @@ export class LegendaryUser {
       return
     }
 
-    const ses = session.fromPartition('persist:epicstore')
-    await ses.clearStorageData()
-    await ses.clearCache()
-    await ses.clearAuthCache()
-    await ses.clearHostResolverCache()
-    await ses.clearData()
     configStore.delete('userInfo')
     clearCache('legendary')
   }
