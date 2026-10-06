@@ -105,6 +105,12 @@ describe('API server', () => {
     expect(withArgs.body.result).toBe(true)
   })
 
+  test('a handler that returns nothing answers null', async () => {
+    addHandler('getRefreshingLibraries', () => undefined as never)
+    const reply = await call('POST', '/api/getRefreshingLibraries')
+    expect(reply).toEqual({ status: 200, body: { result: null } })
+  })
+
   test('dispatches a listener channel and answers null', async () => {
     const listener = jest.fn()
     addListener('logoutGOG', listener)

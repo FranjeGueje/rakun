@@ -89,9 +89,8 @@ async function handleCall(
 
   try {
     if (hasHandler(channel)) {
-      return sendJson(res, 200, {
-        result: await invokeHandler(channel, ...args)
-      })
+      const result = (await invokeHandler(channel, ...args)) ?? null
+      return sendJson(res, 200, { result })
     }
     if (dispatchListener(channel, ...args)) {
       return sendJson(res, 200, { result: null })
