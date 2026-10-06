@@ -1,56 +1,10 @@
 import { createMainWindow } from '../main_window'
-import { sendFrontendMessage } from '../ipc'
-import { BrowserWindow, Display, screen } from 'electron'
+import { Display, screen } from 'electron'
 import { configStore } from 'backend/constants/key_value_stores'
 
 jest.mock('../logger')
 
 describe('main_window', () => {
-  describe('sendFrontendMessage', () => {
-    describe('if no main window', () => {
-      beforeAll(() => {
-        BrowserWindow.setAllWindows([])
-      })
-
-      it('returns false', () => {
-        expect(sendFrontendMessage('message')).toBe(false)
-      })
-    })
-
-    describe('if there is a main window', () => {
-      const window = {
-        webContents: {
-          send: jest.fn()
-        }
-      }
-
-      // stub windows
-      beforeAll(() => {
-        BrowserWindow.setAllWindows([window])
-      })
-
-      // spy the `send` method
-      beforeEach(() => {
-        window.webContents.send = jest.fn()
-      })
-
-      // cleanup stubs
-      afterAll(() => {
-        BrowserWindow.setAllWindows([])
-      })
-
-      it('sends a message to its webContents', () => {
-        sendFrontendMessage('message', 'param1', 'param2')
-
-        expect(window.webContents.send).toHaveBeenCalledWith(
-          'message',
-          'param1',
-          'param2'
-        )
-      })
-    })
-  })
-
   describe('createMainWindow', () => {
     describe('with stored window geometry', () => {
       beforeEach(() => {

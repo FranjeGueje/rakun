@@ -1,7 +1,3 @@
-// eslint-disable-next-line no-restricted-imports
-import { ipcMain, type IpcMainEvent } from 'electron'
-import { getMainWindow } from 'backend/main_window'
-
 import type {
   AsyncIPCFunctions,
   SyncIPCFunctions,
@@ -9,64 +5,126 @@ import type {
   FrontendMessages
 } from 'common/types/ipc'
 
+// Transport-agnostic replacement for Electron's ipcMain: handlers and listeners
+// live in plain registries, and whoever serves the API (the HTTP server)
+// calls `invokeHandler` / `dispatchListener` and subscribes to the events
+// with `onFrontendMessage`. The first handler argument is kept for source
+// compatibility with the old `(e, ...args)` signature; it is always empty.
+type IpcEvent = Record<never, never>
+
+type Handler = (e: IpcEvent, ...args: never[]) => unknown
+type Listener = (e: IpcEvent, ...args: never[]) => void
+type FrontendMessageSubscriber = (channel: string, args: unknown[]) => void
+
+const handlers = new Map<string, Handler>()
+const listeners = new Map<string, Listener[]>()
+const subscribers = new Set<FrontendMessageSubscriber>()
+
+const noEvent: IpcEvent = {}
+
 function addListener<ChannelName extends keyof SyncIPCFunctions>(
   channel: ChannelName,
   listener: (
-    e: IpcMainEvent,
+    e: IpcEvent,
     ...args: Parameters<SyncIPCFunctions[ChannelName]>
   ) => void
 ) {
-  ipcMain.on(channel, listener as never)
+  listeners.set(channel, [
+    ...(listeners.get(channel) ?? []),
+    listener as Listener
+  ])
 }
 
 function addOneTimeListener<ChannelName extends keyof SyncIPCFunctions>(
   channel: ChannelName,
   listener: (
-    e: IpcMainEvent,
+    e: IpcEvent,
     ...args: Parameters<SyncIPCFunctions[ChannelName]>
   ) => void
 ) {
-  ipcMain.once(channel, listener as never)
+  const once: Listener = (e, ...args) => {
+    listeners.set(
+      channel,
+      (listeners.get(channel) ?? []).filter((l) => l !== once)
+    )
+    ;(listener as Listener)(e, ...args)
+  }
+  listeners.set(channel, [...(listeners.get(channel) ?? []), once])
 }
 
 function addTestOnlyListener<ChannelName extends keyof TestSyncIPCFunctions>(
   channel: ChannelName,
   listener: (...args: Parameters<TestSyncIPCFunctions[ChannelName]>) => void
 ) {
-  if (process.env.CI === 'e2e') ipcMain.on(channel, listener as never)
+  if (process.env.CI === 'e2e')
+    addListener(channel as never, (_e: IpcEvent, ...args: never[]) =>
+      (listener as (...a: never[]) => void)(...args)
+    )
 }
 
 function addHandler<ChannelName extends keyof AsyncIPCFunctions>(
   channel: ChannelName,
   handler: (
-    e: IpcMainEvent,
+    e: IpcEvent,
     ...args: Parameters<AsyncIPCFunctions[ChannelName]>
   ) =>
     | ReturnType<AsyncIPCFunctions[ChannelName]>
     | Awaited<ReturnType<AsyncIPCFunctions[ChannelName]>>
 ) {
-  ipcMain.handle(channel, handler as never)
+  handlers.set(channel, handler as Handler)
+}
+
+/** Calls the handler registered with `addHandler`, as `ipcRenderer.invoke` did */
+async function invokeHandler(
+  channel: string,
+  ...args: unknown[]
+): Promise<unknown> {
+  const handler = handlers.get(channel)
+  if (!handler) throw new Error(`No handler registered for "${channel}"`)
+  return handler(noEvent, ...(args as never[]))
+}
+
+/** Calls the listeners registered with `addListener`, as `ipcRenderer.send` did */
+function dispatchListener(channel: string, ...args: unknown[]): boolean {
+  const registered = listeners.get(channel)
+  if (!registered?.length) return false
+  for (const listener of [...registered])
+    listener(noEvent, ...(args as never[]))
+  return true
+}
+
+function hasHandler(channel: string): boolean {
+  return handlers.has(channel)
+}
+
+/** Subscribes to every message sent with `sendFrontendMessage` */
+function onFrontendMessage(subscriber: FrontendMessageSubscriber): () => void {
+  subscribers.add(subscriber)
+  return () => subscribers.delete(subscriber)
 }
 
 /**
- * Sends a message to the main window's webContents if available
- * @returns Whether the message got sent
+ * Publishes a message to every subscriber
+ * @returns Whether anyone received it
  */
 function sendFrontendMessage<ChannelName extends keyof FrontendMessages>(
   channel: ChannelName,
   ...args: Parameters<FrontendMessages[ChannelName]>
 ): boolean {
-  const mainWindow = getMainWindow()
-  if (!mainWindow) return false
-
-  mainWindow.webContents.send(channel, ...args)
+  if (!subscribers.size) return false
+  for (const subscriber of subscribers) subscriber(channel, args)
   return true
 }
 
+export type { IpcEvent }
 export {
   addListener,
   addOneTimeListener,
   addTestOnlyListener,
   addHandler,
+  invokeHandler,
+  dispatchListener,
+  hasHandler,
+  onFrontendMessage,
   sendFrontendMessage
 }

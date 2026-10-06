@@ -5,7 +5,6 @@ import { libraryManagerMap } from 'backend/storeManagers'
 import { sendGameStatusUpdate } from 'backend/utils'
 import { Runner } from 'common/types'
 import { storeMap } from 'common/utils'
-import { Event } from 'electron'
 import { existsSync, rmSync } from 'fs'
 import { join } from 'path'
 
@@ -60,7 +59,7 @@ const removeSettingsAndLogs = (appName: string) => {
 }
 
 export const uninstallGameCallback = async (
-  event: Event,
+  _e: unknown,
   appName: string,
   runner: Runner,
   shouldRemovePrefix: boolean,

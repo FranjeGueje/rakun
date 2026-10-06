@@ -479,13 +479,12 @@ addHandler('isFullscreen', () => isSteamDeckGameMode || isCLIFullscreen)
 
 addHandler('showUpdateSetting', () => true)
 
-addListener('clearCache', (event, showDialog, fromVersionChange = false) => {
+addListener('clearCache', (_e, showDialog, fromVersionChange = false) => {
   clearCache(undefined, fromVersionChange)
   sendFrontendMessage('refreshLibrary')
 
   if (showDialog) {
     showDialogBoxModalAuto({
-      event,
       title: i18next.t('box.cache-cleared.title', 'Cache Cleared'),
       message: i18next.t(
         'box.cache-cleared.message',
@@ -745,7 +744,6 @@ addHandler(
       )
 
       showDialogBoxModalAuto({
-        event,
         title: i18next.t('box.error.title', 'Error'),
         message: i18next.t('box.error.moving', 'Error Moving Game {{error}}', {
           error: moveRes.error
@@ -773,7 +771,6 @@ addHandler(
       const epicOffline = await isEpicServiceOffline()
       if (epicOffline) {
         showDialogBoxModalAuto({
-          event,
           title: i18next.t('box.warning.title', 'Warning'),
           message: i18next.t(
             'box.warning.epic.import',
