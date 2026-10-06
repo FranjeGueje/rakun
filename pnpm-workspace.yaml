@@ -13,15 +13,8 @@ overrides:
   uuid: '^11.0.0'
 
 onlyBuiltDependencies:
-  - '@fortawesome/fontawesome-common-types'
-  - '@fortawesome/fontawesome-svg-core'
-  - '@fortawesome/free-brands-svg-icons'
-  - '@fortawesome/free-regular-svg-icons'
-  - '@fortawesome/free-solid-svg-icons'
   - '@swc/core'
-  - electron
   - esbuild
-  - register-scheme
   - unrs-resolver
 
 minimumReleaseAge: 0
@@ -29,6 +22,5 @@ minimumReleaseAge: 0
 allowBuilds:
   '@parcel/watcher': true
   '@swc/core': true
-  electron-winstaller: true
   esbuild: true
   unrs-resolver: true

@@ -1,9 +1,8 @@
-import { mkdirSync } from 'fs'
+import { existsSync, mkdirSync } from 'fs'
 import { homedir } from 'os'
 import { isAbsolute, join, resolve } from 'path'
 import { env } from 'process'
 import { dirSync } from 'tmp'
-import { isPackaged } from './environment'
 
 // relicd is a fork of Relic and must not share any data with it
 const appName = 'relicd'
@@ -84,37 +83,33 @@ export const steamCompatDir = join(
   'compatibilitytools.d'
 )
 
-export const publicDir = resolve(
-  __dirname,
-  '..',
-  isPackaged || process.env.CI === 'e2e' ? '' : '../public'
+// A release keeps `public` next to the bundle (relicd/relicd.cjs and
+// relicd/public); a source checkout runs build/relicd.cjs with `public` one
+// level up.
+const bundledPublicDir = join(__dirname, 'public')
+export const publicDir = existsSync(bundledPublicDir)
+  ? bundledPublicDir
+  : resolve(__dirname, '..', 'public')
+
+export const fakeEpicExePath = join(
+  publicDir,
+  'bin',
+  'x64',
+  'win32',
+  'EpicGamesLauncher.exe'
 )
 
-export const fakeEpicExePath = fixAsarPath(
-  join(publicDir, 'bin', 'x64', 'win32', 'EpicGamesLauncher.exe')
+export const galaxyCommunicationExePath = join(
+  publicDir,
+  'bin',
+  'x64',
+  'win32',
+  'GalaxyCommunication.exe'
 )
 
-export const galaxyCommunicationExePath = fixAsarPath(
-  join(publicDir, 'bin', 'x64', 'win32', 'GalaxyCommunication.exe')
-)
-
-export const webviewPreloadPath = fixAsarPath(
-  join('file://', publicDir, 'webviewPreload.js')
-)
-
-/**
- * Fix path for packed files with asar, else will do nothing.
- * @param origin  original path
- * @returns fixed path
- */
-export function fixAsarPath(origin: string): string {
-  if (!origin.includes('app.asar.unpacked')) {
-    return origin.replace('app.asar', 'app.asar.unpacked')
-  }
-  return origin
-}
-export const windowIcon = fixAsarPath(join(publicDir, 'icon.png'))
-
-export const zoomPlatformScriptPath = fixAsarPath(
-  join(publicDir, 'bin', 'zoom', 'zoom-platform.sh')
+export const zoomPlatformScriptPath = join(
+  publicDir,
+  'bin',
+  'zoom',
+  'zoom-platform.sh'
 )

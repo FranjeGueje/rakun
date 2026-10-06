@@ -18,8 +18,6 @@ jest.mock('../electronStores', () => ({
 jest.mock('../e2eMock')
 jest.mock('backend/utils')
 jest.mock('backend/launcher')
-jest.mock('fs-extra')
-jest.mock('electron')
 
 jest.mock('../..', () => ({}))
 

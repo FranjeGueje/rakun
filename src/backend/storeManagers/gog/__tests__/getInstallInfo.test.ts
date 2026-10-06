@@ -29,7 +29,6 @@ jest.mock('../../../utils', () => ({
   axiosClient: jest.fn()
 }))
 jest.mock('../../../../common/types/game_manager')
-jest.mock('fs-extra')
 jest.mock('node:zlib')
 jest.mock('node:fs/promises')
 jest.mock('node:fs', () => ({

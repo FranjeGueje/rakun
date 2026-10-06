@@ -1,6 +1,5 @@
 import * as utils from '../utils'
 
-jest.mock('electron')
 jest.mock('../logger')
 jest.mock('../dialog/dialog')
 

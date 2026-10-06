@@ -9,7 +9,6 @@ import {
   DMQueueElement,
   GOGLoginData,
   AppSettings,
-  WindowProps,
   UploadedLogData
 } from 'common/types'
 import { UserData } from 'common/types/gog'
@@ -41,7 +40,6 @@ export interface StoreStructure {
       gogdlLogFile: string
       nileLogFile: string
     }
-    'window-props': WindowProps
     settings: AppSettings
     skipVcRuntime: boolean
   }

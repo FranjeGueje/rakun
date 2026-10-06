@@ -43,7 +43,6 @@ import type { AppSettings } from 'common/types'
 import { configStore } from './constants/key_value_stores'
 import {
   configPath,
-  fixAsarPath,
   gamesConfigPath,
   relicIconFolder,
   publicDir,
@@ -339,7 +338,7 @@ function getLegendaryBin(): { dir: string; bin: string } {
   if (!defaultLegendaryPath)
     defaultLegendaryPath = archSpecificBinary('legendary')
 
-  return splitPathAndName(fixAsarPath(defaultLegendaryPath))
+  return splitPathAndName(defaultLegendaryPath)
 }
 
 let defaultGogdlPath: string | undefined = undefined
@@ -351,7 +350,7 @@ function getGOGdlBin(): { dir: string; bin: string } {
 
   if (!defaultGogdlPath) defaultGogdlPath = archSpecificBinary('gogdl')
 
-  return splitPathAndName(fixAsarPath(defaultGogdlPath))
+  return splitPathAndName(defaultGogdlPath)
 }
 
 let defaultCometPath: string | undefined = undefined
@@ -363,7 +362,7 @@ function getCometBin(): { dir: string; bin: string } {
 
   if (!defaultCometPath) defaultCometPath = archSpecificBinary('comet')
 
-  return splitPathAndName(fixAsarPath(defaultCometPath))
+  return splitPathAndName(defaultCometPath)
 }
 
 let defaultNilePath: string | undefined = undefined
@@ -375,7 +374,7 @@ function getNileBin(): { dir: string; bin: string } {
 
   if (!defaultNilePath) defaultNilePath = archSpecificBinary('nile')
 
-  return splitPathAndName(fixAsarPath(defaultNilePath))
+  return splitPathAndName(defaultNilePath)
 }
 
 export function createNecessaryFolders() {

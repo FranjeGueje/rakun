@@ -149,7 +149,7 @@ describe('API server', () => {
           })
           // Give the server time to register the subscription
           setTimeout(() => {
-            sendFrontendMessage('maximized')
+            sendFrontendMessage('maximized' as 'refreshLibrary')
             sendFrontendMessage('refreshLibrary', 'gog')
           }, 50)
         }

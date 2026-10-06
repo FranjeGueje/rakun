@@ -1,5 +1,3 @@
-import type { OpenDialogOptions, TitleBarOverlay } from 'electron'
-
 import type { SystemInformation } from 'backend/utils/systeminfo'
 
 import type {
@@ -13,7 +11,6 @@ import type {
   ExtraInfo,
   GameAchievement,
   GameInfo,
-  GamepadActionArgs,
   GameSettings,
   GameStatus,
   ImportGameArgs,
@@ -29,19 +26,14 @@ import type {
   UpdateParams,
   UserInfo
 } from '../types'
-import type { GOGCloudSavesLocation, UserData } from './gog'
+import type { UserData } from './gog'
 import type { LoginInfo, LoginResult } from 'common/relic/login'
 import type { NileLoginData, NileRegisterData, NileUserData } from './nile'
 import type { GetLogFileArgs } from 'backend/logger/paths'
 
 // ts-prune-ignore-next
 interface SyncIPCFunctions {
-  setZoomFactor: (zoomFactor: string) => void
   changeLanguage: (language: string) => void
-  frontendReady: () => void
-  lock: (playing: boolean) => void
-  unlock: () => void
-  quit: () => void
   openExternalUrl: (url: string) => void
   openFolder: (folder: string) => void
   openLoginPage: () => void
@@ -51,14 +43,10 @@ interface SyncIPCFunctions {
   clearCache: (showDialog?: boolean, fromVersionChange?: boolean) => void
   clearAchievementCache: (appName: string) => void
   resetRelic: () => void
-  createNewWindow: (url: string) => void
   logoutGOG: () => void
   logError: (message: unknown) => void
   logInfo: (message: unknown) => void
-  clipboardWriteText: (text: string) => void
-  processShortcut: (combination: string) => void
   removeFromDMQueue: (appName: string) => void
-  clearDMFinished: () => void
   abort: (id: string) => void
   'connectivity-changed': (newStatus: ConnectivityStatus) => void
   'set-connectivity-online': () => void
@@ -70,13 +58,6 @@ interface SyncIPCFunctions {
   resumeCurrentDownload: () => void
   pauseCurrentDownload: () => void
   cancelDownload: (removeDownloaded: boolean) => void
-  copySystemInfoToClipboard: () => void
-  minimizeWindow: () => void
-  maximizeWindow: () => void
-  unmaximizeWindow: () => void
-  closeWindow: () => void
-  setFullscreen: (enabled: boolean) => void
-  setTitleBarOverlay: (options: TitleBarOverlay) => void
   changeGameVersionPinnedStatus: (
     appName: string,
     runner: Runner,
@@ -112,17 +93,12 @@ interface AsyncIPCFunctions {
   checkDiskSpace: (folder: string) => Promise<DiskSpaceData>
   checkGameUpdates: () => Promise<string[]>
   getEpicGamesStatus: () => Promise<boolean>
-  updateAll: () => Promise<({ status: 'done' | 'error' | 'abort' } | null)[]>
   getMaxCpus: () => number
   getRelicVersion: () => string
   getLegendaryVersion: () => Promise<string>
   getGogdlVersion: () => Promise<string>
   getCometVersion: () => Promise<string>
   getNileVersion: () => Promise<string>
-  isFullscreen: () => boolean
-  isFrameless: () => boolean
-  isMaximized: () => boolean
-  isMinimized: () => boolean
   showUpdateSetting: () => boolean
   getGameInfo: (appName: string, runner: Runner) => Promise<GameInfo | null>
   getAchievements: (
@@ -170,7 +146,6 @@ interface AsyncIPCFunctions {
   requestGameSettings: (appName: string) => Promise<GameSettings>
   writeConfig: (args: { appName: string; config: Partial<AppSettings> }) => void
   refreshLibrary: (library?: Runner | 'all') => Promise<void>
-  openDialog: (args: OpenDialogOptions) => Promise<string | false>
   install: (args: InstallParams) => Promise<void>
   uninstall: (
     appName: string,
@@ -183,15 +158,7 @@ interface AsyncIPCFunctions {
   importGame: (args: ImportGameArgs) => StatusPromise
   updateGame: (args: UpdateParams) => Promise<void>
   changeInstallPath: (args: MoveGameArgs) => Promise<void>
-  syncGOGSaves: (
-    gogSaves: GOGCloudSavesLocation[],
-    appname: string,
-    arg: string
-  ) => Promise<string>
-  gamepadAction: (args: GamepadActionArgs) => Promise<void>
   getShellPath: (path: string) => Promise<string>
-  getWebviewPreloadPath: () => string
-  clipboardReadText: () => string
   isNative: (args: { appName: string; runner: Runner }) => boolean
   getLogContent: (args: GetLogFileArgs) => string
   getKnownFixes: (appName: string, runner: Runner) => KnowFixesInfo | null
@@ -255,16 +222,11 @@ interface FrontendMessages {
     elements: DMQueueElement[],
     state: DownloadManagerState
   ) => void
-  maximized: () => void
-  unmaximized: () => void
-  fullscreen: (status: boolean) => void
   refreshLibrary: (runner?: Runner) => void
-  openScreen: (screen: string) => void
   'connectivity-changed': (status: {
     status: ConnectivityStatus
     retryIn: number
   }) => void
-  installGame: (appName: string, runner: Runner) => void
   recentGamesChanged: (newRecentGames: RecentGame[]) => void
   pushGameToLibrary: (info: GameInfo) => void
   progressUpdate: (progress: GameStatus) => void
@@ -276,7 +238,6 @@ interface FrontendMessages {
   ) => void
 
   // Used inside tests, so we can be a bit lenient with the type checking here
-  message: (...params: unknown[]) => void
 }
 
 export type {

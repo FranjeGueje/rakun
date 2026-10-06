@@ -14,7 +14,6 @@ import {
   ZoomInstalledInfo,
   ZoomInstallInfo
 } from './types/zoom'
-import { TitleBarOverlay } from 'electron'
 import { ChildProcess } from 'child_process'
 import type { Path } from 'backend/schemas'
 import type LogWriter from 'backend/logger/log_writer'
@@ -356,53 +355,6 @@ export type RefreshOptions = {
   runInBackground?: boolean
 }
 
-export type GamepadActionStatus = Record<
-  ValidGamepadAction,
-  {
-    triggeredAt: { [key: number]: number }
-    repeatDelay: false | number
-  }
->
-
-export type ValidGamepadAction = GamepadActionArgs['action']
-
-export type GamepadActionArgs =
-  GamepadActionArgsWithMetadata | GamepadActionArgsWithoutMetadata
-
-interface GamepadActionArgsWithMetadata {
-  action: 'leftClick' | 'rightClick'
-  metadata: {
-    elementTag: string
-    x: number
-    y: number
-  }
-}
-
-interface GamepadActionArgsWithoutMetadata {
-  action:
-    | 'padUp'
-    | 'padDown'
-    | 'padLeft'
-    | 'padRight'
-    | 'leftStickUp'
-    | 'leftStickDown'
-    | 'leftStickLeft'
-    | 'leftStickRight'
-    | 'rightStickUp'
-    | 'rightStickDown'
-    | 'rightStickLeft'
-    | 'rightStickRight'
-    | 'mainAction'
-    | 'back'
-    | 'altAction'
-    | 'esc'
-    | 'tab'
-    | 'shiftTab'
-    | 'keyboardClick'
-    | 'guide'
-  metadata?: undefined
-}
-
 export type InstallPlatform =
   | LegendaryInstallPlatform
   | GogInstallPlatform
@@ -452,13 +404,6 @@ export interface DiskSpaceData {
 export type StatusPromise = Promise<{ status: 'done' | 'error' | 'abort' }>
 
 export type DownloadManagerState = 'idle' | 'running' | 'paused' | 'stopped'
-
-export interface WindowProps extends Electron.Rectangle {
-  maximized: boolean
-  frame?: boolean
-  titleBarStyle?: 'default' | 'hidden' | 'hiddenInset'
-  titleBarOverlay?: TitleBarOverlay | boolean
-}
 
 export type InstallInfo =
   | LegendaryInstallInfo

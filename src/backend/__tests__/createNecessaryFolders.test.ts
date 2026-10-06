@@ -4,7 +4,6 @@ jest.mock('fs', () => ({
   mkdirSync: jest.fn()
 }))
 
-jest.mock('electron')
 jest.mock('../logger')
 jest.mock('../dialog/dialog')
 

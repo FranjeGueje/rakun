@@ -2,8 +2,6 @@
 
 import eslint from '@eslint/js'
 import tseslint from 'typescript-eslint'
-import react from 'eslint-plugin-react'
-import reactHooks from 'eslint-plugin-react-hooks'
 import prettier from 'eslint-config-prettier'
 import { importX } from 'eslint-plugin-import-x'
 
@@ -12,15 +10,6 @@ export default tseslint.config(
   tseslint.configs.recommendedTypeChecked,
   importX.flatConfigs.recommended,
   importX.flatConfigs.typescript,
-  react.configs.flat.recommended,
-  react.configs.flat['jsx-runtime'],
-  {
-    plugins: { 'react-hooks': reactHooks },
-    rules: {
-      'react-hooks/rules-of-hooks': 'warn',
-      'react-hooks/exhaustive-deps': 'warn'
-    }
-  },
   prettier,
   {
     files: ['**/*.ts', '**/*.tsx'],
@@ -37,44 +26,22 @@ export default tseslint.config(
       '@typescript-eslint/require-await': 'warn',
       '@typescript-eslint/restrict-template-expressions': 'warn',
 
-      'react/no-unknown-property': [
-        'error',
-        { ignore: ['partition', 'allowpopups', 'useragent', 'preload'] }
-      ],
       '@typescript-eslint/no-misused-promises': [
         'error',
         { checksVoidReturn: false }
       ],
       '@typescript-eslint/unbound-method': 'error',
-      // False positive: i18next/React/JSON5 are used here as default-export
+      // False positive: i18next/JSON5 are used here as default-export
       // singletons that also happen to expose named exports (`i18next.t`,
-      // `React.createContext`, `JSON5.parse`). That's the intended usage,
-      // not an ESM/CJS interop mistake.
-      'import-x/no-named-as-default-member': 'off',
-      'no-restricted-imports': [
-        'error',
-        {
-          paths: [
-            {
-              name: 'electron',
-              importNames: ['ipcMain', 'ipcRenderer'],
-              message:
-                'Use the helper functions declared in [backend|preload]/ipc instead.'
-            }
-          ]
-        }
-      ]
+      // `JSON5.parse`). That's the intended usage, not an ESM/CJS interop
+      // mistake.
+      'import-x/no-named-as-default-member': 'off'
     },
 
     languageOptions: {
       parserOptions: {
         project: './tsconfig.eslint.json',
         tsconfigRootDir: import.meta.dirname
-      }
-    },
-    settings: {
-      react: {
-        version: 'detect'
       }
     }
   },

@@ -28,9 +28,6 @@ jest.mock('fs', () => ({
   symlinkSync: jest.fn(),
   writeFileSync: jest.fn()
 }))
-jest.mock('fs-extra', () => ({
-  readFileSync: jest.fn()
-}))
 jest.mock('backend/logger', () => ({
   logInfo: jest.fn(),
   logError: jest.fn(),
@@ -71,10 +68,6 @@ jest.mock('../../steamgrid', () => ({
 jest.mock('../../prefix', () => ({
   preparePrefix: jest.fn(),
   removePrefixSymlink: jest.fn()
-}))
-
-jest.mock('electron', () => ({
-  shell: { openExternal: jest.fn() }
 }))
 
 const mockedAddGameToSteam = jest.mocked(addGameToSteam)
