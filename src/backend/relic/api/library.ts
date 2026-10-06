@@ -1,6 +1,7 @@
 import type { GameInfo, Runner } from 'common/types'
 import { addHandler } from 'backend/ipc'
 import { attachOverrides } from 'backend/game_overrides'
+import { libraryManagerMap } from 'backend/storeManagers'
 import { libraryStore as epicLibraryStore } from 'backend/storeManagers/legendary/electronStores'
 import {
   libraryStore as gogLibraryStore,
@@ -25,9 +26,19 @@ function withInstallInfo(
   })
 }
 
+/**
+ * The Epic and Amazon stores are only rewritten by a refresh, so installing or
+ * uninstalling a game does not show in them; their managers do keep it current
+ */
+function withLiveInfo(runner: 'legendary' | 'nile', games: GameInfo[]) {
+  const manager = libraryManagerMap[runner]
+  return games.map((game) => manager.getGameInfo(game.app_name) ?? game)
+}
+
 const libraries: Record<Runner, () => GameInfo[]> = {
-  legendary: () => epicLibraryStore.get('library', []),
-  nile: () => nileLibraryStore.get('library', []),
+  legendary: () =>
+    withLiveInfo('legendary', epicLibraryStore.get('library', [])),
+  nile: () => withLiveInfo('nile', nileLibraryStore.get('library', [])),
   gog: () =>
     withInstallInfo(
       gogLibraryStore.get('games', []),

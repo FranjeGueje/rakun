@@ -47,6 +47,11 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
 
 #### Corregido
 
+- **`getLibrary` de Epic y Amazon** no reflejaba instalar o desinstalar hasta el
+  siguiente refresco (sus stores solo se reescriben al refrescar); ahora se
+  completa con el estado que mantiene cada manager.
+- **Reparar un juego nativo de Linux** creaba un `.bat` que no le corresponde
+  (su shortcut apunta a `start.sh`); ahora lo omite.
 - **Reinstalar un juego cuyo prefijo se conservó** fallaba con `EEXIST` al crear
   los enlaces del prefijo, y se saltaba el resto de la preparación. Ahora
   reemplaza los enlaces existentes.
@@ -98,6 +103,11 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
 
 #### Fixed
 
+- **`getLibrary` for Epic and Amazon** did not show an install or uninstall
+  until the next refresh (their stores are only rewritten by a refresh); it now
+  fills in the state each manager keeps.
+- **Repairing a Linux native game** created a `.bat` it does not need (its
+  shortcut points to `start.sh`); it is now skipped.
 - **Reinstalling a game whose prefix was kept** failed with `EEXIST` when
   creating the prefix links and skipped the rest of the preparation. It now
   replaces the existing links.
