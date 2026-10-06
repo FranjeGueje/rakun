@@ -45,6 +45,12 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
 - `review.sh` y `release.sh` construyen el tarball; `release.sh` solo publica en
   GitHub si se define `RELICD_REPO`.
 
+#### Corregido
+
+- **Reinstalar un juego cuyo prefijo se conservó** fallaba con `EEXIST` al crear
+  los enlaces del prefijo, y se saltaba el resto de la preparación. Ahora
+  reemplaza los enlaces existentes.
+
 #### Eliminado
 
 - Electron, el frontend (React), el preload, la ventana principal, la bandeja,
@@ -89,6 +95,12 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
   picks the first (safe) option.
 - `review.sh` and `release.sh` build the tarball; `release.sh` only publishes to
   GitHub when `RELICD_REPO` is set.
+
+#### Fixed
+
+- **Reinstalling a game whose prefix was kept** failed with `EEXIST` when
+  creating the prefix links and skipped the rest of the preparation. It now
+  replaces the existing links.
 
 #### Removed
 
