@@ -10,7 +10,7 @@ import type { RunnerOrComet } from './types'
 function getBaseLogPath(): string {
   const stateHome =
     process.env.XDG_STATE_HOME ?? join(homedir(), '.local', 'state')
-  return join(stateHome, 'Relic', 'logs')
+  return join(stateHome, 'Relicd', 'logs')
 }
 
 // Which game log to return. By default, the launch log is returned.
@@ -31,7 +31,7 @@ type GetLogFileArgs =
 function getLogFilePath(args: GetLogFileArgs): string {
   let relativeFilePath: string
   if (!(args?.appName || args?.runner)) {
-    relativeFilePath = 'relic'
+    relativeFilePath = 'relicd'
   } else if (args.runner && !args.appName) {
     relativeFilePath = join('runners', args.runner)
   } else {

@@ -5,7 +5,8 @@ import { env } from 'process'
 import { dirSync } from 'tmp'
 import { isPackaged } from './environment'
 
-const appName = 'relic'
+// relicd is a fork of Relic and must not share any data with it
+const appName = 'relicd'
 
 // Mirrors Electron's `app.getPath('appData')` on Linux: XDG_CONFIG_HOME when it
 // holds an absolute path (relative values are ignored per the XDG spec),
@@ -25,7 +26,7 @@ if (process.env.CI === 'e2e') {
     `CI is set to "e2e", storing Relic config files in ${temp_dir.name}`
   )
   configFolder = temp_dir.name
-  mkdirSync(join(configFolder, 'relic'))
+  mkdirSync(join(configFolder, appName))
 }
 
 // XDG Base Directory: cache = regenerable, non-essential data.
@@ -52,27 +53,27 @@ export const toolsPath = join(appFolder, 'tools')
 export const configPath = join(appFolder, 'config.json')
 export const gamesConfigPath = join(appFolder, 'GamesConfig')
 export const relicIconFolder = join(appFolder, 'icons')
-export const relicInstallPath = join(userHome, 'Games', 'Relic')
+export const relicInstallPath = join(userHome, 'Games', 'Relicd')
 export const fixesPath = join(appFolder, 'fixes')
 export const relicRunnerPath = join(
   userHome,
   '.local',
   'share',
-  'relic',
+  appName,
   'runner'
 )
 export const relicMountPath = join(
   userHome,
   '.local',
   'share',
-  'relic',
+  appName,
   'mount'
 )
 export const relicGamesPath = join(
   userHome,
   '.local',
   'share',
-  'relic',
+  appName,
   'games'
 )
 export const steamCompatDir = join(

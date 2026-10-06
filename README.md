@@ -1,3 +1,9 @@
+> **relicd** is a headless fork of [Relic](https://github.com/FranjeGueje/Relic):
+> backend only (no Electron, no frontend), meant to be driven by an Invasor
+> module. It uses its own identity (`~/.config/relicd`, `~/.local/share/relicd`,
+> `relicd.service`) and shares nothing with Relic. The rest of this document
+> still describes Relic and will be rewritten as the fork progresses.
+
 # Relic
 
 Relic is a fork of [Heroic Games Launcher](https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher)

@@ -1,6 +1,6 @@
 {
-  "name": "relic",
-  "version": "0.6.5",
+  "name": "relicd",
+  "version": "0.1.0",
   "versionNames": {
     "stable": "Tras el grial",
     "beta": "Fragmento"
@@ -9,8 +9,8 @@
   "main": "build/main/main.js",
   "homepage": "./",
   "license": "GPL-3.0-only",
-  "description": "Relic - Linux games installer for GOG, Epic Games and Amazon Games",
-  "desktopName": "Relic",
+  "description": "relicd - headless Linux games installer service for GOG, Epic Games, Amazon Games and Zoom",
+  "desktopName": "relicd",
   "repository": {
     "type": "Github",
     "url": "https://github.com/FranjeGueje/Relic"
