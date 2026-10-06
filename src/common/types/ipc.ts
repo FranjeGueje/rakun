@@ -145,7 +145,8 @@ interface AsyncIPCFunctions {
   requestAppSettings: () => AppSettings
   requestGameSettings: (appName: string) => Promise<GameSettings>
   writeConfig: (args: { appName: string; config: Partial<AppSettings> }) => void
-  refreshLibrary: (library?: Runner | 'all') => Promise<void>
+  refreshLibrary: (library?: Runner | 'all') => void
+  getRefreshingLibraries: () => Runner[]
   install: (args: InstallParams) => Promise<void>
   uninstall: (
     appName: string,

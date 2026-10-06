@@ -8,6 +8,7 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   // Library
   'getLibrary',
   'refreshLibrary',
+  'getRefreshingLibraries',
   'getGameInfo',
   'getExtraInfo',
   'getInstallInfo',

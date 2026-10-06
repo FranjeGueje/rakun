@@ -39,8 +39,12 @@ channel takes in `ipc.ts`; omit the body when there are none).
 ## Channels
 
 **Library:** `getLibrary(runner | 'all')` returns `GameInfo[]` (with install
-state and overrides) as last refreshed; `refreshLibrary(runner | 'all')`
-refreshes from the stores and then `refreshLibrary` fires on `/events`.
+state and overrides) as last refreshed. `refreshLibrary(runner | 'all')`
+**returns at once** and refreshes in the background (a store can take minutes;
+a refresh already running for a store is joined, not repeated). When each store
+ends, `refreshLibrary` fires on `/events` with the store name: call
+`getLibrary` again then. `getRefreshingLibraries` lists the stores refreshing
+now. Logging in refreshes that store by itself.
 `getGameInfo(appName, runner)`, `getExtraInfo`, `getInstallInfo(appName,
 runner, platform, build?, branch?)`, `isGameAvailable`, `isNative`,
 `checkGameUpdates`, `checkDiskSpace(folder)`, `getKnownFixes`.

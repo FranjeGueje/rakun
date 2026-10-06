@@ -20,6 +20,10 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
   `API.md`.
 - **`getLibrary`**: biblioteca de una o todas las tiendas con el estado de
   instalación y los overrides (antes la leía el frontend de los stores).
+- **`refreshLibrary` no bloquea**: responde al instante, refresca en segundo
+  plano, une las peticiones de una tienda que ya se está refrescando y avisa con
+  el evento `refreshLibrary` al terminar; `getRefreshingLibraries` dice qué
+  tiendas están refrescando.
 - **Login sin ventana**: `getLoginInfo` da la URL de login y `submitLogin`
   acepta la dirección final, el JSON de Epic o el código suelto.
 - **`scripts/package.sh`**: tarball `relicd-<v>-linux-x64.tar.gz` (+ `.sha256`)
@@ -59,6 +63,10 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
   `API.md`.
 - **`getLibrary`**: the library of one or all stores with install state and
   overrides (the frontend used to read it from the stores).
+- **`refreshLibrary` does not block**: it answers at once, refreshes in the
+  background, joins requests for a store that is already refreshing and fires
+  the `refreshLibrary` event when done; `getRefreshingLibraries` tells which
+  stores are refreshing.
 - **Window-less login**: `getLoginInfo` returns the login URL and `submitLogin`
   takes the final address, Epic's JSON or the bare code.
 - **`scripts/package.sh`**: `relicd-<v>-linux-x64.tar.gz` (+ `.sha256`) with the

@@ -24,6 +24,7 @@ import {
 } from 'backend/game_overrides'
 import { legendaryInstalled } from 'backend/storeManagers/legendary/constants'
 import { onGameRepaired } from 'backend/relic/game_events'
+import { refreshRunner, refreshingRunners, startRefresh } from './refresh'
 
 addHandler('checkGameUpdates', async (): Promise<string[]> => {
   let oldGames: string[] = []
@@ -125,7 +126,7 @@ addHandler(
 
 addHandler('readConfig', async (event, configClass) => {
   if (configClass === 'library') {
-    await libraryManagerMap['legendary'].refresh()
+    await refreshRunner('legendary')
     return libraryManagerMap['legendary'].getListOfGames()
   }
   const userInfo = LegendaryUser.getUserInfo()
@@ -148,17 +149,10 @@ if (existsSync(legendaryInstalled)) {
   })
 }
 
-addHandler('refreshLibrary', async (e, library?) => {
-  if (library !== undefined && library !== 'all') {
-    await libraryManagerMap[library].refresh()
-  } else {
-    const allRefreshPromises = []
-    for (const manager of Object.values(libraryManagerMap)) {
-      allRefreshPromises.push(manager.refresh())
-    }
-    await Promise.allSettled(allRefreshPromises)
-  }
-})
+// Starts the refresh and answers at once: it ends with a `refreshLibrary` event
+addHandler('refreshLibrary', (_e, library) => startRefresh(library))
+
+addHandler('getRefreshingLibraries', () => refreshingRunners())
 
 addHandler('uninstall', uninstallGameCallback)
 

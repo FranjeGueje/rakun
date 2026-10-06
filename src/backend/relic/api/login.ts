@@ -3,13 +3,13 @@ import type { LoginInfo, LoginResult } from 'common/relic/login'
 import type { NileLoginData } from 'common/types/nile'
 import { addHandler } from 'backend/ipc'
 import { logError, LogPrefix } from 'backend/logger'
-import { libraryManagerMap } from 'backend/storeManagers'
 import { LegendaryUser } from 'backend/storeManagers/legendary/user'
 import { GOGUser } from 'backend/storeManagers/gog/user'
 import { NileUser } from 'backend/storeManagers/nile/user'
 import { ZoomUser } from 'backend/storeManagers/zoom/user'
 import { epicLoginUrl } from 'backend/constants/urls'
 import { extractLoginCode } from './login_input'
+import { startRefresh } from './refresh'
 
 const gogLoginUrl =
   'https://auth.gog.com/auth?client_id=46899977096215655&redirect_uri=https%3A%2F%2Fembed.gog.com%2Fon_login_success%3Forigin%3Dclient&response_type=code&layout=galaxy'
@@ -101,7 +101,7 @@ async function submitLogin(
     return { ok: false, error: String(error) }
   }
 
-  void libraryManagerMap[runner].refresh()
+  startRefresh(runner)
   return { ok: true }
 }
 
