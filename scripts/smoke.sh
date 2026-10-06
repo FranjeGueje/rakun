@@ -14,9 +14,15 @@ BASE="http://127.0.0.1:$PORT"
 
 call() { # channel [json args]
     local body="${2:-[]}"
-    curl -fsS -X POST -H "x-relicd-token: $TOKEN" -H 'Content-Type: application/json' \
-        -d "{\"args\": $body}" "$BASE/api/$1"
-    echo
+    local reply status
+    reply=$(curl -sS -w '\n%{http_code}' -X POST -H "x-relicd-token: $TOKEN" \
+        -H 'Content-Type: application/json' -d "{\"args\": $body}" "$BASE/api/$1")
+    status=${reply##*$'\n'}
+    printf '%s\n' "${reply%$'\n'*}"
+    if [ "$status" != 200 ]; then
+        echo "HTTP $status (args must be valid JSON: strings need double quotes, e.g. '[\"gog\"]')" >&2
+        return 1
+    fi
 }
 
 case "${1:-}" in
