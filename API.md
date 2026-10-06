@@ -63,7 +63,14 @@ shows up in Steam. `uninstall(appName, runner, removePrefix, removeSetting)`,
 **Accounts:** `getAccounts` → `{legendary, gog, nile, zoom}`, each `{loggedIn, name?}`
 from what is stored locally (no network), `isLoggedIn` (Epic), `getUserInfo`, `getAmazonUserInfo`,
 `getZoomUserInfo`, `logoutLegendary`, `logoutGOG`, `logoutAmazon`,
-`logoutZoom`, and the two-step login below.
+`logoutZoom`, `importSessionsFromRelic` and the two-step login below.
+
+`importSessionsFromRelic` (no arguments) copies the store sessions from
+`~/.config/relic` once and never overwrites a session relicd already has. It
+returns `{legendary, gog, nile, zoom}`, each `imported`, `already`, `missing`
+(Relic has none) or `invalid` (the store rejected it, or no connection to check;
+nothing is kept). Installed games are not imported. The copy shares the refresh
+token, so the store may end the session in Relic.
 
 **Artwork:** `steamgriddb.hasApiKey` → boolean and `steamgriddb.setApiKey(key)`.
 Without a SteamGridDB key relicd skips the grid images when it adds a game to

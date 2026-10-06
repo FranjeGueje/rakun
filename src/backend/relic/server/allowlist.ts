@@ -36,6 +36,7 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   'removeFromDMQueue',
   // Accounts
   'getAccounts',
+  'importSessionsFromRelic',
   'isLoggedIn',
   'getUserInfo',
   'getAmazonUserInfo',
