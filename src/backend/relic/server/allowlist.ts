@@ -38,6 +38,8 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   'getUserInfo',
   'getAmazonUserInfo',
   'getZoomUserInfo',
+  'getLoginInfo',
+  'submitLogin',
   'getAmazonLoginData',
   'login',
   'authGOG',
