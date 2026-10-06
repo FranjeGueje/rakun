@@ -47,6 +47,9 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
 
 #### Corregido
 
+- **Zoom: una descarga cortada dejaba un instalador truncado** que el siguiente
+  intento daba por bueno. Ahora se descarga a un `.part` y solo se renombra si
+  llega entero.
 - **`getLibrary` de Epic y Amazon** no reflejaba instalar o desinstalar hasta el
   siguiente refresco (sus stores solo se reescriben al refrescar); ahora se
   completa con el estado que mantiene cada manager.
@@ -103,6 +106,9 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
 
 #### Fixed
 
+- **Zoom: an aborted download left a truncated installer** that the next attempt
+  took for the finished one. It is now downloaded to a `.part` file and renamed
+  only when complete.
 - **`getLibrary` for Epic and Amazon** did not show an install or uninstall
   until the next refresh (their stores are only rewritten by a refresh); it now
   fills in the state each manager keeps.
