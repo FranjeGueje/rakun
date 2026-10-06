@@ -83,15 +83,6 @@ addHandler('getExtraInfo', async (event, appName, runner) => {
   return libraryManagerMap[runner].getGame(appName).getExtraInfo()
 })
 
-addHandler('getGameSettings', async (event, appName, runner) => {
-  try {
-    return await libraryManagerMap[runner].getGame(appName).getSettings()
-  } catch (error) {
-    logError(error, LogPrefix.Backend)
-    return null
-  }
-})
-
 addHandler('getGOGLinuxInstallersLangs', async (event, appName) =>
   libraryManagerMap['gog'].getLinuxInstallersLanguages(appName)
 )
@@ -322,13 +313,6 @@ addHandler('getPrivateBranchPassword', (e, appName) =>
 )
 addHandler('setPrivateBranchPassword', (e, appName, password) =>
   libraryManagerMap['gog'].getGame(appName).setBranchPassword(password)
-)
-
-addHandler('getAvailableCyberpunkMods', () =>
-  libraryManagerMap['gog'].getCyberpunkMods()
-)
-addHandler('setCyberpunkModConfig', (e, props) =>
-  libraryManagerMap['gog'].setCyberpunkModConfig(props)
 )
 
 addListener('changeGameVersionPinnedStatus', (e, appName, runner, status) => {

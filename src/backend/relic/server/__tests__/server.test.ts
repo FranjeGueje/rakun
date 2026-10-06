@@ -94,7 +94,7 @@ describe('API server', () => {
     expect(reply.status).toBe(403)
   })
 
-  test('exposes the private branch and helper version channels, not launch settings', () => {
+  test('exposes the private branch and helper version channels', () => {
     const exposed = [
       'getPrivateBranchPassword',
       'setPrivateBranchPassword',
@@ -103,16 +103,8 @@ describe('API server', () => {
       'getNileVersion',
       'getCometVersion'
     ]
-    const hidden = [
-      'getGameSettings',
-      'getAvailableCyberpunkMods',
-      'setCyberpunkModConfig'
-    ]
     exposed.forEach((channel) =>
       expect(exposedChannels.has(channel)).toBe(true)
-    )
-    hidden.forEach((channel) =>
-      expect(exposedChannels.has(channel)).toBe(false)
     )
   })
 

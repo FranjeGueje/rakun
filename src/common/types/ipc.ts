@@ -108,10 +108,6 @@ interface AsyncIPCFunctions {
     lang?: string
   ) => Promise<GameAchievement[]>
   getExtraInfo: (appName: string, runner: Runner) => Promise<ExtraInfo | null>
-  getGameSettings: (
-    appName: string,
-    runner: Runner
-  ) => Promise<GameSettings | null>
   getGOGLinuxInstallersLangs: (appName: string) => Promise<string[]>
   getInstallInfo: (
     appName: string,
@@ -203,12 +199,6 @@ interface AsyncIPCFunctions {
 
   setPrivateBranchPassword: (appName: string, password: string) => void
   getPrivateBranchPassword: (appName: string) => string
-
-  getAvailableCyberpunkMods: () => Promise<string[]>
-  setCyberpunkModConfig: (props: {
-    enabled: boolean
-    modsToLoad: string[]
-  }) => Promise<void>
 
   'steamgriddb.hasApiKey': () => Promise<boolean>
   'steamgriddb.setApiKey': (key: string) => Promise<void>

@@ -84,9 +84,8 @@ to be reinstalled to get them).
 `writeConfig({appName, config})`, `setSetting({appName, key, value})`,
 `getRelicVersion`, `getEpicGamesStatus`, `get-connectivity-status`,
 `getSystemInfo`, and the helper versions `getLegendaryVersion`,
-`getGogdlVersion`, `getNileVersion`, `getCometVersion`. Per-game launch
-settings (`getGameSettings`, the Cyberpunk mods) are not exposed: relicd does
-not launch games.
+`getGogdlVersion`, `getNileVersion`, `getCometVersion`. There are no per-game
+launch settings: relicd does not launch games.
 
 ## Logging in (no embedded browser)
 

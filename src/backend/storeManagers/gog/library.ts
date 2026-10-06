@@ -27,7 +27,7 @@ import {
   GOGSessionSyncQueueItem
 } from 'common/types/gog'
 import { dirname, join } from 'node:path'
-import { existsSync, readFileSync, statSync } from 'fs'
+import { existsSync, readFileSync } from 'fs'
 
 import {
   getRunnerLogWriter,
@@ -57,8 +57,6 @@ import { gogdlConfigPath } from './constants'
 import { userDataPath } from 'backend/constants/paths'
 import GOGGame from './games'
 import type { LibraryManager } from 'common/types/game_manager'
-import { libraryManagerMap } from '../index'
-import { readdir } from 'fs/promises'
 import { shareInFlight } from 'backend/utils/inflight'
 
 const library: Map<string, GameInfo> = new Map()
@@ -1523,59 +1521,5 @@ export default class GOGLibraryManager implements LibraryManager {
     }
     installedGamesStore.set('installed', installedArray)
     sendFrontendMessage('pushGameToLibrary', game)
-  }
-
-  setCyberpunkModConfig(props: { enabled: boolean; modsToLoad: string[] }) {
-    const cpId = '1423049311'
-    const game = library.get(cpId)
-    const installed = installedGames.get(cpId)
-    if (!game || !installed) {
-      return
-    }
-
-    installed.cyberpunk = {
-      modsEnabled: props.enabled,
-      modsToLoad: props.modsToLoad
-    }
-
-    game.install = installed
-    const installedArray = installedGamesStore.get('installed', [])
-
-    const index = installedArray.findIndex((iGame) => iGame.appName === cpId)
-
-    if (index > -1) {
-      installedArray.splice(index, 1, installed)
-    }
-
-    library.set(cpId, game)
-    installedGames.set(cpId, installed)
-    installedGamesStore.set('installed', installedArray)
-    sendFrontendMessage('pushGameToLibrary', game)
-  }
-
-  async getCyberpunkMods(): Promise<string[]> {
-    const gameInfo = libraryManagerMap['gog'].getGameInfo('1423049311')
-    if (!gameInfo || !gameInfo?.install?.install_path) {
-      return []
-    }
-
-    const modsPath = join(gameInfo.install.install_path, 'mods')
-    if (!existsSync(modsPath)) {
-      return []
-    }
-    const modsPathContents = await readdir(modsPath)
-
-    return modsPathContents.reduce((acc, next) => {
-      const modPath = join(modsPath, next)
-      const infoFilePath = join(modPath, 'info.json')
-
-      const modStat = statSync(modPath)
-
-      if (modStat.isDirectory() && existsSync(infoFilePath)) {
-        acc.push(next)
-      }
-
-      return acc
-    }, [] as string[])
   }
 }

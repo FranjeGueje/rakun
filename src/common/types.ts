@@ -247,11 +247,6 @@ export interface InstalledInfo {
   branch?: string // GOG beta channels
   // Whether to skip update check for this title (currently only used for GOG as it is the only platform actively supporting version rollback)
   pinnedVersion?: boolean
-  cyberpunk?: {
-    // Cyberpunk compatibility options
-    modsEnabled: boolean
-    modsToLoad: string[] // If this is empty redmod will load mods in alphabetic order
-  }
 }
 
 export interface Reqs {
