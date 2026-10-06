@@ -60,7 +60,8 @@ shows up in Steam. `uninstall(appName, runner, removePrefix, removeSetting)`,
 `pauseCurrentDownload`, `resumeCurrentDownload`, `cancelDownload`,
 `removeFromDMQueue`.
 
-**Accounts:** `isLoggedIn` (Epic), `getUserInfo`, `getAmazonUserInfo`,
+**Accounts:** `getAccounts` → `{legendary, gog, nile, zoom}`, each `{loggedIn, name?}`
+from what is stored locally (no network), `isLoggedIn` (Epic), `getUserInfo`, `getAmazonUserInfo`,
 `getZoomUserInfo`, `logoutLegendary`, `logoutGOG`, `logoutAmazon`,
 `logoutZoom`, and the two-step login below.
 

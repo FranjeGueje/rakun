@@ -27,6 +27,7 @@ import type {
   UserInfo
 } from '../types'
 import type { UserData } from './gog'
+import type { AccountsStatus } from 'common/relic/accounts'
 import type { LoginInfo, LoginResult } from 'common/relic/login'
 import type { NileLoginData, NileRegisterData, NileUserData } from './nile'
 import type { GetLogFileArgs } from 'backend/logger/paths'
@@ -140,6 +141,7 @@ interface AsyncIPCFunctions {
   logoutAmazon: () => Promise<void>
   readConfig: (config_class: 'library' | 'user') => Promise<GameInfo[] | string>
   getLibrary: (library?: Runner | 'all') => GameInfo[]
+  getAccounts: () => AccountsStatus
   getLoginInfo: (runner: Runner) => Promise<LoginInfo>
   submitLogin: (runner: Runner, pasted: string) => Promise<LoginResult>
   requestAppSettings: () => AppSettings

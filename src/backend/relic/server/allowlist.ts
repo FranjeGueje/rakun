@@ -35,6 +35,7 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   'cancelDownload',
   'removeFromDMQueue',
   // Accounts
+  'getAccounts',
   'isLoggedIn',
   'getUserInfo',
   'getAmazonUserInfo',
