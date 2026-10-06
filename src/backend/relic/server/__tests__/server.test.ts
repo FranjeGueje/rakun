@@ -2,6 +2,7 @@ import { request, type IncomingMessage, type Server } from 'http'
 import type { AddressInfo } from 'net'
 import { addHandler, addListener, sendFrontendMessage } from 'backend/ipc'
 import { createApiServer } from '../server'
+import { exposedChannels } from '../allowlist'
 
 jest.mock('backend/logger', () => ({
   logError: jest.fn(),
@@ -91,6 +92,28 @@ describe('API server', () => {
     addHandler('getShellPath', async () => '/etc')
     const reply = await call('POST', '/api/getShellPath', { body: '{}' })
     expect(reply.status).toBe(403)
+  })
+
+  test('exposes the private branch and helper version channels, not launch settings', () => {
+    const exposed = [
+      'getPrivateBranchPassword',
+      'setPrivateBranchPassword',
+      'getLegendaryVersion',
+      'getGogdlVersion',
+      'getNileVersion',
+      'getCometVersion'
+    ]
+    const hidden = [
+      'getGameSettings',
+      'getAvailableCyberpunkMods',
+      'setCyberpunkModConfig'
+    ]
+    exposed.forEach((channel) =>
+      expect(exposedChannels.has(channel)).toBe(true)
+    )
+    hidden.forEach((channel) =>
+      expect(exposedChannels.has(channel)).toBe(false)
+    )
   })
 
   test('calls a handler with the given args and returns its result', async () => {

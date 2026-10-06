@@ -28,6 +28,8 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   'importGame',
   'changeInstallPath',
   'changeGameVersionPinnedStatus',
+  'getPrivateBranchPassword',
+  'setPrivateBranchPassword',
   // Download queue
   'getDMQueueInformation',
   'pauseCurrentDownload',
@@ -63,7 +65,11 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   'getEpicGamesStatus',
   'get-connectivity-status',
   'set-connectivity-online',
-  'getSystemInfo'
+  'getSystemInfo',
+  'getLegendaryVersion',
+  'getGogdlVersion',
+  'getNileVersion',
+  'getCometVersion'
 ])
 
 // Events published on GET /events

@@ -55,6 +55,9 @@ install finishes relicd runs the Steam integration (see README) and the game
 shows up in Steam. `uninstall(appName, runner, removePrefix, removeSetting)`,
 `repair(appName, runner)`, `kill(appName, runner)`, `moveInstall`,
 `importGame`, `changeInstallPath`, `changeGameVersionPinnedStatus`.
+For a GOG private beta branch, `setPrivateBranchPassword(appName, password)`
+stores the password and `getPrivateBranchPassword(appName)` returns it; install
+or update with that `branch`.
 
 **Download queue:** `getDMQueueInformation` → `{elements, finished, state}`,
 `pauseCurrentDownload`, `resumeCurrentDownload`, `cancelDownload`,
@@ -80,7 +83,10 @@ to be reinstalled to get them).
 **Settings and status:** `requestAppSettings`, `requestGameSettings(appName)`,
 `writeConfig({appName, config})`, `setSetting({appName, key, value})`,
 `getRelicVersion`, `getEpicGamesStatus`, `get-connectivity-status`,
-`getSystemInfo`.
+`getSystemInfo`, and the helper versions `getLegendaryVersion`,
+`getGogdlVersion`, `getNileVersion`, `getCometVersion`. Per-game launch
+settings (`getGameSettings`, the Cyberpunk mods) are not exposed: relicd does
+not launch games.
 
 ## Logging in (no embedded browser)
 
