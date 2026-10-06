@@ -26,7 +26,6 @@ yarn-error.log*
 package-lock.json
 
 public/**/*.js
-!public/webviewPreload.js
 downloads*.json
 
 vite-plugin-electron.log
