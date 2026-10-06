@@ -33,7 +33,7 @@ Steam. No comparte nada con Relic (rutas `relicd`, no `relic`).
 - GOG achievements (experimental, via [Comet](https://github.com/imLinguin/comet))
 - Linux native game support (GOG)
 
-The API (connection, channels, login flow and events) is documented in [API.md](API.md).
+The API (connection, channels, login flow and events) is documented in [API.md](API.md); a step-by-step test walkthrough (in Spanish) is in [GUIA.md](GUIA.md).
 
 ---
 
