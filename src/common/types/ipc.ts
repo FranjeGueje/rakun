@@ -162,6 +162,7 @@ interface AsyncIPCFunctions {
   logoutLegendary: () => Promise<void>
   logoutAmazon: () => Promise<void>
   readConfig: (config_class: 'library' | 'user') => Promise<GameInfo[] | string>
+  getLibrary: (library?: Runner | 'all') => GameInfo[]
   requestAppSettings: () => AppSettings
   requestGameSettings: (appName: string) => Promise<GameSettings>
   writeConfig: (args: { appName: string; config: Partial<AppSettings> }) => void

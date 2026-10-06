@@ -22,6 +22,7 @@ import {
   LogPrefix
 } from 'backend/logger'
 import { syncMountBin, createEosOverlayBat } from './windowify'
+import { startApiServer } from './server'
 import './api'
 
 function refreshUserDetailsWhenOnline() {
@@ -96,6 +97,8 @@ export async function startDaemon() {
 
   createNecessaryFolders()
   configStore.set('userHome', userHome)
+
+  await startApiServer()
 
   logInfo('Starting the Download Queue', LogPrefix.Backend)
   void initQueue()
