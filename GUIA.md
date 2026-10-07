@@ -11,7 +11,7 @@ completo está en [API.md](API.md).
 relicd no instala ningún servicio: lo arrancas tú cuando lo necesites.
 
 ```bash
-scripts/install.sh dist/relicd-0.1.0-linux-x64.tar.gz   # instala en ~/.local/opt/relicd
+scripts/install.sh                                      # instala en ~/.local/opt/relicd el tarball de tu arquitectura de dist/
 
 relicd                                                  # en primer plano, Ctrl+C lo para
 systemd-run --user --unit=relicd ~/.local/opt/relicd/relicd   # en segundo plano, transitorio

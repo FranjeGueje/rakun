@@ -245,7 +245,7 @@ git clone <this repository> relicd && cd relicd
 pnpm install
 pnpm download-helper-binaries
 pnpm package                     # dist/relicd-<version>-linux-x64.tar.gz and -arm64.tar.gz
-scripts/install.sh dist/relicd-*-linux-x64.tar.gz   # the one for your machine
+scripts/install.sh                # picks the tarball of this machine from dist/
 ```
 
 `pnpm package x64` (or `arm64`) builds just one. Each tarball carries only its own helper
