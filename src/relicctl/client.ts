@@ -42,7 +42,9 @@ export function readCredentials(file = credentialsFile()): Credentials {
   try {
     raw = readFileSync(file, 'utf-8')
   } catch {
-    throw new CliError(`No existe ${file}: ¿está relicd arrancado?`)
+    throw new CliError(
+      `relicd parado (no existe ${file}); arráncalo con "relicctl start"`
+    )
   }
   return parseCredentials(raw, file)
 }
@@ -91,7 +93,7 @@ function send(
     req.once('error', () =>
       reject(
         new CliError(
-          `No se puede conectar con relicd en 127.0.0.1:${creds.port}: ¿está arrancado?`
+          `relicd parado (no responde en 127.0.0.1:${creds.port}); arráncalo con "relicctl start"`
         )
       )
     )

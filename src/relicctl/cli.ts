@@ -9,10 +9,20 @@ import { library, refresh } from './commands/library'
 import { cancel, pause, queue, resume } from './commands/queue'
 import { logs } from './commands/logs'
 import { cache, reset } from './commands/maintenance'
+import {
+  isBusy,
+  isRunning,
+  start,
+  startRelicd,
+  stop,
+  stopRelicd
+} from './commands/service'
+import { ServeDeps, serveDir, processAlive, withServe } from './serve'
 import { config } from './commands/config'
 
 export const HELP = `Uso: relicctl <comando> [argumentos]
 
+  start | stop [--force]          arranca o para relicd (no hace falta systemd)
   status                          estado de relicd, sesiones y cola
   login <tienda>                  inicia sesión
   logout <tienda>
@@ -31,7 +41,8 @@ export const HELP = `Uso: relicctl <comando> [argumentos]
   events                          sigue los eventos de relicd
   call <canal> [json]             llama a un canal de la API
 
-Opciones: --json (salida para scripts), --no-wait (no esperar a que termine)
+Opciones: --json (salida para scripts), --no-wait (no esperar a que termine),
+  -s (si relicd está parado, lo arranca para este comando y lo para al acabar)
 Las tiendas son las que informa relicd (relicctl call getStores).
 Variable: RELICD_API_FILE (api.json de otro relicd)`
 
@@ -70,6 +81,8 @@ export function parseCli(argv: string[]) {
       'skip-dlcs': { type: 'boolean' },
       'remove-files': { type: 'boolean' },
       yes: { type: 'boolean' },
+      force: { type: 'boolean' },
+      serve: { type: 'boolean', short: 's' },
       'no-wait': { type: 'boolean' },
       installed: { type: 'boolean' },
       help: { type: 'boolean', short: 'h' }
@@ -82,6 +95,8 @@ export function parseCli(argv: string[]) {
     skipDlcs: values['skip-dlcs'],
     removeFiles: values['remove-files'],
     yes: values.yes,
+    force: values.force,
+    serve: values.serve,
     wait: !values['no-wait'],
     installed: !!values.installed
   }
@@ -95,15 +110,63 @@ function storesOf(api: Api): () => Promise<StoreInfo[]> {
   return () => (stores ??= api.call<StoreInfo[]>('getStores'))
 }
 
+function serveDeps(): ServeDeps {
+  const api = () => createApi(readCredentials())
+  return {
+    dir: serveDir(),
+    pid: process.pid,
+    isRunning: () => isRunning(),
+    start: () => startRelicd(),
+    stop: () => stopRelicd(),
+    isBusy: async () => isBusy(api()),
+    alive: processAlive
+  }
+}
+
+/** -s cannot work with what outlives the command or has no end */
+export function checkServe(command: string, opts: Options) {
+  if (command === 'start' || command === 'stop')
+    throw new CliError('-s no se usa con start ni stop')
+  if (command === 'events')
+    throw new CliError('-s no se puede usar con events: no termina')
+  if (!opts.wait)
+    throw new CliError(
+      '-s no se puede usar con --no-wait: relicd pararía lo que acabas de encolar'
+    )
+}
+
+async function runCommand(
+  io: Pick<Ctx, 'log' | 'ask'>,
+  handler: Command,
+  args: string[],
+  opts: Options,
+  json: boolean
+) {
+  const api = createApi(readCredentials())
+  await handler({ ...io, api, stores: storesOf(api), json }, args, opts)
+}
+
 export async function runCli(
   argv: string[],
-  io: Pick<Ctx, 'log' | 'ask'>
+  io: Pick<Ctx, 'log' | 'ask'>,
+  serve: () => ServeDeps = serveDeps
 ): Promise<void> {
   const { command, args, opts, json, help } = parseCli(argv)
   if (help || !command) return io.log(HELP)
+  if (opts.serve) checkServe(command, opts)
+  if (command === 'start') return start(io)
+  if (command === 'stop') return stop(io, opts)
   const handler = commands[command]
   if (!handler)
     throw new CliError(`Comando desconocido "${command}"\n\n${HELP}`)
-  const api = createApi(readCredentials())
-  await handler({ ...io, api, stores: storesOf(api), json }, args, opts)
+  if (opts.serve) {
+    return withServe(serve(), () => runCommand(io, handler, args, opts, json))
+  }
+  if (command === 'status' && !(await isRunning()))
+    return io.log(
+      json
+        ? JSON.stringify({ running: false })
+        : 'relicd parado; arráncalo con "relicctl start"'
+    )
+  await runCommand(io, handler, args, opts, json)
 }

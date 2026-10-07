@@ -32,6 +32,7 @@ interface SyncIPCFunctions {
   clearFinishedDMQueue: () => void
   clearCache: (library?: Runner) => void
   resetRelic: () => void
+  stopRelicd: () => void
   'set-connectivity-online': () => void
   setSetting: (args: { key: keyof AppSettings; value: unknown }) => void
   resumeCurrentDownload: () => void

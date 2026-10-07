@@ -13,7 +13,12 @@ export const status: Command = async (ctx) => {
     'getDMQueueInformation'
   )
   const stores = await ctx.stores()
-  const summary = { health, accounts, queue: queue.elements.length }
+  const summary = {
+    running: true,
+    health,
+    accounts,
+    queue: queue.elements.length
+  }
   show(ctx, summary, () =>
     [
       `relicd ${health.version}`,

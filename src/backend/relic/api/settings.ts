@@ -4,7 +4,7 @@ import { backendEvents } from 'backend/backend_events'
 import { GlobalConfig } from 'backend/config'
 import { gameInfoStore } from 'backend/storeManagers/legendary/electronStores'
 import { clearCache, handleExit, writeConfig } from 'backend/utils'
-import { resetAndStop } from '../reset'
+import { resetAndStop, stopAfterReply } from '../reset'
 import { validateSetting, validateSettings } from '../settings_validation'
 
 // Has to run on every way of changing it, not only on `setSetting`
@@ -32,3 +32,5 @@ addListener('clearCache', (_e, library) => {
 })
 
 addListener('resetRelic', () => resetAndStop(handleExit))
+
+addListener('stopRelicd', () => stopAfterReply(handleExit))

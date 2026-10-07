@@ -50,6 +50,7 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   'getMaxCpus',
   'clearCache',
   'resetRelic',
+  'stopRelicd',
   'steamgriddb.hasApiKey',
   'steamgriddb.setApiKey',
   'getRelicVersion',

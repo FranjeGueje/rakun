@@ -35,7 +35,7 @@ describe('credentials', () => {
   })
 
   test('a missing file asks whether relicd is running', () => {
-    expect(() => readCredentials('/no/such/api.json')).toThrow(/arrancado/)
+    expect(() => readCredentials('/no/such/api.json')).toThrow(/relicd parado/)
   })
 
   test.each(['not json', '{"port": 1}', '{"token": "x"}'])(
@@ -111,7 +111,7 @@ describe('call', () => {
   test('nothing listening says relicd may be stopped', async () => {
     await expect(
       createApi({ port: 1, token: 'x' }).call('getLibrary')
-    ).rejects.toThrow(/¿está arrancado\?/)
+    ).rejects.toThrow(/relicd parado/)
   })
 })
 

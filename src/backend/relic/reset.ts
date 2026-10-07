@@ -23,7 +23,11 @@ export function resetRelic() {
   rmSync(relicGamesPath, { recursive: true, force: true })
 }
 
+export function stopAfterReply(stop: () => void) {
+  setTimeout(stop, EXIT_DELAY_MS)
+}
+
 export function resetAndStop(stop: () => void) {
   resetRelic()
-  setTimeout(stop, EXIT_DELAY_MS)
+  stopAfterReply(stop)
 }
