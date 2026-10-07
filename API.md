@@ -56,9 +56,14 @@ anyone who can reach the machine controls relicd. It is for experimental or home
 network you trust, over plain HTTP. What it still does: it only accepts a `Host` that is the
 machine's own address or name (so a web on the internet cannot reach relicd through the
 visitor's browser: DNS rebinding), and `writeConfig`, `setSetting`, `resetRelic`,
-`stopRelicd`, `steamgriddb.setApiKey` and `importSessionsFromRelic` answer `403` to
-anything that is not this machine (an `altLegendaryBin` setting makes relicd run that
-program). A reverse proxy installed on this machine would make visits from outside look
+`stopRelicd`, `steamgriddb.setApiKey`, `importSessionsFromRelic`, `getPrivateBranchPassword`,
+`setPrivateBranchPassword`, `getLogContent`, `listFolders`, `importGame`, `moveInstall` and
+`changeInstallPath` answer `403` to anything that is not this machine (an `altLegendaryBin`
+setting makes relicd run that program; the others read secrets or walk the disk). The error is
+`"<channel>" can only be called from the machine relicd runs on: open the web there as
+http://127.0.0.1:<port>`; being on this machine but using its LAN address counts as remote.
+`install` with a `path` stays open: it is how the web installs, so anyone who can reach the
+port can write a game's files in any folder you can write to. A reverse proxy installed on this machine would make visits from outside look
 local, so do not put one in front. Warnings: the log at startup, `relicctl start` and
 `status`, a small banner in the web, and `/health` reports `"web":"network"`.
 

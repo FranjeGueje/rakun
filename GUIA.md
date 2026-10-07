@@ -24,7 +24,8 @@ Para reinstalar una versión nueva: `pnpm package`, volver a ejecutar
 `scripts/install.sh …` y reiniciar relicd. Los logins se conservan (viven en
 `~/.config/relicd`).
 
-Para probar sin tocar tu `$HOME` real:
+Para probar sin tocar tu `$HOME` real (**con un directorio que exista y no esté vacío**: con `HOME=`
+vacío relicd crea sus carpetas en el directorio actual):
 
 ```bash
 HOME=$(mktemp -d) RELICD_PORT=17999 relicd
@@ -37,26 +38,27 @@ Con relicd instalado, `relicctl` (o `node build/relicctl.cjs` desde el
 repositorio) evita escribir el JSON a mano. Usa el mismo `api.json` y la misma
 variable `RELICD_API_FILE`.
 
-| Quieres…                     | `relicctl`                                                                |
-| ---------------------------- | ------------------------------------------------------------------------- |
-| arrancar / parar relicd      | `relicctl start` / `relicctl stop [--force]`                              |
-| ver si está vivo y sesiones  | `relicctl status` (dice «relicd parado» si no lo está)                    |
-| iniciar sesión               | `relicctl login gog` (epic, gog, amazon, zoom)                            |
-| traer las sesiones de Relic  | `relicctl import-relic`                                                   |
-| listar la biblioteca         | `relicctl library [tienda] [--installed]`                                 |
-| refrescarla y esperar        | `relicctl refresh [tienda]`                                               |
-| instalar                     | `relicctl install gog <appName> [--path DIR] [--lang CODE] [--skip-dlcs]` |
-| actualizar o reparar         | `relicctl update` / `repair <tienda> <appName>`                           |
-| desinstalar                  | `relicctl uninstall <tienda> <appName>`                                   |
-| ver la cola                  | `relicctl queue`                                                          |
-| pausar / reanudar / cancelar | `relicctl pause` / `resume` / `cancel [--remove-files]`                   |
-| vaciar la lista de acabadas  | `relicctl queue clear`                                                    |
-| ver o cambiar ajustes        | `relicctl config [clave [valor]]` (p. ej. `config protonPath RUTA`)       |
-| leer los registros           | `relicctl logs [tienda [appName]] [--type install]`                       |
-| vaciar la caché              | `relicctl cache clear [tienda]`                                           |
-| borrar sesiones y ajustes    | `relicctl reset [--yes]` (detiene relicd; los juegos no se tocan)         |
-| seguir los eventos           | `relicctl events`                                                         |
-| cualquier otro canal         | `relicctl call <canal> '[args]'`                                          |
+| Quieres…                     | `relicctl`                                                                 |
+| ---------------------------- | -------------------------------------------------------------------------- |
+| arrancar / parar relicd      | `relicctl start` / `relicctl stop [--force]`                               |
+| elegir web y puerto          | `relicctl start --web local\|network\|off --port N` (o `config webAccess`) |
+| ver si está vivo y sesiones  | `relicctl status` (dice «relicd parado» si no lo está)                     |
+| iniciar sesión               | `relicctl login gog` (epic, gog, amazon, zoom)                             |
+| traer las sesiones de Relic  | `relicctl import-relic`                                                    |
+| listar la biblioteca         | `relicctl library [tienda] [--installed]`                                  |
+| refrescarla y esperar        | `relicctl refresh [tienda]`                                                |
+| instalar                     | `relicctl install gog <appName> [--path DIR] [--lang CODE] [--skip-dlcs]`  |
+| actualizar o reparar         | `relicctl update` / `repair <tienda> <appName>`                            |
+| desinstalar                  | `relicctl uninstall <tienda> <appName>`                                    |
+| ver la cola                  | `relicctl queue`                                                           |
+| pausar / reanudar / cancelar | `relicctl pause` / `resume` / `cancel [--remove-files]`                    |
+| vaciar la lista de acabadas  | `relicctl queue clear`                                                     |
+| ver o cambiar ajustes        | `relicctl config [clave [valor]]` (p. ej. `config protonPath RUTA`)        |
+| leer los registros           | `relicctl logs [tienda [appName]] [--type install]`                        |
+| vaciar la caché              | `relicctl cache clear [tienda]`                                            |
+| borrar sesiones y ajustes    | `relicctl reset [--yes]` (detiene relicd; los juegos no se tocan)          |
+| seguir los eventos           | `relicctl events`                                                          |
+| cualquier otro canal         | `relicctl call <canal> '[args]'`                                           |
 
 `install`, `update`, `repair` y `uninstall` esperan a que acabe y devuelven un
 código distinto de 0 si falla (`--no-wait` para no esperar). `--json` da la
@@ -208,13 +210,47 @@ pantalla.
 Un shortcut añadido a Steam **no se borra** al desinstalar: se quita a mano
 desde la biblioteca de Steam.
 
+## La web y sus modos
+
+relicd sirve su propia web en el puerto de la API (`http://127.0.0.1:17370`). Quién puede abrirla:
+
+| Modo                  | Cómo                                                    | Qué pasa                                                                     |
+| --------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `local` (por defecto) | nada                                                    | solo este equipo                                                             |
+| `network`             | `relicctl start --web network` o `relicd --web=network` | toda la red, **sin protección** (aviso en el log, en `relicctl` y en la web) |
+| `off`                 | `--web off`                                             | no se sirve la página; la API sigue en este equipo                           |
+
+El parámetro manda sobre la variable `RELICD_WEB` y esta sobre el ajuste guardado
+(`relicctl config webAccess network`, que se aplica **al reiniciar** relicd). `--port N` /
+`RELICD_PORT` cambian el puerto.
+
+```bash
+H=$(mktemp -d -p ~/.cache); [ -n "$H" ] || exit 1          # un HOME temporal que NO esté vacío
+env HOME=$H node build/relicctl.cjs start --web network --port 17998
+LAN=$(ip -4 -o addr show scope global | awk '{print $4}' | cut -d/ -f1 | head -1)
+T=$(python3 -c "import json;print(json.load(open('$H/.config/relicd/api.json'))['token'])")
+
+curl -s http://$LAN:17998/health                           # {"status":"ok",…,"web":"network"}
+curl -s http://$LAN:17998/ | grep -o 'relicd-web" content="[a-z]*'      # network
+curl -s -H "Host: evil.example:17998" http://$LAN:17998/health           # 403: Host no permitido
+for c in setSetting listFolders getLogContent; do                         # 403 desde la red
+  curl -s -X POST -H "x-relicd-token: $T" -d '{"args":[]}' http://$LAN:17998/api/$c; echo
+done
+curl -s -X POST -H "x-relicd-token: $T" -d '{"args":["/usr"]}' http://127.0.0.1:17998/api/listFolders   # 200 desde aquí
+env HOME=$H node build/relicctl.cjs stop; rm -rf "$H"
+```
+
+Entrar por la IP de la red desde el propio equipo cuenta como «red» (el socket no es de
+loopback): sirve para probar el bloqueo sin otro dispositivo. Un puerto ocupado hace que
+`relicctl start` falle y diga el fichero de log (`~/.local/state/Relicd/logs/relicd.log`).
+
 ## Dónde mirar si algo falla
 
-| Qué                      | Dónde                                                         |
-| ------------------------ | ------------------------------------------------------------- |
-| Log general              | `~/.local/state/Relicd/logs/relicd.log`                       |
-| Log de una tienda        | `~/.local/state/Relicd/logs/runners/<tienda>.log`             |
-| Log de una instalación   | `~/.local/state/Relicd/logs/games/<app>_<runner>/install.log` |
-| Proceso en segundo plano | `journalctl --user -u relicd -f` (con `systemd-run`)          |
-| Cualquier registro       | `relicctl logs [tienda [appName]] [--type install]`           |
-| Puerto y token           | `~/.config/relicd/api.json` (`RELICD_PORT` cambia el puerto)  |
+| Qué                      | Dónde                                                                |
+| ------------------------ | -------------------------------------------------------------------- |
+| Log general              | `~/.local/state/Relicd/logs/relicd.log` (también por qué no arrancó) |
+| Log de una tienda        | `~/.local/state/Relicd/logs/runners/<tienda>.log`                    |
+| Log de una instalación   | `~/.local/state/Relicd/logs/games/<app>_<runner>/install.log`        |
+| Proceso en segundo plano | `journalctl --user -u relicd -f` (con `systemd-run`)                 |
+| Cualquier registro       | `relicctl logs [tienda [appName]] [--type install]`                  |
+| Puerto y token           | `~/.config/relicd/api.json` (`RELICD_PORT` cambia el puerto)         |

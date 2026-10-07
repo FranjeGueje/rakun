@@ -54,20 +54,21 @@ The API (connection, channels, login flow and events) is documented in [API.md](
 `RELICD_API_FILE` points it at another one). Stores are `epic`, `gog`, `amazon` and
 `zoom`; `--json` prints for scripts.
 
-| Command                                       | What it does                                                       |
-| --------------------------------------------- | ------------------------------------------------------------------ |
-| `start` / `stop [--force]`                    | start relicd in the background / stop it                           |
-| `status`                                      | version, sessions, queue (or "relicd parado")                      |
-| `login <store>`, `logout <store>`             | log in (paste what the browser ends on) / out                      |
-| `import-relic`                                | copy the sessions of Relic (`~/.config/relic`)                     |
-| `library [store] [--installed]`, `refresh`    | list the library / refresh it and wait                             |
-| `install <store> <app> [--path] [--lang]`     | install (every DLC unless `--skip-dlcs`); waits unless `--no-wait` |
-| `update`, `repair`, `uninstall <store> <app>` | the same, one game                                                 |
-| `queue [clear]`, `pause`, `resume`, `cancel`  | download queue (`cancel --remove-files` deletes what was fetched)  |
-| `config [key [value]]`                        | list, read or change the global settings                           |
-| `logs [store [app]] [--type T]`               | relicd's log, a store's or one game's                              |
-| `cache clear [store]`, `reset [--yes]`        | empty library caches / forget sessions and settings (stops relicd) |
-| `events`, `call <channel> [json]`             | follow the events / call any exposed channel                       |
+| Command                                        | What it does                                                         |
+| ---------------------------------------------- | -------------------------------------------------------------------- |
+| `start` / `stop [--force]`                     | start relicd in the background / stop it                             |
+| `start [--web local\|network\|off] [--port N]` | who can open the web (default: the `webAccess` setting) and the port |
+| `status`                                       | version, sessions, queue (or "relicd parado")                        |
+| `login <store>`, `logout <store>`              | log in (paste what the browser ends on) / out                        |
+| `import-relic`                                 | copy the sessions of Relic (`~/.config/relic`)                       |
+| `library [store] [--installed]`, `refresh`     | list the library / refresh it and wait                               |
+| `install <store> <app> [--path] [--lang]`      | install (every DLC unless `--skip-dlcs`); waits unless `--no-wait`   |
+| `update`, `repair`, `uninstall <store> <app>`  | the same, one game                                                   |
+| `queue [clear]`, `pause`, `resume`, `cancel`   | download queue (`cancel --remove-files` deletes what was fetched)    |
+| `config [key [value]]`                         | list, read or change the global settings                             |
+| `logs [store [app]] [--type T]`                | relicd's log, a store's or one game's                                |
+| `cache clear [store]`, `reset [--yes]`         | empty library caches / forget sessions and settings (stops relicd)   |
+| `events`, `call <channel> [json]`              | follow the events / call any exposed channel                         |
 
 `-s` runs one command with relicd up even if it was stopped, and stops it afterwards
 (see Installation). The channels behind each command are in [API.md](API.md).
@@ -191,7 +192,15 @@ drive_c/relic/  → ~/.local/share/relicd/mount/
 drive_c/games/  → ~/.local/share/relicd/games/
 ```
 
-If GE-Proton is configured, relicd runs `umu-run exit` to initialize the prefix.
+If a GE-Proton is available, relicd runs `umu-run exit` to initialize the prefix. The
+`protonPath` setting empty means **automatic**: the first `*proton*` folder of
+`~/.local/share/Steam/compatibilitytools.d` that exists _when it is needed_ (so a
+GE-Proton installed after relicd was first run is found too). Without any, the prefix is
+left as plain folders and Steam's Proton creates it on the first launch.
+
+**Steam compatibility tool:** relicd does **not** set it. For a Windows game, open its
+properties in Steam → Compatibility → force GE-Proton, or Steam will try to run the
+`.bat` runner as a Linux program.
 
 ### Steam shortcut registration
 
@@ -322,8 +331,31 @@ pnpm package [x64|arm64|all]     # tarballs in dist/ (default: both)
 pnpm codecheck && pnpm lint && pnpm prettier && pnpm test
 ```
 
-`RELICD_PORT` changes the API port (default 17370). The token lives in
-`~/.config/relicd/api.json`.
+`RELICD_PORT` (or `--port`) changes the API port (default 17370), and `RELICD_WEB` (or `--web`) who
+can open the web; the token lives in `~/.config/relicd/api.json`.
+
+The web is in `web/` (React, built with esbuild; its own `tsconfig.json`, tests in a Jest `jsdom`
+project). `pnpm build:web` writes `build/web`, which `relicd.cjs` serves from the checkout; `pnpm
+build` includes it and `RELICD_WEB_DIR` points relicd at another folder. `pnpm test`, `pnpm lint` and
+`pnpm codecheck` cover `web/` too.
+
+When testing, **make sure a temporary `HOME` is not empty** (`H=$(mktemp -d); [ -n "$H" ] || exit`):
+with `HOME=` empty relicd writes its folders relative to the current directory.
+
+---
+
+## Troubleshooting
+
+| Symptom                                                         | What it means / what to do                                                                                                                                                                  |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `relicctl` says "relicd parado"                                 | relicd is not running: `relicctl start`.                                                                                                                                                    |
+| `relicd no ha arrancado (código 1)`                             | Read the log it points to (`~/.local/state/Relicd/logs/relicd.log`); the reason is the last `failed to start` line. A busy port is `EADDRINUSE`: use `--port`.                              |
+| `403` with `Host "…" is not allowed`                            | In `network` mode open the web by the IP or the name of the machine, not by another name (a router alias is not in the list).                                                               |
+| `403` with `can only be called from the machine relicd runs on` | In `network` mode settings, folders, logs and a few more channels only answer to this machine: open `http://127.0.0.1:<port>` there. Opening it by the machine's own LAN IP does not count. |
+| `No GE-Proton configured` in the log (older versions)           | A GE-Proton installed later was never looked for. Update relicd, or set it: `relicctl config protonPath <folder>`.                                                                          |
+| A Windows game does nothing in Steam                            | Force GE-Proton in the game's Steam properties (relicd does not set the compatibility tool) and check the prefix in `compatdata/<id>`.                                                      |
+| Zoom's Windows install fails at once                            | It needs a screen (`DISPLAY`): desktop mode, not game mode.                                                                                                                                 |
+| The web shows the old design after an update                    | The installed copy is `~/.local/opt/relicd/web`: reinstall (`scripts/install.sh`) or copy `build/web/.` there, then Ctrl+F5.                                                                |
 
 ---
 
@@ -342,6 +374,7 @@ pnpm codecheck && pnpm lint && pnpm prettier && pnpm test
 └── zoom_store/              — Zoom Platform login
 
 ~/.cache/relicd/             — Regenerable caches ($XDG_CACHE_HOME)
+~/.local/opt/relicd/         — The installed app (relicd, relicctl, node, public/, web/)
 ~/.local/state/Relicd/       — ($XDG_STATE_HOME)
 ├── logs/                    — relicd.log, runners/<store>.log, games/<app>_<store>/
 └── serve/                   — files `relicctl -s` uses to know who is running

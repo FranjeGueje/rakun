@@ -15,8 +15,8 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
   `~/.local/state/Relicd`, `~/.local/share/relicd`, `~/Games/Relicd`).
 - **API HTTP local** (`127.0.0.1`, puerto 17370 o `RELICD_PORT`): `POST
 /api/<canal>`, `GET /events` (SSE) y `GET /health`. Token en
-  `~/.config/relicd/api.json` (modo 0600), solo cabeceras locales (sin `Origin`,
-  `Host` de loopback) y lista blanca de canales y eventos. Documentada en
+  `~/.config/relicd/api.json` (modo 0600), `Host` propio del equipo, `Origin` solo el de
+  la propia web de relicd y lista blanca de canales y eventos. Documentada en
   `API.md`.
 - **`getLibrary`**: biblioteca de una o todas las tiendas con el estado de
   instalación y los overrides (antes la leía el frontend de los stores).
@@ -66,6 +66,19 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
   necesitan pantalla.
 - **Una tienda es una carpeta más una línea en el registro** (descriptor
   `Store`), con un contrato de tests para todas y una guía en `AGENTS.md`.
+- **La web de relicd** (`web/`, React con esbuild): biblioteca, descargas, cuentas
+  (login por pegado, con botón de portapapeles) y ajustes, usable con ratón, teclado o
+  mando, con cabecera de una fila y menú ☰ en pantallas estrechas. Nació como copia de la
+  interfaz de `relicd-client`, que queda **archivado y sin mantenimiento**. La sirve
+  `GET /` (el token y el modo van en `<meta>`); sin la carpeta `web/` relicd funciona igual.
+- **Quién puede abrir la web**: `local` (por defecto), `network` (toda la red, **sin
+  protección**, solo uso doméstico o experimental) y `off`. Se elige con `relicd --web=…
+--port=…` (que `relicctl start` reenvía), `RELICD_WEB`/`RELICD_PORT` o el ajuste
+  `webAccess`. En `network` relicd solo acepta su propio `Host`, y ajustes, parada,
+  reset, carpetas, registros, secretos y mover o importar juegos solo responden a este
+  equipo. Avisa en el log, en `relicctl start`/`status` y con un banner en la web;
+  `/health` informa de `web`.
+- **`listFolders`**: lista las carpetas de una ruta (para elegir carpetas con el mando o el ratón).
 
 #### Cambiado
 
@@ -119,6 +132,11 @@ use repair or update`; `relicctl` dice «ya está instalado») en vez de descarg
 - **Epic ignoraba `installDlcs`** y siempre pasaba `--skip-dlcs`.
 - **`checkGameUpdates` avisaba de juegos ya encolados** por la actualización
   automática, y Amazon sin sesión se registraba como error (es el estado normal).
+- **La carpeta de Proton vacía ahora es de verdad «automática»**: se busca GE-Proton cuando
+  hace falta, no solo al crear la configuración. Antes un GE-Proton instalado después dejaba
+  el prefijo sin inicializar (`No GE-Proton configured`).
+- **Un fallo al arrancar (p. ej. el puerto ocupado) queda en el log** de relicd, y
+  `relicctl start` dice en qué fichero mirar (`relicctl logs` necesita relicd en marcha).
 
 #### Eliminado
 
@@ -149,8 +167,8 @@ use repair or update`; `relicctl` dice «ya está instalado») en vez de descarg
   `~/.local/state/Relicd`, `~/.local/share/relicd`, `~/Games/Relicd`).
 - **Local HTTP API** (`127.0.0.1`, port 17370 or `RELICD_PORT`): `POST
 /api/<channel>`, `GET /events` (SSE) and `GET /health`. Token in
-  `~/.config/relicd/api.json` (mode 0600), local-only requests (no `Origin`,
-  loopback `Host`) and an allow list of channels and events. Documented in
+  `~/.config/relicd/api.json` (mode 0600), the machine's own `Host`, an `Origin` only
+  from relicd's own web and an allow list of channels and events. Documented in
   `API.md`.
 - **`getLibrary`**: the library of one or all stores with install state and
   overrides (the frontend used to read it from the stores).
@@ -199,6 +217,20 @@ use repair or update`; `relicctl` dice «ya está instalado») en vez de descarg
   game mode. The docs explain that those installers need a screen.
 - **A store is a folder plus one line in the registry** (`Store` descriptor),
   with a test contract for all of them and a guide in `AGENTS.md`.
+- **relicd's own web** (`web/`, React bundled with esbuild): library, downloads,
+  accounts (login by pasting, with a clipboard button) and settings, usable with the
+  mouse, the keyboard or a gamepad, with a one-row header and a ☰ menu on narrow screens.
+  It began as a copy of the `relicd-client` interface, which is now **archived and no
+  longer maintained**. Served by `GET /` (the token and the mode travel in `<meta>`);
+  without the `web/` folder relicd works the same.
+- **Who can open the web**: `local` (default), `network` (the whole network, **without
+  protection**, home or experimental use only) and `off`. Chosen with `relicd --web=…
+--port=…` (which `relicctl start` forwards), `RELICD_WEB`/`RELICD_PORT` or the
+  `webAccess` setting. In `network` relicd only accepts its own `Host`, and settings,
+  stop, reset, folders, logs, secrets and moving or importing games only answer to this
+  machine. It warns in the log, in `relicctl start`/`status` and with a banner in the
+  web; `/health` reports `web`.
+- **`listFolders`**: lists the folders of a path (to pick folders with a gamepad or the mouse).
 
 #### Changed
 
@@ -252,6 +284,11 @@ installed: use repair or update`; `relicctl` says "ya está instalado") instead
 - **Epic ignored `installDlcs`** and always passed `--skip-dlcs`.
 - **`checkGameUpdates` reported games the automatic update had already queued**,
   and Amazon with no session was logged as an error (it is the normal state).
+- **An empty Proton folder is now really «automatic»**: GE-Proton is looked for when it is
+  needed, not only when the settings are created. Before, a GE-Proton installed later left
+  the prefix uninitialised (`No GE-Proton configured`).
+- **A failure to start (a busy port, say) is written to relicd's log**, and `relicctl
+start` says which file to read (`relicctl logs` needs relicd running).
 
 #### Removed
 
