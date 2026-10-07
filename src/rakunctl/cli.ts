@@ -43,7 +43,9 @@ Library
 
 Games
   install <store> <appName> [--path DIR] [--lang CODE] [--skip-dlcs]
-                                    Install a game
+          [--platform windows|linux]
+                                    Install a game (a game with both builds gets
+                                    the Linux one unless --platform says otherwise)
   update [store [appName]]          Update one game, a store's games, or every
                                     game with a new version
   repair <store> <appName>          Repair a game
@@ -114,6 +116,7 @@ export function parseCli(argv: string[]) {
       lang: { type: 'string' },
       type: { type: 'string' },
       'skip-dlcs': { type: 'boolean' },
+      platform: { type: 'string' },
       'remove-files': { type: 'boolean' },
       yes: { type: 'boolean' },
       force: { type: 'boolean' },
@@ -130,6 +133,7 @@ export function parseCli(argv: string[]) {
     lang: values.lang,
     type: values.type,
     skipDlcs: values['skip-dlcs'],
+    platform: values.platform,
     removeFiles: values['remove-files'],
     yes: values.yes,
     force: values.force,

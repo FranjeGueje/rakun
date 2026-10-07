@@ -10,6 +10,8 @@ import { ConfirmDialog } from './ConfirmDialog'
 
 const LABELS: Record<GameAction, StringKey> = {
   install: 'sheet.install',
+  installWindows: 'sheet.installWindows',
+  installLinux: 'sheet.installLinux',
   update: 'sheet.update',
   repair: 'sheet.repair',
   uninstall: 'sheet.uninstall',
@@ -61,6 +63,8 @@ export function GameSheet({
   const run = (action: GameAction) => {
     const doIt: Record<GameAction, () => void> = {
       install: () => actions.install(game),
+      installWindows: () => actions.install(game, 'windows'),
+      installLinux: () => actions.install(game, 'linux'),
       update: () => actions.update(game),
       repair: () => actions.repair(game),
       uninstall: () => actions.uninstall(game),

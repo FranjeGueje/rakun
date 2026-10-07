@@ -9,6 +9,7 @@ import {
 import type { LoginReply, SettingReply } from '../api/bridge'
 import type {
   AccountsStatus,
+  GameInfo,
   AppSettings,
   FolderListing,
   QueueInfo,
@@ -47,12 +48,14 @@ function setup(
     updates?: string[]
     accounts?: AccountsStatus
     login?: LoginReply
+    library?: GameInfo[]
   } = {}
 ) {
   const rakun = fakeRakun(
     {
       getStores: stores,
-      getLibrary: (runner) => library.filter((g) => g.runner === runner),
+      getLibrary: (runner) =>
+        (options.library ?? library).filter((g) => g.runner === runner),
       checkGameUpdates: options.updates ?? [],
       requestAppSettings: settings(options.settings),
       getDMQueueInformation: options.queue ?? emptyQueue,
@@ -159,6 +162,58 @@ describe('game sheet', () => {
       platformToInstall: 'windows'
     })
     expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  test('a game with a Windows and a Linux build asks which one to install', async () => {
+    const both = [
+      game('dual', {
+        title: 'Dual',
+        runner: 'gog',
+        is_linux_native: true,
+        is_windows_native: true
+      })
+    ]
+    const rakun = setup({ library: both })
+    await screen.findByTitle('Dual')
+    press('Enter')
+
+    const windows = screen.getByRole('button', {
+      name: 'Install Windows version'
+    })
+    const linux = screen.getByRole('button', { name: 'Install Linux version' })
+    expect(screen.queryByRole('button', { name: 'Install' })).toBeNull()
+    // Windows, then Linux, then the close button that was already there
+    expect(windows.nextElementSibling).toBe(linux)
+    expect(linux.nextElementSibling?.textContent).toBe('Close')
+
+    fireEvent.click(linux)
+    await waitFor(() => expect(rakun.called('install')).toHaveLength(1))
+    expect(rakun.called('install')[0][1][0]).toMatchObject({
+      appName: 'dual',
+      platformToInstall: 'linux'
+    })
+  })
+
+  test('the Windows button installs the Windows build', async () => {
+    const rakun = setup({
+      library: [
+        game('dual', {
+          title: 'Dual',
+          runner: 'gog',
+          is_linux_native: true,
+          is_windows_native: true
+        })
+      ]
+    })
+    await screen.findByTitle('Dual')
+    press('Enter')
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Install Windows version' })
+    )
+    await waitFor(() => expect(rakun.called('install')).toHaveLength(1))
+    expect(rakun.called('install')[0][1][0]).toMatchObject({
+      platformToInstall: 'windows'
+    })
   })
 
   test('an installed game offers repair and uninstall, not install', async () => {

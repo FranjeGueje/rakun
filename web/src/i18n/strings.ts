@@ -21,6 +21,8 @@ export const en = {
   'status.extracting': 'Extracting',
   'status.busy': 'Busy',
   'sheet.install': 'Install',
+  'sheet.installWindows': 'Install Windows version',
+  'sheet.installLinux': 'Install Linux version',
   'sheet.update': 'Update',
   'sheet.repair': 'Repair',
   'sheet.uninstall': 'Uninstall',

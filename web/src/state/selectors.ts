@@ -87,7 +87,21 @@ export const isBusy = (status?: GameStatus): boolean =>
   !!status && BUSY.has(status.status)
 
 export type GameAction =
-  'install' | 'update' | 'repair' | 'uninstall' | 'cancel' | 'removeFromQueue'
+  | 'install'
+  | 'installWindows'
+  | 'installLinux'
+  | 'update'
+  | 'repair'
+  | 'uninstall'
+  | 'cancel'
+  | 'removeFromQueue'
+
+/** Which build of a game to install, when the store has more than one */
+export type Build = 'windows' | 'linux'
+
+/** A Linux build next to a Windows one: the user chooses (a stale library has no `is_windows_native`: assume it) */
+export const hasBothBuilds = (game: GameInfo): boolean =>
+  !!game.is_linux_native && game.is_windows_native !== false
 
 /** What can be done with a game now. Nothing, while another operation holds it. */
 export function actionsFor(
@@ -98,25 +112,36 @@ export function actionsFor(
   if (status?.status === 'queued') return ['removeFromQueue']
   if (status && DOWNLOADING.has(status.status)) return ['cancel']
   if (isBusy(status)) return []
-  if (!game.is_installed) return ['install']
+  if (!game.is_installed)
+    return hasBothBuilds(game)
+      ? ['installWindows', 'installLinux']
+      : ['install']
   return needsUpdate
     ? ['update', 'repair', 'uninstall']
     : ['repair', 'uninstall']
 }
 
-/** Same rule as `rakunctl`: a native Linux game gets its Linux build */
-export function platformFor(game: GameInfo): InstallPlatform {
-  if (game.is_linux_native) return 'linux'
-  return game.runner === 'gog' || game.runner === 'zoom' ? 'windows' : 'Windows'
+const windowsFor = (game: GameInfo): InstallPlatform =>
+  game.runner === 'gog' || game.runner === 'zoom' ? 'windows' : 'Windows'
+
+/** The one asked for; otherwise, as `rakunctl` does, a native Linux game gets its Linux build */
+export function platformFor(game: GameInfo, build?: Build): InstallPlatform {
+  if (build === 'windows') return windowsFor(game)
+  if (build === 'linux' || game.is_linux_native) return 'linux'
+  return windowsFor(game)
 }
 
-export function installParams(game: GameInfo, path: string): InstallParams {
+export function installParams(
+  game: GameInfo,
+  path: string,
+  build?: Build
+): InstallParams {
   return {
     appName: game.app_name,
     runner: game.runner,
     gameInfo: game,
     path,
-    platformToInstall: platformFor(game)
+    platformToInstall: platformFor(game, build)
   }
 }
 

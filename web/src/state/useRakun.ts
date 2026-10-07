@@ -2,10 +2,10 @@ import { useCallback, useEffect, useReducer, useRef } from 'react'
 import type { RakunEvent } from '../api/channels'
 import type { GameInfo, GameStatus, Runner } from '../api/types'
 import { initialState, reducer, type State } from './reducer'
-import { installParams } from './selectors'
+import { installParams, type Build } from './selectors'
 
 export type Actions = {
-  install: (game: GameInfo) => void
+  install: (game: GameInfo, build?: Build) => void
   update: (game: GameInfo) => void
   repair: (game: GameInfo) => void
   uninstall: (game: GameInfo) => void
@@ -181,11 +181,11 @@ export function useRakun(): { state: State; actions: Actions } {
   )
 
   const actions: Actions = {
-    install: (game) =>
+    install: (game, build) =>
       run(() =>
         window.rakun.call(
           'install',
-          installParams(game, stateRef.current.defaultInstallPath)
+          installParams(game, stateRef.current.defaultInstallPath, build)
         )
       ),
     update: (game) =>

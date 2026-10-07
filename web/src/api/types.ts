@@ -31,6 +31,7 @@ export type GameInfo = {
   art_square: string
   is_installed: boolean
   is_linux_native?: boolean
+  is_windows_native?: boolean
   developer?: string
   description?: string
   /** A game managed by another launcher (EA App, Ubisoft Connect…): not installable here */

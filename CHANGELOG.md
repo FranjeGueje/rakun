@@ -24,6 +24,11 @@ repository.
 - The web uses the rakun mascot as its icon (centred in the top bar) and the red of its
   helmet as the accent colour, with the "Rakun" lettering next to it (drawn from
   the outlines of Lilita One, SIL OFL).
+- A game with a Windows and a Linux build (GOG, Zoom) asks which one to install
+  in the web: "Install Windows version" and "Install Linux version" replace
+  the single install button, which always chose the Linux build. `GameInfo`
+  has a new `is_windows_native` field. `rakunctl install` has the same choice
+  with `--platform windows|linux`.
 - Cancelling a download from the web deletes the files left half downloaded,
   like `rakunctl cancel --remove-files`; the downloads panel now asks first, as
   the game sheet already did.

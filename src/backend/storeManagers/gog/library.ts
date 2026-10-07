@@ -986,6 +986,9 @@ export default class GOGLibraryManager implements LibraryManager {
       is_linux_native: Boolean(
         info.supported_operating_systems.find((os) => os.slug === 'linux')
       ),
+      is_windows_native: Boolean(
+        info.supported_operating_systems.find((os) => os.slug === 'windows')
+      ),
       thirdPartyManagedApp: undefined
     }
 

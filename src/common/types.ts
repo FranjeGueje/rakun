@@ -111,6 +111,8 @@ export interface GameInfo {
   isUbisoftManaged?: boolean
   is_mac_native?: boolean
   is_linux_native?: boolean
+  /** The store has a Windows build (GOG, Zoom): with a Linux one too, the client lets the user choose */
+  is_windows_native?: boolean
   browserUrl?: string
   description?: string
   //used for store release versions. if remote !== local, then update

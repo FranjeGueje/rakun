@@ -48,7 +48,7 @@ you from typing the JSON by hand. It uses the same `api.json` and the same
 | bring the sessions of Relic | `rakunctl import-relic`                                                                                               |
 | list the library            | `rakunctl library [store] [--installed]`                                                                              |
 | refresh it and wait         | `rakunctl refresh [store]`                                                                                            |
-| install                     | `rakunctl install gog <appName> [--path DIR] [--lang CODE] [--skip-dlcs]`                                             |
+| install                     | `rakunctl install gog <appName> [--path DIR] [--lang CODE] [--skip-dlcs] [--platform windows\|linux]`                 |
 | update                      | `rakunctl update [store [appName]]`: one game, a store's games or every game with a new version (Zoom is not updated) |
 | repair                      | `rakunctl repair <store> <appName>`                                                                                   |
 | uninstall                   | `rakunctl uninstall <store> <appName>`                                                                                |
@@ -69,7 +69,7 @@ for scripts. `-s` in front of any command that ends (it does not work with
 if it was already running, it does not touch it. `install` of an already
 installed game is refused ("is already installed: use repair or update").
 `uninstall` deletes the game's files. `--lang` chooses the install language (on
-GOG, `en-US` if not given). DLCs are installed by default; `--skip-dlcs` skips
+GOG, `en-US` if not given). A game with a Windows and a Linux build gets the Linux one unless `--platform windows` says otherwise (a build the game does not have is refused). DLCs are installed by default; `--skip-dlcs` skips
 them.
 
 ## Argument format

@@ -167,6 +167,38 @@ describe('installing', () => {
     expect(platformFor(game('a', { runner: 'nile' }))).toBe('Windows')
   })
 
+  test('a game with both builds lets the user choose, the rest has one way to install', () => {
+    const both = game('a', { is_linux_native: true, is_windows_native: true })
+    expect(actionsFor(both, undefined, false)).toEqual([
+      'installWindows',
+      'installLinux'
+    ])
+    // A library saved before `is_windows_native` existed: assume it has one
+    expect(
+      actionsFor(game('a', { is_linux_native: true }), undefined, false)
+    ).toEqual(['installWindows', 'installLinux'])
+    expect(
+      actionsFor(
+        game('a', { is_linux_native: true, is_windows_native: false }),
+        undefined,
+        false
+      )
+    ).toEqual(['install'])
+    expect(actionsFor(game('a'), undefined, false)).toEqual(['install'])
+  })
+
+  test('the build asked for wins over the default', () => {
+    const both = game('a', { is_linux_native: true, is_windows_native: true })
+    expect(platformFor(both, 'windows')).toBe('windows')
+    expect(platformFor(both, 'linux')).toBe('linux')
+    expect(platformFor(game('a', { runner: 'legendary' }), 'windows')).toBe(
+      'Windows'
+    )
+    expect(installParams(both, '/g', 'windows').platformToInstall).toBe(
+      'windows'
+    )
+  })
+
   test('the parameters carry the game, the path and the platform', () => {
     const g = game('a', { runner: 'legendary' })
     expect(installParams(g, '/juegos')).toEqual({

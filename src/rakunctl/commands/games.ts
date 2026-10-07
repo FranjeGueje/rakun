@@ -15,10 +15,30 @@ import { Command, Ctx, Options, requireArg } from '../context'
 
 const FINAL_STATUSES = new Set(['done', 'error', 'canceled'])
 
+type Build = 'windows' | 'linux'
+
+/** `--platform`: nothing, or the build to install */
+export function parsePlatform(value: string | undefined): Build | undefined {
+  if (value === undefined || value === 'windows' || value === 'linux')
+    return value
+  throw new CliError('--platform must be windows or linux')
+}
+
 // GOG and Zoom name platforms in lower case, Epic and Amazon capitalised
-export function platformFor({ runner, is_linux_native }: GameInfo) {
-  if (is_linux_native) return 'linux'
+export function platformFor(
+  { runner, is_linux_native }: GameInfo,
+  build?: Build
+) {
+  if (build === 'linux' || (!build && is_linux_native)) return 'linux'
   return runner === 'gog' || runner === 'zoom' ? 'windows' : 'Windows'
+}
+
+/** Refuses a build the game does not have (a stale library may not say: only a «no» refuses) */
+function checkBuild(game: GameInfo, build?: Build) {
+  if (build === 'linux' && !game.is_linux_native)
+    throw new CliError(`${game.title} has no Linux build`)
+  if (build === 'windows' && game.is_windows_native === false)
+    throw new CliError(`${game.title} has no Windows build`)
 }
 
 async function loadGame(ctx: Ctx, appName: string, runner: Runner) {
@@ -36,9 +56,16 @@ export async function installParams(
   ctx: Ctx,
   appName: string,
   runner: Runner,
-  { path, lang, skipDlcs }: Pick<Options, 'path' | 'lang' | 'skipDlcs'>
+  {
+    path,
+    lang,
+    skipDlcs,
+    platform
+  }: Pick<Options, 'path' | 'lang' | 'skipDlcs' | 'platform'>
 ): Promise<InstallParams> {
+  const build = parsePlatform(platform)
   const gameInfo = await loadGame(ctx, appName, runner)
+  checkBuild(gameInfo, build)
   const settings = await ctx.api.call<{ defaultInstallPath: string }>(
     'requestAppSettings'
   )
@@ -47,7 +74,7 @@ export async function installParams(
     runner,
     gameInfo,
     path: path ?? settings.defaultInstallPath,
-    platformToInstall: platformFor(gameInfo),
+    platformToInstall: platformFor(gameInfo, build),
     installLanguage: lang,
     // No list means every DLC; an empty one means none
     installDlcs: skipDlcs ? [] : undefined

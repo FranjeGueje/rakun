@@ -212,6 +212,77 @@ describe('game commands', () => {
     expect(lines).toEqual(['queued', 'done'])
   })
 
+  describe('install --platform', () => {
+    const dual = game({
+      runner: 'gog',
+      is_linux_native: true,
+      is_windows_native: true
+    })
+    const replies = (info: GameInfo) => ({
+      getGameInfo: info,
+      requestAppSettings: { defaultInstallPath: '/games' },
+      getDMQueueInformation: { finished: [] }
+    })
+    const installed = (calls: [string, unknown[]][]) =>
+      (
+        calls.find(([channel]) => channel === 'install')?.[1][0] as {
+          platformToInstall: string
+        }
+      ).platformToInstall
+
+    test('a game with both builds gets Linux by default and Windows on request', async () => {
+      const byDefault = fakeCtx(replies(dual), [update1('done')])
+      await install(byDefault.ctx, ['gog', 'g1'], opts)
+      expect(installed(byDefault.calls)).toBe('linux')
+
+      const windows = fakeCtx(replies(dual), [update1('done')])
+      await install(windows.ctx, ['gog', 'g1'], {
+        ...opts,
+        platform: 'windows'
+      })
+      expect(installed(windows.calls)).toBe('windows')
+    })
+
+    test('linux works on a game that has it', async () => {
+      const { ctx, calls } = fakeCtx(replies(dual), [update1('done')])
+      await install(ctx, ['gog', 'g1'], { ...opts, platform: 'linux' })
+      expect(installed(calls)).toBe('linux')
+    })
+
+    test('a build the game does not have is refused before installing', async () => {
+      const windowsOnly = fakeCtx(replies(game({ runner: 'gog' })))
+      await expect(
+        install(windowsOnly.ctx, ['gog', 'g1'], { ...opts, platform: 'linux' })
+      ).rejects.toThrow('Game One has no Linux build')
+
+      const linuxOnly = fakeCtx(
+        replies(game({ is_linux_native: true, is_windows_native: false }))
+      )
+      await expect(
+        install(linuxOnly.ctx, ['gog', 'g1'], {
+          ...opts,
+          platform: 'windows'
+        })
+      ).rejects.toThrow('Game One has no Windows build')
+      expect(windowsOnly.calls.map(([c]) => c)).not.toContain('install')
+      expect(linuxOnly.calls.map(([c]) => c)).not.toContain('install')
+    })
+
+    test('anything but windows or linux is a usage error', async () => {
+      const { ctx } = fakeCtx(replies(dual))
+      await expect(
+        install(ctx, ['gog', 'g1'], { ...opts, platform: 'mac' })
+      ).rejects.toThrow('--platform must be windows or linux')
+    })
+
+    test('parseCli reads --platform', () => {
+      expect(
+        parseCli(['install', 'gog', 'g1', '--platform', 'windows']).opts
+          .platform
+      ).toBe('windows')
+    })
+  })
+
   test('install --path overrides the default', async () => {
     const { ctx, calls } = fakeCtx(
       {

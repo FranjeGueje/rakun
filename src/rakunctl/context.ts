@@ -16,6 +16,8 @@ export type Options = {
   lang?: string
   type?: string
   skipDlcs?: boolean
+  /** Only for `install`: the build of a game that has Windows and Linux ones */
+  platform?: string
   removeFiles?: boolean
   yes?: boolean
   force?: boolean
