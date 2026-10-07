@@ -1,0 +1,279 @@
+import type { GameInfo } from 'common/types'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs'
+import { tmpdir } from 'os'
+import { join } from 'path'
+import { stores } from '..'
+import { tokenPath } from '../zoom/constants'
+import { LegendaryUser } from '../legendary/user'
+import { GOGUser } from '../gog/user'
+import { NileUser } from '../nile/user'
+import { ZoomUser } from '../zoom/user'
+import * as legendaryStores from '../legendary/electronStores'
+import * as gogStores from '../gog/electronStores'
+import * as zoomStores from '../zoom/electronStores'
+
+jest.mock('backend/constants/paths', () => {
+  const { mkdtempSync } = jest.requireActual<typeof import('fs')>('fs')
+  const { tmpdir } = jest.requireActual<typeof import('os')>('os')
+  const root = mkdtempSync(`${tmpdir()}/relicd-adapters-`)
+  return {
+    appDataPath: root,
+    userDataPath: `${root}/relicd`,
+    appFolder: `${root}/relicd`,
+    toolsPath: `${root}/relicd/tools`
+  }
+})
+jest.mock('../legendary/user', () => ({
+  LegendaryUser: {
+    isLoggedIn: jest.fn(),
+    getUserInfo: jest.fn(),
+    login: jest.fn(),
+    logout: jest.fn()
+  }
+}))
+jest.mock('../gog/user', () => ({
+  GOGUser: {
+    isLoggedIn: jest.fn(),
+    getUserDetails: jest.fn(),
+    login: jest.fn(),
+    logout: jest.fn()
+  }
+}))
+jest.mock('../nile/user', () => ({
+  NileUser: {
+    isLoggedIn: jest.fn(),
+    getUserData: jest.fn(),
+    getLoginData: jest.fn(),
+    login: jest.fn(),
+    logout: jest.fn()
+  }
+}))
+jest.mock('../zoom/user', () => ({
+  ZoomUser: { getUserDetails: jest.fn(), login: jest.fn(), logout: jest.fn() }
+}))
+jest.mock('../legendary/electronStores', () => ({
+  libraryStore: { get: jest.fn() }
+}))
+jest.mock('../nile/electronStores', () => ({
+  libraryStore: { get: jest.fn() }
+}))
+jest.mock('../gog/electronStores', () => ({
+  configStore: { get_nodefault: jest.fn(), set: jest.fn() },
+  libraryStore: { get: jest.fn() },
+  installedGamesStore: { get: jest.fn() }
+}))
+jest.mock('../zoom/electronStores', () => ({
+  configStore: { get: jest.fn(), get_nodefault: jest.fn() },
+  libraryStore: { get: jest.fn() },
+  installedGamesStore: { get: jest.fn() }
+}))
+
+const game = (app_name: string, extra: object = {}) =>
+  ({ app_name, title: app_name, is_installed: false, ...extra }) as GameInfo
+
+describe('store identity', () => {
+  test('each store has its own id, a lower-case name and a label', () => {
+    expect(
+      Object.values(stores).map(({ id, name, label }) => [id, name, label])
+    ).toEqual([
+      ['legendary', 'epic', 'Epic'],
+      ['gog', 'gog', 'GOG'],
+      ['nile', 'amazon', 'Amazon'],
+      ['zoom', 'zoom', 'Zoom']
+    ])
+  })
+})
+
+describe('Epic', () => {
+  test('account joins the local check and the display name', () => {
+    jest.mocked(LegendaryUser.isLoggedIn).mockReturnValue(true)
+    jest
+      .mocked(LegendaryUser.getUserInfo)
+      .mockReturnValue({ displayName: 'ann' } as never)
+
+    expect(stores.legendary.session.account()).toEqual({
+      loggedIn: true,
+      name: 'ann'
+    })
+  })
+
+  test('submit maps the login status', async () => {
+    jest
+      .mocked(LegendaryUser.login)
+      .mockResolvedValueOnce({ status: 'done', data: undefined })
+      .mockResolvedValueOnce({ status: 'failed', data: undefined })
+
+    expect(await stores.legendary.login.submit('c')).toEqual({ ok: true })
+    expect(await stores.legendary.login.submit('c')).toEqual({
+      ok: false,
+      error: 'The store rejected the login'
+    })
+  })
+
+  test('its library is the manager view, not the stale store', () => {
+    jest
+      .mocked(legendaryStores.libraryStore.get)
+      .mockReturnValue([game('a'), game('b')])
+    jest
+      .spyOn(stores.legendary.library, 'getGameInfo')
+      .mockImplementation((id) =>
+        id === 'a' ? game('a', { is_installed: true }) : undefined
+      )
+
+    expect(
+      stores.legendary.readLibrary().map((g) => [g.app_name, g.is_installed])
+    ).toEqual([
+      ['a', true],
+      ['b', false]
+    ])
+  })
+})
+
+describe('GOG', () => {
+  test('account takes the name from the stored user data', () => {
+    jest.mocked(GOGUser.isLoggedIn).mockReturnValue(true)
+    jest
+      .mocked(gogStores.configStore.get_nodefault)
+      .mockReturnValue({ username: 'bob' })
+
+    expect(stores.gog.session.account()).toEqual({
+      loggedIn: true,
+      name: 'bob'
+    })
+  })
+
+  test('copied credentials are accepted when the store knows the user', async () => {
+    jest.mocked(GOGUser.getUserDetails).mockResolvedValueOnce({} as never)
+    expect(await stores.gog.session.isAccepted()).toBe(true)
+    expect(gogStores.configStore.set).toHaveBeenCalledWith('isLoggedIn', true)
+
+    jest.mocked(GOGUser.getUserDetails).mockResolvedValueOnce(undefined)
+    expect(await stores.gog.session.isAccepted()).toBe(false)
+  })
+
+  test('discarding a copy logs out', () => {
+    stores.gog.session.discard([])
+    expect(GOGUser.logout).toHaveBeenCalled()
+  })
+
+  test('its library carries the install info of the installed store', () => {
+    jest
+      .mocked(gogStores.libraryStore.get)
+      .mockReturnValue([game('x'), game('y')])
+    jest
+      .mocked(gogStores.installedGamesStore.get)
+      .mockReturnValue([{ appName: 'x', platform: 'linux' }])
+
+    const result = stores.gog.readLibrary()
+
+    expect(result[0]).toMatchObject({
+      is_installed: true,
+      install: { appName: 'x' }
+    })
+    expect(result[1].is_installed).toBe(false)
+  })
+})
+
+describe('Amazon', () => {
+  test('account reads the user data before asking whether it is logged in', () => {
+    const order: string[] = []
+    jest.mocked(NileUser.getUserData).mockImplementation(() => {
+      order.push('getUserData')
+      return { name: 'cy' } as never
+    })
+    jest.mocked(NileUser.isLoggedIn).mockImplementation(() => {
+      order.push('isLoggedIn')
+      return true as never
+    })
+
+    expect(stores.nile.session.account()).toEqual({
+      loggedIn: true,
+      name: 'cy'
+    })
+    expect(order).toEqual(['getUserData', 'isLoggedIn'])
+  })
+
+  test('the files to copy are the user file and the device key only', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'relicd-nile-'))
+    ;['current_user.json', 'abc.enc', 'installed.json', 'library.json'].forEach(
+      (name) => writeFileSync(join(dir, name), 'x')
+    )
+    mkdirSync(join(dir, 'SDK'))
+
+    expect(stores.nile.session.files(dir).sort()).toEqual([
+      'abc.enc',
+      'current_user.json'
+    ])
+    rmSync(dir, { recursive: true })
+  })
+
+  test('submitting before asking for the login says to ask first', async () => {
+    expect(await stores.nile.login.submit('code')).toEqual({
+      ok: false,
+      error: 'Request the Amazon login (getLoginInfo) first'
+    })
+  })
+
+  test('the verifier from start() goes with the code and is used once', async () => {
+    jest.mocked(NileUser.getLoginData).mockResolvedValue({
+      url: 'https://amazon/login',
+      code_verifier: 'v',
+      serial: 's',
+      client_id: 'c'
+    })
+    jest
+      .mocked(NileUser.login)
+      .mockResolvedValue({ status: 'done', user: undefined })
+
+    const info = await stores.nile.login.start()
+    expect(info).toMatchObject({ runner: 'nile', url: 'https://amazon/login' })
+
+    expect(await stores.nile.login.submit('abc')).toEqual({ ok: true })
+    expect(NileUser.login).toHaveBeenCalledWith({
+      code: 'abc',
+      code_verifier: 'v',
+      serial: 's',
+      client_id: 'c'
+    })
+    expect((await stores.nile.login.submit('abc')).ok).toBe(false)
+  })
+})
+
+describe('Zoom', () => {
+  test('account needs the token file as well as the stored flag', () => {
+    mkdirSync(join(tokenPath, '..'), { recursive: true })
+    jest.mocked(zoomStores.configStore.get).mockReturnValue(true)
+    jest.mocked(zoomStores.configStore.get_nodefault).mockReturnValue('di')
+
+    rmSync(tokenPath, { force: true })
+    expect(stores.zoom.session.account().loggedIn).toBe(false)
+
+    writeFileSync(tokenPath, 'tok')
+    expect(stores.zoom.session.account()).toEqual({
+      loggedIn: true,
+      name: 'di'
+    })
+    rmSync(tokenPath)
+  })
+
+  test('submit hands Zoom the callback address carrying the token', async () => {
+    jest.mocked(ZoomUser.login).mockReturnValue({ status: 'done' })
+
+    expect(await stores.zoom.login.submit('a b')).toEqual({ ok: true })
+
+    const url = new URL(jest.mocked(ZoomUser.login).mock.calls[0][0])
+    expect(url.origin).toBe('https://www.zoom-platform.com')
+    expect(url.searchParams.get('li_token')).toBe('a b')
+    expect(ZoomUser.getUserDetails).toHaveBeenCalled()
+  })
+
+  test('a rejected token does not ask for the user details', async () => {
+    jest.mocked(ZoomUser.login).mockReturnValue({ status: 'error' })
+
+    expect(await stores.zoom.login.submit('x')).toEqual({
+      ok: false,
+      error: 'The store rejected the login'
+    })
+    expect(ZoomUser.getUserDetails).not.toHaveBeenCalled()
+  })
+})

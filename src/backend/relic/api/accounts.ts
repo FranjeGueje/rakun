@@ -3,10 +3,7 @@ import { LegendaryUser } from 'backend/storeManagers/legendary/user'
 import { GOGUser } from 'backend/storeManagers/gog/user'
 import { NileUser } from 'backend/storeManagers/nile/user'
 import { ZoomUser } from 'backend/storeManagers/zoom/user'
-import { configStore as gogConfigStore } from 'backend/storeManagers/gog/electronStores'
-import { configStore as zoomConfigStore } from 'backend/storeManagers/zoom/electronStores'
-import { tokenPath as zoomTokenPath } from 'backend/storeManagers/zoom/constants'
-import { existsSync } from 'fs'
+import { RUNNERS, stores } from 'backend/storeManagers'
 import type { AccountsStatus } from 'common/relic/accounts'
 
 addHandler('getUserInfo', () => {
@@ -43,22 +40,9 @@ addHandler('getZoomUserInfo', async () => ZoomUser.getUserDetails())
  * Zoom's own check asks its API every time)
  */
 addHandler('getAccounts', (): AccountsStatus => {
-  const epic = LegendaryUser.getUserInfo()
-  const amazon = NileUser.getUserData()
-  return {
-    legendary: {
-      loggedIn: LegendaryUser.isLoggedIn(),
-      name: epic?.displayName
-    },
-    gog: {
-      loggedIn: !!GOGUser.isLoggedIn(),
-      name: gogConfigStore.get_nodefault('userData')?.username
-    },
-    nile: { loggedIn: !!NileUser.isLoggedIn(), name: amazon?.name },
-    zoom: {
-      loggedIn:
-        existsSync(zoomTokenPath) && !!zoomConfigStore.get('isLoggedIn', false),
-      name: zoomConfigStore.get_nodefault('username')
-    }
-  }
+  const accounts = {} as AccountsStatus
+  RUNNERS.forEach((runner) => {
+    accounts[runner] = stores[runner].session.account()
+  })
+  return accounts
 })

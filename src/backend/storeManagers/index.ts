@@ -1,20 +1,28 @@
-import GOGLibraryManager from 'backend/storeManagers/gog/library'
-import LegendaryLibraryManager from 'backend/storeManagers/legendary/library'
-import NileLibraryManager from 'backend/storeManagers/nile/library'
-import ZoomLibraryManager from 'backend/storeManagers/zoom/library'
+import { gog } from 'backend/storeManagers/gog/store'
+import { legendary } from 'backend/storeManagers/legendary/store'
+import { nile } from 'backend/storeManagers/nile/store'
+import { zoom } from 'backend/storeManagers/zoom/store'
 
 import { logInfo, RunnerToLogPrefixMap } from 'backend/logger'
 import { addToQueue } from 'backend/downloadmanager/downloadqueue'
 
 import type { DMQueueElement, GameInfo, Runner } from 'common/types'
-import type { LibraryManager } from 'common/types/game_manager'
+import type { Store } from './store'
 
-export const libraryManagerMap = {
-  gog: new GOGLibraryManager(),
-  legendary: new LegendaryLibraryManager(),
-  nile: new NileLibraryManager(),
-  zoom: new ZoomLibraryManager()
-} satisfies Record<Runner, LibraryManager>
+/**
+ * Every store relicd supports: a new one is added here and nowhere else. The
+ * order is the one clients show them in.
+ */
+export const stores = { legendary, gog, nile, zoom } satisfies Record<
+  Runner,
+  Store
+>
+
+export const RUNNERS = Object.keys(stores) as Runner[]
+
+export const libraryManagerMap = Object.fromEntries(
+  Object.values(stores).map((store) => [store.id, store.library])
+) as { [R in Runner]: (typeof stores)[R]['library'] }
 
 function getDMElement(gameInfo: GameInfo, appName: string) {
   const {

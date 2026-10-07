@@ -1,9 +1,7 @@
 import type { Runner } from 'common/types'
 import { sendFrontendMessage } from 'backend/ipc'
 import { logError, LogPrefix } from 'backend/logger'
-import { libraryManagerMap } from 'backend/storeManagers'
-
-const RUNNERS = Object.keys(libraryManagerMap) as Runner[]
+import { libraryManagerMap, RUNNERS } from 'backend/storeManagers'
 
 // A store refresh can take minutes (GOG asks for every game one by one) and two
 // at once only make each other slower, so a second request joins the first

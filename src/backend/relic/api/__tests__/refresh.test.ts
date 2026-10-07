@@ -7,6 +7,7 @@ jest.mock('backend/logger', () => ({
   LogPrefix: { Backend: 'Backend' }
 }))
 jest.mock('backend/storeManagers', () => ({
+  RUNNERS: ['gog', 'legendary', 'nile', 'zoom'],
   libraryManagerMap: {
     gog: { refresh: jest.fn() },
     legendary: { refresh: jest.fn() },
