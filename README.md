@@ -3,9 +3,11 @@
 relicd is a headless fork of [Relic](https://github.com/FranjeGueje/Relic) (itself a
 Linux-only fork of [Heroic Games Launcher](https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher)).
 It is **backend only**: a Node service, no Electron and no window of its own. A local
-HTTP API lets a client ([relicd-client](../relicd-client/), a console-mode app, or the
+HTTP API lets a client (relicd's own web, `relicctl`, or the
 [Invasor](../proyecto-invasor/) module `invasor-relic`) log in
 to the stores, list the library and install, update, repair and uninstall games.
+`relicd-client`, the console-mode Electron app that was the first client, is **archived
+and no longer maintained**: relicd's own web replaces it.
 
 relicd is **not** a launcher. When an install finishes it runs the Steam integration
 (shortcut, prefix, grids) and the game shows up in Steam. Steam is the launcher.
@@ -18,10 +20,11 @@ relicd is **not** a launcher. When an install finishes it runs the Steam integra
 ## Español
 
 relicd es un fork **solo backend** de Relic: un servicio Node sin Electron ni ventana. Una
-API HTTP local permite a un cliente (`relicd-client`, de modo consola, o el módulo `invasor-relic` de Invasor) iniciar sesión en las
+API HTTP local permite a un cliente (la web de relicd, `relicctl` o el módulo `invasor-relic` de Invasor) iniciar sesión en las
 tiendas, ver la biblioteca e instalar, actualizar, reparar y desinstalar juegos. No lanza
 juegos: al terminar cada instalación hace la integración con Steam y el juego aparece en
-Steam. No comparte nada con Relic (rutas `relicd`, no `relic`). `relicctl` es el
+Steam. `relicd-client`, la app de Electron que fue el primer cliente, está **archivada y sin mantenimiento**: la
+reemplaza la web de relicd. No comparte nada con Relic (rutas `relicd`, no `relic`). `relicctl` es el
 cliente de línea de comandos (ver la sección _relicctl_; la guía de pruebas está en
 [GUIA.md](GUIA.md)).
 
