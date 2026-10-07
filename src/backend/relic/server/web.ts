@@ -18,7 +18,7 @@ const CSP =
 
 export type WebFile = { type: string; body: Buffer | string }
 
-/** A release keeps the web next to the bundle (relicd/web); `RELICD_WEB_DIR` points elsewhere */
+/** The web sits next to the bundle (relicd/web in a release, build/web in a checkout); `RELICD_WEB_DIR` points elsewhere */
 export function defaultWebDir(): string {
   return process.env.RELICD_WEB_DIR || join(__dirname, 'web')
 }

@@ -26,13 +26,14 @@ not relicd's own, `http://127.0.0.1:<port>` or `http://localhost:<port>`.
 
 ## The web
 
-If a `web/` folder sits next to `relicd.cjs` (or `RELICD_WEB_DIR` points to one),
-`GET /` serves it: open `http://127.0.0.1:17370` in a browser on this machine.
+relicd's own web (`web/` in the repository, built by `pnpm build` into `build/web` and
+shipped as `web/` next to `relicd.cjs`; `RELICD_WEB_DIR` points to another folder)
+is served by `GET /`: open `http://127.0.0.1:17370` in a browser on this machine.
 The files need no token. `index.html` comes with the token inside
 (`<meta name="relicd-token" content="…">`) and the page sends it like any other
 client; another web cannot read it (it is refused by `Origin` and `Host`). Without
-that folder these paths answer `404`/`401` and everything else works the same. The
-release packages the web of `relicd-client` (`pnpm build:web`).
+that folder these paths answer `404`/`401` and everything else works the same. The web
+logs in by pasting (see the login below); a browser cannot watch the page of a store.
 
 ## Calling a channel
 

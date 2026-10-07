@@ -4,8 +4,7 @@
 #   relicd/node          Node runtime of that architecture (SteamOS does not ship one)
 #   relicd/relicd.cjs    the bundled daemon
 #   relicd/relicctl      launcher of the command line client (relicctl.cjs)
-#   relicd/web/          the web (the interface of relicd-client, built with `pnpm build:web`),
-#                        only if RELICD_WEB_DIR or ../relicd-client/dist-web exists
+#   relicd/web/          the web relicd serves on its port (built from web/ by `pnpm build`)
 #   relicd/public/bin/   helper binaries: legendary, gogdl and nile for <arch>/linux, the
 #                        x64/win32 ones (they run inside Wine/Proton, so both architectures
 #                        need them, comet.exe among them), umu and zoom
@@ -13,7 +12,6 @@
 # Usage: scripts/package.sh [x64|arm64|all]      (default: all)
 #   RELICD_NODE_BINARY=/path/to/node   use this node instead of downloading it
 #                                      (only with a single architecture)
-#   RELICD_WEB_DIR=/path/to/dist-web   the web to ship (default: ../relicd-client/dist-web)
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -100,16 +98,6 @@ LAUNCHER
     chmod +x "$1/$2"
 }
 
-# The web is optional: without it relicd works the same, with no page on its port
-stage_web() { # relicd folder of the stage
-    local web="${RELICD_WEB_DIR:-../relicd-client/dist-web}"
-    if [ -f "$web/index.html" ]; then
-        cp -r "$web" "$1/web"
-    else
-        echo "Aviso: sin web ($web/index.html no existe); relicd saldrá sin página." >&2
-    fi
-}
-
 stage_package() { # arch, stage
     local helper bin="$2/relicd/public/bin"
     mkdir -p "$bin/$1"
@@ -122,7 +110,7 @@ stage_package() { # arch, stage
     mkdir -p "$bin/x64"
     cp -r public/bin/x64/win32 "$bin/x64/"
     cp COPYING API.md "$2/relicd/"
-    stage_web "$2/relicd"
+    cp -r build/web "$2/relicd/web"
     fetch_node "$1" "$2/relicd"
     make_launcher "$2/relicd" relicd
     make_launcher "$2/relicd" relicctl

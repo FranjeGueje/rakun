@@ -4,6 +4,7 @@ import eslint from '@eslint/js'
 import tseslint from 'typescript-eslint'
 import prettier from 'eslint-config-prettier'
 import { importX } from 'eslint-plugin-import-x'
+import reactHooks from 'eslint-plugin-react-hooks'
 
 export default tseslint.config(
   eslint.configs.recommended,
@@ -59,7 +60,19 @@ export default tseslint.config(
     }
   },
   {
-    files: ['**/__tests__/**/*.ts', '**/__mocks__/**/*.ts'],
+    // The web is React for a browser: its own tsconfig (DOM, JSX) and the rules of hooks
+    files: ['web/**/*.ts', 'web/**/*.tsx'],
+    plugins: { 'react-hooks': reactHooks },
+    rules: reactHooks.configs.recommended.rules,
+    languageOptions: {
+      parserOptions: {
+        project: './web/tsconfig.json',
+        tsconfigRootDir: import.meta.dirname
+      }
+    }
+  },
+  {
+    files: ['**/__tests__/**/*.{ts,tsx}', '**/__mocks__/**/*.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       // Mocks and fixtures are loosely typed on purpose

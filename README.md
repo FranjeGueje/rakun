@@ -31,8 +31,8 @@ cliente de línea de comandos (ver la sección _relicctl_; la guía de pruebas e
 
 - Login: Epic Games, GOG, Amazon Games, Zoom Platform (paste the code or address your
   browser ends on; no embedded browser)
-- A web of its own on `http://127.0.0.1:17370` (the interface of `relicd-client`, usable with the mouse)
-  when the release carries it
+- A web on `http://127.0.0.1:17370` (library, downloads, accounts and settings; made for the mouse, the
+  keyboard and a gamepad work too), source in `web/`
 - Library, download queue (pause, resume, cancel), install, update, repair and uninstall
 - `relicctl`, a command line client for all of it, and a way to start relicd only
   while a command runs (`relicctl -s`)
