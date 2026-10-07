@@ -8,6 +8,10 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
 
 ### Español
 
+#### Añadido
+
+- `AUTHORS` y una nota sobre el origen (Heroic → Relic → rakun); se conserva el historial de git.
+
 #### Cambiado
 
 - **relicd pasa a llamarse rakun** y `relicctl` a `rakunctl`. Corte limpio, sin
@@ -20,6 +24,10 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
   reinstala el juego.
 
 ### English
+
+#### Added
+
+- `AUTHORS` and a note on the origin (Heroic → Relic → rakun); the git history is kept.
 
 #### Changed
 

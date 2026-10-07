@@ -109,7 +109,7 @@ stage_package() { # arch, stage
     cp -r public/bin/umu public/bin/zoom public/bin/legendary.LICENSE "$bin/"
     mkdir -p "$bin/x64"
     cp -r public/bin/x64/win32 "$bin/x64/"
-    cp COPYING API.md "$2/rakun/"
+    cp COPYING AUTHORS API.md "$2/rakun/"
     cp -r build/web "$2/rakun/web"
     fetch_node "$1" "$2/rakun"
     make_launcher "$2/rakun" rakun

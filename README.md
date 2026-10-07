@@ -1,7 +1,9 @@
 # rakun
 
 rakun is a headless fork of [Relic](https://github.com/FranjeGueje/Relic) (itself a
-Linux-only fork of [Heroic Games Launcher](https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher)).
+Linux-only fork of [Heroic Games Launcher](https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher)):
+Heroic → Relic → rakun. The git history of all three is kept in this repository, and
+the people behind it are listed in [AUTHORS](AUTHORS).
 It is **backend only**: a Node service, no Electron and no window of its own. A local
 HTTP API lets a client (rakun's own web, `rakunctl`, or the
 [Invasor](../proyecto-invasor/) module `invasor-relic`) log in
@@ -19,7 +21,7 @@ rakun is **not** a launcher. When an install finishes it runs the Steam integrat
 
 ## Español
 
-rakun es un fork **solo backend** de Relic: un servicio Node sin Electron ni ventana. Una
+rakun es un fork **solo backend** de Relic (que viene de Heroic Games Launcher: Heroic → Relic → rakun; el historial de git de los tres se conserva y las personas que contribuyeron están en [AUTHORS](AUTHORS)): un servicio Node sin Electron ni ventana. Una
 API HTTP local permite a un cliente (la web de rakun, `rakunctl` o el módulo `invasor-relic` de Invasor) iniciar sesión en las
 tiendas, ver la biblioteca e instalar, actualizar, reparar y desinstalar juegos. No lanza
 juegos: al terminar cada instalación hace la integración con Steam y el juego aparece en
@@ -393,6 +395,7 @@ with `HOME=` empty rakun writes its folders relative to the current directory.
 
 - [Relic](https://github.com/FranjeGueje/Relic) and
   [Heroic Games Launcher](https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher)
+- Everyone listed in [AUTHORS](AUTHORS)
 - [Legendary](https://github.com/derrod/legendary)
 - [GOGdl](https://github.com/Heroic-Games-Launcher/heroic-gogdl)
 - [Nile](https://github.com/imLinguin/nile)

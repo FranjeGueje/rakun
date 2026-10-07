@@ -1,0 +1,211 @@
+rakun is a fork of Relic, which is a fork of Heroic Games Launcher (GPL-3.0).
+The full git history of both projects is kept in this repository.
+
+People who contributed to that history, most commits first (names only; emails
+are in the git log). Regenerate the raw data with: git shortlog -sne HEAD
+
+Flavio F Lima
+Ariel Juodziukynas
+FranjeGueje
+Mathis Dröge
+Paweł Lidwin
+Niklas
+Etaash Mathamsetty
+CommandMC
+Rishabh Moharir
+Adityarup Laha
+dawidgarus
+dragonDScript
+Pedro Daniel Reis
+Brett
+Nico
+Linux FourGood
+Parsa Shadab
+Tim Weber
+Bobertes
+Eric
+FC7
+Flonky
+lol28
+octoshrimpy
+Philip Wilk
+Sedative
+Tabulate
+Ehren Bendler
+Giovanni Gualtieri
+Karan Duggal
+Mihail Donatos Karagkiaouris
+Nicol Bolas
+Raul Dipeas
+Sergio Varela
+Vidi
+Vitor Henrique
+Willian
+সৌম্যদীপ ঘোষ
+0xCmdrKeen
+Bihary Roland
+Chandu JR
+David Flegal
+djib
+Gontzal Manuel Pujana Onaindia
+Ian Wijma
+onadrog
+rdbrschf
+syto203
+Tuomas Lähteenmäki
+Abhinav Anil
+Aidan Gauland
+Alexander Hansen
+Conner
+DankXylese
+Denys Madureira
+Didi Kohen
+entaromia
+EsalRider
+fawaz006
+I. Musthafa
+JakobDev
+Jan B
+Joan Josep
+João Victor
+Kjell291
+LenaWil
+Maria Bonifácio
+Michael G
+neuromancer
+Nils
+Pedro Doblas
+R1kaB3rN
+RawToast
+Ron Stephen Mathew @ Newtron
+Ruffled
+Rui Araújo
+Ács Zoltán
+Aashwin Vaish
+Aikufurr
+airmil
+Albert1st1
+Aleksandar Anžel
+Alex
+AMS21
+Andreas Willich
+Andy Lin
+andyvorld
+Artem Polishchuk
+Arturo Miranda
+Biliane Silva
+bmsuseluda
+Bradford Condon
+Brendan Shanks
+Breno Baptista
+Bringas4You
+bukaj0
+Capi Etheriel
+Cat
+Christian Elbrianno
+Daedalusspacegames
+Daniel
+David C. Drake
+David Fraga
+DavidoTek
+Dean M Greer
+Delta2Force
+Denzil Ferreira
+Depal1
+Devansh Sharma
+Djibiiii
+dogyx
+Drake
+Ecron
+Edward
+Efe Yağız
+Eino Keskitalo
+Enzito
+fazzi
+Findlay Feng
+gert7
+Gessio Mori
+ghoste07
+Gustash
+Hassan Zahid
+HazardousBackup
+Heel
+hitgubian
+Husam Ashkar
+J. King
+Jakub Januszkiewicz
+Jakub Jaruszewski
+JavMatz
+Jordan
+Justin Brewer
+K.B.Dharun Krishna
+K900
+Kekschen
+Kemal Oktay Aktoğan
+Kevin Majewski
+Kirazake
+Kshitij Subedi
+Leandro Stanger
+Liam Murphy
+lmReef
+lostb1t
+Lucas
+Lucas Cavalheiro
+m3e-g
+Makzef
+Marek Ryšavý
+Marios Philippou
+Marky
+Mateo González Lourido
+Matt Sturgeon
+Matteo Battistutta
+Matthew Kennerly
+Maxim Leshchenko
+maxim-kruch
+Mike Repeć
+Misael dos Santos
+MLGRadish
+MuraPura
+Newbyte
+nezd5553
+Nick Roma
+nodscher
+OctopusET
+ojsi
+Olek Baran
+Oğuz Ersen
+Pedro Ferrari
+Peheux
+Pl1y
+PolishKrowa
+radekbocon
+Reverb
+robblue2x
+Ron Stephen Mathew
+Root-Core
+Sandeep Kumar
+Santiago Montero
+Sarthak Deshmukh
+Sascha Lüdecke
+Shakhzod Shukrulloev
+SheffeyG
+Skovoroda l10n
+skowr
+Skythrew
+Snaggly
+Snoodelz
+Stefan Lobbenmeier
+talynone
+TenTeypek
+TheGuy
+tomascarreira
+Trevonn
+Ulysses Zhan
+vinícius
+WombatFromHell
+Zarklord
+Ümid Quliyev
+酸柠檬猹Char
+
+Translations: Hosted Weblate and its translators.
+Automated commits: dependabot and github-actions.
