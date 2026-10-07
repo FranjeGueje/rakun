@@ -223,9 +223,10 @@ describe('game sheet', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'Import from a folder' })
     )
-    fireEvent.click(
-      await screen.findByRole('button', { name: 'Use this folder' })
-    )
+    const use = await screen.findByRole('button', { name: 'Use this folder' })
+    // The row that picks the folder is the one in the accent colour
+    expect(use.classList.contains('primary')).toBe(true)
+    fireEvent.click(use)
 
     await waitFor(() => expect(rakun.called('importGame')).toHaveLength(1))
     expect(rakun.called('importGame')[0][1]).toEqual([

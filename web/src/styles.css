@@ -445,6 +445,15 @@ kbd {
   background: rgba(255, 255, 255, 0.12);
 }
 
+.row.primary {
+  background: var(--accent);
+  color: white;
+}
+
+.row.primary.focused {
+  background: color-mix(in srgb, var(--accent) 80%, white);
+}
+
 .rows.tall {
   max-height: 50vh;
   overflow-y: auto;

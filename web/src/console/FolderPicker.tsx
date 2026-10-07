@@ -4,7 +4,13 @@ import type { Translate } from '../i18n'
 import { CloseButton } from './CloseButton'
 import { useLayer } from '../input/useInput'
 
-type Row = { id: string; label: string; run: () => void }
+type Row = {
+  id: string
+  label: string
+  run: () => void
+  /** The row that does what the screen is for: drawn in the accent colour */
+  primary?: boolean
+}
 
 const childOf = (path: string, folder: string) =>
   path.endsWith('/') ? `${path}${folder}` : `${path}/${folder}`
@@ -64,6 +70,7 @@ export function FolderPicker({
     ? [
         {
           id: 'use',
+          primary: true,
           label: t('folders.use'),
           run: () => void pick(listing.path)
         },
@@ -114,7 +121,7 @@ export function FolderPicker({
           {rows.map((row, index) => (
             <li key={row.id}>
               <button
-                className={`row${index === focus ? ' focused' : ''}`}
+                className={`row${row.primary ? ' primary' : ''}${index === focus ? ' focused' : ''}`}
                 onMouseEnter={() => setFocus(index)}
                 onClick={row.run}
               >
