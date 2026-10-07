@@ -1,3 +1,4 @@
+import { resolve } from 'path'
 import { CliError } from '../client'
 import { parseStore } from '../stores'
 import { libraryText, table } from '../format'
@@ -5,6 +6,7 @@ import { importRelic, login, logout, status } from '../commands/accounts'
 import { library, refresh } from '../commands/library'
 import {
   followGame,
+  importFolder,
   install,
   platformFor,
   repair,
@@ -280,6 +282,92 @@ describe('game commands', () => {
         parseCli(['install', 'gog', 'g1', '--platform', 'windows']).opts
           .platform
       ).toBe('windows')
+    })
+  })
+
+  describe('import', () => {
+    /** The game, installed or not depending on whether rakun registered it */
+    const replies = (registers: boolean, extra: Partial<GameInfo> = {}) => {
+      let imported = false
+      return {
+        getGameInfo: () => game({ ...extra, is_installed: imported }),
+        importGame: () => {
+          imported = registers
+          return { status: 'done' }
+        }
+      }
+    }
+    const sent = (calls: [string, unknown[]][]) =>
+      calls.find(([channel]) => channel === 'importGame')?.[1][0]
+
+    test('sends the folder (absolute) and confirms that the game is installed', async () => {
+      const { ctx, calls, lines } = fakeCtx(replies(true))
+
+      await importFolder(ctx, ['gog', 'g1', 'games/one'], opts)
+
+      expect(sent(calls)).toEqual({
+        appName: 'g1',
+        runner: 'gog',
+        path: resolve('games/one'),
+        platform: 'windows'
+      })
+      expect(lines).toEqual(['Imported Game One'])
+    })
+
+    test('rakun says done even when it failed: the game decides', async () => {
+      const { ctx } = fakeCtx(replies(false))
+      await expect(
+        importFolder(ctx, ['gog', 'g1', '/x'], opts)
+      ).rejects.toThrow(/Could not import Game One from \/x/)
+    })
+
+    test('--platform picks the build', async () => {
+      const dual = replies(true, {
+        is_linux_native: true,
+        is_windows_native: true
+      })
+      const windows = fakeCtx(dual)
+      await importFolder(windows.ctx, ['gog', 'g1', '/x'], {
+        ...opts,
+        platform: 'windows'
+      })
+      expect((sent(windows.calls) as { platform: string }).platform).toBe(
+        'windows'
+      )
+
+      const linux = fakeCtx(replies(true, { is_linux_native: true }))
+      await importFolder(linux.ctx, ['gog', 'g1', '/x'], {
+        ...opts,
+        platform: 'linux'
+      })
+      expect((sent(linux.calls) as { platform: string }).platform).toBe('linux')
+    })
+
+    test('Epic and Amazon use their own platform name', async () => {
+      const { ctx, calls } = fakeCtx(replies(true, { runner: 'legendary' }))
+      await importFolder(ctx, ['epic', 'g1', '/x'], opts)
+      expect((sent(calls) as { platform: string }).platform).toBe('Windows')
+    })
+
+    test('refuses Zoom, a game that is already installed and a missing folder', async () => {
+      const zoom = fakeCtx(replies(true, { runner: 'zoom' }))
+      await expect(
+        importFolder(zoom.ctx, ['zoom', 'g1', '/x'], opts)
+      ).rejects.toThrow('Importing is not supported for Zoom')
+
+      const installed = fakeCtx({
+        getGameInfo: game({ is_installed: true }),
+        importGame: { status: 'done' }
+      })
+      await expect(
+        importFolder(installed.ctx, ['gog', 'g1', '/x'], opts)
+      ).rejects.toThrow('Game One is already installed')
+      expect(installed.calls.map(([c]) => c)).not.toContain('importGame')
+
+      const none = fakeCtx(replies(true))
+      await expect(importFolder(none.ctx, ['gog', 'g1'], opts)).rejects.toThrow(
+        '<folder>'
+      )
     })
   })
 

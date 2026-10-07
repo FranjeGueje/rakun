@@ -1,11 +1,13 @@
 import type {
   DMQueueElement,
+  ImportGameArgs,
   GameInfo,
   GameStatus,
   InstallParams,
   Runner,
   UpdateParams
 } from 'common/types'
+import { resolve } from 'path'
 import type { UpdateableGame } from 'common/rakun/updates'
 import type { ApiEvent } from '../client'
 import { CliError } from '../client'
@@ -159,6 +161,31 @@ export const install: Command = async (ctx, args, opts) => {
     () => ctx.api.call('install', params),
     true
   )
+}
+
+/** Registers a game that is already on the disk. rakun answers «done» even when it failed: only the game says */
+export const importFolder: Command = async (ctx, args, opts) => {
+  const [runner, appName] = await gameArgs(ctx, args)
+  const path = resolve(requireArg(args, 2, 'folder'))
+  const build = parsePlatform(opts.platform)
+  if (runner === 'zoom')
+    throw new CliError('Importing is not supported for Zoom')
+  const game = await loadGame(ctx, appName, runner)
+  checkBuild(game, build)
+  if (game.is_installed)
+    throw new CliError(`${game.title} is already installed`)
+  const params: ImportGameArgs = {
+    appName,
+    runner,
+    path,
+    platform: platformFor(game, build)
+  }
+  await ctx.api.call('importGame', params)
+  if (!(await loadGame(ctx, appName, runner)).is_installed)
+    throw new CliError(
+      `Could not import ${game.title} from ${path}: see the logs (rakunctl logs ${args[0]} ${appName})`
+    )
+  ctx.log(`Imported ${game.title}`)
 }
 
 async function updateGame(ctx: Ctx, gameInfo: GameInfo, wait: boolean) {

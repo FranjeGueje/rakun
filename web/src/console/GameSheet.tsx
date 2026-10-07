@@ -7,11 +7,13 @@ import type { Actions } from '../state/useRakun'
 import { actionsFor, coverSources, type GameAction } from '../state/selectors'
 import { Cover } from './Cover'
 import { ConfirmDialog } from './ConfirmDialog'
+import { FolderPicker } from './FolderPicker'
 
 const LABELS: Record<GameAction, StringKey> = {
   install: 'sheet.install',
   installWindows: 'sheet.installWindows',
   installLinux: 'sheet.installLinux',
+  importFolder: 'sheet.importFolder',
   update: 'sheet.update',
   repair: 'sheet.repair',
   uninstall: 'sheet.uninstall',
@@ -56,6 +58,7 @@ export function GameSheet({
   const available = actionsFor(game, status, needsUpdate)
   const [focus, setFocus] = useState(0)
   const [asking, setAsking] = useState<GameAction | null>(null)
+  const [picking, setPicking] = useState(false)
   // The available actions and a «close» at the end
   const rows = [...available, 'close' as const]
   const selected = Math.min(focus, rows.length - 1)
@@ -65,6 +68,7 @@ export function GameSheet({
       install: () => actions.install(game),
       installWindows: () => actions.install(game, 'windows'),
       installLinux: () => actions.install(game, 'linux'),
+      importFolder: () => undefined, // picks a folder first: see `choose`
       update: () => actions.update(game),
       repair: () => actions.repair(game),
       uninstall: () => actions.uninstall(game),
@@ -77,6 +81,7 @@ export function GameSheet({
 
   const choose = (row: (typeof rows)[number]) => {
     if (row === 'close') onClose()
+    else if (row === 'importFolder') setPicking(true)
     else if (ASKS[row]) setAsking(row)
     else run(row)
   }
@@ -129,6 +134,19 @@ export function GameSheet({
           </div>
         </div>
       </div>
+      {picking && (
+        <FolderPicker
+          title={t('sheet.importFolder')}
+          start={defaultInstallPath}
+          t={t}
+          onPick={(path) => {
+            actions.importFolder(game, path)
+            onClose()
+            return Promise.resolve(undefined)
+          }}
+          onClose={() => setPicking(false)}
+        />
+      )}
       {asking && ask && (
         <ConfirmDialog
           title={t(ask.title, { title: game.title })}

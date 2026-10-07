@@ -2,10 +2,12 @@ import { useCallback, useEffect, useReducer, useRef } from 'react'
 import type { RakunEvent } from '../api/channels'
 import type { GameInfo, GameStatus, Runner } from '../api/types'
 import { initialState, reducer, type State } from './reducer'
-import { installParams, type Build } from './selectors'
+import { installParams, platformFor, type Build } from './selectors'
 
 export type Actions = {
   install: (game: GameInfo, build?: Build) => void
+  /** Registers a game that is already in `path`, without downloading it */
+  importFolder: (game: GameInfo, path: string) => void
   update: (game: GameInfo) => void
   repair: (game: GameInfo) => void
   uninstall: (game: GameInfo) => void
@@ -188,6 +190,19 @@ export function useRakun(): { state: State; actions: Actions } {
           installParams(game, stateRef.current.defaultInstallPath, build)
         )
       ),
+    importFolder: (game, path) =>
+      run(async () => {
+        await window.rakun.call('importGame', {
+          appName: game.app_name,
+          runner: game.runner,
+          path,
+          platform: platformFor(game)
+        })
+        const games = await window.rakun.call('getLibrary', game.runner)
+        await loadLibrary(game.runner)
+        if (!games.some((g) => g.app_name === game.app_name && g.is_installed))
+          throw new Error(`Could not import ${game.title} from ${path}`)
+      }),
     update: (game) =>
       run(() =>
         window.rakun.call('updateGame', {

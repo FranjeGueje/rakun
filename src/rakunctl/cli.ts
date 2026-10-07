@@ -4,7 +4,13 @@ import { Api, CliError, createApi, readCredentials } from './client'
 import { Command, Ctx, Options } from './context'
 import { call, events } from './commands/call'
 import { importRelic, login, logout, status } from './commands/accounts'
-import { install, repair, uninstall, update } from './commands/games'
+import {
+  importFolder,
+  install,
+  repair,
+  uninstall,
+  update
+} from './commands/games'
 import { library, refresh } from './commands/library'
 import { cancel, pause, queue, resume } from './commands/queue'
 import { logs } from './commands/logs'
@@ -46,6 +52,8 @@ Games
           [--platform windows|linux]
                                     Install a game (a game with both builds gets
                                     the Linux one unless --platform says otherwise)
+  import <store> <appName> <folder> [--platform windows|linux]
+                                    Register a game that is already in a folder
   update [store [appName]]          Update one game, a store's games, or every
                                     game with a new version
   repair <store> <appName>          Repair a game
@@ -91,6 +99,7 @@ export const commands: Record<string, Command> = {
   library,
   refresh,
   install,
+  import: importFolder,
   update,
   repair,
   uninstall,

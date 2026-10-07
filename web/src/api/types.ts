@@ -96,6 +96,14 @@ export type InstallParams = {
   installDlcs?: string[]
 }
 
+/** A game that is already on the disk, in `path`, to be registered */
+export type ImportParams = {
+  appName: string
+  runner: Runner
+  path: string
+  platform: InstallPlatform
+}
+
 export type UpdateParams = {
   appName: string
   runner: Runner

@@ -49,6 +49,8 @@ function setup(
     accounts?: AccountsStatus
     login?: LoginReply
     library?: GameInfo[]
+    /** Called when a game is imported from a folder */
+    onImport?: () => void
   } = {}
 ) {
   const rakun = fakeRakun(
@@ -57,6 +59,10 @@ function setup(
       getLibrary: (runner) =>
         (options.library ?? library).filter((g) => g.runner === runner),
       checkGameUpdates: options.updates ?? [],
+      importGame: () => {
+        options.onImport?.()
+        return { status: 'done' }
+      },
       requestAppSettings: settings(options.settings),
       getDMQueueInformation: options.queue ?? emptyQueue,
       getAccounts: options.accounts ?? signedIn,
@@ -182,9 +188,12 @@ describe('game sheet', () => {
     })
     const linux = screen.getByRole('button', { name: 'Install Linux version' })
     expect(screen.queryByRole('button', { name: 'Install' })).toBeNull()
-    // Windows, then Linux, then the close button that was already there
+    // Windows, then Linux, then the import and the close button that was already there
     expect(windows.nextElementSibling).toBe(linux)
-    expect(linux.nextElementSibling?.textContent).toBe('Close')
+    expect(linux.nextElementSibling?.textContent).toBe('Import from a folder')
+    expect(linux.nextElementSibling?.nextElementSibling?.textContent).toBe(
+      'Close'
+    )
 
     fireEvent.click(linux)
     await waitFor(() => expect(rakun.called('install')).toHaveLength(1))
@@ -192,6 +201,52 @@ describe('game sheet', () => {
       appName: 'dual',
       platformToInstall: 'linux'
     })
+  })
+
+  test('a game that is not installed offers to import it from a folder', async () => {
+    setup({ library: [game('here', { title: 'Here', runner: 'gog' })] })
+    await screen.findByTitle('Here')
+    press('Enter')
+    expect(
+      screen.getByRole('button', { name: 'Import from a folder' })
+    ).toBeTruthy()
+  })
+
+  test('importing from a folder sends it to rakun and reloads the library', async () => {
+    const lib = [game('here', { title: 'Here', runner: 'gog' })]
+    const rakun = setup({
+      library: lib,
+      onImport: () => void (lib[0] = { ...lib[0], is_installed: true })
+    })
+    await screen.findByTitle('Here')
+    press('Enter')
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Import from a folder' })
+    )
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Use this folder' })
+    )
+
+    await waitFor(() => expect(rakun.called('importGame')).toHaveLength(1))
+    expect(rakun.called('importGame')[0][1]).toEqual([
+      { appName: 'here', runner: 'gog', path: '/juegos', platform: 'windows' }
+    ])
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.queryByRole('alertdialog')).toBeNull()
+  })
+
+  test('an import that did not register the game says so', async () => {
+    setup({ library: [game('here', { title: 'Here', runner: 'gog' })] })
+    await screen.findByTitle('Here')
+    press('Enter')
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Import from a folder' })
+    )
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Use this folder' })
+    )
+
+    await screen.findByText('Could not import Here from /juegos')
   })
 
   test('the Windows button installs the Windows build', async () => {

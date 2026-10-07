@@ -110,7 +110,10 @@ describe('stores', () => {
 
 describe('actionsFor', () => {
   test('a game that is not installed can be installed', () => {
-    expect(actionsFor(game('a'), undefined, false)).toEqual(['install'])
+    expect(actionsFor(game('a'), undefined, false)).toEqual([
+      'install',
+      'importFolder'
+    ])
   })
 
   test('an installed one can be repaired or uninstalled, updated first if it needs it', () => {
@@ -171,20 +174,37 @@ describe('installing', () => {
     const both = game('a', { is_linux_native: true, is_windows_native: true })
     expect(actionsFor(both, undefined, false)).toEqual([
       'installWindows',
-      'installLinux'
+      'installLinux',
+      'importFolder'
     ])
     // A library saved before `is_windows_native` existed: assume it has one
     expect(
       actionsFor(game('a', { is_linux_native: true }), undefined, false)
-    ).toEqual(['installWindows', 'installLinux'])
+    ).toEqual(['installWindows', 'installLinux', 'importFolder'])
     expect(
       actionsFor(
         game('a', { is_linux_native: true, is_windows_native: false }),
         undefined,
         false
       )
-    ).toEqual(['install'])
-    expect(actionsFor(game('a'), undefined, false)).toEqual(['install'])
+    ).toEqual(['install', 'importFolder'])
+    expect(actionsFor(game('a'), undefined, false)).toEqual([
+      'install',
+      'importFolder'
+    ])
+  })
+
+  test('a game that is not installed can also be imported, except on Zoom', () => {
+    expect(actionsFor(game('a'), undefined, false)).toEqual([
+      'install',
+      'importFolder'
+    ])
+    expect(actionsFor(game('a', { runner: 'zoom' }), undefined, false)).toEqual(
+      ['install']
+    )
+    expect(
+      actionsFor(game('a', { is_installed: true }), undefined, false)
+    ).not.toContain('importFolder')
   })
 
   test('the build asked for wins over the default', () => {

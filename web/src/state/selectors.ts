@@ -90,6 +90,7 @@ export type GameAction =
   | 'install'
   | 'installWindows'
   | 'installLinux'
+  | 'importFolder'
   | 'update'
   | 'repair'
   | 'uninstall'
@@ -112,10 +113,13 @@ export function actionsFor(
   if (status?.status === 'queued') return ['removeFromQueue']
   if (status && DOWNLOADING.has(status.status)) return ['cancel']
   if (isBusy(status)) return []
-  if (!game.is_installed)
-    return hasBothBuilds(game)
+  if (!game.is_installed) {
+    const install: GameAction[] = hasBothBuilds(game)
       ? ['installWindows', 'installLinux']
       : ['install']
+    // Zoom has no way to register a game that is already on the disk
+    return game.runner === 'zoom' ? install : [...install, 'importFolder']
+  }
   return needsUpdate
     ? ['update', 'repair', 'uninstall']
     : ['repair', 'uninstall']
