@@ -1,5 +1,6 @@
 // Registers every API handler (importing a module is what registers it)
 import './system'
+import './folders'
 import './accounts'
 import './import_sessions'
 import './settings'

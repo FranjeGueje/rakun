@@ -31,6 +31,8 @@ cliente de línea de comandos (ver la sección _relicctl_; la guía de pruebas e
 
 - Login: Epic Games, GOG, Amazon Games, Zoom Platform (paste the code or address your
   browser ends on; no embedded browser)
+- A web of its own on `http://127.0.0.1:17370` (the interface of `relicd-client`, usable with the mouse)
+  when the release carries it
 - Library, download queue (pause, resume, cancel), install, update, repair and uninstall
 - `relicctl`, a command line client for all of it, and a way to start relicd only
   while a command runs (`relicctl -s`)
@@ -272,6 +274,7 @@ Every other command tells you when relicd is stopped. The files `-s` uses to
 coordinate live in `~/.local/state/Relicd/serve/`.
 
 Check it with `relicctl status` (or `scripts/smoke.sh`, or `curl http://127.0.0.1:17370/health`).
+If the release has the web, open `http://127.0.0.1:17370` in a browser of this machine.
 
 ### Requirements
 

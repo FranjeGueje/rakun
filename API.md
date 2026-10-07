@@ -20,9 +20,19 @@ port. The server only listens on `127.0.0.1`.
 
 The token goes in the `x-relicd-token` header. If nothing answers on the port,
 relicd is stopped: start it (`relicctl start`, or run `relicd`) and read `api.json`
-after it answers `/health`. Requests with an `Origin`
-header (browsers) or a `Host` other than `127.0.0.1:<port>` / `localhost:<port>`
-get `403`.
+after it answers `/health`. A `Host` other than `127.0.0.1:<port>` /
+`localhost:<port>` gets `403`, and so does an `Origin` header (a browser) that is
+not relicd's own, `http://127.0.0.1:<port>` or `http://localhost:<port>`.
+
+## The web
+
+If a `web/` folder sits next to `relicd.cjs` (or `RELICD_WEB_DIR` points to one),
+`GET /` serves it: open `http://127.0.0.1:17370` in a browser on this machine.
+The files need no token. `index.html` comes with the token inside
+(`<meta name="relicd-token" content="…">`) and the page sends it like any other
+client; another web cannot read it (it is refused by `Origin` and `Host`). Without
+that folder these paths answer `404`/`401` and everything else works the same. The
+release packages the web of `relicd-client` (`pnpm build:web`).
 
 ## Calling a channel
 
@@ -74,6 +84,11 @@ short name to type or show, e.g. `epic` for `legendary`). `getAccounts` →
 `{<id>: {loggedIn, name?}}` from what is stored locally (no network),
 `logout(runner)`, `importSessionsFromRelic` and the two-step login below. A
 `runner` that is not one of the stores answers `500` with `Unknown store`.
+
+**Folders:** `listFolders(path?)` → `{path, parent, folders}`: the folders inside
+`path` (the home folder when omitted), hidden ones too, sorted; `parent` is `null`
+at the root. `path` has to be absolute; one that cannot be read answers `500`
+with the reason. It is for a client that lets the user pick a folder.
 
 `importSessionsFromRelic` (no arguments) copies the store sessions from
 `~/.config/relic` once and never overwrites a session relicd already has. It

@@ -14,6 +14,7 @@ import {
 import { logError, logInfo, LogPrefix } from 'backend/logger'
 import { relicVersion } from 'backend/constants/others'
 import { exposedChannels, exposedEvents } from './allowlist'
+import { defaultWebDir, webFile, webHeaders } from './web'
 
 const MAX_BODY_BYTES = 1024 * 1024
 const HEARTBEAT_MS = 25_000
@@ -55,10 +56,19 @@ function hasValidToken(req: IncomingMessage, token: string): boolean {
   )
 }
 
-/** Only the loopback address is allowed as Host, and browsers are refused (no Origin) */
+/**
+ * Only the loopback address is allowed as Host, and a browser only if the
+ * request comes from relicd's own web (its Origin): any other page is refused
+ */
 function isLocalRequest(req: IncomingMessage): boolean {
-  if (req.headers.origin) return false
   const port = req.socket.localPort
+  const origin = req.headers.origin
+  if (
+    origin &&
+    origin !== `http://127.0.0.1:${port}` &&
+    origin !== `http://localhost:${port}`
+  )
+    return false
   const host = req.headers.host ?? ''
   return host === `127.0.0.1:${port}` || host === `localhost:${port}`
 }
@@ -129,9 +139,13 @@ function handleEvents(req: IncomingMessage, res: ServerResponse) {
  *   GET  /health            no token
  *   POST /api/<channel>     body {"args": [...]} -> {"result": ...}
  *   GET  /events            Server-Sent Events (see allowlist.ts)
+ *   GET  /<file>            relicd's own web, if there is one (no token: it carries it)
  * Everything but /health needs the `x-relicd-token` header.
  */
-export function createApiServer(token: string): Server {
+export function createApiServer(
+  token: string,
+  webDir: string = defaultWebDir()
+): Server {
   return createServer((req, res) => {
     if (!isLocalRequest(req)) {
       return sendJson(res, 403, { error: 'forbidden' })
@@ -141,6 +155,14 @@ export function createApiServer(token: string): Server {
 
     if (req.method === 'GET' && pathname === '/health') {
       return sendJson(res, 200, { status: 'ok', version: relicVersion })
+    }
+
+    if (req.method === 'GET') {
+      const file = webFile(webDir, pathname, token)
+      if (file) {
+        res.writeHead(200, { 'Content-Type': file.type, ...webHeaders })
+        return void res.end(file.body)
+      }
     }
 
     if (!hasValidToken(req, token)) {

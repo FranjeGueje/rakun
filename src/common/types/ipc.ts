@@ -22,6 +22,7 @@ import type {
   UpdateParams
 } from '../types'
 import type { AccountsStatus, SessionsImport } from 'common/relic/accounts'
+import type { FolderListing } from 'common/relic/folders'
 import type { LoginInfo, LoginResult } from 'common/relic/login'
 import type { StoreInfo } from 'common/relic/stores'
 import type { GetLogFileArgs } from 'backend/logger/paths'
@@ -67,6 +68,7 @@ interface AsyncIPCFunctions {
   ) => Promise<InstallInfo | null>
   getLibrary: (library?: Runner | 'all') => GameInfo[]
   getStores: () => StoreInfo[]
+  listFolders: (path?: string) => FolderListing
   getAccounts: () => AccountsStatus
   logout: (runner: Runner) => Promise<void>
   importSessionsFromRelic: () => Promise<SessionsImport>
