@@ -269,7 +269,8 @@ scripts/install.sh                # picks the tarball of this machine from dist/
 binaries (legendary, gogdl and nile for Linux; the Windows `.exe` ones, `comet.exe` among
 them, run inside the prefix) and its own Node, so nothing else is needed on SteamOS. The installer
 puts it in `~/.local/opt/rakun` and links `~/.local/bin/rakun`. It creates **no
-service**; start it when you want it:
+service** unless you ask for one (`rakunctl install-service`, below); otherwise start it
+when you want it:
 
 ```bash
 rakunctl start                                   # background, detached
@@ -279,7 +280,16 @@ rakunctl -s library                              # starts rakun only if stopped,
 rakun                                           # foreground, Ctrl+C stops it
 systemd-run --user --unit=rakun ~/.local/opt/rakun/rakun   # background, transient
 systemctl --user stop rakun                     # stop that one (not rakunctl stop)
+rakunctl install-service [--web network] [--port N]   # user service: starts at every login
+rakunctl uninstall-service                       # stops it and removes the service
 ```
+
+`install-service` takes the same `--web` and `--port` as `start` and bakes them into the unit. It writes `~/.config/systemd/user/rakun.service` (`Restart=on-failure`, so
+`rakunctl stop` really stops it until the next login) and runs `systemctl --user enable
+--now`. Limits: the service has no screen (`DISPLAY`), so **Zoom installers, which open a
+window, do not work with it**; and with `webAccess` set to `network` the web would be open
+to the network, unprotected, at every login (the command warns about both). Do not mix it
+with the `systemd-run` line above: both are called `rakun`.
 
 `-s` works with any command that ends (not `events`, nor `--no-wait`). Several `-s`
 at once are safe: rakun stops when the **last** one finishes, and only if a `-s`

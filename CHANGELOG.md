@@ -10,6 +10,7 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
 
 #### Añadido
 
+- `rakunctl install-service` y `uninstall-service`: rakun como servicio de usuario de systemd (sin `DISPLAY`: los instaladores de Zoom no funcionan con él).
 - `AUTHORS` y una nota sobre el origen (Heroic → Relic → rakun); se conserva el historial de git.
 
 #### Cambiado
@@ -27,6 +28,7 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
 
 #### Added
 
+- `rakunctl install-service` and `uninstall-service`: rakun as a systemd user service (no `DISPLAY`: Zoom installers do not work with it).
 - `AUTHORS` and a note on the origin (Heroic → Relic → rakun); the git history is kept.
 
 #### Changed

@@ -1,6 +1,6 @@
 import { networkInterfaces } from 'os'
 
-const NETWORK_WARNING =
+export const NETWORK_WARNING =
   'AVISO: la web está abierta a toda la red SIN protección: cualquiera que llegue a este equipo controla rakun. Solo para uso experimental o doméstico.'
 
 /** The addresses other machines can reach this one by */

@@ -18,6 +18,7 @@ systemd-run --user --unit=rakun ~/.local/opt/rakun/rakun   # en segundo plano, t
 rakunctl start | stop                                         # alternativa sin systemd
 rakunctl -s library                                           # arranca si hace falta y para al acabar
 systemctl --user stop rakun                            # para el de segundo plano
+rakunctl install-service | uninstall-service           # servicio de usuario: arranca al iniciar sesión (Zoom no: sin pantalla)
 ```
 
 Para reinstalar una versión nueva: `pnpm package`, volver a ejecutar

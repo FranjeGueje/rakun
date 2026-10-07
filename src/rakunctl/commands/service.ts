@@ -13,6 +13,7 @@ import {
 import { Ctx, Options } from '../context'
 import { forgetStarted } from '../serve'
 import { webLines } from '../web'
+import { serviceInstalled } from './systemd'
 
 const WAIT_MS = 15000
 const POLL_MS = 100
@@ -140,4 +141,8 @@ export async function stop(
   await stopRakun(opts.force)
   forgetStarted()
   ctx.log('rakun parado')
+  if (serviceInstalled())
+    ctx.log(
+      'El servicio sigue instalado: arrancará en el próximo inicio de sesión'
+    )
 }

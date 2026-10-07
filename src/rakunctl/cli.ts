@@ -19,12 +19,15 @@ import {
 } from './commands/service'
 import { ServeDeps, serveDir, processAlive, withServe } from './serve'
 import { config } from './commands/config'
+import { installService, uninstallService } from './commands/systemd'
 
 export const HELP = `Uso: rakunctl <comando> [argumentos]
 
   start | stop [--force]          arranca o para rakun (no hace falta systemd)
   start [--web local|network|off] [--port N]
                                   quién abre la web (por defecto el ajuste webAccess) y el puerto
+  install-service [--web local|network|off] [--port N] | uninstall-service
+                                  rakun como servicio de usuario de systemd (arranca al iniciar sesión)
   status                          estado de rakun, sesiones y cola
   login <tienda>                  inicia sesión
   logout <tienda>
@@ -129,10 +132,17 @@ function serveDeps(): ServeDeps {
   }
 }
 
+const SERVICE_COMMANDS = [
+  'start',
+  'stop',
+  'install-service',
+  'uninstall-service'
+]
+
 /** -s cannot work with what outlives the command or has no end */
 export function checkServe(command: string, opts: Options) {
-  if (command === 'start' || command === 'stop')
-    throw new CliError('-s no se usa con start ni stop')
+  if (SERVICE_COMMANDS.includes(command))
+    throw new CliError(`-s no se usa con ${command}`)
   if (command === 'events')
     throw new CliError('-s no se puede usar con events: no termina')
   if (!opts.wait)
@@ -162,6 +172,8 @@ export async function runCli(
   if (opts.serve) checkServe(command, opts)
   if (command === 'start') return start(io, opts)
   if (command === 'stop') return stop(io, opts)
+  if (command === 'install-service') return installService(io, opts)
+  if (command === 'uninstall-service') return uninstallService(io)
   const handler = commands[command]
   if (!handler)
     throw new CliError(`Comando desconocido "${command}"\n\n${HELP}`)
