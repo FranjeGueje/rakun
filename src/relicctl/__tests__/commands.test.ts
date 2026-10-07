@@ -12,6 +12,7 @@ import {
   update
 } from '../commands/games'
 import { parseCallArgs, call } from '../commands/call'
+import { logs } from '../commands/logs'
 import { config, parseValue, settingKey } from '../commands/config'
 import { parseCli, runCli } from '../cli'
 import type { GameInfo } from 'common/types'
@@ -481,5 +482,26 @@ describe('config', () => {
     expect(parseValue(0, '4')).toBe(4)
     expect(() => parseValue(true, 'si')).toThrow(CliError)
     expect(() => parseValue(0, 'x')).toThrow(CliError)
+  })
+})
+
+describe('logs', () => {
+  test('asks for relicd, a store or one game', async () => {
+    const { ctx, calls, lines } = fakeCtx({ getLogContent: 'hola\n' })
+    await logs(ctx, [], opts)
+    await logs(ctx, ['epic'], opts)
+    await logs(ctx, ['gog', 'g1'], { ...opts, type: 'install' })
+    expect(calls.map(([, args]) => args[0])).toEqual([
+      {},
+      { runner: 'legendary' },
+      { runner: 'gog', appName: 'g1', type: 'install' }
+    ])
+    expect(lines[0]).toBe('hola')
+  })
+
+  test('says so when there is no log', async () => {
+    const { ctx, lines } = fakeCtx({ getLogContent: '' })
+    await logs(ctx, [], opts)
+    expect(lines).toEqual(['No hay registro'])
   })
 })

@@ -7,6 +7,7 @@ import { importRelic, login, logout, status } from './commands/accounts'
 import { install, repair, uninstall, update } from './commands/games'
 import { library, refresh } from './commands/library'
 import { queue } from './commands/queue'
+import { logs } from './commands/logs'
 import { config } from './commands/config'
 
 export const HELP = `Uso: relicctl <comando> [argumentos]
@@ -20,6 +21,7 @@ export const HELP = `Uso: relicctl <comando> [argumentos]
   install <tienda> <appName> [--path DIR] [--lang CODE] [--skip-dlcs]
   update | repair | uninstall <tienda> <appName>
   queue                           cola de descargas
+  logs [tienda [appName]] [--type T]  registro de relicd, de una tienda o de un juego
   config [clave [valor]]          ver o cambiar ajustes (p. ej. defaultInstallPath)
   events                          sigue los eventos de relicd
   call <canal> [json]             llama a un canal de la API
@@ -41,6 +43,7 @@ export const commands: Record<string, Command> = {
   uninstall,
   queue,
   config,
+  logs,
   events,
   call
 }
@@ -53,6 +56,7 @@ export function parseCli(argv: string[]) {
       json: { type: 'boolean' },
       path: { type: 'string' },
       lang: { type: 'string' },
+      type: { type: 'string' },
       'skip-dlcs': { type: 'boolean' },
       'no-wait': { type: 'boolean' },
       installed: { type: 'boolean' },
@@ -62,6 +66,7 @@ export function parseCli(argv: string[]) {
   const opts: Options = {
     path: values.path,
     lang: values.lang,
+    type: values.type,
     skipDlcs: values['skip-dlcs'],
     wait: !values['no-wait'],
     installed: !!values.installed

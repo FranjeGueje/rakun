@@ -87,7 +87,7 @@ to be reinstalled to get them).
 `setSetting({key, value})` (all settings are global; `relicctl config [key [value]]`
 reads and sets them),
 `getRelicVersion`, `getEpicGamesStatus`, `get-connectivity-status`,
-`getSystemInfo`, `getLogContent` (see Logs below), and the helper versions `getLegendaryVersion`,
+`getSystemInfo`, `getLogContent` (see Logs below; `relicctl logs`), and the helper versions `getLegendaryVersion`,
 `getGogdlVersion`, `getNileVersion`, `getCometVersion`. There are no
 per-game settings: relicd does not launch games.
 
