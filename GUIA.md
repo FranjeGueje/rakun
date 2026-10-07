@@ -35,23 +35,24 @@ Con relicd instalado, `relicctl` (o `node build/relicctl.cjs` desde el
 repositorio) evita escribir el JSON a mano. Usa el mismo `api.json` y la misma
 variable `RELICD_API_FILE`.
 
-| Quieres…                    | `relicctl`                                      |
-| --------------------------- | ----------------------------------------------- |
-| ver si está vivo y sesiones | `relicctl status`                               |
-| iniciar sesión              | `relicctl login gog` (epic, gog, amazon, zoom)  |
-| traer las sesiones de Relic | `relicctl import-relic`                         |
-| listar la biblioteca        | `relicctl library [tienda] [--installed]`       |
-| refrescarla y esperar       | `relicctl refresh [tienda]`                     |
-| instalar                    | `relicctl install gog <appName> [--path DIR]`   |
-| actualizar o reparar        | `relicctl update` / `repair <tienda> <appName>` |
-| desinstalar                 | `relicctl uninstall <tienda> <appName>`         |
-| ver la cola                 | `relicctl queue`                                |
-| seguir los eventos          | `relicctl events`                               |
-| cualquier otro canal        | `relicctl call <canal> '[args]'`                |
+| Quieres…                    | `relicctl`                                                  |
+| --------------------------- | ----------------------------------------------------------- |
+| ver si está vivo y sesiones | `relicctl status`                                           |
+| iniciar sesión              | `relicctl login gog` (epic, gog, amazon, zoom)              |
+| traer las sesiones de Relic | `relicctl import-relic`                                     |
+| listar la biblioteca        | `relicctl library [tienda] [--installed]`                   |
+| refrescarla y esperar       | `relicctl refresh [tienda]`                                 |
+| instalar                    | `relicctl install gog <appName> [--path DIR] [--lang CODE]` |
+| actualizar o reparar        | `relicctl update` / `repair <tienda> <appName>`             |
+| desinstalar                 | `relicctl uninstall <tienda> <appName>`                     |
+| ver la cola                 | `relicctl queue`                                            |
+| seguir los eventos          | `relicctl events`                                           |
+| cualquier otro canal        | `relicctl call <canal> '[args]'`                            |
 
 `install`, `update`, `repair` y `uninstall` esperan a que acabe y devuelven un
 código distinto de 0 si falla (`--no-wait` para no esperar). `--json` da la
-salida para scripts. `uninstall` borra los ficheros del juego.
+salida para scripts. `uninstall` borra los ficheros del juego. `--lang` elige el
+idioma de la instalación (en GOG, `en-US` si no se indica).
 
 ## Formato de los argumentos
 

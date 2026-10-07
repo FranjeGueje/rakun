@@ -43,7 +43,12 @@ import { sendFrontendMessage } from '../../ipc'
 import { Game, RemoveArgs } from 'common/types/game_manager'
 import axios, { AxiosError } from 'axios'
 import { isOnline, runOnceWhenOnline } from 'backend/online_monitor'
-import { gogdlConfigPath, gogSupportPath } from './constants'
+import { downloadArgs } from './download_args'
+import {
+  defaultInstallLanguage,
+  gogdlConfigPath,
+  gogSupportPath
+} from './constants'
 import { isLinux } from 'backend/constants/environment'
 
 export default class GOGGame implements Game {
@@ -239,23 +244,13 @@ export default class GOGGame implements Game {
     path,
     installDlcs,
     platformToInstall,
-    installLanguage,
+    installLanguage = defaultInstallLanguage,
     build,
     branch
   }: InstallArgs): Promise<{
     status: 'done' | 'error' | 'abort'
     error?: string
   }> {
-    const { maxWorkers } = GlobalConfig.get().getSettings()
-    const workers = maxWorkers ? ['--max-workers', `${maxWorkers}`] : []
-    const privateBranchPassword = privateBranchesStore.get(this.id, '')
-    const withDlcs = installDlcs?.length
-      ? ['--with-dlcs', '--dlcs', installDlcs.join(',')]
-      : ['--skip-dlcs']
-
-    const buildArgs = build ? ['--build', build] : []
-    const branchArgs = branch ? ['--branch', branch] : []
-
     const credentials = await GOGUser.getCredentials()
 
     if (!credentials) {
@@ -271,26 +266,19 @@ export default class GOGGame implements Game {
         ? 'osx'
         : (platformToInstall.toLowerCase() as GogInstallPlatform)
 
-    const commandParts: string[] = [
-      'download',
-      this.id,
-      '--platform',
-      installPlatform,
-      '--path',
+    const { maxWorkers } = GlobalConfig.get().getSettings()
+    const commandParts = downloadArgs({
+      appName: this.id,
+      platform: installPlatform,
       path,
-      '--support',
-      join(gogSupportPath, this.id),
-      ...withDlcs,
-      '--lang',
-      String(installLanguage),
-      ...buildArgs,
-      ...branchArgs,
-      ...workers
-    ]
-
-    if (privateBranchPassword.length) {
-      commandParts.push('--password', privateBranchPassword)
-    }
+      supportPath: join(gogSupportPath, this.id),
+      installDlcs,
+      language: installLanguage,
+      build,
+      branch,
+      maxWorkers,
+      branchPassword: privateBranchesStore.get(this.id, '')
+    })
 
     const onOutput = (data: string) => {
       this.onInstallOrUpdateOutput('installing', data)
@@ -453,7 +441,7 @@ export default class GOGGame implements Game {
       join(gogSupportPath, this.id),
       withDlcs,
       '--lang',
-      gameData.install.language || 'en-US',
+      gameData.install.language || defaultInstallLanguage,
       '-b=' + gameData.install.buildId,
       ...workers
     ]
@@ -548,7 +536,9 @@ export default class GOGGame implements Game {
       : branch
 
     const overwrittenLanguage: string =
-      updateOverwrites?.language || gameData.install.language || 'en-US'
+      updateOverwrites?.language ||
+      gameData.install.language ||
+      defaultInstallLanguage
 
     const overwrittenDlcs: string[] = updateOverwrites?.dlcs?.length
       ? ['--dlcs', updateOverwrites.dlcs.join(',')]

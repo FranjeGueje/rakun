@@ -10,7 +10,7 @@ import type { ApiEvent } from '../client'
 import { CliError } from '../client'
 import { progressLine, statusLine } from '../format'
 import { parseStore } from '../stores'
-import { Command, Ctx, requireArg } from '../context'
+import { Command, Ctx, Options, requireArg } from '../context'
 
 const FINAL_STATUSES = new Set(['done', 'error', 'canceled'])
 
@@ -36,7 +36,7 @@ export async function installParams(
   ctx: Ctx,
   appName: string,
   runner: Runner,
-  path?: string
+  { path, lang }: Pick<Options, 'path' | 'lang'>
 ): Promise<InstallParams> {
   const gameInfo = await loadGame(ctx, appName, runner)
   const settings = await ctx.api.call<{ defaultInstallPath: string }>(
@@ -47,7 +47,8 @@ export async function installParams(
     runner,
     gameInfo,
     path: path ?? settings.defaultInstallPath,
-    platformToInstall: platformFor(gameInfo)
+    platformToInstall: platformFor(gameInfo),
+    installLanguage: lang
   }
 }
 
@@ -110,7 +111,7 @@ async function gameArgs(ctx: Ctx, args: string[]): Promise<[Runner, string]> {
 
 export const install: Command = async (ctx, args, opts) => {
   const [runner, appName] = await gameArgs(ctx, args)
-  const params = await installParams(ctx, appName, runner, opts.path)
+  const params = await installParams(ctx, appName, runner, opts)
   await run(
     ctx,
     appName,

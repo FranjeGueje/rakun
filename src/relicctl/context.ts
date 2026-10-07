@@ -11,7 +11,12 @@ export type Ctx = {
   ask: (question: string) => Promise<string>
 }
 
-export type Options = { path?: string; wait: boolean; installed: boolean }
+export type Options = {
+  path?: string
+  lang?: string
+  wait: boolean
+  installed: boolean
+}
 
 export type Command = (ctx: Ctx, args: string[], opts: Options) => Promise<void>
 

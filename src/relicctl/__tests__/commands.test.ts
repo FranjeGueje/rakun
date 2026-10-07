@@ -223,6 +223,23 @@ describe('game commands', () => {
     expect(calls[2][1]).toMatchObject([{ path: '/mine' }])
   })
 
+  test('install --lang sends the language, and without it sends none', async () => {
+    const replies = {
+      getGameInfo: game(),
+      requestAppSettings: { defaultInstallPath: '/games' },
+      getDMQueueInformation: { finished: [] }
+    }
+    const withLang = fakeCtx(replies, [update1('done')])
+    await install(withLang.ctx, ['gog', 'g1'], { ...opts, lang: 'es-ES' })
+    expect(withLang.calls[2][1]).toMatchObject([{ installLanguage: 'es-ES' }])
+
+    const without = fakeCtx(replies, [update1('done')])
+    await install(without.ctx, ['gog', 'g1'], opts)
+    expect(without.calls[2][1]).toEqual([
+      expect.not.objectContaining({ installLanguage: expect.any(String) })
+    ])
+  })
+
   test('install of an unknown game fails before queueing', async () => {
     const { ctx, calls } = fakeCtx({ getGameInfo: null })
 
@@ -374,9 +391,15 @@ describe('cli', () => {
     ).toMatchObject({
       command: 'install',
       args: ['gog', 'g1'],
-      opts: { path: '/x', wait: false, installed: false },
+      opts: { path: '/x', lang: undefined, wait: false, installed: false },
       json: true
     })
+  })
+
+  test('parses --lang', () => {
+    expect(
+      parseCli(['install', 'gog', 'g1', '--lang', 'es-ES']).opts.lang
+    ).toBe('es-ES')
   })
 
   test('without a command it prints the help, with no API access', async () => {
