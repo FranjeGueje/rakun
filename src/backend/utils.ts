@@ -903,10 +903,11 @@ export const writeConfig = (config: Partial<AppSettings>) => {
       JSON.stringify(oldConfig[key]) !== JSON.stringify(config[key])
   )
   for (const key of changedKeys) {
-    logInfo(
-      ['Changed config:', key, 'from', oldConfig[key], 'to', config[key]],
-      LogPrefix.Backend
-    )
+    backendEvents.emit('settingChanged', {
+      key,
+      oldValue: oldConfig[key],
+      newValue: config[key]
+    })
   }
 
   GlobalConfig.get().set(config as AppSettings)

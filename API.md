@@ -86,7 +86,10 @@ Steam (it is stored in `config.json`, so a game installed before setting it has
 to be reinstalled to get them).
 
 **Settings and status:** `requestAppSettings`, `writeConfig(config)`,
-`setSetting({key, value})` (all settings are global; `relicctl config [key [value]]`
+`getMaxCpus` (the most `maxWorkers` can be), `setSetting({key, value})` (all
+settings are global and validated: an unknown key, a wrong type, an unsupported
+`language`, a `maxWorkers` out of range or a path that does not exist answers
+`500` with the reason; changing `language` takes effect at once; `relicctl config [key [value]]`
 reads and sets them), `clearCache(library?)` (library caches, all stores or one;
 `relicctl cache clear [store]`), `resetRelic` (forgets sessions, settings, the
 queue and per-game data, keeps installed games and `api.json`, then relicd

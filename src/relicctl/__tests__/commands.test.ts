@@ -455,6 +455,15 @@ describe('cli', () => {
 })
 
 describe('config', () => {
+  test('shows how many CPUs maxWorkers can use', async () => {
+    const all = fakeCtx({
+      requestAppSettings: { maxWorkers: 0 },
+      getMaxCpus: 8
+    })
+    await config(all.ctx, [], opts)
+    expect(all.lines[0]).toBe('maxWorkers = 0 (máx. 8)')
+  })
+
   const settings = {
     defaultInstallPath: '/games',
     autoUpdateGames: true,

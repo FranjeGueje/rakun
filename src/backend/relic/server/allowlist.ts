@@ -47,6 +47,7 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   'requestAppSettings',
   'writeConfig',
   'setSetting',
+  'getMaxCpus',
   'clearCache',
   'resetRelic',
   'steamgriddb.hasApiKey',

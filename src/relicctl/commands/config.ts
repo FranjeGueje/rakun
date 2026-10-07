@@ -1,6 +1,6 @@
 import type { AppSettings } from 'common/types'
 import { CliError } from '../client'
-import { Command, show } from '../context'
+import { Command, Ctx, show } from '../context'
 
 export function settingKey(
   settings: AppSettings,
@@ -31,19 +31,35 @@ export function parseValue(
   return raw
 }
 
-const line = (key: string, value: unknown) => `${key} = ${String(value)}`
+const line = (key: string, value: unknown, note = '') =>
+  `${key} = ${String(value)}${note}`
+
+/** `maxWorkers` is only meaningful next to how many CPUs there are */
+async function maxWorkersNote(ctx: Ctx, key: string) {
+  if (key !== 'maxWorkers') return ''
+  return ` (máx. ${await ctx.api.call<number>('getMaxCpus')})`
+}
+
+async function listLines(ctx: Ctx, settings: AppSettings) {
+  const lines = []
+  for (const [key, value] of Object.entries(settings))
+    lines.push(line(key, value, await maxWorkersNote(ctx, key)))
+  return lines.join('\n')
+}
 
 export const config: Command = async (ctx, args) => {
   const settings = await ctx.api.call<AppSettings>('requestAppSettings')
   if (!args[0])
-    return show(ctx, settings, (all) =>
-      Object.entries(all)
-        .map(([key, value]) => line(key, value))
-        .join('\n')
+    return ctx.log(
+      ctx.json
+        ? JSON.stringify(settings, null, 2)
+        : await listLines(ctx, settings)
     )
   const key = settingKey(settings, args[0])
-  if (args[1] === undefined)
-    return show(ctx, settings[key], (value) => String(value))
+  if (args[1] === undefined) {
+    const note = ctx.json ? '' : await maxWorkersNote(ctx, key)
+    return show(ctx, settings[key], (value) => `${String(value)}${note}`)
+  }
   const value = parseValue(settings[key], args[1])
   await ctx.api.call('setSetting', { key, value })
   ctx.log(line(key, value))

@@ -89,6 +89,7 @@ interface AsyncIPCFunctions {
   getLoginInfo: (runner: Runner) => Promise<LoginInfo>
   submitLogin: (runner: Runner, pasted: string) => Promise<LoginResult>
   requestAppSettings: () => AppSettings
+  getMaxCpus: () => number
   writeConfig: (config: Partial<AppSettings>) => void
   refreshLibrary: (library?: Runner | 'all') => void
   getRefreshingLibraries: () => Runner[]
