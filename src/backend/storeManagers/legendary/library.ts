@@ -175,7 +175,7 @@ export default class LegendaryLibraryManager implements LibraryManager {
     const arr = Array.from(library.values())
     libraryStore.set('library', arr)
     logInfo(
-      ['Game list updated, got', `${arr.length}`, 'games & DLCs'],
+      ['Game list updated, got', `${arr.length}`, 'games'],
       LogPrefix.Legendary
     )
     return this.defaultExecResult
@@ -213,7 +213,7 @@ export default class LegendaryLibraryManager implements LibraryManager {
   ): Promise<LegendaryInstallInfo> {
     const cache = installStore.get(appName)
     if (cache && cache.manifest) {
-      logDebug('Using cached install info', LogPrefix.Legendary)
+      logDebug(`Using cached install info for ${appName}`, LogPrefix.Legendary)
       return cache
     }
 
@@ -233,7 +233,7 @@ export default class LegendaryLibraryManager implements LibraryManager {
   ): Promise<LegendaryInstallInfo> {
     const retries = options?.retries
 
-    logInfo(`Getting more details with 'legendary info'`, LogPrefix.Legendary)
+    logInfo(`Getting install info for ${appName}`, LogPrefix.Legendary)
     const command: LegendaryCommand = {
       subcommand: 'info',
       appName: LegendaryAppName.parse(appName),
@@ -410,12 +410,7 @@ export default class LegendaryLibraryManager implements LibraryManager {
       )
     }
     logInfo(
-      [
-        'Found',
-        `${updateableGames.length}`,
-        'game' + (updateableGames.length !== 1 ? 's' : ''),
-        'to update'
-      ],
+      `Found ${updateableGames.length} game${updateableGames.length !== 1 ? 's' : ''} to update`,
       LogPrefix.Legendary
     )
     return updateableGames

@@ -264,10 +264,7 @@ export default class GOGLibraryManager implements LibraryManager {
       .get<Library>(url.toString(), { headers })
       .then(({ data }) => data)
       .catch((e: AxiosError) => {
-        logError(
-          ['There was an error getting games library data', e.message],
-          LogPrefix.Gog
-        )
+        logError(['Failed to get library data:', e.message], LogPrefix.Gog)
         return null
       })
 
@@ -391,10 +388,10 @@ export default class GOGLibraryManager implements LibraryManager {
     if (!credentials) {
       return this.defaultExecResult
     }
-    logInfo('Getting GOG library', LogPrefix.Gog)
+    logInfo('Refreshing library...', LogPrefix.Gog)
     const gameApiArray: GalaxyLibraryEntry[] = await this.getGalaxyLibrary()
     if (!gameApiArray.length) {
-      logError('There was an error Loading games library', LogPrefix.Gog)
+      logError('Failed to refresh library: no games received', LogPrefix.Gog)
       return this.defaultExecResult
     }
 
@@ -467,7 +464,10 @@ export default class GOGLibraryManager implements LibraryManager {
       void gogLogWriter.logInfo(logContent)
     })
 
-    logInfo('Saved games data', LogPrefix.Gog)
+    logInfo(
+      ['Game list updated, got', `${gamesObjects.length}`, 'games'],
+      LogPrefix.Gog
+    )
 
     return this.defaultExecResult
   }
@@ -522,16 +522,7 @@ export default class GOGLibraryManager implements LibraryManager {
     if (installInfoStore.has(installInfoStoreKey)) {
       const cache = installInfoStore.get(installInfoStoreKey)
       if (cache) {
-        logDebug(
-          [
-            'Got install info from cache for',
-            appName,
-            'on',
-            installPlatform,
-            'platform'
-          ],
-          LogPrefix.Gog
-        )
+        logDebug(`Using cached install info for ${appName}`, LogPrefix.Gog)
         return cache
       }
     }
@@ -853,7 +844,10 @@ export default class GOGLibraryManager implements LibraryManager {
         updateable.push(game.appName)
       }
     }
-    logInfo(`Found ${updateable.length} game(s) to update`, LogPrefix.Gog)
+    logInfo(
+      `Found ${updateable.length} game${updateable.length !== 1 ? 's' : ''} to update`,
+      LogPrefix.Gog
+    )
     return updateable
   }
 

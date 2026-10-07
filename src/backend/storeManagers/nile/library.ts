@@ -196,9 +196,10 @@ export default class NileLibraryManager implements LibraryManager {
     }
 
     const updates: string[] = JSON.parse(output)
-    if (updates.length) {
-      logInfo(['Found', `${updates.length}`, 'games to update'], LogPrefix.Nile)
-    }
+    logInfo(
+      `Found ${updates.length} game${updates.length !== 1 ? 's' : ''} to update`,
+      LogPrefix.Nile
+    )
     return updates
   }
 
@@ -332,7 +333,7 @@ export default class NileLibraryManager implements LibraryManager {
   async getInstallInfo(appName: string): Promise<NileInstallInfo> {
     const cache = installStore.get(appName)
     if (cache) {
-      logDebug('Using cached install info', LogPrefix.Nile)
+      logDebug(`Using cached install info for ${appName}`, LogPrefix.Nile)
       return cache
     }
 
@@ -344,7 +345,7 @@ export default class NileLibraryManager implements LibraryManager {
   }
 
   private async fetchInstallInfo(appName: string): Promise<NileInstallInfo> {
-    logInfo('Getting more details', LogPrefix.Nile)
+    logInfo(`Getting install info for ${appName}`, LogPrefix.Nile)
     this.refreshInstalled()
 
     const game = this.library.get(appName)

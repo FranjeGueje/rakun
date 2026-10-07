@@ -309,10 +309,7 @@ export default class GOGGame implements Game {
     }
 
     if (res.error) {
-      logError(
-        ['Failed to install GOG game ', `${this.id}:`, res.error],
-        LogPrefix.Gog
-      )
+      logError(['Failed to install', `${this.id}:`, res.error], LogPrefix.Gog)
       return { status: 'error', error: res.error }
     }
 

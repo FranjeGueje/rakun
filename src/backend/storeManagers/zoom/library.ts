@@ -54,13 +54,10 @@ export default class ZoomLibraryManager implements LibraryManager {
       return { stdout: '', stderr: 'App offline' }
     }
 
-    logInfo('Getting Zoom library', LogPrefix.Zoom)
+    logInfo('Refreshing library...', LogPrefix.Zoom)
     const gameApiArray: ZoomGameInfo[] = await this.getZoomLibrary()
     if (!gameApiArray.length) {
-      logError(
-        'There was an error loading games library from Zoom',
-        LogPrefix.Zoom
-      )
+      logError('Failed to refresh library: no games received', LogPrefix.Zoom)
       return { stdout: '', stderr: 'Error loading library' }
     }
 
@@ -99,7 +96,10 @@ export default class ZoomLibraryManager implements LibraryManager {
     const zoomLogWriter = getRunnerLogWriter('zoom')
     void zoomLogWriter.logInfo(logContent)
 
-    logInfo('Saved games data for Zoom', LogPrefix.Zoom)
+    logInfo(
+      ['Game list updated, got', `${logLines.length}`, 'games'],
+      LogPrefix.Zoom
+    )
 
     return { stdout: 'Library refreshed', stderr: '' }
   }
@@ -130,7 +130,7 @@ export default class ZoomLibraryManager implements LibraryManager {
       libraryCache.set('library', allGames)
       return allGames
     } catch (error) {
-      logError(['Error fetching Zoom library:', error], LogPrefix.Zoom)
+      logError(['Failed to get library data:', error], LogPrefix.Zoom)
       return []
     }
   }
@@ -189,10 +189,7 @@ export default class ZoomLibraryManager implements LibraryManager {
     appName: string,
     installPlatform = 'windows'
   ): Promise<ZoomInstallInfo | undefined> {
-    logInfo(
-      `Getting install info for ${appName} on ${installPlatform}`,
-      LogPrefix.Zoom
-    )
+    logInfo(`Getting install info for ${appName}`, LogPrefix.Zoom)
 
     const gameData = this.getGameInfo(appName)
     if (!gameData) {

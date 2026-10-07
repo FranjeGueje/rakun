@@ -224,7 +224,10 @@ export default class NileGameManager implements Game {
 
     if (res.error) {
       if (!res.error.includes('signal')) {
-        logError(['Failed to install', this.id, res.error], LogPrefix.Nile)
+        logError(
+          ['Failed to install', `${this.id}:`, res.error],
+          LogPrefix.Nile
+        )
       }
       return { status: 'error', error: res.error }
     }
@@ -348,7 +351,7 @@ export default class NileGameManager implements Game {
 
     if (res.error) {
       if (!res.error.includes('signal')) {
-        logError(['Failed to update', this.id, res.error], LogPrefix.Nile)
+        logError(['Failed to update', `${this.id}:`, res.error], LogPrefix.Nile)
       }
       return { status: 'error', error: res.error }
     }
