@@ -12,14 +12,6 @@ jest.mock('fs', () => ({
   copyFileSync: jest.fn()
 }))
 
-jest.mock('node:crypto', () => ({
-  createHash: jest.fn(() => ({
-    update: jest.fn(() => ({
-      digest: jest.fn(() => 'abc123')
-    }))
-  }))
-}))
-
 jest.mock('backend/logger', () => ({
   logInfo: jest.fn(),
   logError: jest.fn(),
@@ -189,42 +181,55 @@ describe('syncMountBin', () => {
     )
   })
 
-  test('copies binary files when missing', () => {
+  const file = (size: number, mtimeMs: number) =>
+    ({ isFile: () => true, size, mtimeMs }) as ReturnType<typeof statSync>
+
+  /** The source is `source` and the copy in the mount is `copy` (undefined: missing) */
+  function syncWith(
+    source: ReturnType<typeof statSync>,
+    copy: ReturnType<typeof statSync> | undefined
+  ) {
     mockedExistsSync.mockImplementation((p: any) => {
       const str = String(p)
       if (str.includes('bin/x64/win32')) return true
-      if (str.includes('/mount/bin/')) return false
-      return false
-    })
-    mockedReaddirSync.mockReturnValue(['helper.exe', 'config.txt'] as any)
-    mockedStatSync.mockReturnValue({ isFile: () => true } as ReturnType<
-      typeof statSync
-    >)
-
-    const { syncMountBin } = freshWindowify()
-
-    syncMountBin()
-
-    expect(mockedCopyFileSync).toHaveBeenCalledTimes(2)
-  })
-
-  test('skips files with matching hashes', () => {
-    mockedExistsSync.mockImplementation((p: any) => {
-      const str = String(p)
-      if (str.includes('bin/x64/win32')) return true
-      if (str.includes('/mount/bin/')) return true
-      return false
+      return str.includes('/mount/bin/') && copy !== undefined
     })
     mockedReaddirSync.mockReturnValue(['helper.exe'] as any)
-    mockedStatSync.mockReturnValue({ isFile: () => true } as ReturnType<
-      typeof statSync
-    >)
+    mockedStatSync.mockImplementation(((p: any) =>
+      String(p).includes('/mount/bin/') ? copy : source) as any)
 
-    const { syncMountBin } = freshWindowify()
+    freshWindowify().syncMountBin()
+  }
 
-    syncMountBin()
+  test('copies a binary that is missing from the mount', () => {
+    syncWith(file(100, 1000), undefined)
+
+    expect(mockedCopyFileSync).toHaveBeenCalledTimes(1)
+  })
+
+  test('copies it when the size differs', () => {
+    syncWith(file(100, 1000), file(99, 2000))
+
+    expect(mockedCopyFileSync).toHaveBeenCalledTimes(1)
+  })
+
+  test('copies it when the source is newer than the copy', () => {
+    syncWith(file(100, 3000), file(100, 2000))
+
+    expect(mockedCopyFileSync).toHaveBeenCalledTimes(1)
+  })
+
+  test('leaves alone a copy of the same size that is not older', () => {
+    syncWith(file(100, 1000), file(100, 1000))
+    syncWith(file(100, 1000), file(100, 5000))
 
     expect(mockedCopyFileSync).not.toHaveBeenCalled()
+  })
+
+  test('never reads the binaries to compare them', () => {
+    syncWith(file(100, 1000), file(100, 2000))
+
+    expect(readFileSync).not.toHaveBeenCalled()
   })
 })
 

@@ -5,13 +5,13 @@ import {
   readdirSync,
   rmSync,
   statSync,
+  type Stats,
   symlinkSync,
   unlinkSync,
   writeFileSync,
   copyFileSync
 } from 'fs'
 import { basename, join } from 'path'
-import { createHash } from 'node:crypto'
 import { logError, logInfo, logWarning } from 'backend/logger'
 import {
   relicMountPath,
@@ -176,14 +176,8 @@ export function syncMountBin(): void {
     const sourcePath = join(sourceDir, file)
     const targetPath = join(targetDir, file)
 
-    if (!statSync(sourcePath).isFile()) continue
-
-    const sourceHash = md5File(sourcePath)
-
-    if (existsSync(targetPath)) {
-      const targetHash = md5File(targetPath)
-      if (sourceHash === targetHash) continue
-    }
+    const source = statSync(sourcePath)
+    if (!source.isFile() || isUpToDate(source, targetPath)) continue
 
     copyFileSync(sourcePath, targetPath)
     logInfo(`syncMountBin: ${file} copiado`, LOG_PREFIX)
@@ -314,7 +308,13 @@ function copyAndTransformInstalled(
   logInfo(`Windowified ${sourcePath} → ${targetPath}`, LOG_PREFIX)
 }
 
-function md5File(filePath: string): string {
-  const content = readFileSync(filePath)
-  return createHash('md5').update(content).digest('hex')
+/**
+ * The copy is good when it has the same size and is not older than the source.
+ * The files are tens of MB and this runs on every start: reading them all to
+ * compare hashes costs more than starting everything else.
+ */
+function isUpToDate(source: Stats, targetPath: string): boolean {
+  if (!existsSync(targetPath)) return false
+  const target = statSync(targetPath)
+  return target.size === source.size && target.mtimeMs >= source.mtimeMs
 }
