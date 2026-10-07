@@ -771,43 +771,6 @@ export default class LegendaryGame implements Game {
     return res
   }
 
-  /**
-   * Sync saves.
-   * Does NOT check for online connectivity.
-   */
-  async syncSaves(arg: string, path: string): Promise<string> {
-    if (!path) {
-      logError(
-        'No path provided for SavesSync, check your settings!',
-        LogPrefix.Legendary
-      )
-      return 'No path provided.'
-    }
-
-    const command: LegendaryCommand = {
-      subcommand: 'sync-saves',
-      appName: this.appName,
-      [arg]: true,
-      '--save-path': Path.parse(path),
-      '-y': true
-    }
-
-    let fullOutput = ''
-    const res = await libraryManagerMap['legendary'].runRunnerCommand(command, {
-      abortId: this.appName,
-      logMessagePrefix: `Syncing saves for ${this.getGameInfo().title}`,
-      onOutput: (output) => (fullOutput += output)
-    })
-
-    if (res.error) {
-      logError(
-        ['Failed to sync saves for', `${this.appName}:`, res.error],
-        LogPrefix.Legendary
-      )
-    }
-    return fullOutput
-  }
-
   isNative(): boolean {
     return false
   }

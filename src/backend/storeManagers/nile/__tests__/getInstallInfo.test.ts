@@ -17,7 +17,7 @@ jest.mock('../electronStores', () => ({
 
 jest.mock('../e2eMock')
 jest.mock('backend/utils')
-jest.mock('backend/launcher')
+jest.mock('backend/runner_call')
 
 jest.mock('../..', () => ({}))
 

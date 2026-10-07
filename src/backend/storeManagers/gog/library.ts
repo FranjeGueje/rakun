@@ -46,7 +46,7 @@ import {
   privateBranchesStore,
   playtimeSyncQueue
 } from './electronStores'
-import { callRunner } from '../../launcher'
+import { callRunner } from '../../runner_call'
 import { isOnline, runOnceWhenOnline } from '../../online_monitor'
 import i18next from 'i18next'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'

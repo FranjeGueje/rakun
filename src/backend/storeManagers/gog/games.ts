@@ -23,8 +23,7 @@ import { existsSync, rmSync } from 'fs'
 import {
   installedGamesStore,
   playtimeSyncQueue,
-  privateBranchesStore,
-  syncStore
+  privateBranchesStore
 } from './electronStores'
 import {
   logError,
@@ -41,7 +40,7 @@ import {
   onGameMoved,
   onGameUninstalled
 } from 'backend/relic/game_events'
-import { GOGCloudSavesLocation, GogInstallPlatform } from 'common/types/gog'
+import { GogInstallPlatform } from 'common/types/gog'
 import { sendFrontendMessage } from '../../ipc'
 import { Game, RemoveArgs } from 'common/types/game_manager'
 import axios, { AxiosError } from 'axios'
@@ -494,66 +493,6 @@ export default class GOGGame implements Game {
     return res
   }
 
-  async syncSaves(
-    arg: string,
-    path: string,
-    gogSaves?: GOGCloudSavesLocation[]
-  ): Promise<string> {
-    if (!gogSaves) {
-      return 'Unable to sync saves, gogSaves is undefined'
-    }
-
-    const credentials = await GOGUser.getCredentials()
-    if (!credentials) {
-      return 'Unable to sync saves, no credentials'
-    }
-
-    const gameInfo = this.getGameInfo()
-    if (!gameInfo || !gameInfo.install.platform) {
-      return 'Unable to sync saves, game info not found'
-    }
-
-    let fullOutput = ''
-
-    for (const location of gogSaves) {
-      const commandParts = [
-        'save-sync',
-        location.location,
-        this.id,
-        '--os',
-        gameInfo.install.platform,
-        '--ts',
-        syncStore.get(`${this.id}.${location.name}`, '0'),
-        '--name',
-        location.name,
-        arg
-      ]
-
-      logInfo([`Syncing saves for ${gameInfo.title}`], LogPrefix.Gog)
-
-      const res = await libraryManagerMap['gog'].runRunnerCommand(
-        commandParts,
-        {
-          abortId: this.id,
-          logMessagePrefix: `Syncing saves for ${gameInfo.title}`,
-          onOutput: (output) => (fullOutput += output)
-        }
-      )
-
-      if (res.error) {
-        logError(
-          ['Failed to sync saves for', `${this.id}`, `${res.error}`],
-          LogPrefix.Gog
-        )
-      }
-      if (res.stdout) {
-        syncStore.set(`${this.id}.${location.name}`, res.stdout.trim())
-      }
-    }
-
-    return fullOutput
-  }
-
   async uninstall(_removeArgs: RemoveArgs): Promise<ExecResult> {
     void _removeArgs
     const array = installedGamesStore.get('installed', [])
@@ -581,7 +520,6 @@ export default class GOGGame implements Game {
     const gameInfo = this.getGameInfo()
     gameInfo.is_installed = false
     gameInfo.install = { is_dlc: false }
-    syncStore.delete(this.id)
     await onGameUninstalled(this)
     sendFrontendMessage('pushGameToLibrary', gameInfo)
     return res

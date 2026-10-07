@@ -21,12 +21,6 @@ const configStore = new TypeCheckedStoreBackend('gogConfigStore', {
 
 const apiInfoCache = new CacheStore<GamesDBData>('gog_api_info', 60 * 24)
 const libraryStore = new CacheStore<GameInfo[], 'games'>('gog_library', null)
-const syncStore = new TypeCheckedStoreBackend('gogSyncStore', {
-  cwd: 'gog_store',
-  name: 'saveTimestamps',
-  clearInvalidConfig: true
-})
-
 const installInfoStore = new CacheStore<GogInstallInfo>('gog_install_info')
 
 const privateBranchesStore = new TypeCheckedStoreBackend('gogPrivateBranches', {
@@ -44,7 +38,6 @@ export {
   installedGamesStore,
   apiInfoCache,
   libraryStore,
-  syncStore,
   installInfoStore,
   playtimeSyncQueue,
   privateBranchesStore

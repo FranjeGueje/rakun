@@ -14,7 +14,7 @@ jest.mock('backend/utils', () => ({
   getNileBin: jest.fn(() => ({ dir: '/tmp', bin: 'nile' })),
   removeSpecialcharacters: jest.fn((value: string) => value)
 }))
-jest.mock('backend/launcher', () => ({ callRunner: jest.fn() }))
+jest.mock('backend/runner_call', () => ({ callRunner: jest.fn() }))
 jest.mock('backend/constants/paths', () => ({
   appDataPath: '/tmp/appdata',
   userDataPath: '/tmp/userdata',

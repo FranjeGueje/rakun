@@ -26,7 +26,7 @@ jest.mock('../electronStores', () => ({
 
 jest.mock('../user', () => ({ LegendaryUser: {} }))
 jest.mock('../e2eMock')
-jest.mock('../../../launcher')
+jest.mock('../../../runner_call')
 jest.mock('../../index', () => ({}))
 
 import { installStore } from '../electronStores'

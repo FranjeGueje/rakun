@@ -1,37 +1,12 @@
-import {
-  CallRunnerOptions,
-  Runner,
-  ExecResult,
-  KnowFixesInfo
-} from 'common/types'
+import { CallRunnerOptions, Runner, ExecResult } from 'common/types'
 
-import { existsSync, readFileSync } from 'fs'
 import { join, isAbsolute } from 'path'
 
 import { quoteIfNecessary, errorHandler, memoryLog } from './utils'
-import { logError, logInfo, LogPrefix, logWarning } from './logger'
+import { logError, logInfo, LogPrefix } from './logger'
 import { spawn } from 'child_process'
 import { LegendaryCommand } from './storeManagers/legendary/commands'
-import { storeMap } from 'common/utils'
 import { libraryManagerMap } from 'backend/storeManagers'
-import { fixesPath } from './constants/paths'
-
-export function readKnownFixes(appName: string, runner: Runner) {
-  const fixPath = join(fixesPath, `${appName}-${storeMap[runner]}.json`)
-
-  if (!existsSync(fixPath)) return null
-
-  try {
-    const fixesContent = JSON.parse(
-      readFileSync(fixPath).toString()
-    ) as KnowFixesInfo
-
-    return fixesContent
-  } catch (error) {
-    logWarning(`Known fixes could not be applied, ignoring.\n${error}`)
-    return null
-  }
-}
 
 interface RunnerProps {
   name: Runner
@@ -48,21 +23,16 @@ function appNameFromCommandParts(commandParts: string[], runner: Runner) {
 
   switch (runner) {
     case 'gog':
-      idx = commandParts.findIndex((value) => value === 'launch')
+      idx = commandParts.findIndex((value) =>
+        ['download', 'repair', 'update'].includes(value)
+      )
       if (idx > -1) {
-        appNameIndex = idx + 2
-      } else {
-        idx = commandParts.findIndex((value) =>
-          ['download', 'repair', 'update'].includes(value)
-        )
-        if (idx > -1) {
-          appNameIndex = idx + 1
-        }
+        appNameIndex = idx + 1
       }
       break
     case 'legendary':
       idx = commandParts.findIndex((value) =>
-        ['launch', 'install', 'repair', 'update'].includes(value)
+        ['install', 'repair', 'update'].includes(value)
       )
       if (idx > -1) {
         appNameIndex = idx + 1
@@ -70,7 +40,7 @@ function appNameFromCommandParts(commandParts: string[], runner: Runner) {
       break
     case 'nile':
       idx = commandParts.findIndex((value) =>
-        ['launch', 'install', 'update', 'verify'].includes(value)
+        ['install', 'update', 'verify'].includes(value)
       )
       if (idx > -1) {
         appNameIndex = commandParts.length - 1

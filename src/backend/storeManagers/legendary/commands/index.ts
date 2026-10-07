@@ -1,11 +1,9 @@
 import { PositiveInteger } from './base'
 
 import InstallCommand from './install'
-import LaunchCommand from './launch'
 import ListCommand from './list'
 import InfoCommand from './info'
 import MoveCommand from './move'
-import SyncSavesCommand from './sync_saves'
 import StatusCommand from './status'
 import UninstallCommand from './uninstall'
 import ImportCommand from './import'
@@ -30,11 +28,9 @@ export type LegendaryCommand = BaseLegendaryCommand &
   (
     | { subcommand: undefined }
     | InstallCommand
-    | LaunchCommand
     | ListCommand
     | InfoCommand
     | MoveCommand
-    | SyncSavesCommand
     | StatusCommand
     | UninstallCommand
     | ImportCommand

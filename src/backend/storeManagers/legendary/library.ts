@@ -28,13 +28,12 @@ import {
   logWarning
 } from 'backend/logger'
 import { installStore, libraryStore } from './electronStores'
-import { callRunner } from '../../launcher'
+import { callRunner } from '../../runner_call'
 import { dirname, join } from 'path'
 import { isOnline } from 'backend/online_monitor'
 import { LegendaryCommand } from './commands'
 import { LegendaryAppName, LegendaryPlatform } from './commands/base'
 import { Path } from 'backend/schemas'
-import { split } from 'shlex'
 import thirdParty from './thirdParty'
 import { Entries } from 'type-fest'
 import { runLegendaryCommandStub } from './e2eMock'
@@ -767,14 +766,8 @@ export default class LegendaryLibraryManager implements LibraryManager {
             commandParts.push('--install-tag', sdlTag)
         }
         break
-      case 'launch':
-        commandParts.push(command.appName)
-        if (command.extraArguments)
-          commandParts.push(...split(command.extraArguments))
-        break
       case 'update':
       case 'info':
-      case 'sync-saves':
       case 'uninstall':
       case 'repair':
         commandParts.push(command.appName)

@@ -313,11 +313,6 @@ export default class NileGameManager implements Game {
     return res
   }
 
-  async syncSaves(): Promise<string> {
-    // Amazon Games doesn't support cloud saves
-    return ''
-  }
-
   // FIXME: This doesn't respect the `RemoveArgs` passed to it
   async uninstall(): Promise<ExecResult> {
     const commandParts = ['uninstall', this.id]

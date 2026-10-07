@@ -344,13 +344,6 @@ export interface DMQueueElement {
   status?: DMStatus
 }
 
-export interface SaveSyncArgs {
-  arg: string | undefined
-  path: string
-  appName: string
-  runner: Runner
-}
-
 export interface ImportGameArgs {
   appName: string
   path: string

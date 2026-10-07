@@ -22,7 +22,7 @@ jest.mock('../electronStores', () => ({
   playtimeSyncQueue: { get: jest.fn(), set: jest.fn() }
 }))
 
-jest.mock('../../../launcher')
+jest.mock('../../../runner_call')
 jest.mock('../../../utils', () => ({
   getGOGdlBin: jest.fn().mockReturnValue({ dir: '/tmp', bin: 'gogdl' }),
   getFileSize: jest.fn().mockReturnValue(0),

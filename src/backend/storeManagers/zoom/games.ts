@@ -574,14 +574,6 @@ export default class ZoomGame implements Game {
     return { stdout: '', stderr: 'Repair not implemented' }
   }
 
-  async syncSaves(): Promise<string> {
-    logWarning(
-      `Sync saves not implemented for Zoom: ${this.id}`,
-      LogPrefix.Zoom
-    )
-    return 'Sync saves not implemented'
-  }
-
   async uninstall(): Promise<ExecResult> {
     const array = installedGamesStore.get('installed', [])
     const index = array.findIndex((game) => game.appName === this.id)

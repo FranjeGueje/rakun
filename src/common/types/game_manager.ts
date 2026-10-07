@@ -7,7 +7,6 @@ import {
   InstallArgs,
   InstallInfo
 } from 'common/types'
-import { GOGCloudSavesLocation } from './gog'
 
 export interface InstallResult {
   status: 'done' | 'error' | 'abort'
@@ -24,20 +23,10 @@ export interface Game {
   getGameInfo: () => GameInfo
   getExtraInfo: () => Promise<ExtraInfo>
   importGame: (path: string, platform: InstallPlatform) => Promise<ExecResult>
-  onInstallOrUpdateOutput: (
-    action: 'installing' | 'updating',
-    data: string,
-    totalDownloadSize: number
-  ) => void
   install: (args: InstallArgs) => Promise<InstallResult>
   isNative: () => boolean
   moveInstall: (newInstallPath: string) => Promise<InstallResult>
   repair: () => Promise<ExecResult>
-  syncSaves: (
-    arg: string,
-    path: string,
-    gogSaves?: GOGCloudSavesLocation[]
-  ) => Promise<string>
   uninstall: (args: RemoveArgs) => Promise<ExecResult>
   update: (updateOverwrites?: {
     build?: string
@@ -68,5 +57,4 @@ export interface LibraryManager {
   listUpdateableGames: () => Promise<string[]>
   changeGameInstallPath: (appName: string, newPath: string) => Promise<void>
   changeVersionPinnedStatus: (appName: string, status: boolean) => void
-  installState: (appName: string, state: boolean) => void
 }

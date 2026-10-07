@@ -17,7 +17,7 @@ import {
 import { existsSync, readFileSync, writeFileSync, cpSync } from 'fs'
 import { installStore, libraryStore } from './electronStores'
 import { getFileSize, getNileBin, removeSpecialcharacters } from 'backend/utils'
-import { callRunner } from 'backend/launcher'
+import { callRunner } from 'backend/runner_call'
 import { dirname, join } from 'path'
 import { appDataPath } from 'backend/constants/paths'
 import { NileUser } from './user'
