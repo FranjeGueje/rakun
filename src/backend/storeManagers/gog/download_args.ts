@@ -1,10 +1,17 @@
 import type { GogInstallPlatform } from 'common/types/gog'
 
+function dlcArgs(installDlcs?: string[]): string[] {
+  if (installDlcs === undefined) return ['--with-dlcs']
+  if (!installDlcs.length) return ['--skip-dlcs']
+  return ['--with-dlcs', '--dlcs', installDlcs.join(',')]
+}
+
 type DownloadArgs = {
   appName: string
   platform: GogInstallPlatform
   path: string
   supportPath: string
+  /** Undefined: all of them. Empty: none. Otherwise only those */
   installDlcs?: string[]
   /** A real language code: gogdl cannot parse anything else */
   language: string
@@ -29,9 +36,7 @@ export function downloadArgs(options: DownloadArgs): string[] {
     path,
     '--support',
     supportPath,
-    ...(installDlcs?.length
-      ? ['--with-dlcs', '--dlcs', installDlcs.join(',')]
-      : ['--skip-dlcs']),
+    ...dlcArgs(installDlcs),
     '--lang',
     language,
     ...(build ? ['--build', build] : []),

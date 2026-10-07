@@ -11,7 +11,7 @@ const base = {
 }
 
 describe('downloadArgs', () => {
-  test('the basic command, skipping DLCs', () => {
+  test('the basic command, with every DLC', () => {
     expect(downloadArgs(base)).toEqual([
       'download',
       '123',
@@ -21,7 +21,7 @@ describe('downloadArgs', () => {
       '/games',
       '--support',
       '/support/123',
-      '--skip-dlcs',
+      '--with-dlcs',
       '--lang',
       'en-US'
     ])
@@ -43,8 +43,11 @@ describe('downloadArgs', () => {
     expect(args).not.toContain('--skip-dlcs')
   })
 
-  test('an empty DLC list still skips them', () => {
-    expect(downloadArgs({ ...base, installDlcs: [] })).toContain('--skip-dlcs')
+  test('an empty DLC list skips them', () => {
+    const args = downloadArgs({ ...base, installDlcs: [] })
+
+    expect(args).toContain('--skip-dlcs')
+    expect(args).not.toContain('--with-dlcs')
   })
 
   test('build, branch, workers and branch password only when there are any', () => {

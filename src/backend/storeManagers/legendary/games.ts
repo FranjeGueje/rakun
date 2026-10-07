@@ -41,10 +41,10 @@ import { Game } from 'common/types/game_manager'
 import {
   LegendaryAppName,
   LegendaryPlatform,
-  NonEmptyString,
   PositiveInteger
 } from './commands/base'
 import { LegendaryCommand } from './commands'
+import { installCommand } from './install_command'
 import thirdParty from './thirdParty'
 import { Path } from 'backend/schemas'
 import { configStore } from 'backend/constants/key_value_stores'
@@ -521,7 +521,12 @@ export default class LegendaryGame implements Game {
    * Install game.
    * Does NOT check for online connectivity.
    */
-  async install({ path, sdlList, platformToInstall }: InstallArgs): Promise<{
+  async install({
+    path,
+    sdlList,
+    platformToInstall,
+    installDlcs
+  }: InstallArgs): Promise<{
     status: 'done' | 'error' | 'abort'
     error?: string
   }> {
@@ -545,18 +550,14 @@ export default class LegendaryGame implements Game {
       platformToInstall
     )
 
-    const command: LegendaryCommand = {
-      subcommand: 'install',
+    const command = installCommand({
       appName: this.appName,
-      '--platform': LegendaryPlatform.parse(platformToInstall),
-      '--base-path': Path.parse(path),
-      '--skip-dlcs': true,
-      '-y': true
-    }
-    if (maxWorkers) command['--max-workers'] = PositiveInteger.parse(maxWorkers)
-    if (sdlList?.length)
-      command.sdlList = sdlList.map((tag) => NonEmptyString.parse(tag))
-    else command['--skip-sdl'] = true
+      platform: platformToInstall,
+      path,
+      installDlcs,
+      sdlList,
+      maxWorkers
+    })
 
     const onOutput = (data: string) => {
       this.onInstallOrUpdateOutput(

@@ -240,6 +240,23 @@ describe('game commands', () => {
     ])
   })
 
+  test('install --skip-dlcs sends an empty list, and without it none', async () => {
+    const replies = {
+      getGameInfo: game(),
+      requestAppSettings: { defaultInstallPath: '/games' },
+      getDMQueueInformation: { finished: [] }
+    }
+    const skipping = fakeCtx(replies, [update1('done')])
+    await install(skipping.ctx, ['gog', 'g1'], { ...opts, skipDlcs: true })
+    expect(skipping.calls[2][1]).toMatchObject([{ installDlcs: [] }])
+
+    const byDefault = fakeCtx(replies, [update1('done')])
+    await install(byDefault.ctx, ['gog', 'g1'], opts)
+    expect(
+      (byDefault.calls[2][1] as { installDlcs?: string[] }[])[0].installDlcs
+    ).toBeUndefined()
+  })
+
   test('install of an unknown game fails before queueing', async () => {
     const { ctx, calls } = fakeCtx({ getGameInfo: null })
 
@@ -391,9 +408,21 @@ describe('cli', () => {
     ).toMatchObject({
       command: 'install',
       args: ['gog', 'g1'],
-      opts: { path: '/x', lang: undefined, wait: false, installed: false },
+      opts: {
+        path: '/x',
+        lang: undefined,
+        skipDlcs: undefined,
+        wait: false,
+        installed: false
+      },
       json: true
     })
+  })
+
+  test('parses --skip-dlcs', () => {
+    expect(
+      parseCli(['install', 'gog', 'g1', '--skip-dlcs']).opts.skipDlcs
+    ).toBe(true)
   })
 
   test('parses --lang', () => {

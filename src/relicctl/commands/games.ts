@@ -36,7 +36,7 @@ export async function installParams(
   ctx: Ctx,
   appName: string,
   runner: Runner,
-  { path, lang }: Pick<Options, 'path' | 'lang'>
+  { path, lang, skipDlcs }: Pick<Options, 'path' | 'lang' | 'skipDlcs'>
 ): Promise<InstallParams> {
   const gameInfo = await loadGame(ctx, appName, runner)
   const settings = await ctx.api.call<{ defaultInstallPath: string }>(
@@ -48,7 +48,9 @@ export async function installParams(
     gameInfo,
     path: path ?? settings.defaultInstallPath,
     platformToInstall: platformFor(gameInfo),
-    installLanguage: lang
+    installLanguage: lang,
+    // No list means every DLC; an empty one means none
+    installDlcs: skipDlcs ? [] : undefined
   }
 }
 

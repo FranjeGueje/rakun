@@ -16,7 +16,7 @@ export const HELP = `Uso: relicctl <comando> [argumentos]
   import-relic                    copia las sesiones de Relic
   library [tienda] [--installed]  lista la biblioteca
   refresh [tienda]                actualiza la biblioteca y espera
-  install <tienda> <appName> [--path DIR] [--lang CODE]
+  install <tienda> <appName> [--path DIR] [--lang CODE] [--skip-dlcs]
   update | repair | uninstall <tienda> <appName>
   queue                           cola de descargas
   events                          sigue los eventos de relicd
@@ -50,6 +50,7 @@ export function parseCli(argv: string[]) {
       json: { type: 'boolean' },
       path: { type: 'string' },
       lang: { type: 'string' },
+      'skip-dlcs': { type: 'boolean' },
       'no-wait': { type: 'boolean' },
       installed: { type: 'boolean' },
       help: { type: 'boolean', short: 'h' }
@@ -58,6 +59,7 @@ export function parseCli(argv: string[]) {
   const opts: Options = {
     path: values.path,
     lang: values.lang,
+    skipDlcs: values['skip-dlcs'],
     wait: !values['no-wait'],
     installed: !!values.installed
   }

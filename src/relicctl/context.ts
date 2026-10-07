@@ -14,6 +14,7 @@ export type Ctx = {
 export type Options = {
   path?: string
   lang?: string
+  skipDlcs?: boolean
   wait: boolean
   installed: boolean
 }

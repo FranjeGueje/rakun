@@ -44,6 +44,7 @@ import { Game, RemoveArgs } from 'common/types/game_manager'
 import axios, { AxiosError } from 'axios'
 import { isOnline, runOnceWhenOnline } from 'backend/online_monitor'
 import { downloadArgs } from './download_args'
+import { wantsDlcs } from '../dlcs'
 import {
   defaultInstallLanguage,
   gogdlConfigPath,
@@ -348,6 +349,7 @@ export default class GOGGame implements Game {
         : installInfo.game.version,
       appName: this.id,
       installedDLCs: installDlcs,
+      installedWithDLCs: wantsDlcs(installDlcs),
       language: installLanguage,
       versionEtag: isLinuxNative ? '' : installInfo.manifest.versionEtag,
       buildId: isLinuxNative ? '' : installInfo.game.buildId,
