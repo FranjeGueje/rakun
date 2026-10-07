@@ -23,6 +23,10 @@ import {
   installStore as nileInstallStore,
   libraryStore as nileLibraryStore
 } from './storeManagers/nile/electronStores'
+import {
+  installInfoStore as zoomInstallInfoStore,
+  libraryStore as zoomLibraryStore
+} from './storeManagers/zoom/electronStores'
 import { formatBytes } from 'common/formatBytes'
 import { showDialogBoxModalAuto, askQuestion } from './dialog/dialog'
 import { sendFrontendMessage } from './ipc'
@@ -261,6 +265,10 @@ function clearCache(library?: Runner) {
   if (library === 'nile' || !library) {
     nileInstallStore.clear()
     nileLibraryStore.clear()
+  }
+  if (library === 'zoom' || !library) {
+    zoomInstallInfoStore.clear()
+    zoomLibraryStore.clear()
   }
 
   if (library === 'gog' || !library) GOGapiInfoCache.clear()
