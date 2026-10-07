@@ -279,6 +279,11 @@ Check it with `relicctl status` (or `scripts/smoke.sh`, or `curl http://127.0.0.
   (relicd picks the first `*proton*` folder it finds; change it with
   `relicctl config protonPath <folder>`, the folder must contain the `proton` script).
   Zoom Platform's Windows installers also need it.
+- For Zoom Platform's **Windows** games, a screen: its installer is a normal Windows
+  wizard (licence, options) that opens in a window through Proton, so relicd has to
+  run with a `DISPLAY` (desktop mode, or a session that has one). Without it the
+  install fails and relicd reports the error. Zoom support is **experimental**; Zoom's
+  Linux installers do not need a screen.
 
 ### Language
 

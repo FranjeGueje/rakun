@@ -118,6 +118,10 @@ waiting for its next check), `getSystemInfo`, `getLogContent` (see Logs below;
 `getGogdlVersion`, `getNileVersion`. `getGOGLinuxInstallersLangs(appName)` lists
 the languages of a GOG Linux installer. `getMaxCpus` returns the number of CPUs.
 
+Zoom Platform's Windows installers (experimental) open a window through Proton:
+relicd needs a `DISPLAY` for them (desktop mode) and `protonPath` set, or the
+install ends in error.
+
 relicd has no translations: the text of its messages and of `showDialog` is in English.
 
 ## Logs

@@ -324,10 +324,14 @@ export default class ZoomGame implements Game {
       const protonPath = GlobalConfig.get().getSettings().protonPath
       if (!protonPath) {
         logWarning(
-          'No GE-Proton configured for Windows installer. Set it in Settings > General.',
+          'No GE-Proton configured for Windows installer. Set it with: relicctl config protonPath <folder>',
           LogPrefix.Zoom
         )
-        installResult = { stdout: '', stderr: 'No GE-Proton configured' }
+        installResult = {
+          stdout: '',
+          stderr: 'No GE-Proton configured',
+          error: 'No GE-Proton configured'
+        }
       } else {
         logInfo(
           `Running zoom-platform.sh: PROTONPATH=${protonPath} ${zoomPlatformScriptPath} -i ${downloadPath} -d ${installPath}`,
@@ -352,6 +356,7 @@ export default class ZoomGame implements Game {
             ['Windows installer failed:', scriptResult.stderr],
             LogPrefix.Zoom
           )
+          installResult.error = `zoom-platform.sh failed (code ${scriptResult.code})`
         }
       }
     }
