@@ -18,7 +18,7 @@ export function removeAllBut(folder: string, keep: string) {
  * Forgets sessions, settings, the queue and per-game data. Installed games and
  * the API credentials stay. The caller stops relicd afterwards.
  */
-export function resetRelic() {
+function resetRelic() {
   removeAllBut(appFolder, credentialsPath)
   rmSync(relicGamesPath, { recursive: true, force: true })
 }

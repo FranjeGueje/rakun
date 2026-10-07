@@ -95,7 +95,7 @@ function replaceSymlink(target: string, linkPath: string): void {
   symlinkSync(target, linkPath)
 }
 
-export async function prepareUmuPrefix(
+async function prepareUmuPrefix(
   gameInfo: GameInfo,
   installPath: string,
   steamAppId: number
@@ -132,7 +132,7 @@ export async function prepareUmuPrefix(
     logInfo(`Prefix created for Steam ID ${steamAppId}`, LOG_PREFIX)
   } catch (error) {
     logError(
-      `Failed to prepare prefix for Steam ID ${steamAppId}: ${error}`,
+      `Failed to prepare prefix for Steam ID ${steamAppId}: ${String(error)}`,
       LOG_PREFIX
     )
     return

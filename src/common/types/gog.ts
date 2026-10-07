@@ -53,7 +53,7 @@ export interface GOGDLInstallInfo {
   }
 }
 
-export interface DLCInfo {
+interface DLCInfo {
   app_name: string
   title: string
   perLangSize: PerLanguageSize

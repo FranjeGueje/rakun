@@ -50,17 +50,6 @@ interface About {
   shortDescription: string
 }
 
-export type Release = {
-  type: 'stable' | 'beta'
-  html_url: string
-  name: string
-  tag_name: string
-  published_at: string
-  prerelease: boolean
-  id: number
-  body?: string
-}
-
 export interface AppSettings {
   altGogdlBin: string
   altLegendaryBin: string
@@ -133,7 +122,7 @@ export interface GameInfo {
   }
 }
 
-export type Status =
+type Status =
   | 'installing'
   | 'importing'
   | 'updating'
@@ -213,8 +202,6 @@ export interface Reqs {
   title: string
 }
 
-export type SyncType = 'Download' | 'Upload' | 'Force download' | 'Force upload'
-
 export type UserInfo = {
   account_id: string
   displayName: string
@@ -285,18 +272,6 @@ export interface CallRunnerOptions {
   onOutput?: (output: string, child: ChildProcess) => void
   abortId?: string
   cwd?: string
-}
-
-export interface WrapperEnv {
-  appName: string
-  appRunner: Runner
-}
-
-export type RefreshOptions = {
-  checkForUpdates?: boolean
-  fullRefresh?: boolean
-  library?: Runner | 'all'
-  runInBackground?: boolean
 }
 
 export type InstallPlatform =

@@ -36,7 +36,7 @@ async function importSession(runner: Runner): Promise<SessionImportResult> {
   return 'invalid'
 }
 
-export async function importSessions(): Promise<SessionsImport> {
+async function importSessions(): Promise<SessionsImport> {
   const result = {} as SessionsImport
   for (const runner of RUNNERS) {
     result[runner] = await importSession(runner)

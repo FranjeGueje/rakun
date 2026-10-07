@@ -166,7 +166,7 @@ function handleExit() {
   process.exit(0)
 }
 
-export async function askForceUninstall(game: Game) {
+async function askForceUninstall(game: Game) {
   const { title } = game.getGameInfo()
   const response = await askQuestion({
     title,
@@ -710,7 +710,6 @@ export const writeConfig = (config: Partial<AppSettings>) => {
 
 export {
   errorHandler,
-  execAsync,
   handleExit,
   isEpicServiceOffline,
   removeSpecialcharacters,

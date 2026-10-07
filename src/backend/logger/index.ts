@@ -88,7 +88,6 @@ export {
   logInfo,
   logWarning,
   logError,
-  getRunnerLogWriter,
   logGamesList,
   createGameLogWriter,
   LogPrefix,

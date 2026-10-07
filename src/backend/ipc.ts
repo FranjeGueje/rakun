@@ -105,7 +105,6 @@ function sendFrontendMessage<ChannelName extends keyof FrontendMessages>(
   return true
 }
 
-export type { IpcEvent }
 export {
   addListener,
   addOneTimeListener,

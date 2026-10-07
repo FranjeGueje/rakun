@@ -148,7 +148,7 @@ interface GameInstallInfo {
   version: string
 }
 
-export interface DLCInfo {
+interface DLCInfo {
   app_name: string
   title: string
   is_installed?: boolean
@@ -203,10 +203,3 @@ interface TagInfo {
   name: string
   version: number
 } */
-
-export interface SelectiveDownload {
-  tags: Array<string>
-  name: string
-  description: string
-  required?: boolean
-}

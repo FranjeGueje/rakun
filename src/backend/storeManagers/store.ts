@@ -21,7 +21,7 @@ export interface StoreSession {
 }
 
 /** The two-step login with no embedded browser: show a URL, take back a code */
-export interface StoreLogin {
+interface StoreLogin {
   /** Parameter of the final address that carries the code */
   urlParam: string
   start: () => Promise<LoginInfo>
