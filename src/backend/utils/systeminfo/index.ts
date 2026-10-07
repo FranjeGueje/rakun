@@ -53,7 +53,6 @@ interface SystemInformation {
     version: string
   }
   steamDeckInfo: SteamDeckInfo
-  isAppImage: boolean
   softwareInUse: {
     rakunVersion: string
     legendaryVersion: string
@@ -102,7 +101,6 @@ async function getSystemInfo(cache = true): Promise<SystemInformation> {
       ...detailedOsInfo
     },
     steamDeckInfo: deckInfo,
-    isAppImage: !!process.env.APPIMAGE,
     softwareInUse: {
       rakunVersion: getRakunVersion(),
       legendaryVersion: legendaryVersion,
@@ -114,36 +112,32 @@ async function getSystemInfo(cache = true): Promise<SystemInformation> {
   return sysinfo
 }
 
-function formatSystemInfo(info: SystemInformation): string {
-  const isLinux: boolean = process.platform === 'linux'
-  return `CPU: ${info.CPU.cores}x ${info.CPU.model}
-Memory: ${formatBytes(info.memory.total)} (used: ${formatBytes(info.memory.used)})
-GPUs:
-${info.GPUs.map(
-  (gpu, index) => `  GPU ${index}:
-    Name: ${gpu.vendorString} ${gpu.deviceString}
-    IDs: D=${gpu.deviceId} V=${gpu.vendorId} SD=${gpu.subdeviceId} SV=${gpu.subvendorId}
-    Driver: ${gpu.driverVersion}`
-).join('\n')}
-OS: ${info.OS.name} ${info.OS.version} (${info.OS.platform})
-
-The current system is${info.steamDeckInfo.isDeck ? '' : ' not'} a Steam Deck${
-    info.steamDeckInfo.isDeck
-      ? ` (model: ${info.steamDeckInfo.model}) in ${info.steamDeckInfo.mode} mode`
-      : ''
-  }
-${
-  isLinux
-    ? `We are${info.isAppImage ? '' : ' not'} running from an AppImage
-`
-    : ''
-}
-Software Versions:
-  Rakun: ${info.softwareInUse.rakunVersion}
-  Legendary: ${info.softwareInUse.legendaryVersion}
-  gogdl: ${info.softwareInUse.gogdlVersion}
-  Nile: ${info.softwareInUse.nileVersion}`
+/** What the log says about the system, one entry per line so that each one carries the log prefix */
+function systemInfoLines(info: SystemInformation): string[] {
+  const { steamDeckInfo: deck, softwareInUse: software } = info
+  return [
+    `CPU: ${info.CPU.cores}x ${info.CPU.model}`,
+    `Memory: ${formatBytes(info.memory.total)} (used: ${formatBytes(info.memory.used)})`,
+    'GPUs:',
+    ...info.GPUs.flatMap((gpu, index) => [
+      `  GPU ${index}:`,
+      `    Name: ${gpu.vendorString} ${gpu.deviceString}`,
+      `    IDs: D=${gpu.deviceId} V=${gpu.vendorId} SD=${gpu.subdeviceId} SV=${gpu.subvendorId}`,
+      `    Driver: ${gpu.driverVersion}`
+    ]),
+    `OS: ${info.OS.name} ${info.OS.version} (${info.OS.platform})`,
+    ...(deck.isDeck
+      ? [
+          `The current system is a Steam Deck (model: ${deck.model}) in ${deck.mode} mode`
+        ]
+      : []),
+    'Software Versions:',
+    `  Rakun: ${software.rakunVersion}`,
+    `  Legendary: ${software.legendaryVersion}`,
+    `  gogdl: ${software.gogdlVersion}`,
+    `  Nile: ${software.nileVersion}`
+  ]
 }
 
-export { getSystemInfo, formatSystemInfo }
+export { getSystemInfo, systemInfoLines }
 export type { SystemInformation, GPUInfo }

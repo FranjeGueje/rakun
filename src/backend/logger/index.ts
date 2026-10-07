@@ -1,4 +1,4 @@
-import { formatSystemInfo, getSystemInfo } from 'backend/utils/systeminfo'
+import { getSystemInfo, systemInfoLines } from 'backend/utils/systeminfo'
 import { backendEvents } from 'backend/backend_events'
 
 import { LogPrefix, RunnerToLogPrefixMap } from './constants'
@@ -33,6 +33,17 @@ function getRunnerLogWriter(runner: Runner) {
   return newWriter
 }
 
+/** One entry per line, so that every line of the system information has the prefix */
+async function logSystemInfo() {
+  const lines = [
+    'System Information:',
+    ...systemInfoLines(await getSystemInfo())
+  ]
+  // One after the other: written together they could come out of order
+  for (const line of lines)
+    await rakunLogWriter.logInfo(line, LogPrefix.Backend)
+}
+
 /** Writes the games a store just listed to that store's own log */
 function logGamesList(runner: Runner, games: GameInfo[]) {
   void getRunnerLogWriter(runner).logInfo(gamesListText(games))
@@ -65,10 +76,7 @@ function init() {
 
   rakunLogWriter = new LogWriter(getLogFilePath({}), true, false)
 
-  void rakunLogWriter.logInfo(
-    ['System Information:', getSystemInfo().then(formatSystemInfo)],
-    LogPrefix.Backend
-  )
+  void logSystemInfo()
 
   backendEvents.on('settingChanged', ({ key, oldValue, newValue }) =>
     rakunLogWriter.logInfo([

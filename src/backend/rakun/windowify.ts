@@ -183,7 +183,7 @@ export function syncMountBin(): void {
     if (!source.isFile() || isUpToDate(source, targetPath)) continue
 
     copyFileSync(sourcePath, targetPath)
-    logInfo(`syncMountBin: ${file} copiado`, LOG_PREFIX)
+    logInfo(`syncMountBin: ${file} copied`, LOG_PREFIX)
     copied++
   }
 
