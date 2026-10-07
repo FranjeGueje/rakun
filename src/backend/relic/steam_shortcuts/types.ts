@@ -1,4 +1,6 @@
-export type GameRunner = 'legendary' | 'gog' | 'nile' | 'zoom'
+import type { Runner } from 'common/types'
+
+export type GameRunner = Runner
 
 export interface AddGameToSteamOptions {
   gameName: string

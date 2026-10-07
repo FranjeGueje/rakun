@@ -252,7 +252,7 @@ function removeSpecialcharacters(text: string): string {
   return text.replaceAll(regexp, '')
 }
 
-function clearCache(library?: 'gog' | 'legendary' | 'nile' | 'zoom') {
+function clearCache(library?: Runner) {
   if (library === 'gog' || !library) {
     GOGlibraryStore.clear()
     GOGinstallInfoStore.clear()

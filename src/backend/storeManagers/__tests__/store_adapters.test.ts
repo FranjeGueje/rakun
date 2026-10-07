@@ -2,7 +2,7 @@ import type { GameInfo } from 'common/types'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { getStore, stores } from '..'
+import { getStore, RUNNERS, stores } from '..'
 import { tokenPath } from '../zoom/constants'
 import { LegendaryUser } from '../legendary/user'
 import { GOGUser } from '../gog/user'
@@ -10,6 +10,7 @@ import { NileUser } from '../nile/user'
 import { ZoomUser } from '../zoom/user'
 import * as legendaryStores from '../legendary/electronStores'
 import * as gogStores from '../gog/electronStores'
+import * as nileStores from '../nile/electronStores'
 import * as zoomStores from '../zoom/electronStores'
 
 jest.mock('backend/constants/paths', () => {
@@ -72,15 +73,17 @@ const game = (app_name: string, extra: object = {}) =>
   ({ app_name, title: app_name, is_installed: false, ...extra }) as GameInfo
 
 describe('store identity', () => {
-  test('each store has its own id, a lower-case name and a label', () => {
+  test('the stores relicd ships with keep their id, name and label', () => {
     expect(
       Object.values(stores).map(({ id, name, label }) => [id, name, label])
-    ).toEqual([
-      ['legendary', 'epic', 'Epic'],
-      ['gog', 'gog', 'GOG'],
-      ['nile', 'amazon', 'Amazon'],
-      ['zoom', 'zoom', 'Zoom']
-    ])
+    ).toEqual(
+      expect.arrayContaining([
+        ['legendary', 'epic', 'Epic'],
+        ['gog', 'gog', 'GOG'],
+        ['nile', 'amazon', 'Amazon'],
+        ['zoom', 'zoom', 'Zoom']
+      ])
+    )
   })
 })
 
@@ -283,5 +286,93 @@ describe('Zoom', () => {
       error: 'The store rejected the login'
     })
     expect(ZoomUser.getUserDetails).not.toHaveBeenCalled()
+  })
+})
+
+// What every store has to offer, whatever it wraps. A new store is added to
+// `stores` and this is what it has to pass.
+describe('store contract', () => {
+  beforeEach(() => {
+    jest.mocked(LegendaryUser.isLoggedIn).mockReturnValue(false)
+    jest.mocked(GOGUser.isLoggedIn).mockReturnValue(false)
+    jest.mocked(NileUser.isLoggedIn).mockReturnValue(false)
+    jest.mocked(legendaryStores.libraryStore.get).mockReturnValue([])
+    jest.mocked(nileStores.libraryStore.get).mockReturnValue([])
+    jest.mocked(gogStores.libraryStore.get).mockReturnValue([])
+    jest.mocked(gogStores.installedGamesStore.get).mockReturnValue([])
+    jest.mocked(zoomStores.libraryStore.get).mockReturnValue([])
+    jest.mocked(zoomStores.installedGamesStore.get).mockReturnValue([])
+  })
+
+  const all = Object.entries(stores)
+
+  test('the registry is keyed by id and RUNNERS lists every store', () => {
+    expect(RUNNERS).toEqual(Object.keys(stores))
+    all.forEach(([key, store]) => expect(store.id).toBe(key))
+  })
+
+  test('names and labels are unique, and names are easy to type', () => {
+    const names = all.map(([, store]) => store.name)
+    const labels = all.map(([, store]) => store.label)
+    expect(new Set(names).size).toBe(names.length)
+    expect(new Set(labels).size).toBe(labels.length)
+    names.forEach((name) => expect(name).toMatch(/^[a-z0-9]+$/))
+    labels.forEach((label) => expect(label.trim()).not.toBe(''))
+  })
+
+  test.each(all)(
+    '%s: the library manager has the whole interface',
+    (_id, s) => {
+      const methods = [
+        'init',
+        'getGame',
+        'refresh',
+        'getGameInfo',
+        'getInstallInfo',
+        'listUpdateableGames',
+        'changeGameInstallPath',
+        'changeVersionPinnedStatus'
+      ]
+      methods.forEach((method) =>
+        expect(
+          typeof (s.library as unknown as Record<string, unknown>)[method]
+        ).toBe('function')
+      )
+    }
+  )
+
+  test.each(all)('%s: reads its library as an array', (_id, s) => {
+    expect(Array.isArray(s.readLibrary())).toBe(true)
+  })
+
+  test.each(all)(
+    '%s: knows who is logged in without asking the store',
+    (_id, s) => {
+      expect(typeof s.session.account().loggedIn).toBe('boolean')
+    }
+  )
+
+  test.each(all)(
+    '%s: its session files are plain names that include the main one',
+    (_id, s) => {
+      const dir = mkdtempSync(join(tmpdir(), 'relicd-contract-'))
+      writeFileSync(join(dir, s.session.main), 'x')
+
+      const files = s.session.files(dir)
+
+      expect(files).toContain(s.session.main)
+      files.forEach((file) => expect(file).not.toMatch(/[\\/]/))
+      rmSync(dir, { recursive: true })
+    }
+  )
+
+  test.each(all)('%s: can log in and out', (_id, s) => {
+    expect(s.login.urlParam).not.toBe('')
+    ;[
+      s.login.start,
+      s.login.submit,
+      s.session.logout,
+      s.session.isAccepted
+    ].forEach((fn) => expect(typeof fn).toBe('function'))
   })
 })

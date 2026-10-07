@@ -101,7 +101,7 @@ export interface ExtraInfo {
 export type GameConfigVersion = 'auto' | 'v0' | 'v0.1'
 
 export interface GameInfo {
-  runner: 'legendary' | 'gog' | 'nile' | 'zoom'
+  runner: Runner
   store_url?: string
   app_name: string
   art_cover: string
