@@ -2,6 +2,7 @@ import { addHandler, addListener } from '../ipc'
 import {
   addToQueue,
   cancelCurrentDownload,
+  clearFinished,
   getQueueInformation,
   pauseCurrentDownload,
   removeFromQueue,
@@ -62,6 +63,7 @@ addHandler('updateGame', async (_e, args) => {
 })
 
 addListener('removeFromDMQueue', (e, appName) => removeFromQueue(appName))
+addListener('clearFinishedDMQueue', () => clearFinished())
 addListener('resumeCurrentDownload', () => resumeCurrentDownload())
 addListener('pauseCurrentDownload', () => pauseCurrentDownload())
 addListener('cancelDownload', (e, removeDownloaded) =>

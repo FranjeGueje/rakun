@@ -12,6 +12,7 @@ import {
   update
 } from '../commands/games'
 import { parseCallArgs, call } from '../commands/call'
+import { cancel, pause, queue, resume } from '../commands/queue'
 import { logs } from '../commands/logs'
 import { config, parseValue, settingKey } from '../commands/config'
 import { parseCli, runCli } from '../cli'
@@ -503,5 +504,21 @@ describe('logs', () => {
     const { ctx, lines } = fakeCtx({ getLogContent: '' })
     await logs(ctx, [], opts)
     expect(lines).toEqual(['No hay registro'])
+  })
+})
+
+describe('queue control', () => {
+  test('pause, resume, cancel and clear call their channel', async () => {
+    const { ctx, calls } = fakeCtx()
+    await pause(ctx, [], opts)
+    await resume(ctx, [], opts)
+    await cancel(ctx, [], { ...opts, removeFiles: true })
+    await queue(ctx, ['clear'], opts)
+    expect(calls).toEqual([
+      ['pauseCurrentDownload', []],
+      ['resumeCurrentDownload', []],
+      ['cancelDownload', [true]],
+      ['clearFinishedDMQueue', []]
+    ])
   })
 })

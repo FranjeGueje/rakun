@@ -62,7 +62,9 @@ or update with that `branch`.
 
 **Download queue:** `getDMQueueInformation` → `{elements, finished, state}`,
 `pauseCurrentDownload`, `resumeCurrentDownload`, `cancelDownload`,
-`removeFromDMQueue`.
+`removeFromDMQueue`, `clearFinishedDMQueue` (empties the `finished` list; installed
+games stay). `relicctl pause`, `resume`, `cancel [--remove-files]` and
+`queue clear` wrap them.
 
 **Accounts:** `getStores` → `[{id, name, label}]` (the stores relicd supports, in
 the order to show them; `id` is the `runner` every channel takes, `name` the

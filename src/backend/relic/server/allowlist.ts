@@ -35,6 +35,7 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   'resumeCurrentDownload',
   'cancelDownload',
   'removeFromDMQueue',
+  'clearFinishedDMQueue',
   // Accounts
   'getStores',
   'getAccounts',

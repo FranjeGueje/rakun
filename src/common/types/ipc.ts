@@ -30,6 +30,7 @@ import type { GetLogFileArgs } from 'backend/logger/paths'
 // ts-prune-ignore-next
 interface SyncIPCFunctions {
   removeFromDMQueue: (appName: string) => void
+  clearFinishedDMQueue: () => void
   'set-connectivity-online': () => void
   setSetting: (args: { key: keyof AppSettings; value: unknown }) => void
   resumeCurrentDownload: () => void

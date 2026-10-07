@@ -16,6 +16,7 @@ export type Options = {
   lang?: string
   type?: string
   skipDlcs?: boolean
+  removeFiles?: boolean
   wait: boolean
   installed: boolean
 }

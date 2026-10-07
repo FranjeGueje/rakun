@@ -35,7 +35,7 @@ jest.mock('backend/downloadmanager/utils', () => ({
   updateQueueElement: jest.fn()
 }))
 
-import { initQueue } from '../downloadqueue'
+import { clearFinished, initQueue } from '../downloadqueue'
 import { installQueueElement } from '../utils'
 
 const element = {
@@ -59,5 +59,15 @@ describe('initQueue', () => {
     await Promise.all([first, second])
 
     expect(installQueueElement).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('clearFinished', () => {
+  test('empties the finished list and keeps the queue', () => {
+    store['finished'] = [element]
+    store['queue'] = [element]
+    clearFinished()
+    expect(store['finished']).toEqual([])
+    expect(store['queue']).toEqual([element])
   })
 })

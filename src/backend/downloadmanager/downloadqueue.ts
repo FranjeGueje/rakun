@@ -237,6 +237,15 @@ function cancelCurrentDownload({ removeDownloaded = false }) {
   }
 }
 
+function clearFinished() {
+  downloadManager.set('finished', [])
+  sendFrontendMessage(
+    'changedDMQueueInformation',
+    downloadManager.get('queue', []),
+    queueState
+  )
+}
+
 function pauseCurrentDownload() {
   if (currentElement) {
     stopCurrentDownload()
@@ -295,6 +304,7 @@ export {
   removeFromQueue,
   getQueueInformation,
   cancelCurrentDownload,
+  clearFinished,
   pauseCurrentDownload,
   resumeCurrentDownload,
   isRunning
