@@ -10,6 +10,10 @@ repository.
 - `rakunctl update [store [app]]`: with no arguments it updates every installed game that has a new version, with a store only that store's; a failure does not stop the rest. New channel `getUpdateableGames`.
 - `rakunctl install-service` and `uninstall-service`: rakun as a systemd user service (no `DISPLAY`: Zoom installers do not work with it).
 - `AUTHORS` and a note on the origin (Heroic → Relic → rakun); the git history is kept.
+- `rakunctl versions <store> <appName>` lists the builds and branches of a GOG
+  game, and `install` / `update` of one GOG game take `--build ID` and
+  `--branch NAME`: the game stays on that version (pinned) until it is updated
+  by name. Epic, Amazon and Zoom have no equivalent in the backend.
 - Games already on the disk can be imported: `rakunctl import <store> <appName>
 <folder>` and, in the web, "Import from a folder" in the sheet of a game that
   is not installed (GOG, Epic and Amazon; Zoom has no import). Both check that

@@ -9,7 +9,8 @@ import {
   install,
   repair,
   uninstall,
-  update
+  update,
+  versions
 } from './commands/games'
 import { library, refresh } from './commands/library'
 import { cancel, pause, queue, resume } from './commands/queue'
@@ -49,13 +50,16 @@ Library
 
 Games
   install <store> <appName> [--path DIR] [--lang CODE] [--skip-dlcs]
-          [--platform windows|linux]
+          [--platform windows|linux] [--build ID] [--branch NAME]
                                     Install a game (a game with both builds gets
-                                    the Linux one unless --platform says otherwise)
+                                    the Linux one unless --platform says otherwise;
+                                    --build and --branch: GOG only, see versions)
+  versions <store> <appName>        List the builds and branches of a GOG game
   import <store> <appName> <folder> [--platform windows|linux]
                                     Register a game that is already in a folder
   update [store [appName]]          Update one game, a store's games, or every
-                                    game with a new version
+                                    game with a new version (one GOG game also
+                                    takes --build ID and --branch NAME)
   repair <store> <appName>          Repair a game
   uninstall <store> <appName>       Uninstall a game and delete its files
 
@@ -100,6 +104,7 @@ export const commands: Record<string, Command> = {
   refresh,
   install,
   import: importFolder,
+  versions,
   update,
   repair,
   uninstall,
@@ -126,6 +131,8 @@ export function parseCli(argv: string[]) {
       type: { type: 'string' },
       'skip-dlcs': { type: 'boolean' },
       platform: { type: 'string' },
+      build: { type: 'string' },
+      branch: { type: 'string' },
       'remove-files': { type: 'boolean' },
       yes: { type: 'boolean' },
       force: { type: 'boolean' },
@@ -143,6 +150,8 @@ export function parseCli(argv: string[]) {
     type: values.type,
     skipDlcs: values['skip-dlcs'],
     platform: values.platform,
+    build: values.build,
+    branch: values.branch,
     removeFiles: values['remove-files'],
     yes: values.yes,
     force: values.force,

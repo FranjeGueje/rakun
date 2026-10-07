@@ -18,6 +18,9 @@ export type Options = {
   skipDlcs?: boolean
   /** Only for `install`: the build of a game that has Windows and Linux ones */
   platform?: string
+  /** Only for `install` and `update` of one GOG game: a build and a branch of it */
+  build?: string
+  branch?: string
   removeFiles?: boolean
   yes?: boolean
   force?: boolean

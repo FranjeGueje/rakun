@@ -9,11 +9,12 @@ import type {
 } from 'common/types'
 import { resolve } from 'path'
 import type { UpdateableGame } from 'common/rakun/updates'
+import type { GogInstallInfo } from 'common/types/gog'
 import type { ApiEvent } from '../client'
 import { CliError } from '../client'
-import { progressLine, statusLine } from '../format'
+import { progressLine, statusLine, table } from '../format'
 import { parseStore } from '../stores'
-import { Command, Ctx, Options, requireArg } from '../context'
+import { Command, Ctx, Options, requireArg, show } from '../context'
 
 const FINAL_STATUSES = new Set(['done', 'error', 'canceled'])
 
@@ -54,6 +55,72 @@ async function loadGame(ctx: Ctx, appName: string, runner: Runner) {
   return game
 }
 
+type Version = Pick<Options, 'build' | 'branch'>
+
+const GOG_ONLY = 'Choosing a version is only possible on GOG'
+
+/** What GOG says about a game: its builds (of a branch) and its branches */
+async function installInfoOf(
+  ctx: Ctx,
+  appName: string,
+  { build, branch }: Version = {}
+): Promise<GogInstallInfo | null> {
+  // GOG lists the builds of Windows; arguments that are not set are not sent
+  const extra = build || branch ? [build ?? '', branch ?? ''] : []
+  return ctx.api.call<GogInstallInfo | null>(
+    'getInstallInfo',
+    appName,
+    'gog',
+    'windows',
+    ...extra
+  )
+}
+
+/** Refuses a version the game does not have; resolves with what to send (nothing when none was asked) */
+async function checkVersion(
+  ctx: Ctx,
+  game: GameInfo,
+  { build, branch }: Version
+): Promise<Version> {
+  if (!build && !branch) return {}
+  if (game.runner !== 'gog') throw new CliError(GOG_ONLY)
+  if (build) {
+    const info = await installInfoOf(ctx, game.app_name, { branch })
+    const listed = info?.manifest.builds ?? []
+    if (!listed.some((item) => item.build_id === build))
+      throw new CliError(
+        `${game.title} has no build "${build}": see rakunctl versions gog ${game.app_name}`
+      )
+  }
+  return { ...(build ? { build } : {}), ...(branch ? { branch } : {}) }
+}
+
+/** `versions`: the builds and branches of a GOG game, the current one marked */
+export const versions: Command = async (ctx, args) => {
+  const [runner, appName] = await gameArgs(ctx, args)
+  if (runner !== 'gog') throw new CliError(GOG_ONLY)
+  const game = await loadGame(ctx, appName, runner)
+  const info = await installInfoOf(ctx, appName)
+  show(ctx, info, (value) => versionsText(game.title, value))
+}
+
+function versionsText(title: string, info: GogInstallInfo | null): string {
+  const builds = info?.manifest.builds ?? []
+  if (!info || !builds.length) return `No builds listed for ${title}`
+  const rows = builds.map((item) => [
+    item.build_id + (item.build_id === info.game.buildId ? ' *' : ''),
+    item.version_name,
+    item.branch ?? 'default',
+    item.date_published.slice(0, 10)
+  ])
+  const branches = info.game.branches.filter(Boolean).join(', ')
+  return [
+    table([['BUILD ID', 'VERSION', 'BRANCH', 'DATE'], ...rows]),
+    '* current build',
+    ...(branches ? [`Branches: ${branches}`] : [])
+  ].join('\n')
+}
+
 export async function installParams(
   ctx: Ctx,
   appName: string,
@@ -62,12 +129,21 @@ export async function installParams(
     path,
     lang,
     skipDlcs,
-    platform
-  }: Pick<Options, 'path' | 'lang' | 'skipDlcs' | 'platform'>
+    platform,
+    build: wantedBuild,
+    branch: wantedBranch
+  }: Pick<
+    Options,
+    'path' | 'lang' | 'skipDlcs' | 'platform' | 'build' | 'branch'
+  >
 ): Promise<InstallParams> {
   const build = parsePlatform(platform)
   const gameInfo = await loadGame(ctx, appName, runner)
   checkBuild(gameInfo, build)
+  const version = await checkVersion(ctx, gameInfo, {
+    build: wantedBuild,
+    branch: wantedBranch
+  })
   const settings = await ctx.api.call<{ defaultInstallPath: string }>(
     'requestAppSettings'
   )
@@ -79,7 +155,8 @@ export async function installParams(
     platformToInstall: platformFor(gameInfo, build),
     installLanguage: lang,
     // No list means every DLC; an empty one means none
-    installDlcs: skipDlcs ? [] : undefined
+    installDlcs: skipDlcs ? [] : undefined,
+    ...version
   }
 }
 
@@ -188,9 +265,14 @@ export const importFolder: Command = async (ctx, args, opts) => {
   ctx.log(`Imported ${game.title}`)
 }
 
-async function updateGame(ctx: Ctx, gameInfo: GameInfo, wait: boolean) {
+async function updateGame(
+  ctx: Ctx,
+  gameInfo: GameInfo,
+  wait: boolean,
+  version: Version = {}
+) {
   const { app_name: appName, runner } = gameInfo
-  const params: UpdateParams = { appName, runner, gameInfo }
+  const params: UpdateParams = { appName, runner, gameInfo, ...version }
   await run(ctx, appName, wait, () => ctx.api.call('updateGame', params), true)
 }
 
@@ -230,11 +312,28 @@ async function updateAll(ctx: Ctx, runner: Runner | undefined, wait: boolean) {
 }
 
 /** `update`: one game, every game of a store, or every game with an update */
+/** To a version: it stays there (pinned), so that updating them all does not move it again */
+async function updateToVersion(ctx: Ctx, game: GameInfo, opts: Options) {
+  const version = await checkVersion(ctx, game, opts)
+  await updateGame(ctx, game, opts.wait, version)
+  if (version.build && opts.wait)
+    await ctx.api.call(
+      'changeGameVersionPinnedStatus',
+      game.app_name,
+      game.runner,
+      true
+    )
+}
+
 export const update: Command = async (ctx, args, opts) => {
   if (args[1]) {
     const [runner, appName] = await gameArgs(ctx, args)
-    return updateGame(ctx, await loadGame(ctx, appName, runner), opts.wait)
+    return updateToVersion(ctx, await loadGame(ctx, appName, runner), opts)
   }
+  if (opts.build || opts.branch)
+    throw new CliError(
+      '--build and --branch need one game: rakunctl update <store> <appName>'
+    )
   const runner = args[0]
     ? parseStore(await ctx.stores(), args[0]).id
     : undefined

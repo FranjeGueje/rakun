@@ -11,7 +11,8 @@ import {
   platformFor,
   repair,
   uninstall,
-  update
+  update,
+  versions
 } from '../commands/games'
 import { parseCallArgs, call } from '../commands/call'
 import { cancel, pause, queue, resume } from '../commands/queue'
@@ -282,6 +283,120 @@ describe('game commands', () => {
         parseCli(['install', 'gog', 'g1', '--platform', 'windows']).opts
           .platform
       ).toBe('windows')
+    })
+  })
+
+  describe('versions of a GOG game', () => {
+    const builds = [
+      {
+        build_id: 'b2',
+        version_name: '1.1',
+        branch: null,
+        date_published: '2024-05-02T10:00:00+0000'
+      },
+      {
+        build_id: 'b1',
+        version_name: '1.0',
+        branch: null,
+        date_published: '2024-01-01T10:00:00+0000'
+      }
+    ]
+    const info = (listed: unknown[] = builds) => ({
+      game: {
+        app_name: 'g1',
+        title: 'Game One',
+        buildId: 'b2',
+        branches: [null, 'beta']
+      },
+      manifest: { builds: listed },
+      folder_name: 'g1'
+    })
+    const replies = (listed?: unknown[], extra: Partial<GameInfo> = {}) => ({
+      getGameInfo: game(extra),
+      getInstallInfo: info(listed),
+      requestAppSettings: { defaultInstallPath: '/games' },
+      getDMQueueInformation: { finished: [] },
+      changeGameVersionPinnedStatus: null
+    })
+    const sentTo = (calls: [string, unknown[]][], channel: string) =>
+      calls.find(([c]) => c === channel)?.[1][0] as Record<string, unknown>
+
+    test('lists the builds, marks the current one and names the branches', async () => {
+      const { ctx, lines } = fakeCtx(replies())
+      await versions(ctx, ['gog', 'g1'], opts)
+      expect(lines[0]).toMatch(/BUILD ID\s+VERSION\s+BRANCH\s+DATE/)
+      expect(lines[0]).toMatch(/b2 \*\s+1\.1\s+default\s+2024-05-02/)
+      expect(lines[0]).toMatch(/b1\s+1\.0\s+default\s+2024-01-01/)
+      expect(lines[0]).toContain('* current build')
+      expect(lines[0]).toContain('Branches: beta')
+    })
+
+    test('says so when the game lists no builds, and refuses the other stores', async () => {
+      const none = fakeCtx(replies([]))
+      await versions(none.ctx, ['gog', 'g1'], opts)
+      expect(none.lines).toEqual(['No builds listed for Game One'])
+
+      const epic = fakeCtx(replies(undefined, { runner: 'legendary' }))
+      await expect(versions(epic.ctx, ['epic', 'g1'], opts)).rejects.toThrow(
+        'Choosing a version is only possible on GOG'
+      )
+    })
+
+    test('install --build sends the build and the branch', async () => {
+      const { ctx, calls } = fakeCtx(replies(), [update1('done')])
+      await install(ctx, ['gog', 'g1'], {
+        ...opts,
+        build: 'b1',
+        branch: 'beta'
+      })
+      expect(sentTo(calls, 'install')).toMatchObject({
+        build: 'b1',
+        branch: 'beta'
+      })
+    })
+
+    test('a build the game does not have is refused before installing', async () => {
+      const { ctx, calls } = fakeCtx(replies())
+      await expect(
+        install(ctx, ['gog', 'g1'], { ...opts, build: 'nope' })
+      ).rejects.toThrow(
+        'Game One has no build "nope": see rakunctl versions gog g1'
+      )
+      expect(calls.map(([c]) => c)).not.toContain('install')
+    })
+
+    test('--build is for GOG only', async () => {
+      const { ctx } = fakeCtx(replies(undefined, { runner: 'legendary' }))
+      await expect(
+        install(ctx, ['epic', 'g1'], { ...opts, build: 'b1' })
+      ).rejects.toThrow('Choosing a version is only possible on GOG')
+    })
+
+    test('update --build goes to that build and pins the version', async () => {
+      const { ctx, calls } = fakeCtx(replies(), [update1('done')])
+      await update(ctx, ['gog', 'g1'], { ...opts, build: 'b1' })
+      expect(sentTo(calls, 'updateGame')).toMatchObject({ build: 'b1' })
+      expect(calls.at(-1)).toEqual([
+        'changeGameVersionPinnedStatus',
+        ['g1', 'gog', true]
+      ])
+    })
+
+    test('update --build needs one game', async () => {
+      const { ctx } = fakeCtx(replies())
+      await expect(
+        update(ctx, ['gog'], { ...opts, build: 'b1' })
+      ).rejects.toThrow('need one game')
+      await expect(
+        update(ctx, [], { ...opts, branch: 'beta' })
+      ).rejects.toThrow('need one game')
+    })
+
+    test('parseCli reads --build and --branch', () => {
+      expect(
+        parseCli(['install', 'gog', 'g1', '--build', 'b1', '--branch', 'beta'])
+          .opts
+      ).toMatchObject({ build: 'b1', branch: 'beta' })
     })
   })
 
