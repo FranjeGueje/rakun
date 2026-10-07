@@ -140,10 +140,10 @@ export const repair: Command = async (ctx, args, opts) => {
   )
 }
 
-// Deletes the game's files and its settings: that is what uninstalling means
+// Deletes the game's files: that is what uninstalling means
 export const uninstall: Command = async (ctx, args, opts) => {
   const [runner, appName] = await gameArgs(ctx, args)
   await run(ctx, appName, opts.wait, () =>
-    ctx.api.call('uninstall', appName, runner, true, true)
+    ctx.api.call('uninstall', appName, runner, true)
   )
 }

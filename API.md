@@ -52,7 +52,7 @@ runner, platform, build?, branch?)`, `isGameAvailable`, `isNative`,
 **Install, update, repair, uninstall:** `install(InstallParams)` and
 `updateGame(InstallParams)` put the game in the download queue; when the
 install finishes relicd runs the Steam integration (see README) and the game
-shows up in Steam. `uninstall(appName, runner, removePrefix, removeSetting)`,
+shows up in Steam. `uninstall(appName, runner, removePrefix)`,
 `repair(appName, runner)`, `kill(appName, runner)`, `moveInstall`,
 `importGame`, `changeInstallPath`, `changeGameVersionPinnedStatus`.
 For a GOG private beta branch, `setPrivateBranchPassword(appName, password)`
@@ -82,12 +82,12 @@ Without a SteamGridDB key relicd skips the grid images when it adds a game to
 Steam (it is stored in `config.json`, so a game installed before setting it has
 to be reinstalled to get them).
 
-**Settings and status:** `requestAppSettings`, `requestGameSettings(appName)`,
-`writeConfig({appName, config})`, `setSetting({appName, key, value})`,
+**Settings and status:** `requestAppSettings`, `writeConfig(config)`,
+`setSetting({key, value})` (all settings are global),
 `getRelicVersion`, `getEpicGamesStatus`, `get-connectivity-status`,
 `getSystemInfo`, `getLogContent` (see Logs below), and the helper versions `getLegendaryVersion`,
-`getGogdlVersion`, `getNileVersion`, `getCometVersion`. There are no per-game
-launch settings: relicd does not launch games.
+`getGogdlVersion`, `getNileVersion`, `getCometVersion`. There are no
+per-game settings: relicd does not launch games.
 
 ## Logs
 

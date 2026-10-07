@@ -51,8 +51,7 @@ variable `RELICD_API_FILE`.
 
 `install`, `update`, `repair` y `uninstall` esperan a que acabe y devuelven un
 código distinto de 0 si falla (`--no-wait` para no esperar). `--json` da la
-salida para scripts. `uninstall` borra los ficheros del juego y su
-configuración.
+salida para scripts. `uninstall` borra los ficheros del juego.
 
 ## Formato de los argumentos
 
@@ -178,7 +177,7 @@ baje.
 ## 6. Desinstalar, reparar y otras acciones
 
 ```bash
-scripts/smoke.sh uninstall "[\"$APP\",\"$RUNNER\",false,false]"
+scripts/smoke.sh uninstall "[\"$APP\",\"$RUNNER\",false]"   # true borra también la carpeta del juego
 scripts/smoke.sh repair "[\"$APP\",\"$RUNNER\"]"
 scripts/smoke.sh kill "[\"$APP\",\"$RUNNER\"]"            # aborta lo que esté haciendo
 scripts/smoke.sh pauseCurrentDownload

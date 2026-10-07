@@ -57,10 +57,9 @@ export function autoUpdate(runner: Runner, gamesToUpdate: string[]) {
   const logPrefix = RunnerToLogPrefixMap[runner]
   gamesToUpdate.forEach(async (appName) => {
     const game = libraryManagerMap[runner].getGame(appName)
-    const { ignoreGameUpdates } = await game.getSettings()
     const gameInfo = game.getGameInfo()
     const gameIsAvailable = await game.isGameAvailable()
-    if (!ignoreGameUpdates && gameIsAvailable) {
+    if (gameIsAvailable) {
       logInfo(`Auto-Updating ${gameInfo.title}`, logPrefix)
       const dmQueueElement: DMQueueElement = getDMElement(gameInfo, appName)
       void addToQueue(dmQueueElement)

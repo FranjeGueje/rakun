@@ -1,10 +1,4 @@
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  writeFileSync
-} from 'fs'
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'fs'
 
 import { AppSettings, GlobalConfigVersion } from 'common/types'
 import { currentGlobalConfigVersion } from 'backend/constants/others'
@@ -15,7 +9,6 @@ import { configStore } from './constants/key_value_stores'
 
 import {
   configPath,
-  gamesConfigPath,
   relicInstallPath,
   steamCompatDir,
   userHome
@@ -204,10 +197,6 @@ class GlobalConfigV0 extends GlobalConfig {
       return this.config
     }
 
-    if (!existsSync(gamesConfigPath)) {
-      mkdirSync(gamesConfigPath, { recursive: true })
-    }
-
     if (!existsSync(configPath)) {
       return this.getFactoryDefaults()
     }
@@ -242,7 +231,6 @@ class GlobalConfigV0 extends GlobalConfig {
       language: 'en',
       maxWorkers: 0,
       protonPath: this.detectGeProton(),
-      verboseLogs: true,
       steamGridDbApiKey: ''
     }
     return settings as AppSettings

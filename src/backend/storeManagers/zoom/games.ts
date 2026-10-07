@@ -1,4 +1,3 @@
-import { GameConfig } from '../../game_config'
 import {
   getFileSize,
   parseSize,
@@ -13,7 +12,6 @@ import { saveStreamToFile } from './download'
 import {
   ExtraInfo,
   GameInfo,
-  GameSettings,
   ExecResult,
   InstallArgs,
   InstalledInfo,
@@ -134,13 +132,6 @@ export default class ZoomGame implements Game {
       }
     }
     return info
-  }
-
-  async getSettings(): Promise<GameSettings> {
-    return (
-      GameConfig.get(this.id).config ||
-      (await GameConfig.get(this.id).getSettings())
-    )
   }
 
   async importGame(): Promise<ExecResult> {

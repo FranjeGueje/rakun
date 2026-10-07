@@ -8,7 +8,6 @@ const LogPrefix = {
   Zoom: 'Zoom',
   ToolInstaller: 'ToolInstaller',
   GlobalConfig: 'GlobalConfig',
-  GameConfig: 'GameConfig',
   ProtocolHandler: 'ProtocolHandler',
   Backend: 'Backend',
   Runtime: 'Runtime',

@@ -2,7 +2,6 @@ import {
   ExecResult,
   ExtraInfo,
   GameInfo,
-  GameSettings,
   InstallArgs,
   InstallProgress
 } from 'common/types'
@@ -15,7 +14,6 @@ import {
   logInfo,
   createGameLogWriter
 } from 'backend/logger'
-import { GameConfig } from 'backend/game_config'
 
 import { existsSync } from 'fs'
 import {
@@ -39,11 +37,6 @@ export default class NileGameManager implements Game {
 
   constructor(id: string) {
     this.id = id
-  }
-
-  async getSettings(): Promise<GameSettings> {
-    const gameConfig = GameConfig.get(this.id)
-    return gameConfig.config || (await gameConfig.getSettings())
   }
 
   getGameInfo(): GameInfo {
@@ -86,7 +79,7 @@ export default class NileGameManager implements Game {
   }
 
   async importGame(folderPath: string): Promise<ExecResult> {
-    const importLogWriter = await createGameLogWriter(this.id, 'nile', 'import')
+    const importLogWriter = createGameLogWriter(this.id, 'nile', 'import')
     const res = await libraryManagerMap['nile'].runRunnerCommand(
       ['import', '--path', folderPath, this.id],
       {
@@ -217,11 +210,7 @@ export default class NileGameManager implements Game {
       this.onInstallOrUpdateOutput('installing', data)
     }
 
-    const installLogWriter = await createGameLogWriter(
-      this.id,
-      'nile',
-      'install'
-    )
+    const installLogWriter = createGameLogWriter(this.id, 'nile', 'install')
     const res = await libraryManagerMap['nile'].runRunnerCommand(commandParts, {
       abortId: this.id,
       logWriters: [installLogWriter],
@@ -296,7 +285,7 @@ export default class NileGameManager implements Game {
     }
 
     logDebug([this.id, 'is installed at', install_path], LogPrefix.Nile)
-    const repairLogWriter = await createGameLogWriter(this.id, 'nile', 'repair')
+    const repairLogWriter = createGameLogWriter(this.id, 'nile', 'repair')
     const res = await libraryManagerMap['nile'].runRunnerCommand(
       ['verify', '--path', install_path, this.id],
       {
@@ -345,7 +334,7 @@ export default class NileGameManager implements Game {
       this.onInstallOrUpdateOutput('updating', data)
     }
 
-    const updateLogWriter = await createGameLogWriter(this.id, 'nile', 'update')
+    const updateLogWriter = createGameLogWriter(this.id, 'nile', 'update')
     const res = await libraryManagerMap['nile'].runRunnerCommand(commandParts, {
       abortId: this.id,
       logWriters: [updateLogWriter],

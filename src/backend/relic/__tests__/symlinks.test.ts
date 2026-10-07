@@ -58,7 +58,6 @@ jest.mock('backend/constants/paths', () => ({
   relicGamesPath: '/mock/games',
   relicRunnerPath: '/mock/runner',
   configPath: '/mock/config.json',
-  gamesConfigPath: '/mock/gamesconfig',
   relicIconFolder: '/mock/icons',
   fixesPath: '/mock/fixes',
   publicDir: '/mock/public',

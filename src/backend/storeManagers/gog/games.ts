@@ -1,6 +1,5 @@
 import { libraryManagerMap } from '..'
 import { join } from 'path'
-import { GameConfig } from '../../game_config'
 import { GlobalConfig } from '../../config'
 import {
   getFileSize,
@@ -13,7 +12,6 @@ import {
 import {
   ExtraInfo,
   GameInfo,
-  GameSettings,
   ExecResult,
   InstallArgs,
   InstalledInfo,
@@ -119,13 +117,6 @@ export default class GOGGame implements Game {
       }
     }
     return info
-  }
-
-  async getSettings(): Promise<GameSettings> {
-    return (
-      GameConfig.get(this.id).config ||
-      (await GameConfig.get(this.id).getSettings())
-    )
   }
 
   async importGame(folderPath: string): Promise<ExecResult> {
@@ -305,11 +296,7 @@ export default class GOGGame implements Game {
       this.onInstallOrUpdateOutput('installing', data)
     }
 
-    const installLogWriter = await createGameLogWriter(
-      this.id,
-      'gog',
-      'install'
-    )
+    const installLogWriter = createGameLogWriter(this.id, 'gog', 'install')
     const res = await libraryManagerMap['gog'].runRunnerCommand(commandParts, {
       abortId: this.id,
       logWriters: [installLogWriter],
@@ -418,7 +405,6 @@ export default class GOGGame implements Game {
     newInstallPath: string
   ): Promise<{ status: 'done' } | { status: 'error'; error: string }> {
     const gameInfo = this.getGameInfo()
-    await this.getSettings()
     logInfo(`Moving ${gameInfo.title} to ${newInstallPath}`, LogPrefix.Gog)
 
     const moveImpl = moveOnUnix
@@ -479,7 +465,7 @@ export default class GOGGame implements Game {
       commandParts.push('--password', privateBranchPassword)
     }
 
-    const repairLogWriter = await createGameLogWriter(this.id, 'gog', 'repair')
+    const repairLogWriter = createGameLogWriter(this.id, 'gog', 'repair')
     const res = await libraryManagerMap['gog'].runRunnerCommand(commandParts, {
       abortId: this.id,
       logWriters: [repairLogWriter],
@@ -548,7 +534,6 @@ export default class GOGGame implements Game {
       return { status: 'error', error: 'No credentials' }
     }
 
-    await this.getSettings()
     const installedDlcs = gameData.install.installedDLCs || []
 
     if (updateOverwrites?.dlcs) {
@@ -603,7 +588,7 @@ export default class GOGGame implements Game {
       this.onInstallOrUpdateOutput('updating', data)
     }
 
-    const updateLogWriter = await createGameLogWriter(this.id, 'gog', 'update')
+    const updateLogWriter = createGameLogWriter(this.id, 'gog', 'update')
     const res = await libraryManagerMap['gog'].runRunnerCommand(commandParts, {
       abortId: this.id,
       logWriters: [updateLogWriter],

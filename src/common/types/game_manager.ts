@@ -2,7 +2,6 @@ import {
   ExtraInfo,
   GameInfo,
   InstallPlatform,
-  GameSettings,
   ExecResult,
   InstallArgs,
   InstallInfo
@@ -19,7 +18,6 @@ export type RemoveArgs = {
 }
 
 export interface Game {
-  getSettings: () => Promise<GameSettings>
   getGameInfo: () => GameInfo
   getExtraInfo: () => Promise<ExtraInfo>
   importGame: (path: string, platform: InstallPlatform) => Promise<ExecResult>

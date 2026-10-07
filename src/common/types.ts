@@ -61,12 +61,7 @@ export type Release = {
   body?: string
 }
 
-export type ExperimentalFeatures = {
-  enableHelp: boolean
-  cometSupport: boolean
-}
-
-export interface AppSettings extends GameSettings {
+export interface AppSettings {
   altGogdlBin: string
   altCometBin: string
   altLegendaryBin: string
@@ -74,10 +69,9 @@ export interface AppSettings extends GameSettings {
   autoUpdateGames: boolean
   defaultInstallPath: string
   defaultSteamPath: string
-  experimentalFeatures?: ExperimentalFeatures
+  language: string
   maxWorkers: number
   protonPath: string
-  verboseLogs: boolean
   steamGridDbApiKey: string
 }
 
@@ -97,8 +91,6 @@ export interface ExtraInfo {
   changelog?: string
   genres?: string[]
 }
-
-export type GameConfigVersion = 'auto' | 'v0' | 'v0.1'
 
 export interface GameInfo {
   runner: Runner
@@ -140,17 +132,6 @@ export interface GameInfo {
     art_cover?: string
     art_square?: string
   }
-}
-
-export interface GameSettings {
-  ignoreGameUpdates: boolean
-  language: string
-  maxSharpness?: number
-  offlineMode: boolean
-  targetExe: string
-  savesPath: string
-  verboseLogs: boolean
-  enableQuickSavesMenu: boolean
 }
 
 export type Status =

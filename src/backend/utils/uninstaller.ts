@@ -1,5 +1,5 @@
 import { GlobalConfig } from 'backend/config'
-import { fixesPath, gamesConfigPath } from 'backend/constants/paths'
+import { fixesPath } from 'backend/constants/paths'
 import { logError, logInfo, LogPrefix } from 'backend/logger'
 import { libraryManagerMap } from 'backend/storeManagers'
 import { sendGameStatusUpdate } from 'backend/utils'
@@ -44,26 +44,11 @@ const removeFixFile = (appName: string, runner: Runner) => {
   }
 }
 
-const removeSettingsAndLogs = (appName: string) => {
-  const removeIfExists = (filename: string) => {
-    logInfo(`Removing ${filename}`, LogPrefix.Backend)
-    const gameSettingsFile = join(gamesConfigPath, filename)
-    if (existsSync(gameSettingsFile)) {
-      rmSync(gameSettingsFile)
-    }
-  }
-
-  removeIfExists(appName.concat('.json'))
-  removeIfExists(appName.concat('.log'))
-  removeIfExists(appName.concat('-lastPlay.log'))
-}
-
 export const uninstallGameCallback = async (
   _e: unknown,
   appName: string,
   runner: Runner,
-  shouldRemovePrefix: boolean,
-  shouldRemoveSetting: boolean
+  shouldRemovePrefix: boolean
 ) => {
   sendGameStatusUpdate({
     appName,
@@ -85,9 +70,6 @@ export const uninstallGameCallback = async (
   if (uninstalled) {
     if (shouldRemovePrefix) {
       removePrefix(appName, runner)
-    }
-    if (shouldRemoveSetting) {
-      removeSettingsAndLogs(appName)
     }
     removeFixFile(appName, runner)
 

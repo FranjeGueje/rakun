@@ -1,5 +1,5 @@
 import { callAllAbortControllers } from './utils/aborthandler/aborthandler'
-import { Runner, GameInfo, GameSettings, GameStatus } from 'common/types'
+import { Runner, GameInfo, GameStatus } from 'common/types'
 import axios from 'axios'
 import https from 'node:https'
 import { exec, spawn, SpawnOptions, spawnSync } from 'child_process'
@@ -27,7 +27,6 @@ import { formatBytes } from 'common/formatBytes'
 import { showDialogBoxModalAuto, askQuestion } from './dialog/dialog'
 import { sendFrontendMessage } from './ipc'
 import { GlobalConfig } from './config'
-import { GameConfig } from './game_config'
 import { libraryManagerMap } from 'backend/storeManagers'
 import { readdir, lstat } from 'fs/promises'
 import { backendEvents } from './backend_events'
@@ -39,12 +38,7 @@ import {
 } from './utils/systeminfo/gpu/pci_ids'
 import type { AppSettings } from 'common/types'
 import { configStore } from './constants/key_value_stores'
-import {
-  gamesConfigPath,
-  relicIconFolder,
-  publicDir,
-  toolsPath
-} from './constants/paths'
+import { relicIconFolder, publicDir, toolsPath } from './constants/paths'
 
 import { gogdlAuthConfig } from './storeManagers/gog/constants'
 import { tokenPath as zoomTokenPath } from './storeManagers/zoom/constants'
@@ -147,9 +141,7 @@ async function isEpicServiceOffline(
  * run them (legendary, gogdl, nile) are killed first.
  */
 function handleExit() {
-  const isLocked = existsSync(join(gamesConfigPath, 'lock'))
-
-  if (isLocked || isRunning()) {
+  if (isRunning()) {
     // This is very hacky and can be removed if bineries handle SIGTERM and SIGKILL
     // FIXME: we should keep track of what we are doing and kill just that
     // this is really dangerous cause we can be killing other processes unrelated
@@ -354,7 +346,6 @@ export function createNecessaryFolders() {
   // stores would create it, but only on a write that happens after login.
   // legendary and nile don't need this, their binaries makedirs on their own.
   const defaultFolders = [
-    gamesConfigPath,
     relicIconFolder,
     dirname(gogdlAuthConfig),
     dirname(zoomTokenPath)
@@ -893,42 +884,28 @@ const axiosClient = axios.create({
   httpsAgent: new https.Agent({ keepAlive: true })
 })
 
-export const writeConfig = (appName: string, config: Partial<AppSettings>) => {
-  logInfo(
-    `Writing config for ${appName === 'default' ? 'Relic' : appName}`,
-    LogPrefix.Backend
-  )
-  const oldConfig =
-    appName === 'default'
-      ? GlobalConfig.get().getSettings()
-      : GameConfig.get(appName).config
+export const writeConfig = (config: Partial<AppSettings>) => {
+  logInfo('Writing config for Relic', LogPrefix.Backend)
+  const oldConfig = GlobalConfig.get().getSettings()
 
   // log only the changed setting
-  const sharedKeys = (
-    Object.keys(oldConfig) as (keyof typeof oldConfig)[]
-  ).filter((key) => key in config)
-  const changedKeys = sharedKeys.filter(
-    (key) => JSON.stringify(oldConfig[key]) !== JSON.stringify(config[key])
+  const changedKeys = (Object.keys(config) as (keyof AppSettings)[]).filter(
+    (key) =>
+      key in oldConfig &&
+      JSON.stringify(oldConfig[key]) !== JSON.stringify(config[key])
   )
   for (const key of changedKeys) {
-    const oldValue = oldConfig[key]
-    const newValue = config[key]
     logInfo(
-      ['Changed config:', key, 'from', oldValue, 'to', newValue],
+      ['Changed config:', key, 'from', oldConfig[key], 'to', config[key]],
       LogPrefix.Backend
     )
   }
 
-  if (appName === 'default') {
-    GlobalConfig.get().set(config as AppSettings)
-    GlobalConfig.get().flush()
-    const currentConfigStore = configStore.get_nodefault('settings')
-    if (currentConfigStore) {
-      configStore.set('settings', { ...currentConfigStore, ...config })
-    }
-  } else {
-    GameConfig.get(appName).config = config as GameSettings
-    GameConfig.get(appName).flush()
+  GlobalConfig.get().set(config as AppSettings)
+  GlobalConfig.get().flush()
+  const currentConfigStore = configStore.get_nodefault('settings')
+  if (currentConfigStore) {
+    configStore.set('settings', { ...currentConfigStore, ...config })
   }
 }
 

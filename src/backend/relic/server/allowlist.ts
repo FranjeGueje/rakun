@@ -44,7 +44,6 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   'submitLogin',
   // Settings and status
   'requestAppSettings',
-  'requestGameSettings',
   'writeConfig',
   'setSetting',
   'steamgriddb.hasApiKey',

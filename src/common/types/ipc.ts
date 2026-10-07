@@ -10,7 +10,6 @@ import type {
   DownloadManagerState,
   ExtraInfo,
   GameInfo,
-  GameSettings,
   GameStatus,
   ImportGameArgs,
   InstallInfo,
@@ -32,11 +31,7 @@ import type { GetLogFileArgs } from 'backend/logger/paths'
 interface SyncIPCFunctions {
   removeFromDMQueue: (appName: string) => void
   'set-connectivity-online': () => void
-  setSetting: (args: {
-    appName: string
-    key: keyof AppSettings
-    value: unknown
-  }) => void
+  setSetting: (args: { key: keyof AppSettings; value: unknown }) => void
   resumeCurrentDownload: () => void
   pauseCurrentDownload: () => void
   cancelDownload: (removeDownloaded: boolean) => void
@@ -91,16 +86,14 @@ interface AsyncIPCFunctions {
   getLoginInfo: (runner: Runner) => Promise<LoginInfo>
   submitLogin: (runner: Runner, pasted: string) => Promise<LoginResult>
   requestAppSettings: () => AppSettings
-  requestGameSettings: (appName: string) => Promise<GameSettings>
-  writeConfig: (args: { appName: string; config: Partial<AppSettings> }) => void
+  writeConfig: (config: Partial<AppSettings>) => void
   refreshLibrary: (library?: Runner | 'all') => void
   getRefreshingLibraries: () => Runner[]
   install: (args: InstallParams) => Promise<void>
   uninstall: (
     appName: string,
     runner: Runner,
-    shouldRemovePrefix: boolean,
-    shoudlRemoveSetting: boolean
+    shouldRemovePrefix: boolean
   ) => Promise<void>
   repair: (appName: string, runner: Runner) => Promise<void>
   moveInstall: (args: MoveGameArgs) => Promise<void>

@@ -1,4 +1,3 @@
-import { GameConfig } from 'backend/game_config'
 import { formatSystemInfo, getSystemInfo } from 'backend/utils/systeminfo'
 import { backendEvents } from 'backend/backend_events'
 
@@ -34,21 +33,12 @@ function getRunnerLogWriter(runner: RunnerOrComet) {
   return newWriter
 }
 
-async function createGameLogWriter(
+function createGameLogWriter(
   appName: string,
   runner: Runner,
   type: GameLogType = 'launch'
-): Promise<LogWriter> {
-  const logsDisabledPerGame =
-    type === 'launch'
-      ? !(await GameConfig.get(appName).getSettings()).verboseLogs
-      : false
-
-  return new LogWriter(
-    getLogFilePath({ appName, runner, type }),
-    false,
-    logsDisabledPerGame
-  )
+): LogWriter {
+  return new LogWriter(getLogFilePath({ appName, runner, type }), false, false)
 }
 
 function init() {

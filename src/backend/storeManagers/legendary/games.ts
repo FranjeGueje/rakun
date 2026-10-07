@@ -9,7 +9,6 @@ import {
   InstallPlatform,
   InstallProgress
 } from 'common/types'
-import { GameConfig } from '../../game_config'
 import { GlobalConfig } from '../../config'
 import { libraryManagerMap } from '..'
 import {
@@ -309,19 +308,6 @@ export default class LegendaryGame implements Game {
   }
 
   /**
-   * Alias for `GameConfig.get(appName).config`
-   * If it doesn't exist, uses getSettings() instead.
-   *
-   * @returns GameConfig
-   */
-  async getSettings() {
-    return (
-      GameConfig.get(this.appName).config ||
-      (await GameConfig.get(this.appName).getSettings())
-    )
-  }
-
-  /**
    * Parent folder to move app to.
    * Amends install path by adding the appropriate folder name.
    */
@@ -496,7 +482,7 @@ export default class LegendaryGame implements Game {
       )
     }
 
-    const updateLogWriter = await createGameLogWriter(
+    const updateLogWriter = createGameLogWriter(
       this.appName,
       'legendary',
       'update'
@@ -580,7 +566,7 @@ export default class LegendaryGame implements Game {
       )
     }
 
-    const installLogWriter = await createGameLogWriter(
+    const installLogWriter = createGameLogWriter(
       this.appName,
       'legendary',
       'install'
@@ -716,7 +702,7 @@ export default class LegendaryGame implements Game {
     }
     if (maxWorkers) command['--max-workers'] = PositiveInteger.parse(maxWorkers)
 
-    const repairLogWriter = await createGameLogWriter(
+    const repairLogWriter = createGameLogWriter(
       this.appName,
       'legendary',
       'repair'
@@ -750,11 +736,7 @@ export default class LegendaryGame implements Game {
 
     logInfo(`Importing ${this.appName}.`, LogPrefix.Legendary)
 
-    const logWriter = await createGameLogWriter(
-      this.appName,
-      'legendary',
-      'import'
-    )
+    const logWriter = createGameLogWriter(this.appName, 'legendary', 'import')
     const res = await libraryManagerMap['legendary'].runRunnerCommand(command, {
       abortId: this.appName,
       logWriters: [logWriter]

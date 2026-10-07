@@ -1,7 +1,6 @@
-import { GameConfigVersion, GlobalConfigVersion } from 'common/types'
+import { GlobalConfigVersion } from 'common/types'
 import pkg_json from 'backend/../../package.json'
 
-export const currentGameConfigVersion: GameConfigVersion = 'v0'
 export const currentGlobalConfigVersion: GlobalConfigVersion = 'v0'
 
 // Replaces Electron's `app.getVersion()`, which read this very field from

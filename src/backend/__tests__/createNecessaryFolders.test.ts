@@ -9,7 +9,6 @@ jest.mock('../dialog/dialog')
 
 jest.mock('backend/constants/paths', () => ({
   ...jest.requireActual('backend/constants/paths'),
-  gamesConfigPath: '/config/relic/GamesConfig',
   relicIconFolder: '/config/relic/icons',
   toolsPath: '/config/relic/tools'
 }))
@@ -34,14 +33,10 @@ beforeEach(() => {
 })
 
 describe('createNecessaryFolders', () => {
-  test('creates the config, icon and tools folders', () => {
+  test('creates the icon and tools folders', () => {
     createNecessaryFolders()
 
-    for (const folder of [
-      '/config/relic/GamesConfig',
-      '/config/relic/icons',
-      '/config/relic/tools'
-    ]) {
+    for (const folder of ['/config/relic/icons', '/config/relic/tools']) {
       expect(mockedMkdirSync).toHaveBeenCalledWith(folder, { recursive: true })
     }
   })

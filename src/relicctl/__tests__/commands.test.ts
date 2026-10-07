@@ -299,9 +299,7 @@ describe('game commands', () => {
 
     const removed = fakeCtx({}, [update1('done')])
     await uninstall(removed.ctx, ['epic', 'g1'], opts)
-    expect(removed.calls).toEqual([
-      ['uninstall', ['g1', 'legendary', true, true]]
-    ])
+    expect(removed.calls).toEqual([['uninstall', ['g1', 'legendary', true]]])
   })
 
   test('progress is printed once per whole percent', async () => {

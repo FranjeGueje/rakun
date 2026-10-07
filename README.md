@@ -261,8 +261,7 @@ pnpm test                        # jest
 ├── legendaryConfig/         — Epic login + installed.json
 ├── gogdlConfig/             — GOG login + installed.json
 ├── nile_config/             — Amazon login + installed.json
-├── zoom_store/              — Zoom Platform login
-└── GamesConfig/             — Per-game settings
+└── zoom_store/              — Zoom Platform login
 
 ~/.cache/relicd/             — Regenerable caches ($XDG_CACHE_HOME)
 ~/.local/state/Relicd/logs/  — Logs ($XDG_STATE_HOME)
