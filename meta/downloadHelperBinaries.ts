@@ -5,8 +5,6 @@ import { Readable } from 'stream'
 import { finished } from 'stream/promises'
 import { execSync } from 'child_process'
 
-import { setGlobalDispatcher, ProxyAgent } from 'undici'
-
 type SupportedPlatform = 'win32' | 'linux'
 type DownloadedBinary =
   | 'legendary'
@@ -142,8 +140,7 @@ async function downloadLegendary() {
         win32: 'legendary_windows_x64.exe'
       },
       arm64: {
-        linux: 'legendary_linux_arm64',
-        win32: 'legendary_windows_arm64.exe'
+        linux: 'legendary_linux_arm64'
       }
     }
   )
@@ -156,8 +153,7 @@ async function downloadGogdl() {
       win32: 'gogdl_windows_x86_64.exe'
     },
     arm64: {
-      linux: 'gogdl_linux_arm64',
-      win32: 'gogdl_windows_arm64.exe'
+      linux: 'gogdl_linux_arm64'
     }
   })
 }
@@ -193,8 +189,7 @@ async function downloadComet() {
         win32: 'comet-x86_64-pc-windows-msvc.exe'
       },
       arm64: {
-        linux: 'comet-aarch64-unknown-linux-gnu',
-        win32: 'comet-aarch64-pc-windows-msvc.exe'
+        linux: 'comet-aarch64-unknown-linux-gnu'
       }
     }),
     downloadDummyService()
@@ -340,13 +335,6 @@ async function storeDownloadedTags() {
 }
 
 async function main() {
-  const proxyUri = process.env['HTTPS_PROXY']
-  if (proxyUri) {
-    console.log(`Using proxy: ${proxyUri}`)
-    const proxyAgent = new ProxyAgent(proxyUri)
-    setGlobalDispatcher(proxyAgent)
-  }
-
   if (process.env['RELIC_CHECK'] === '1') {
     await runVersionCheck()
     return

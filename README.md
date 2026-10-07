@@ -213,11 +213,12 @@ relicd has no public release yet. Build the tarball and install it:
 git clone <this repository> relicd && cd relicd
 pnpm install
 pnpm download-helper-binaries
-pnpm package                     # dist/relicd-<version>-linux-x64.tar.gz
-scripts/install.sh dist/relicd-*-linux-x64.tar.gz
+pnpm package                     # dist/relicd-<version>-linux-x64.tar.gz and -arm64.tar.gz
+scripts/install.sh dist/relicd-*-linux-x64.tar.gz   # the one for your machine
 ```
 
-The tarball carries its own Node, so nothing else is needed on SteamOS. The installer
+`pnpm package x64` (or `arm64`) builds just one. Each tarball carries only its own helper
+binaries and its own Node, so nothing else is needed on SteamOS. The installer
 puts it in `~/.local/opt/relicd` and links `~/.local/bin/relicd`. It creates **no
 service**; start it when you want it:
 

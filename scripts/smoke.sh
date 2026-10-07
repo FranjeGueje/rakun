@@ -37,7 +37,7 @@ case "${1:-}" in
         echo "== accounts"; call getAccounts
         echo "== library (first 300 chars)"; call getLibrary '["all"]' | head -c 300; echo
         echo "== not exposed (expect 403)"
-        curl -s -o /dev/null -w '%{http_code}\n' -X POST -H "x-relicd-token: $TOKEN" "$BASE/api/resetRelic"
+        curl -s -o /dev/null -w '%{http_code}\n' -X POST -H "x-relicd-token: $TOKEN" "$BASE/api/quit"
         ;;
     *)
         call "$1" "${2:-[]}"

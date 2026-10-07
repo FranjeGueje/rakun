@@ -1,7 +1,7 @@
 #!/bin/bash
 # Installs relicd from a release tarball:
-#   scripts/install.sh dist/relicd-0.1.0-linux-x64.tar.gz
-#   scripts/install.sh https://example.org/relicd-0.1.0-linux-x64.tar.gz
+#   scripts/install.sh dist/relicd-0.1.0-linux-<arch>.tar.gz     (x64 or arm64)
+#   scripts/install.sh https://example.org/relicd-0.1.0-linux-<arch>.tar.gz
 # If a .sha256 file sits next to the tarball (or next to the URL) it is checked.
 #
 # It installs to ~/.local/opt/relicd and links ~/.local/bin/relicd. It does not
@@ -10,7 +10,7 @@ set -euo pipefail
 
 SOURCE="${1:-}"
 [ -n "$SOURCE" ] || {
-    echo "Uso: $0 <relicd-X.Y.Z-linux-x64.tar.gz | URL>" >&2
+    echo "Uso: $0 <relicd-X.Y.Z-linux-<arch>.tar.gz | URL>" >&2
     exit 1
 }
 
