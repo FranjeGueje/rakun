@@ -9,7 +9,6 @@ jest.mock('backend/logger', () => ({
 }))
 
 jest.mock('backend/online_monitor')
-jest.mock('backend/schemas')
 
 jest.mock('../../../utils', () => ({
   isEpicServiceOffline: jest.fn().mockResolvedValue(false),

@@ -1,26 +1,37 @@
-import { z } from 'zod/v3'
+import { Brand, isPath, Path, schema } from 'backend/schemas'
 
-import { Path } from 'backend/schemas'
+export type LegendaryAppName = Brand<string, 'LegendaryAppName'>
+export const LegendaryAppName = schema<LegendaryAppName>(
+  'LegendaryAppName',
+  (value) => typeof value === 'string'
+)
 
-export const LegendaryAppName = z.string().brand('LegendaryAppName')
-export type LegendaryAppName = z.infer<typeof LegendaryAppName>
+const PLATFORMS = ['Win32', 'Windows', 'Mac'] as const
+export type LegendaryPlatform = (typeof PLATFORMS)[number]
+export const LegendaryPlatform = schema<LegendaryPlatform>(
+  'LegendaryPlatform',
+  (value) => PLATFORMS.some((platform) => platform === value)
+)
 
-export const LegendaryPlatform = z.enum(['Win32', 'Windows', 'Mac'] as const)
-export type LegendaryPlatform = z.infer<typeof LegendaryPlatform>
+export type NonEmptyString = Brand<string, 'NonEmptyString'>
+export const NonEmptyString = schema<NonEmptyString>(
+  'NonEmptyString',
+  (value) => typeof value === 'string' && value.length > 0
+)
 
-export const NonEmptyString = z.string().min(1).brand('NonEmptyString')
-export type NonEmptyString = z.infer<typeof NonEmptyString>
+export type PositiveInteger = Brand<number, 'PositiveInteger'>
+export const PositiveInteger = schema<PositiveInteger>(
+  'PositiveInteger',
+  (value) => Number.isInteger(value) && (value as number) > 0
+)
 
-export const PositiveInteger = z
-  .number()
-  .int()
-  .positive()
-  .brand('PositiveInteger')
-export type PositiveInteger = z.infer<typeof PositiveInteger>
+// `URL` is also the name of the type below, so the global one is asked by name
+const isUrl = (value: unknown): boolean =>
+  typeof value === 'string' && globalThis.URL.canParse(value)
 
-export const URL = z.string().url().brand('URL')
-export type URL = z.infer<typeof URL>
+export type URL = Brand<string, 'URL'>
+export const URL = schema<URL>('URL', isUrl)
 
-// FIXME: This doesn't feel right
-export const URI = z.union([Path, URL])
-export type URI = z.infer<typeof URI>
+// A manifest is either a file or a URL
+export type URI = Path | URL
+export const URI = schema<URI>('URI', (value) => isUrl(value) || isPath(value))
