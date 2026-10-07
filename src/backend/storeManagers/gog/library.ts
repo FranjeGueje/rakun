@@ -52,6 +52,7 @@ import { userDataPath } from 'backend/constants/paths'
 import GOGGame from './games'
 import type { LibraryManager } from 'common/types/game_manager'
 import { shareInFlight } from 'backend/utils/inflight'
+import { hasDuplicates, uniqueInstalled } from '../installed_list'
 import { GlobalConfig } from 'backend/config'
 
 /** The language the user chose, then English as the fallback */
@@ -727,6 +728,9 @@ export default class GOGLibraryManager implements LibraryManager {
    */
   refreshInstalled() {
     const installedArray = installedGamesStore.get('installed', [])
+    if (hasDuplicates(installedArray)) {
+      installedGamesStore.set('installed', uniqueInstalled(installedArray))
+    }
     installedGames.clear()
     installedArray.forEach((value) => {
       if (!value.appName) {

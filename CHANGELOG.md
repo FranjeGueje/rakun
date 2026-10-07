@@ -106,6 +106,12 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
   cacheada.
 - **GOG: instalar sin idioma enviaba el texto «undefined» a gogdl**, que se caía.
   Usa `en-US` por defecto y guarda el idioma usado (`relicctl install --lang`).
+- **Reinstalar un juego de GOG o Zoom (y los de terceros de Epic) repetía su
+  registro** en `installed.json`: tres instalaciones dejaban tres entradas, y
+  desinstalar solo quitaba una, así que el juego seguía figurando como instalado.
+  Ahora hay una entrada por juego, desinstalar las quita todas y un refresco
+  limpia los duplicados ya existentes. Además, quitar un juego de terceros que no
+  estaba en la lista borraba el último.
 - **Epic ignoraba `installDlcs`** y siempre pasaba `--skip-dlcs`.
 - **`checkGameUpdates` avisaba de juegos ya encolados** por la actualización
   automática, y Amazon sin sesión se registraba como error (es el estado normal).
@@ -225,6 +231,12 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
 - **GOG: installing with no language sent the text "undefined" to gogdl**, which
   crashed. It now defaults to `en-US` and stores the language used
   (`relicctl install --lang`).
+- **Reinstalling a GOG or Zoom game (and Epic's third-party ones) repeated its
+  record** in `installed.json`: three installs left three entries, and uninstalling
+  removed only one, so the game still looked installed. There is now one entry per
+  game, uninstalling removes them all and a refresh cleans up the duplicates that
+  already exist. Also, removing a third-party game that was not in the list deleted
+  the last one.
 - **Epic ignored `installDlcs`** and always passed `--skip-dlcs`.
 - **`checkGameUpdates` reported games the automatic update had already queued**,
   and Amazon with no session was logged as an error (it is the normal state).

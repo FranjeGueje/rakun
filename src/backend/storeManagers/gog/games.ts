@@ -1,4 +1,5 @@
 import { libraryManagerMap } from '..'
+import { removeInstalled, upsertInstalled } from '../installed_list'
 import { join } from 'path'
 import { GlobalConfig } from '../../config'
 import {
@@ -355,9 +356,10 @@ export default class GOGGame implements Game {
       buildId: isLinuxNative ? '' : installInfo.game.buildId,
       pinnedVersion: !!build
     }
-    const array = installedGamesStore.get('installed', [])
-    array.push(installedData)
-    installedGamesStore.set('installed', array)
+    installedGamesStore.set(
+      'installed',
+      upsertInstalled(installedGamesStore.get('installed', []), installedData)
+    )
     gameInfo.is_installed = true
     gameInfo.install = installedData
     libraryManagerMap['gog'].refreshInstalled()
@@ -469,12 +471,11 @@ export default class GOGGame implements Game {
   async uninstall(_removeArgs: RemoveArgs): Promise<ExecResult> {
     void _removeArgs
     const array = installedGamesStore.get('installed', [])
-    const index = array.findIndex((game) => game.appName === this.id)
-    if (index === -1) {
+    const object = array.find((game) => game.appName === this.id)
+    if (!object) {
       throw Error("Game isn't installed")
     }
 
-    const [object] = array.splice(index, 1)
     logInfo(['Removing', object.install_path], LogPrefix.Gog)
     const res: ExecResult = { stdout: '', stderr: '' }
     if (existsSync(object.install_path)) {
@@ -488,7 +489,7 @@ export default class GOGGame implements Game {
     if (existsSync(supportPath)) {
       rmSync(supportPath, { recursive: true }) // Remove unnecessary support dir
     }
-    installedGamesStore.set('installed', array)
+    installedGamesStore.set('installed', removeInstalled(array, this.id))
     libraryManagerMap['gog'].refreshInstalled()
     const gameInfo = this.getGameInfo()
     gameInfo.is_installed = false

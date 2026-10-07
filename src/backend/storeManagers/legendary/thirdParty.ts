@@ -28,8 +28,22 @@ const getInstalledGames = (): [string, InstalledJsonMetadata][] => {
   return []
 }
 
+type ThirdPartyEntry = [string, string]
+
+/** One entry per game: installing it again replaces the old one */
+const withGame = (
+  list: ThirdPartyEntry[],
+  appName: string,
+  platform: string
+): ThirdPartyEntry[] => [...withoutGame(list, appName), [appName, platform]]
+
+const withoutGame = (
+  list: ThirdPartyEntry[],
+  appName: string
+): ThirdPartyEntry[] => list.filter(([name]) => name !== appName)
+
 const addInstalledGame = async (appName: string, platform: string) => {
-  const installedAppNames = []
+  const installedAppNames: ThirdPartyEntry[] = []
 
   if (existsSync(thirdPartyInstalled)) {
     try {
@@ -42,12 +56,11 @@ const addInstalledGame = async (appName: string, platform: string) => {
       )
     }
   }
-  installedAppNames.push([appName, platform])
 
   try {
     await writeFile(
       thirdPartyInstalled,
-      JSON.stringify(installedAppNames),
+      JSON.stringify(withGame(installedAppNames, appName, platform)),
       'utf-8'
     )
   } catch (err) {
@@ -59,7 +72,7 @@ const addInstalledGame = async (appName: string, platform: string) => {
 }
 
 const removeInstalledGame = async (appName: string) => {
-  const installedAppNames = []
+  const installedAppNames: ThirdPartyEntry[] = []
   try {
     const buffer = await readFile(thirdPartyInstalled, 'utf-8')
     installedAppNames.push(...(JSON.parse(buffer) as [string, string][]))
@@ -69,13 +82,11 @@ const removeInstalledGame = async (appName: string) => {
       LogPrefix.Legendary
     )
   }
-  const index = installedAppNames.findIndex((a) => a[0] === appName)
-  installedAppNames.splice(index, 1)
 
   try {
     await writeFile(
       thirdPartyInstalled,
-      JSON.stringify(installedAppNames),
+      JSON.stringify(withoutGame(installedAppNames, appName)),
       'utf-8'
     )
   } catch (e) {

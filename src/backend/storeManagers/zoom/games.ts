@@ -39,6 +39,7 @@ import { showDialogBoxModalAuto } from '../../dialog/dialog'
 import { sendFrontendMessage } from '../../ipc'
 import { Game } from 'common/types/game_manager'
 import { displayForInstaller } from './display'
+import { removeInstalled, upsertInstalled } from '../installed_list'
 import { isLinux } from 'backend/constants/environment'
 import { libraryManagerMap } from '..'
 
@@ -506,9 +507,10 @@ export default class ZoomGame implements Game {
       buildId: '',
       pinnedVersion: false
     }
-    const array = installedGamesStore.get('installed', [])
-    array.push(installedData)
-    installedGamesStore.set('installed', array)
+    installedGamesStore.set(
+      'installed',
+      upsertInstalled(installedGamesStore.get('installed', []), installedData)
+    )
     void libraryManagerMap['zoom'].refresh()
     const libraryGame = this.getGameInfo()
     if (libraryGame) {
@@ -581,18 +583,17 @@ export default class ZoomGame implements Game {
 
   async uninstall(): Promise<ExecResult> {
     const array = installedGamesStore.get('installed', [])
-    const index = array.findIndex((game) => game.appName === this.id)
-    if (index === -1) {
+    const object = array.find((game) => game.appName === this.id)
+    if (!object) {
       throw Error("Game isn't installed")
     }
 
-    const [object] = array.splice(index, 1)
     logInfo(['Removing', object.install_path], LogPrefix.Zoom)
 
     if (existsSync(object.install_path)) {
       rmSync(object.install_path, { recursive: true })
     }
-    installedGamesStore.set('installed', array)
+    installedGamesStore.set('installed', removeInstalled(array, this.id))
     void libraryManagerMap['zoom'].refresh()
     const gameInfo = this.getGameInfo()
     gameInfo.is_installed = false

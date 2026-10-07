@@ -1,3 +1,4 @@
+import { hasDuplicates, uniqueInstalled } from '../installed_list'
 import { sendFrontendMessage } from '../../ipc'
 import { ZoomUser } from './user'
 import { GameInfo, InstalledInfo, ExecResult, LaunchOption } from 'common/types'
@@ -236,6 +237,9 @@ export default class ZoomLibraryManager implements LibraryManager {
 
   refreshInstalled() {
     const installedArray = installedGamesStore.get('installed', [])
+    if (hasDuplicates(installedArray)) {
+      installedGamesStore.set('installed', uniqueInstalled(installedArray))
+    }
     installedGames.clear()
     installedArray.forEach((value) => {
       if (!value.appName) {
