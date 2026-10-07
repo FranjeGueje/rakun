@@ -35,6 +35,37 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
   verificado contra su checksum. **`scripts/install.sh`** lo instala en
   `~/.local/opt/relicd` sin crear ningún servicio. **`scripts/smoke.sh`**
   comprueba un relicd en marcha.
+- **`relicctl`**, cliente de línea de comandos (solo habla HTTP con relicd):
+  `status`, `login`/`logout`, `import-relic`, `library`, `refresh`,
+  `install`/`update`/`repair`/`uninstall` (esperan a que acabe; `--lang`,
+  `--skip-dlcs`, `--no-wait`), `queue`, `pause`/`resume`/`cancel`, `config`,
+  `logs`, `cache clear`, `reset`, `events`, `call` y `--json`. Las tiendas salen
+  de `getStores`, así que añadir una no toca `relicctl`.
+- **`relicctl start`, `stop` y `-s`**: arrancar y parar relicd sin systemd.
+  `relicctl -s <comando>` lo arranca si está parado y lo para al acabar; con
+  varios `-s` a la vez lo para el último, y solo si lo arrancó un `-s`.
+  Si relicd está parado, los demás comandos lo dicen.
+- **Ajustes globales validados** (`setSetting`/`writeConfig`): una clave
+  desconocida, un tipo erróneo, un idioma no soportado, `maxWorkers` fuera de
+  rango o una ruta inexistente responden `500` con el motivo. Cambiar `language`
+  surte efecto al instante. `getMaxCpus` indica el máximo de `maxWorkers`.
+- **`clearCache`, `resetRelic` y `stopRelicd`** en la API. `resetRelic` olvida
+  sesiones, ajustes y cola (no los juegos instalados ni `api.json`) y detiene
+  relicd.
+- **Cola de descargas**: `clearFinishedDMQueue`, y un fallo guarda su motivo en
+  `DMQueueElement.error` (`relicctl install` lo muestra en vez de «mira los
+  logs»).
+- **`getStores` y `logout(runner)`** genéricos, `getLogContent` y
+  `importSessionsFromRelic` (copia las sesiones de `~/.config/relic`), y la
+  rama privada de GOG con las versiones de los binarios auxiliares.
+- **Los DLC se instalan por defecto** en Epic y GOG (`installDlcs` omitido = todos,
+  `[]` = ninguno, una lista = solo esos en GOG).
+- **Zoom (experimental)**: relicd comprueba que hay pantalla antes de descargar
+  un juego de Windows y falla al instante sin `DISPLAY`, con el servidor gráfico
+  caído o en modo juego. La documentación explica que esos instaladores
+  necesitan pantalla.
+- **Una tienda es una carpeta más una línea en el registro** (descriptor
+  `Store`), con un contrato de tests para todas y una guía en `AGENTS.md`.
 
 #### Cambiado
 
@@ -46,6 +77,15 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
   `askQuestion` elige siempre la primera opción (la segura).
 - `review.sh` y `release.sh` construyen el tarball; `release.sh` solo publica en
   GitHub si se define `RELICD_REPO`.
+- Un solo tarball por arquitectura: `pnpm package [x64|arm64|all]` genera
+  `relicd-<v>-linux-<arch>.tar.gz`, cada uno solo con sus binarios y su Node.
+- Sin traducciones: los mensajes del daemon van en inglés; `language` solo elige
+  el idioma por defecto de GOG.
+- Los comandos de `relicctl` ya no dicen «¿está arrancado?»: dicen «relicd
+  parado» y cómo arrancarlo.
+- El registro de la API deja de tener canales por tienda (`login`, `authGOG`,
+  `isLoggedIn`, `logoutLegendary`…): se usan `getStores`, `getAccounts`,
+  `getLoginInfo`, `submitLogin` y `logout`.
 
 #### Corregido
 
@@ -60,12 +100,31 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
 - **Reinstalar un juego cuyo prefijo se conservó** fallaba con `EEXIST` al crear
   los enlaces del prefijo, y se saltaba el resto de la preparación. Ahora
   reemplaza los enlaces existentes.
+- **Zoom: un instalador de Windows que fallaba se daba por instalado**: el juego
+  quedaba registrado y se añadía a Steam sin existir. Ahora la instalación
+  termina en error. Cerrar la sesión de Zoom también vacía la biblioteca
+  cacheada.
+- **GOG: instalar sin idioma enviaba el texto «undefined» a gogdl**, que se caía.
+  Usa `en-US` por defecto y guarda el idioma usado (`relicctl install --lang`).
+- **Epic ignoraba `installDlcs`** y siempre pasaba `--skip-dlcs`.
+- **`checkGameUpdates` avisaba de juegos ya encolados** por la actualización
+  automática, y Amazon sin sesión se registraba como error (es el estado normal).
 
 #### Eliminado
 
 - Electron, el frontend (React), el preload, la ventana principal, la bandeja,
   `images_cache`, Playwright, electron-vite, electron-builder y sus
   dependencias; los canales de ventana, atajos, portapapeles, gamepad y zoom.
+- i18next y las traducciones (`public/locales`), `easydl`, `tmp`, `undici`
+  (el proxy lo gestiona `NODE_USE_ENV_PROXY`), el soporte e2e heredado de Relic,
+  el parche de `@types/node` y código sin uso. `node_modules` pasa de 605 MB a
+  171 MB.
+- El Comet nativo de Linux (`getCometVersion`, `altCometBin`, el registro de
+  `comet`); queda `comet.exe`, que corre dentro del prefijo.
+- La configuración por juego (`GameConfig`, `GameSettings`), los mods de
+  Cyberpunk, los guardados en la nube de GOG y los canales heredados de la
+  interfaz.
+- Los `.exe` de arm64 de Windows (nadie los usaba).
 
 ### English
 
@@ -96,6 +155,36 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
   esbuild bundle, the helper binaries and its own Node 24 checked against its
   checksum. **`scripts/install.sh`** installs it to `~/.local/opt/relicd`
   without creating any service. **`scripts/smoke.sh`** checks a running relicd.
+- **`relicctl`**, a command line client (it only talks HTTP to relicd):
+  `status`, `login`/`logout`, `import-relic`, `library`, `refresh`,
+  `install`/`update`/`repair`/`uninstall` (they wait until done; `--lang`,
+  `--skip-dlcs`, `--no-wait`), `queue`, `pause`/`resume`/`cancel`, `config`,
+  `logs`, `cache clear`, `reset`, `events`, `call` and `--json`. The stores come
+  from `getStores`, so adding one does not touch `relicctl`.
+- **`relicctl start`, `stop` and `-s`**: start and stop relicd without systemd.
+  `relicctl -s <command>` starts it if stopped and stops it afterwards; with
+  several `-s` at once the last one stops it, and only if a `-s` started it.
+  With relicd stopped, every other command says so.
+- **Validated global settings** (`setSetting`/`writeConfig`): an unknown key, a
+  wrong type, an unsupported language, a `maxWorkers` out of range or a missing
+  path answers `500` with the reason. Changing `language` takes effect at once.
+  `getMaxCpus` gives the most `maxWorkers` can be.
+- **`clearCache`, `resetRelic` and `stopRelicd`** in the API. `resetRelic`
+  forgets sessions, settings and the queue (not the installed games nor
+  `api.json`) and stops relicd.
+- **Download queue**: `clearFinishedDMQueue`, and a failure keeps its reason in
+  `DMQueueElement.error` (`relicctl install` prints it instead of "see the
+  logs").
+- **Generic `getStores` and `logout(runner)`**, `getLogContent` and
+  `importSessionsFromRelic` (copies the sessions of `~/.config/relic`), and the
+  GOG private branch with the helper binary versions.
+- **DLCs are installed by default** on Epic and GOG (`installDlcs` omitted = all,
+  `[]` = none, a list = only those on GOG).
+- **Zoom (experimental)**: relicd checks there is a screen before downloading a
+  Windows game and fails at once without `DISPLAY`, with the X server gone or in
+  game mode. The docs explain that those installers need a screen.
+- **A store is a folder plus one line in the registry** (`Store` descriptor),
+  with a test contract for all of them and a guide in `AGENTS.md`.
 
 #### Changed
 
@@ -107,6 +196,15 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
   picks the first (safe) option.
 - `review.sh` and `release.sh` build the tarball; `release.sh` only publishes to
   GitHub when `RELICD_REPO` is set.
+- One tarball per architecture: `pnpm package [x64|arm64|all]` builds
+  `relicd-<v>-linux-<arch>.tar.gz`, each with only its own binaries and Node.
+- No translations: the daemon's messages are in English; `language` only picks
+  GOG's default language.
+- `relicctl` commands no longer say "is it running?": they say "relicd stopped"
+  and how to start it.
+- The API drops the per-store channels (`login`, `authGOG`, `isLoggedIn`,
+  `logoutLegendary`…): use `getStores`, `getAccounts`, `getLoginInfo`,
+  `submitLogin` and `logout`.
 
 #### Fixed
 
@@ -121,9 +219,27 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
 - **Reinstalling a game whose prefix was kept** failed with `EEXIST` when
   creating the prefix links and skipped the rest of the preparation. It now
   replaces the existing links.
+- **Zoom: a Windows installer that failed was taken as installed**: the game was
+  recorded and added to Steam without existing. The install now ends in error.
+  Logging out of Zoom also empties the cached library.
+- **GOG: installing with no language sent the text "undefined" to gogdl**, which
+  crashed. It now defaults to `en-US` and stores the language used
+  (`relicctl install --lang`).
+- **Epic ignored `installDlcs`** and always passed `--skip-dlcs`.
+- **`checkGameUpdates` reported games the automatic update had already queued**,
+  and Amazon with no session was logged as an error (it is the normal state).
 
 #### Removed
 
 - Electron, the React frontend, the preload, the main window, the tray,
   `images_cache`, Playwright, electron-vite, electron-builder and their
   dependencies; the window, shortcut, clipboard, gamepad and zoom channels.
+- i18next and the translations (`public/locales`), `easydl`, `tmp`, `undici`
+  (the proxy is handled by `NODE_USE_ENV_PROXY`), the e2e support inherited from
+  Relic, the `@types/node` patch and unused code. `node_modules` goes from
+  605 MB to 171 MB.
+- The native Linux Comet (`getCometVersion`, `altCometBin`, the `comet` log);
+  `comet.exe` stays, as it runs inside the prefix.
+- Per-game settings (`GameConfig`, `GameSettings`), the Cyberpunk mods, GOG cloud
+  saves and the UI-era channels.
+- The Windows arm64 `.exe` files (nothing used them).
