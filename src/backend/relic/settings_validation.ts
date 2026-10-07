@@ -2,6 +2,7 @@ import { existsSync, statSync } from 'fs'
 import { cpus } from 'os'
 import { isAbsolute, join } from 'path'
 import { supportedLanguages } from 'common/languages'
+import { isWebAccess, WEB_ACCESS_MODES } from 'common/relic/web'
 import type { AppSettings } from 'common/types'
 
 type Rule = (value: never) => string | undefined
@@ -31,6 +32,10 @@ const rules: Partial<Record<keyof AppSettings, Rule>> = {
     value === '' || (isFolder(value) && existsSync(join(value, 'proton')))
       ? undefined
       : `${value} no es una carpeta de Proton (falta el ejecutable "proton")`,
+  webAccess: (value: string) =>
+    isWebAccess(value)
+      ? undefined
+      : `webAccess debe ser uno de: ${WEB_ACCESS_MODES.join(', ')}`,
   altGogdlBin: emptyOrFile('altGogdlBin'),
   altLegendaryBin: emptyOrFile('altLegendaryBin'),
   altNileBin: emptyOrFile('altNileBin')

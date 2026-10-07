@@ -750,3 +750,29 @@ describe('without relicd', () => {
     expect(screen.queryByRole('button', { name: /Start/ })).toBeNull()
   })
 })
+
+describe('the web open to the network', () => {
+  const setMode = (mode: string) => {
+    const meta = document.createElement('meta')
+    meta.name = 'relicd-web'
+    meta.content = mode
+    document.head.appendChild(meta)
+    return () => meta.remove()
+  }
+
+  test('says it has no protection', async () => {
+    const remove = setMode('network')
+    setup()
+    await screen.findByTitle('Alpha')
+    expect(screen.getByRole('note').textContent).toContain('no protection')
+    remove()
+  })
+
+  test('says nothing when it is only for this machine', async () => {
+    const remove = setMode('local')
+    setup()
+    await screen.findByTitle('Alpha')
+    expect(screen.queryByRole('note')).toBeNull()
+    remove()
+  })
+})

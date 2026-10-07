@@ -11,7 +11,9 @@ export type Credentials = { port: number; token: string }
 export type ApiEvent = { event: string; args: unknown[] }
 
 export type Api = {
-  health: () => Promise<{ status: string; version: string }>
+  /** The port relicd listens on (from `api.json`) */
+  port: number
+  health: () => Promise<{ status: string; version: string; web?: string }>
   call: <T = unknown>(channel: string, ...args: unknown[]) => Promise<T>
   // Resolves once connected, so nothing sent after it can be missed
   events: () => Promise<AsyncGenerator<ApiEvent>>
@@ -132,11 +134,13 @@ async function* readEvents(res: IncomingMessage): AsyncGenerator<ApiEvent> {
 
 export function createApi(creds: Credentials): Api {
   return {
+    port: creds.port,
     async health() {
       const res = await send(creds, 'GET', '/health')
       return JSON.parse(await readBody(res)) as {
         status: string
         version: string
+        web?: string
       }
     },
     async call<T>(channel: string, ...args: unknown[]) {

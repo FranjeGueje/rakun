@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, statSync } from 'fs'
 import { extname, join, resolve, sep } from 'path'
+import type { WebAccess } from 'common/relic/web'
 
 const TYPES: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -30,9 +31,14 @@ export const webHeaders = {
   'Cache-Control': 'no-store'
 }
 
-/** The page learns the token from its own server: no other web can read it (CORS) */
-export function withToken(html: string, token: string): string {
-  const meta = `<meta name="relicd-token" content="${token}">`
+/**
+ * The page learns the token and the web mode from its own server. The token is
+ * the same for everyone who may load the page (nobody else can read it: CORS and `Host`).
+ */
+export function withMeta(html: string, token: string, mode: WebAccess): string {
+  const meta =
+    `<meta name="relicd-token" content="${token}">` +
+    `<meta name="relicd-web" content="${mode}">`
   return /<head[^>]*>/i.test(html)
     ? html.replace(/<head[^>]*>/i, (head) => `${head}${meta}`)
     : `${meta}${html}`
@@ -57,13 +63,14 @@ function fileFor(webDir: string, urlPath: string): string | undefined {
 export function webFile(
   webDir: string,
   urlPath: string,
-  token: string
+  token: string,
+  mode: WebAccess
 ): WebFile | undefined {
   const file = fileFor(webDir, urlPath)
   if (!file) return undefined
   const type = TYPES[extname(file).toLowerCase()] ?? 'application/octet-stream'
   const content = readFileSync(file)
   return file.endsWith('.html')
-    ? { type, body: withToken(content.toString('utf-8'), token) }
+    ? { type, body: withMeta(content.toString('utf-8'), token, mode) }
     : { type, body: content }
 }

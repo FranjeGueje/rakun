@@ -20,6 +20,10 @@ export type Options = {
   yes?: boolean
   force?: boolean
   serve?: boolean
+  /** Only for `start`: how relicd opens the web (`local`, `network`, `off`) */
+  web?: string
+  /** Only for `start`: the port to listen on */
+  port?: string
   wait: boolean
   installed: boolean
 }

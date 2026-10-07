@@ -11,9 +11,11 @@ import {
   invokeHandler,
   onFrontendMessage
 } from 'backend/ipc'
-import { logError, logInfo, LogPrefix } from 'backend/logger'
+import { logError, logInfo, logWarning, LogPrefix } from 'backend/logger'
 import { relicVersion } from 'backend/constants/others'
+import type { WebAccess } from 'common/relic/web'
 import { exposedChannels, exposedEvents } from './allowlist'
+import { allowedHosts, isBlockedFromNetwork, isOwnOrigin } from './access'
 import { defaultWebDir, webFile, webHeaders } from './web'
 
 const MAX_BODY_BYTES = 1024 * 1024
@@ -56,21 +58,16 @@ function hasValidToken(req: IncomingMessage, token: string): boolean {
   )
 }
 
-/**
- * Only the loopback address is allowed as Host, and a browser only if the
- * request comes from relicd's own web (its Origin): any other page is refused
- */
-function isLocalRequest(req: IncomingMessage): boolean {
-  const port = req.socket.localPort
-  const origin = req.headers.origin
-  if (
-    origin &&
-    origin !== `http://127.0.0.1:${port}` &&
-    origin !== `http://localhost:${port}`
-  )
-    return false
-  const host = req.headers.host ?? ''
-  return host === `127.0.0.1:${port}` || host === `localhost:${port}`
+/** Why a request is refused before anything else: its `Host` or its `Origin` is not relicd's own */
+function refusal(req: IncomingMessage, mode: WebAccess): string | undefined {
+  const host = (req.headers.host ?? '').toLowerCase()
+  const port = req.socket.localPort ?? 0
+  if (!allowedHosts(port, mode).has(host))
+    return mode === 'network'
+      ? `Host "${host}" is not allowed: open relicd by the IP or the name of this machine`
+      : 'forbidden'
+  if (!isOwnOrigin(req.headers.origin, host)) return 'forbidden'
+  return undefined
 }
 
 function parseArgs(body: string): unknown[] {
@@ -84,10 +81,16 @@ function parseArgs(body: string): unknown[] {
 async function handleCall(
   req: IncomingMessage,
   res: ServerResponse,
-  channel: string
+  channel: string,
+  mode: WebAccess
 ) {
   if (!exposedChannels.has(channel)) {
     return sendJson(res, 403, { error: `channel "${channel}" is not exposed` })
+  }
+  if (isBlockedFromNetwork(channel, req.socket.remoteAddress, mode)) {
+    return sendJson(res, 403, {
+      error: `"${channel}" can only be called from the machine relicd runs on`
+    })
   }
 
   let args: unknown[]
@@ -142,23 +145,32 @@ function handleEvents(req: IncomingMessage, res: ServerResponse) {
  *   GET  /<file>            relicd's own web, if there is one (no token: it carries it)
  * Everything but /health needs the `x-relicd-token` header.
  */
+export type ServerSetup = {
+  /** Who can open the web (the API is always on this machine unless it is `network`) */
+  web?: WebAccess
+  webDir?: string
+}
+
 export function createApiServer(
   token: string,
-  webDir: string = defaultWebDir()
+  { web = 'local', webDir = defaultWebDir() }: ServerSetup = {}
 ): Server {
   return createServer((req, res) => {
-    if (!isLocalRequest(req)) {
-      return sendJson(res, 403, { error: 'forbidden' })
-    }
+    const refused = refusal(req, web)
+    if (refused) return sendJson(res, 403, { error: refused })
 
     const { pathname } = new URL(req.url ?? '/', 'http://localhost')
 
     if (req.method === 'GET' && pathname === '/health') {
-      return sendJson(res, 200, { status: 'ok', version: relicVersion })
+      return sendJson(res, 200, {
+        status: 'ok',
+        version: relicVersion,
+        web
+      })
     }
 
-    if (req.method === 'GET') {
-      const file = webFile(webDir, pathname, token)
+    if (req.method === 'GET' && web !== 'off') {
+      const file = webFile(webDir, pathname, token, web)
       if (file) {
         res.writeHead(200, { 'Content-Type': file.type, ...webHeaders })
         return void res.end(file.body)
@@ -174,18 +186,30 @@ export function createApiServer(
     }
 
     if (req.method === 'POST' && pathname.startsWith(API_PREFIX)) {
-      return void handleCall(req, res, pathname.slice(API_PREFIX.length))
+      return void handleCall(req, res, pathname.slice(API_PREFIX.length), web)
     }
 
     return sendJson(res, 404, { error: 'not found' })
   })
 }
 
-export function listenApiServer(server: Server, port: number): Promise<void> {
+const NETWORK_WARNING =
+  'The web is open to the whole network WITHOUT protection: anyone who can reach this machine controls relicd. Experimental or home use only.'
+
+export function listenApiServer(
+  server: Server,
+  port: number,
+  mode: WebAccess
+): Promise<void> {
+  const address = mode === 'network' ? '0.0.0.0' : '127.0.0.1'
   return new Promise((resolve, reject) => {
     server.once('error', reject)
-    server.listen(port, '127.0.0.1', () => {
-      logInfo(`API listening on 127.0.0.1:${port}`, LogPrefix.Backend)
+    server.listen(port, address, () => {
+      logInfo(
+        `API listening on ${address}:${port} (web: ${mode})`,
+        LogPrefix.Backend
+      )
+      if (mode === 'network') logWarning(NETWORK_WARNING, LogPrefix.Backend)
       resolve()
     })
   })

@@ -14,12 +14,14 @@ export type Call = [string, unknown[]]
 export function fakeCtx(
   replies: Record<string, unknown> = {},
   events: ApiEvent[] = [],
-  json = false
+  json = false,
+  web?: string
 ) {
   const calls: Call[] = []
   const lines: string[] = []
   const api: Api = {
-    health: () => Promise.resolve({ status: 'ok', version: '1.2.3' }),
+    port: 17370,
+    health: () => Promise.resolve({ status: 'ok', version: '1.2.3', web }),
     call: <T>(channel: string, ...args: unknown[]) => {
       calls.push([channel, args])
       return Promise.resolve(replies[channel] as T)

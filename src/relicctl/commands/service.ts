@@ -11,6 +11,7 @@ import {
 } from '../client'
 import { Ctx, Options } from '../context'
 import { forgetStarted } from '../serve'
+import { webLines } from '../web'
 
 const WAIT_MS = 15000
 const POLL_MS = 100
@@ -41,9 +42,15 @@ type Launched = {
   exited: () => number | null | undefined
 }
 
-function launchRelicd(dir = __dirname): Launched {
+export function launchRelicd(
+  dir = __dirname,
+  extraArgs: string[] = []
+): Launched {
   const { cmd, args } = relicdCommand(dir)
-  const child = spawn(cmd, args, { detached: true, stdio: 'ignore' })
+  const child = spawn(cmd, [...args, ...extraArgs], {
+    detached: true,
+    stdio: 'ignore'
+  })
   let exitCode: number | null | undefined
   child.once('exit', (code) => (exitCode = code))
   child.once('error', () => (exitCode = -1))
@@ -101,10 +108,21 @@ export async function stopRelicd(force = false): Promise<void> {
     throw new CliError('relicd no ha terminado a tiempo')
 }
 
-export async function start(ctx: Io): Promise<void> {
+/** `--web` and `--port` of `relicctl start`, as the arguments of relicd (which checks them) */
+export function relicdFlags(opts: Pick<Options, 'web' | 'port'>): string[] {
+  return [
+    ...(opts.web ? [`--web=${opts.web}`] : []),
+    ...(opts.port ? [`--port=${opts.port}`] : [])
+  ]
+}
+
+export async function start(ctx: Io, opts: Pick<Options, 'web' | 'port'> = {}) {
   if (await isRunning()) return ctx.log('relicd ya está arrancado')
-  await startRelicd()
+  await startRelicd(() => launchRelicd(__dirname, relicdFlags(opts)))
   ctx.log('relicd arrancado')
+  const creds = readCredentials()
+  const { web } = await createApi(creds).health()
+  webLines(web, creds.port).forEach((line) => ctx.log(line))
 }
 
 export async function stop(

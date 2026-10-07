@@ -75,6 +75,8 @@ export const en = {
   'login.paste': 'Paste from clipboard and sign in',
   'login.unreadable':
     'Could not read the clipboard: paste the address into the field.',
+  'web.networkWarning':
+    'Open to the network, no protection: experimental or home use only',
   'menu.title': 'Menu',
   'menu.accounts': 'Accounts',
   'menu.downloadPath': 'Download folder',

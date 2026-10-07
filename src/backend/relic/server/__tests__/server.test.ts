@@ -1,5 +1,6 @@
 import { request, type IncomingMessage, type Server } from 'http'
 import type { AddressInfo } from 'net'
+import { networkInterfaces } from 'os'
 import { addHandler, addListener, sendFrontendMessage } from 'backend/ipc'
 import { createApiServer } from '../server'
 import { exposedChannels } from '../allowlist'
@@ -184,4 +185,106 @@ describe('API server', () => {
     expect(received).toContain('event: refreshLibrary\ndata: ["gog"]')
     expect(received).not.toContain('maximized')
   })
+})
+
+describe('web modes', () => {
+  const servers: Server[] = []
+  afterAll(() => {
+    servers.forEach((s) => {
+      s.closeAllConnections()
+      s.close()
+    })
+  })
+
+  async function modeServer(web: 'local' | 'network' | 'off', webDir?: string) {
+    const instance = createApiServer(TOKEN, { web, webDir })
+    await new Promise<void>((resolve) =>
+      instance.listen(0, '127.0.0.1', resolve)
+    )
+    servers.push(instance)
+    const modePort = (instance.address() as AddressInfo).port
+    return (path: string, headers: Record<string, string> = {}) =>
+      new Promise<{ status: number; body: string }>((resolve, reject) => {
+        const req = request(
+          { host: '127.0.0.1', port: modePort, path, headers },
+          (res) => {
+            let body = ''
+            res.on('data', (chunk) => (body += chunk))
+            res.on('end', () => resolve({ status: res.statusCode ?? 0, body }))
+          }
+        )
+        req.on('error', reject)
+        req.end()
+      })
+  }
+
+  test('/health says which mode the web is in', async () => {
+    for (const mode of ['local', 'network', 'off'] as const) {
+      const get = await modeServer(mode)
+      expect(JSON.parse((await get('/health')).body).web).toBe(mode)
+    }
+  })
+
+  test('in network mode the Host of the machine is accepted, a foreign one is not and says why', async () => {
+    const get = await modeServer('network')
+    const own = (await import('os')).hostname().toLowerCase()
+    const port = servers.at(-1)?.address() as AddressInfo
+    expect((await get('/health', { Host: `${own}:${port.port}` })).status).toBe(
+      200
+    )
+    const foreign = await get('/health', { Host: `evil.example:${port.port}` })
+    expect(foreign.status).toBe(403)
+    expect(foreign.body).toContain('IP or the name of this machine')
+  })
+
+  test('in local mode a Host that is not loopback is refused', async () => {
+    const get = await modeServer('local')
+    const own = (await import('os')).hostname().toLowerCase()
+    const port = servers.at(-1)?.address() as AddressInfo
+    expect((await get('/health', { Host: `${own}:${port.port}` })).status).toBe(
+      403
+    )
+  })
+
+  const lanAddress = Object.values(networkInterfaces())
+    .flatMap((list) => list ?? [])
+    .find((entry) => entry.family === 'IPv4' && !entry.internal)?.address
+
+  // A connection to the address of the LAN, even from this very machine, is not a loopback one
+  const testWithLan = lanAddress ? test : test.skip
+
+  testWithLan(
+    'in network mode the settings answer to this machine and not to the network',
+    async () => {
+      addHandler('writeConfig', () => undefined as never)
+      const networked = createApiServer(TOKEN, { web: 'network' })
+      await new Promise<void>((resolve) =>
+        networked.listen(0, '0.0.0.0', resolve)
+      )
+      servers.push(networked)
+      const networkPort = (networked.address() as AddressInfo).port
+
+      const post = (host: string) =>
+        new Promise<number>((resolve, reject) => {
+          const req = request(
+            {
+              host,
+              port: networkPort,
+              method: 'POST',
+              path: '/api/writeConfig',
+              headers: { 'x-relicd-token': TOKEN }
+            },
+            (res) => {
+              res.resume()
+              resolve(res.statusCode ?? 0)
+            }
+          )
+          req.on('error', reject)
+          req.end('{}')
+        })
+
+      expect(await post('127.0.0.1')).toBe(200)
+      expect(await post(lanAddress as string)).toBe(403)
+    }
+  )
 })

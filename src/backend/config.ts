@@ -231,7 +231,8 @@ class GlobalConfigV0 extends GlobalConfig {
       language: 'en',
       maxWorkers: 0,
       protonPath: this.detectGeProton(),
-      steamGridDbApiKey: ''
+      steamGridDbApiKey: '',
+      webAccess: 'local'
     }
     return settings as AppSettings
   }

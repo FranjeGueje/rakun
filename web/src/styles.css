@@ -476,3 +476,17 @@ kbd {
   margin: 8px 0 16px;
   color: var(--accent);
 }
+
+.networkWarning {
+  position: fixed;
+  right: 8px;
+  bottom: 8px;
+  z-index: 50;
+  margin: 0;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(150, 90, 0, 0.9);
+  color: #fff;
+  font-size: 11px;
+  pointer-events: none;
+}

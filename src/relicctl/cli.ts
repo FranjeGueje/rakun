@@ -23,6 +23,8 @@ import { config } from './commands/config'
 export const HELP = `Uso: relicctl <comando> [argumentos]
 
   start | stop [--force]          arranca o para relicd (no hace falta systemd)
+  start [--web local|network|off] [--port N]
+                                  quién abre la web (por defecto el ajuste webAccess) y el puerto
   status                          estado de relicd, sesiones y cola
   login <tienda>                  inicia sesión
   logout <tienda>
@@ -83,6 +85,8 @@ export function parseCli(argv: string[]) {
       yes: { type: 'boolean' },
       force: { type: 'boolean' },
       serve: { type: 'boolean', short: 's' },
+      web: { type: 'string' },
+      port: { type: 'string' },
       'no-wait': { type: 'boolean' },
       installed: { type: 'boolean' },
       help: { type: 'boolean', short: 'h' }
@@ -97,6 +101,8 @@ export function parseCli(argv: string[]) {
     yes: values.yes,
     force: values.force,
     serve: values.serve,
+    web: values.web,
+    port: values.port,
     wait: !values['no-wait'],
     installed: !!values.installed
   }
@@ -154,7 +160,7 @@ export async function runCli(
   const { command, args, opts, json, help } = parseCli(argv)
   if (help || !command) return io.log(HELP)
   if (opts.serve) checkServe(command, opts)
-  if (command === 'start') return start(io)
+  if (command === 'start') return start(io, opts)
   if (command === 'stop') return stop(io, opts)
   const handler = commands[command]
   if (!handler)

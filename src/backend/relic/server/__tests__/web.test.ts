@@ -4,7 +4,7 @@ import type { AddressInfo } from 'net'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { createApiServer } from '../server'
-import { webFile, withToken } from '../web'
+import { webFile, withMeta } from '../web'
 
 jest.mock('backend/logger', () => ({
   logError: jest.fn(),
@@ -27,31 +27,33 @@ writeFileSync(join(root, 'secret.txt'), 'outside')
 
 afterAll(() => rmSync(root, { recursive: true, force: true }))
 
-describe('withToken', () => {
-  test('puts the token in the head', () => {
-    expect(withToken('<html><head><title>x</title></head></html>', 'abc')).toBe(
-      '<html><head><meta name="relicd-token" content="abc"><title>x</title></head></html>'
+describe('withMeta', () => {
+  test('puts the token and the web mode in the head', () => {
+    expect(
+      withMeta('<html><head><title>x</title></head></html>', 'abc', 'network')
+    ).toBe(
+      '<html><head><meta name="relicd-token" content="abc"><meta name="relicd-web" content="network"><title>x</title></head></html>'
     )
   })
 
   test('without a head it goes first', () => {
-    expect(withToken('<p>hi</p>', 'abc')).toBe(
-      '<meta name="relicd-token" content="abc"><p>hi</p>'
+    expect(withMeta('<p>hi</p>', 'abc', 'local')).toBe(
+      '<meta name="relicd-token" content="abc"><meta name="relicd-web" content="local"><p>hi</p>'
     )
   })
 })
 
 describe('webFile', () => {
   test('/ is the index, with the token, and the others keep their type', () => {
-    const index = webFile(webDir, '/', TOKEN)
+    const index = webFile(webDir, '/', TOKEN, 'local')
     expect(index?.type).toContain('text/html')
     expect(String(index?.body)).toContain(
       `<meta name="relicd-token" content="${TOKEN}">`
     )
-    expect(webFile(webDir, '/assets/app.js', TOKEN)?.type).toContain(
+    expect(webFile(webDir, '/assets/app.js', TOKEN, 'local')?.type).toContain(
       'text/javascript'
     )
-    expect(webFile(webDir, '/assets/app.css', TOKEN)?.type).toContain(
+    expect(webFile(webDir, '/assets/app.css', TOKEN, 'local')?.type).toContain(
       'text/css'
     )
   })
@@ -67,11 +69,11 @@ describe('webFile', () => {
       '/assets',
       '/nope.js'
     ])
-      expect(webFile(webDir, path, TOKEN)).toBeUndefined()
+      expect(webFile(webDir, path, TOKEN, 'local')).toBeUndefined()
   })
 
   test('without a web folder there is nothing to serve', () => {
-    expect(webFile(join(root, 'missing'), '/', TOKEN)).toBeUndefined()
+    expect(webFile(join(root, 'missing'), '/', TOKEN, 'local')).toBeUndefined()
   })
 })
 
@@ -80,7 +82,7 @@ describe('the web over HTTP', () => {
   let port: number
 
   beforeAll(async () => {
-    server = createApiServer(TOKEN, webDir)
+    server = createApiServer(TOKEN, { webDir })
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
     port = (server.address() as AddressInfo).port
   })

@@ -2,6 +2,7 @@ import type { AccountsStatus, SessionsImport } from 'common/relic/accounts'
 import type { LoginInfo, LoginResult } from 'common/relic/login'
 import type { DMQueueElement } from 'common/types'
 import { CliError } from '../client'
+import { webLines } from '../web'
 import { accountsText, sessionsImportText } from '../format'
 import { parseStore } from '../stores'
 import { Command, requireArg, show } from '../context'
@@ -22,6 +23,7 @@ export const status: Command = async (ctx) => {
   show(ctx, summary, () =>
     [
       `relicd ${health.version}`,
+      ...webLines(health.web, ctx.api.port),
       accountsText(accounts, stores),
       `Cola: ${queue.elements.length} pendientes`
     ].join('\n')

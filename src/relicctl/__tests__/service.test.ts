@@ -3,7 +3,12 @@ import { tmpdir } from 'os'
 import { join } from 'path'
 import { CliError } from '../client'
 import { checkServe, runCli } from '../cli'
-import { relicdCommand, startRelicd, stop } from '../commands/service'
+import {
+  relicdCommand,
+  relicdFlags,
+  startRelicd,
+  stop
+} from '../commands/service'
 import { opts } from './helpers'
 
 describe('relicdCommand', () => {
@@ -19,6 +24,17 @@ describe('relicdCommand', () => {
       cmd: process.execPath,
       args: [join(dir, 'relicd.cjs')]
     })
+  })
+})
+
+describe('relicdFlags', () => {
+  test('forwards --web and --port to relicd, which checks them', () => {
+    expect(relicdFlags({ web: 'network', port: '18000' })).toEqual([
+      '--web=network',
+      '--port=18000'
+    ])
+    expect(relicdFlags({ web: 'off' })).toEqual(['--web=off'])
+    expect(relicdFlags({})).toEqual([])
   })
 })
 

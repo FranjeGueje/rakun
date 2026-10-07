@@ -9,20 +9,21 @@ typed in `src/common/types/ipc.ts` (`AsyncIPCFunctions`, `SyncIPCFunctions`,
 ## Connecting
 
 `~/.config/relicd/api.json` (mode 0600) holds `{"port": 17370, "token": "…"}`.
-The token is generated once and survives restarts; `RELICD_PORT` overrides the
-port. The server only listens on `127.0.0.1`.
+The token is generated once and survives restarts. The port is the one in
+`api.json`; `RELICD_PORT` or `relicd --port=<n>` change it (and it is saved there).
+The server listens on `127.0.0.1` unless the web is opened to the network (see below).
 
-| Request               | Needs token | Purpose                         |
-| --------------------- | ----------- | ------------------------------- |
-| `GET /health`         | no          | `{"status":"ok","version":"…"}` |
-| `POST /api/<channel>` | yes         | call a channel                  |
-| `GET /events`         | yes         | Server-Sent Events stream       |
+| Request               | Needs token | Purpose                                       |
+| --------------------- | ----------- | --------------------------------------------- |
+| `GET /health`         | no          | `{"status":"ok","version":"…","web":"local"}` |
+| `POST /api/<channel>` | yes         | call a channel                                |
+| `GET /events`         | yes         | Server-Sent Events stream                     |
 
 The token goes in the `x-relicd-token` header. If nothing answers on the port,
 relicd is stopped: start it (`relicctl start`, or run `relicd`) and read `api.json`
-after it answers `/health`. A `Host` other than `127.0.0.1:<port>` /
-`localhost:<port>` gets `403`, and so does an `Origin` header (a browser) that is
-not relicd's own, `http://127.0.0.1:<port>` or `http://localhost:<port>`.
+after it answers `/health`. A `Host` that is not one of this machine's (`127.0.0.1:<port>`,
+`localhost:<port>`, and in `network` mode its addresses and name) gets `403`, and so does
+an `Origin` header (a browser) that is not the page relicd itself served (`http://<Host>`).
 
 ## The web
 
@@ -30,10 +31,36 @@ relicd's own web (`web/` in the repository, built by `pnpm build` into `build/we
 shipped as `web/` next to `relicd.cjs`; `RELICD_WEB_DIR` points to another folder)
 is served by `GET /`: open `http://127.0.0.1:17370` in a browser on this machine.
 The files need no token. `index.html` comes with the token inside
-(`<meta name="relicd-token" content="…">`) and the page sends it like any other
-client; another web cannot read it (it is refused by `Origin` and `Host`). Without
-that folder these paths answer `404`/`401` and everything else works the same. The web
-logs in by pasting (see the login below); a browser cannot watch the page of a store.
+(`<meta name="relicd-token" content="…">`) and the web mode (`<meta name="relicd-web">`),
+and the page sends the token like any other client; another web cannot read it (it is
+refused by `Origin` and `Host`). Without that folder these paths answer `404`/`401` and
+everything else works the same. The web logs in by pasting (see the login below); a
+browser cannot watch the page of a store.
+
+### Who can open the web (`webAccess`)
+
+| Mode                  | Listens on  | Web                              | Settings from     |
+| --------------------- | ----------- | -------------------------------- | ----------------- |
+| `local` (the default) | `127.0.0.1` | yes                              | this machine      |
+| `network`             | `0.0.0.0`   | yes, for anyone who can reach it | this machine only |
+| `off`                 | `127.0.0.1` | no (no page is served)           | this machine      |
+
+`off` keeps the API on this machine: `relicctl`, `start`/`stop` and the clients need it.
+Choose with `relicd --web=<mode> --port=<n>` (`relicctl start` forwards both), with
+`RELICD_WEB`, or with the saved setting `webAccess` (`relicctl config webAccess network`),
+in that order of priority. It takes effect when relicd starts; an invalid value stops it
+with the reason in the log.
+
+**`network` has no protection.** The page carries the token for whoever loads it, so
+anyone who can reach the machine controls relicd. It is for experimental or home use on a
+network you trust, over plain HTTP. What it still does: it only accepts a `Host` that is the
+machine's own address or name (so a web on the internet cannot reach relicd through the
+visitor's browser: DNS rebinding), and `writeConfig`, `setSetting`, `resetRelic`,
+`stopRelicd`, `steamgriddb.setApiKey` and `importSessionsFromRelic` answer `403` to
+anything that is not this machine (an `altLegendaryBin` setting makes relicd run that
+program). A reverse proxy installed on this machine would make visits from outside look
+local, so do not put one in front. Warnings: the log at startup, `relicctl start` and
+`status`, a small banner in the web, and `/health` reports `"web":"network"`.
 
 ## Calling a channel
 
@@ -119,6 +146,7 @@ reason and saves nothing. `relicctl config [key [value]]` wraps them.
 | `steamGridDbApiKey`                            | text (also `steamgriddb.setApiKey`)                                          |
 | `defaultSteamPath`                             | Steam folder (default `~/.steam/steam`)                                      |
 | `altLegendaryBin`, `altGogdlBin`, `altNileBin` | empty, or an existing file                                                   |
+| `webAccess`                                    | `local`, `network` or `off`: who can open the web (read when relicd starts)  |
 
 **Maintenance:** `clearCache(library?)` empties the library caches (all stores or
 one; `relicctl cache clear [store]`). `resetRelic` forgets sessions, settings,

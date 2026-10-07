@@ -276,6 +276,11 @@ coordinate live in `~/.local/state/Relicd/serve/`.
 Check it with `relicctl status` (or `scripts/smoke.sh`, or `curl http://127.0.0.1:17370/health`).
 If the release has the web, open `http://127.0.0.1:17370` in a browser of this machine.
 
+By default only this machine can open the web. `relicctl config webAccess network` (or
+`relicd --web=network`, or `relicctl start --web network`) opens it to the whole network **without
+any protection**, for experimental or home use only; `off` turns the web off (the API stays on
+this machine). `--port <n>` (or `RELICD_PORT`) changes the port. See _Who can open the web_ in [API.md](API.md).
+
 ### Requirements
 
 - Linux and Steam
