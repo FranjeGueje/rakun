@@ -103,13 +103,13 @@ async function run(
   }
 }
 
-function gameArgs(args: string[]): [Runner, string] {
-  const { runner } = parseStore(requireArg(args, 0, 'tienda'))
-  return [runner, requireArg(args, 1, 'appName')]
+async function gameArgs(ctx: Ctx, args: string[]): Promise<[Runner, string]> {
+  const store = parseStore(await ctx.stores(), requireArg(args, 0, 'tienda'))
+  return [store.id, requireArg(args, 1, 'appName')]
 }
 
 export const install: Command = async (ctx, args, opts) => {
-  const [runner, appName] = gameArgs(args)
+  const [runner, appName] = await gameArgs(ctx, args)
   const params = await installParams(ctx, appName, runner, opts.path)
   await run(
     ctx,
@@ -121,7 +121,7 @@ export const install: Command = async (ctx, args, opts) => {
 }
 
 export const update: Command = async (ctx, args, opts) => {
-  const [runner, appName] = gameArgs(args)
+  const [runner, appName] = await gameArgs(ctx, args)
   const gameInfo = await loadGame(ctx, appName, runner)
   const params: UpdateParams = { appName, runner, gameInfo }
   await run(
@@ -134,7 +134,7 @@ export const update: Command = async (ctx, args, opts) => {
 }
 
 export const repair: Command = async (ctx, args, opts) => {
-  const [runner, appName] = gameArgs(args)
+  const [runner, appName] = await gameArgs(ctx, args)
   await run(ctx, appName, opts.wait, () =>
     ctx.api.call('repair', appName, runner)
   )
@@ -142,7 +142,7 @@ export const repair: Command = async (ctx, args, opts) => {
 
 // Deletes the game's files and its settings: that is what uninstalling means
 export const uninstall: Command = async (ctx, args, opts) => {
-  const [runner, appName] = gameArgs(args)
+  const [runner, appName] = await gameArgs(ctx, args)
   await run(ctx, appName, opts.wait, () =>
     ctx.api.call('uninstall', appName, runner, true, true)
   )

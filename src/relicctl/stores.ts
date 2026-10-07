@@ -1,29 +1,20 @@
 import type { Runner } from 'common/types'
+import type { StoreInfo } from 'common/relic/stores'
 import { CliError } from './client'
 
-type Store = { name: string; runner: Runner; label: string }
-
-export const STORES: readonly Store[] = [
-  {
-    name: 'epic',
-    runner: 'legendary',
-    label: 'Epic'
-  },
-  { name: 'gog', runner: 'gog', label: 'GOG' },
-  { name: 'amazon', runner: 'nile', label: 'Amazon' },
-  { name: 'zoom', runner: 'zoom', label: 'Zoom' }
-]
-
 /** Accepts the friendly name (`epic`) and the runner's (`legendary`) */
-export function parseStore(name: string | undefined): Store {
-  const store = STORES.find((s) => s.name === name || s.runner === name)
+export function parseStore(
+  stores: StoreInfo[],
+  name: string | undefined
+): StoreInfo {
+  const store = stores.find((s) => s.name === name || s.id === name)
   if (!store) {
-    const valid = STORES.map((s) => s.name).join(', ')
+    const valid = stores.map((s) => s.name).join(', ')
     throw new CliError(`Tienda desconocida "${name ?? ''}" (${valid})`)
   }
   return store
 }
 
-export function storeLabel(runner: Runner): string {
-  return STORES.find((s) => s.runner === runner)?.label ?? runner
+export function storeLabel(stores: StoreInfo[], runner: Runner): string {
+  return stores.find((s) => s.id === runner)?.label ?? runner
 }

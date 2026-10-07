@@ -1,5 +1,13 @@
 import type { Api, ApiEvent } from '../client'
+import type { StoreInfo } from 'common/relic/stores'
 import type { Ctx } from '../context'
+
+export const STORES: StoreInfo[] = [
+  { id: 'legendary', name: 'epic', label: 'Epic' },
+  { id: 'gog', name: 'gog', label: 'GOG' },
+  { id: 'nile', name: 'amazon', label: 'Amazon' },
+  { id: 'zoom', name: 'zoom', label: 'Zoom' }
+]
 
 export type Call = [string, unknown[]]
 
@@ -25,6 +33,7 @@ export function fakeCtx(
   }
   const ctx: Ctx = {
     api,
+    stores: () => Promise.resolve(STORES),
     json,
     log: (line) => lines.push(line),
     ask: () => Promise.resolve('pasted')

@@ -12,18 +12,22 @@ export const status: Command = async (ctx) => {
   const queue = await ctx.api.call<{ elements: DMQueueElement[] }>(
     'getDMQueueInformation'
   )
+  const stores = await ctx.stores()
   const summary = { health, accounts, queue: queue.elements.length }
   show(ctx, summary, () =>
     [
       `relicd ${health.version}`,
-      accountsText(accounts),
+      accountsText(accounts, stores),
       `Cola: ${queue.elements.length} pendientes`
     ].join('\n')
   )
 }
 
 export const login: Command = async (ctx, args) => {
-  const { runner } = parseStore(requireArg(args, 0, 'tienda'))
+  const { id: runner } = parseStore(
+    await ctx.stores(),
+    requireArg(args, 0, 'tienda')
+  )
   const info = await ctx.api.call<LoginInfo>('getLoginInfo', runner)
   ctx.log(`${info.instructions}\n\n${info.url}\n`)
   const pasted = await ctx.ask('Pega aquí el resultado: ')
@@ -33,12 +37,13 @@ export const login: Command = async (ctx, args) => {
 }
 
 export const logout: Command = async (ctx, args) => {
-  const store = parseStore(requireArg(args, 0, 'tienda'))
-  await ctx.api.call('logout', store.runner)
+  const store = parseStore(await ctx.stores(), requireArg(args, 0, 'tienda'))
+  await ctx.api.call('logout', store.id)
   ctx.log(`Sesión de ${store.label} cerrada.`)
 }
 
 export const importRelic: Command = async (ctx) => {
   const result = await ctx.api.call<SessionsImport>('importSessionsFromRelic')
-  show(ctx, result, sessionsImportText)
+  const stores = await ctx.stores()
+  show(ctx, result, (value) => sessionsImportText(value, stores))
 }

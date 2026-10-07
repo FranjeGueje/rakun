@@ -1,8 +1,11 @@
+import type { StoreInfo } from 'common/relic/stores'
 import type { Api } from './client'
 import { CliError } from './client'
 
 export type Ctx = {
   api: Api
+  /** The stores relicd supports, asked once and only when needed */
+  stores: () => Promise<StoreInfo[]>
   json: boolean
   log: (line: string) => void
   ask: (question: string) => Promise<string>

@@ -1,5 +1,5 @@
 import { CliError } from '../client'
-import { parseStore, STORES } from '../stores'
+import { parseStore } from '../stores'
 import { libraryText, table } from '../format'
 import { importRelic, login, logout, status } from '../commands/accounts'
 import { library, refresh } from '../commands/library'
@@ -14,7 +14,7 @@ import {
 import { parseCallArgs, call } from '../commands/call'
 import { parseCli, runCli } from '../cli'
 import type { GameInfo } from 'common/types'
-import { fakeCtx, opts } from './helpers'
+import { fakeCtx, opts, STORES } from './helpers'
 
 const game = (extra: Partial<GameInfo> = {}) =>
   ({
@@ -32,14 +32,14 @@ const update1 = (status: string, appName = 'g1') => ({
 
 describe('stores', () => {
   test('accepts friendly and runner names', () => {
-    expect(parseStore('epic').runner).toBe('legendary')
-    expect(parseStore('legendary').runner).toBe('legendary')
-    expect(parseStore('amazon').runner).toBe('nile')
+    expect(parseStore(STORES, 'epic').id).toBe('legendary')
+    expect(parseStore(STORES, 'legendary').id).toBe('legendary')
+    expect(parseStore(STORES, 'amazon').id).toBe('nile')
   })
 
   test('rejects an unknown store listing the valid ones', () => {
-    expect(() => parseStore('steam')).toThrow(/epic, gog, amazon, zoom/)
-    expect(() => parseStore(undefined)).toThrow(CliError)
+    expect(() => parseStore(STORES, 'steam')).toThrow(/epic, gog, amazon, zoom/)
+    expect(() => parseStore(STORES, undefined)).toThrow(CliError)
   })
 })
 
@@ -54,10 +54,10 @@ describe('format', () => {
   })
 
   test('library lists store and install state', () => {
-    expect(libraryText([game({ is_installed: true })])).toBe(
+    expect(libraryText([game({ is_installed: true })], STORES)).toBe(
       'g1  GOG  Game One  instalado'
     )
-    expect(libraryText([])).toMatch(/vacía/)
+    expect(libraryText([], STORES)).toMatch(/vacía/)
   })
 })
 
@@ -159,7 +159,7 @@ describe('library commands', () => {
   test('refresh of all waits for the four stores', async () => {
     const { ctx, calls, lines } = fakeCtx(
       {},
-      STORES.map((s) => ({ event: 'refreshLibrary', args: [s.runner] }))
+      STORES.map((s) => ({ event: 'refreshLibrary', args: [s.id] }))
     )
 
     await refresh(ctx, [], opts)
@@ -344,6 +344,28 @@ describe('call command', () => {
 
     expect(calls).toEqual([['getRelicVersion', []]])
     expect(lines).toEqual(['"1.0"'])
+  })
+})
+
+describe('stores of relicd', () => {
+  test('an unknown store lists the names relicd reports', async () => {
+    const { ctx } = fakeCtx()
+    ctx.stores = () =>
+      Promise.resolve([{ id: 'legendary', name: 'epic', label: 'Epic' }])
+
+    await expect(login(ctx, ['steam'], opts)).rejects.toThrow(
+      'Tienda desconocida "steam" (epic)'
+    )
+  })
+
+  test('a store relicd added later works without changing relicctl', async () => {
+    const { ctx, calls } = fakeCtx()
+    ctx.stores = () =>
+      Promise.resolve([{ id: 'itch' as never, name: 'itch', label: 'itch.io' }])
+
+    await logout(ctx, ['itch'], opts)
+
+    expect(calls).toEqual([['logout', ['itch']]])
   })
 })
 

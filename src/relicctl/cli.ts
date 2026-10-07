@@ -1,5 +1,6 @@
 import { parseArgs } from 'util'
-import { CliError, createApi, readCredentials } from './client'
+import type { StoreInfo } from 'common/relic/stores'
+import { Api, CliError, createApi, readCredentials } from './client'
 import { Command, Ctx, Options } from './context'
 import { call, events } from './commands/call'
 import { importRelic, login, logout, status } from './commands/accounts'
@@ -10,7 +11,7 @@ import { queue } from './commands/queue'
 export const HELP = `Uso: relicctl <comando> [argumentos]
 
   status                          estado de relicd, sesiones y cola
-  login <tienda>                  inicia sesión (epic, gog, amazon, zoom)
+  login <tienda>                  inicia sesión
   logout <tienda>
   import-relic                    copia las sesiones de Relic
   library [tienda] [--installed]  lista la biblioteca
@@ -22,6 +23,7 @@ export const HELP = `Uso: relicctl <comando> [argumentos]
   call <canal> [json]             llama a un canal de la API
 
 Opciones: --json (salida para scripts), --no-wait (no esperar a que termine)
+Las tiendas son las que informa relicd (relicctl call getStores).
 Variable: RELICD_API_FILE (api.json de otro relicd)`
 
 export const commands: Record<string, Command> = {
@@ -61,6 +63,12 @@ export function parseCli(argv: string[]) {
   return { command, args, opts, json: !!values.json, help: !!values.help }
 }
 
+/** Asks relicd for its stores the first time and remembers the answer */
+function storesOf(api: Api): () => Promise<StoreInfo[]> {
+  let stores: Promise<StoreInfo[]> | undefined
+  return () => (stores ??= api.call<StoreInfo[]>('getStores'))
+}
+
 export async function runCli(
   argv: string[],
   io: Pick<Ctx, 'log' | 'ask'>
@@ -71,5 +79,5 @@ export async function runCli(
   if (!handler)
     throw new CliError(`Comando desconocido "${command}"\n\n${HELP}`)
   const api = createApi(readCredentials())
-  await handler({ ...io, api, json }, args, opts)
+  await handler({ ...io, api, stores: storesOf(api), json }, args, opts)
 }

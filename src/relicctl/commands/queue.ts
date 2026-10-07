@@ -7,5 +7,6 @@ export const queue: Command = async (ctx) => {
     elements: DMQueueElement[]
     finished: DMQueueElement[]
   }>('getDMQueueInformation')
-  show(ctx, info, queueText)
+  const stores = await ctx.stores()
+  show(ctx, info, (value) => queueText(value, stores))
 }
