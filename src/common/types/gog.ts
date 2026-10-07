@@ -245,10 +245,6 @@ interface MultiLanguageDataObject {
   name: LanguageMapper<string>
   slug: string
 }
-// Might need this later
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-type MultiLanguageDataObjectWithoutId = Omit<MultiLanguageDataObject, 'id'>
-
 type LanguageMapper<T> = {
   '*': T
   'en-US': T

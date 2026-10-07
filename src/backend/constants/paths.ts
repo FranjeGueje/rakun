@@ -77,22 +77,6 @@ export const publicDir = existsSync(bundledPublicDir)
   ? bundledPublicDir
   : resolve(__dirname, '..', 'public')
 
-export const fakeEpicExePath = join(
-  publicDir,
-  'bin',
-  'x64',
-  'win32',
-  'EpicGamesLauncher.exe'
-)
-
-export const galaxyCommunicationExePath = join(
-  publicDir,
-  'bin',
-  'x64',
-  'win32',
-  'GalaxyCommunication.exe'
-)
-
 export const zoomPlatformScriptPath = join(
   publicDir,
   'bin',

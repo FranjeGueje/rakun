@@ -1,7 +1,6 @@
 import { existsSync } from 'fs'
 import { searchForExecutableOnPath } from './os/path'
 import { publicDir } from 'backend/constants/paths'
-import { isLinux } from 'backend/constants/environment'
 import { join } from 'path'
 
 export const getUmuPath = async (): Promise<string | null> => {
@@ -12,13 +11,4 @@ export const getUmuPath = async (): Promise<string | null> => {
   if (existsSync(bundled)) return bundled
 
   return null
-}
-
-export async function isUmuSupported(
-  checkUmuInstalled = true
-): Promise<boolean> {
-  if (!isLinux) return false
-  if (!checkUmuInstalled) return true
-  const path = await getUmuPath()
-  return path !== null && existsSync(path)
 }

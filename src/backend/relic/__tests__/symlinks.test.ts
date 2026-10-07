@@ -61,8 +61,6 @@ jest.mock('backend/constants/paths', () => ({
   relicIconFolder: '/mock/icons',
   fixesPath: '/mock/fixes',
   publicDir: '/mock/public',
-  fakeEpicExePath: '/mock/epic.exe',
-  galaxyCommunicationExePath: '/mock/galaxy.exe',
   webviewPreloadPath: '/mock/webview.js',
   windowIcon: '/mock/icon.png',
   fixAsarPath: (s: string): string => s,

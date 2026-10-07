@@ -689,70 +689,6 @@ function parseSize(size: string): number {
   }
 }
 
-function formatTime(seconds: number): string {
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds - hours * 3600) / 60)
-  const remainingSeconds = seconds - hours * 3600 - minutes * 60
-  return `${hours.toString().padStart(2, '0')}:${minutes
-    .toString()
-    .padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
-}
-
-function calculateEta(
-  downloadedBytes: number,
-  downloadSpeed: number,
-  downloadSize: number,
-  lastProgressTime: number = Date.now()
-): string | null {
-  // Calculate the remaining seconds
-  const remainingBytes = downloadSize - downloadedBytes
-  const elapsedSeconds = (Date.now() - lastProgressTime) / 1000
-  const remainingSeconds = remainingBytes / downloadSpeed - elapsedSeconds
-
-  // Check if the download has completed or failed
-  if (remainingSeconds <= 0) {
-    return '00:00:00'
-  } else if (!isFinite(remainingSeconds)) {
-    return null
-  }
-
-  // Format the remaining seconds as "hh:mm:ss"
-  const eta = formatTime(Math.floor(remainingSeconds))
-  return eta
-}
-
-interface ExtractOptions {
-  path: string
-  destination: string
-  strip: number
-}
-
-async function extractFiles({ path, destination, strip = 0 }: ExtractOptions) {
-  if (path.includes('.tar')) return extractTarFile({ path, destination, strip })
-
-  logError(['extractFiles: Unsupported file', path], LogPrefix.Backend)
-  return { status: 'error', error: 'Unsupported file type' }
-}
-
-async function extractTarFile({
-  path,
-  destination,
-  strip = 0
-}: ExtractOptions) {
-  const { code, stderr } = await spawnAsync('tar', [
-    '-xf',
-    path,
-    '-C',
-    destination,
-    `--strip-components=${strip}`
-  ])
-  if (code !== 0) {
-    logError(`Extracting Error: ${stderr}`, LogPrefix.Backend)
-    return { status: 'error', error: stderr }
-  }
-  return { status: 'done', installPath: destination }
-}
-
 const axiosClient = axios.create({
   timeout: 10 * 1000,
   httpsAgent: new https.Agent({ keepAlive: true })
@@ -805,8 +741,6 @@ export {
   getPathDiskSize,
   sendGameStatusUpdate,
   sendProgressUpdate,
-  calculateEta,
-  extractFiles,
   axiosClient,
   parseSize
 }
