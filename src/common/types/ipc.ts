@@ -18,7 +18,6 @@ import type {
   KnowFixesInfo,
   MoveGameArgs,
   Runner,
-  RunnerCommandStub,
   StatusPromise,
   UpdateParams
 } from '../types'
@@ -43,21 +42,6 @@ interface SyncIPCFunctions {
     runner: Runner,
     status: boolean
   ) => void
-}
-
-/*
- * These events should only be used during tests to stub/mock
- *
- * We have to handle them in another interface because these
- * events don't have an IpcMainEvent first argument when handled
- */
-interface TestSyncIPCFunctions {
-  setLegendaryCommandStub: (stubs: RunnerCommandStub[]) => void
-  resetLegendaryCommandStub: () => void
-  setGogdlCommandStub: (stubs: RunnerCommandStub[]) => void
-  resetGogdlCommandStub: () => void
-  setNileCommandStub: (stubs: RunnerCommandStub[]) => void
-  resetNileCommandStub: () => void
 }
 
 // ts-prune-ignore-next
@@ -152,9 +136,4 @@ interface FrontendMessages {
   // Used inside tests, so we can be a bit lenient with the type checking here
 }
 
-export type {
-  SyncIPCFunctions,
-  TestSyncIPCFunctions,
-  AsyncIPCFunctions,
-  FrontendMessages
-}
+export type { SyncIPCFunctions, AsyncIPCFunctions, FrontendMessages }

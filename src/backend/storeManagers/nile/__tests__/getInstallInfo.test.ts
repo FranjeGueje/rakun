@@ -15,7 +15,6 @@ jest.mock('../electronStores', () => ({
   libraryStore: { get: jest.fn(), set: jest.fn() }
 }))
 
-jest.mock('../e2eMock')
 jest.mock('backend/utils')
 jest.mock('backend/runner_call')
 

@@ -21,7 +21,6 @@ import { callRunner } from 'backend/runner_call'
 import { dirname, join } from 'path'
 import { appDataPath } from 'backend/constants/paths'
 import { NileUser } from './user'
-import { runNileCommandStub } from './e2eMock'
 import { nileConfigPath, nileInstalled, nileLibrary } from './constants'
 import NileGame from './games'
 import type { LibraryManager } from 'common/types/game_manager'
@@ -487,10 +486,6 @@ export default class NileLibraryManager implements LibraryManager {
     commandParts: string[],
     options?: CallRunnerOptions
   ): Promise<ExecResult> {
-    if (process.env.CI === 'e2e') {
-      return runNileCommandStub(commandParts)
-    }
-
     const { dir, bin } = getNileBin()
 
     // Set NILE_CONFIG_PATH to a custom, Relic-specific location so user-made

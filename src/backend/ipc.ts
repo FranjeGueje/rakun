@@ -1,7 +1,6 @@
 import type {
   AsyncIPCFunctions,
   SyncIPCFunctions,
-  TestSyncIPCFunctions,
   FrontendMessages
 } from 'common/types/ipc'
 
@@ -50,16 +49,6 @@ function addOneTimeListener<ChannelName extends keyof SyncIPCFunctions>(
     ;(listener as Listener)(e, ...args)
   }
   listeners.set(channel, [...(listeners.get(channel) ?? []), once])
-}
-
-function addTestOnlyListener<ChannelName extends keyof TestSyncIPCFunctions>(
-  channel: ChannelName,
-  listener: (...args: Parameters<TestSyncIPCFunctions[ChannelName]>) => void
-) {
-  if (process.env.CI === 'e2e')
-    addListener(channel as never, (_e: IpcEvent, ...args: never[]) =>
-      (listener as (...a: never[]) => void)(...args)
-    )
 }
 
 function addHandler<ChannelName extends keyof AsyncIPCFunctions>(
@@ -120,7 +109,6 @@ export type { IpcEvent }
 export {
   addListener,
   addOneTimeListener,
-  addTestOnlyListener,
   addHandler,
   invokeHandler,
   dispatchListener,

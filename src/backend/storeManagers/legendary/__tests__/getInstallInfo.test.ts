@@ -24,7 +24,6 @@ jest.mock('../electronStores', () => ({
 }))
 
 jest.mock('../user', () => ({ LegendaryUser: {} }))
-jest.mock('../e2eMock')
 jest.mock('../../../runner_call')
 jest.mock('../../index', () => ({}))
 

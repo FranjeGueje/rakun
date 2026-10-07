@@ -23,7 +23,6 @@ jest.mock('backend/constants/paths', () => ({
 jest.mock('../user', () => ({
   NileUser: { isLoggedIn: jest.fn(() => true), getUserData: jest.fn() }
 }))
-jest.mock('../e2eMock', () => ({ runNileCommandStub: jest.fn() }))
 jest.mock('../constants', () => ({
   nileConfigPath: '/tmp/nile_config',
   nileInstalled: '/tmp/nile_config/installed.json',

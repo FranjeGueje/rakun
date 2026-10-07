@@ -47,18 +47,17 @@ import { isOnline, runOnceWhenOnline } from '../../online_monitor'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { unzipSync } from 'node:zlib'
 import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
-import { runGogdlCommandStub } from './e2eMock'
 import { gogdlConfigPath } from './constants'
 import { userDataPath } from 'backend/constants/paths'
 import GOGGame from './games'
 import type { LibraryManager } from 'common/types/game_manager'
+import { shareInFlight } from 'backend/utils/inflight'
 import { GlobalConfig } from 'backend/config'
 
 /** The language the user chose, then English as the fallback */
 function preferredLanguages(): string[] {
   return [GlobalConfig.get().getSettings().language, 'en']
 }
-import { shareInFlight } from 'backend/utils/inflight'
 
 const library: Map<string, GameInfo> = new Map()
 const installedGames: Map<string, InstalledInfo> = new Map()
@@ -1336,10 +1335,6 @@ export default class GOGLibraryManager implements LibraryManager {
     commandParts: string[],
     options?: CallRunnerOptions
   ): Promise<ExecResult> {
-    if (process.env.CI === 'e2e') {
-      return runGogdlCommandStub(commandParts)
-    }
-
     const { dir, bin } = getGOGdlBin()
     const authConfig = join(userDataPath, 'gog_store', 'auth.json')
 

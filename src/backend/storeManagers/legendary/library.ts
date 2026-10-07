@@ -36,7 +36,6 @@ import { LegendaryAppName, LegendaryPlatform } from './commands/base'
 import { Path } from 'backend/schemas'
 import thirdParty from './thirdParty'
 import { Entries } from 'type-fest'
-import { runLegendaryCommandStub } from './e2eMock'
 import { legendaryConfigPath, legendaryMetadata } from './constants'
 import { LibraryManager } from 'common/types/game_manager'
 import LegendaryGame from './games'
@@ -711,10 +710,6 @@ export default class LegendaryLibraryManager implements LibraryManager {
     command: LegendaryCommand,
     options?: CallRunnerOptions
   ): Promise<ExecResult> {
-    if (process.env.CI === 'e2e') {
-      return runLegendaryCommandStub(command)
-    }
-
     const { dir, bin } = getLegendaryBin()
 
     // Set LEGENDARY_CONFIG_PATH to a custom, Relic-specific location so user-made
