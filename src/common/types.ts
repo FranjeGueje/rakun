@@ -1,8 +1,4 @@
-import {
-  GOGCloudSavesLocation,
-  GogInstallInfo,
-  GogInstallPlatform
-} from './types/gog'
+import { GogInstallInfo, GogInstallPlatform } from './types/gog'
 import {
   LegendaryInstallPlatform,
   GameMetadataInner,
@@ -125,7 +121,6 @@ export interface GameInfo {
   save_folder?: string
   // ...and this is the folder with them filled in
   save_path?: string
-  gog_save_location?: GOGCloudSavesLocation[]
   title: string
   canRunOffline: boolean
   thirdPartyManagedApp?: string
@@ -154,7 +149,6 @@ export interface GameSettings {
   offlineMode: boolean
   targetExe: string
   savesPath: string
-  gogSaves?: GOGCloudSavesLocation[]
   verboseLogs: boolean
   enableQuickSavesMenu: boolean
 }

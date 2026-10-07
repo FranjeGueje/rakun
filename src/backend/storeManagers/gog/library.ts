@@ -10,11 +10,9 @@ import {
   LaunchOption
 } from 'common/types'
 import {
-  GOGCloudSavesLocation,
   GOGGameDotInfoFile,
   GogInstallInfo,
   GOGGameDotIdFile,
-  GOGClientsResponse,
   GamesDBData,
   Library,
   BuildItem,
@@ -22,8 +20,6 @@ import {
   ProductsEndpointData,
   GOGDLInstallInfo,
   GOGCredentials,
-  GOGv1Manifest,
-  GOGv2Manifest,
   GOGSessionSyncQueueItem
 } from 'common/types/gog'
 import { dirname, join } from 'node:path'
@@ -242,77 +238,6 @@ export default class GOGLibraryManager implements LibraryManager {
       })
   }
 
-  async getSaveSyncLocation(
-    appName: string,
-    install: InstalledInfo
-  ): Promise<GOGCloudSavesLocation[] | undefined> {
-    let syncPlatform: 'Windows' | 'MacOS' = 'Windows'
-    const platform = install.platform
-    switch (platform) {
-      case 'windows':
-        syncPlatform = 'Windows'
-        break
-      case 'osx':
-        syncPlatform = 'MacOS'
-        break
-    }
-
-    let clientId
-
-    const manifestPath = join(gogdlConfigPath, 'manifests', appName)
-    if (existsSync(manifestPath)) {
-      try {
-        const dataRaw = readFileSync(manifestPath, { encoding: 'utf-8' })
-        const data: GOGv1Manifest | GOGv2Manifest = JSON.parse(dataRaw)
-        if (data.version === 2) {
-          clientId = data.clientId
-        }
-      } catch (err) {
-        clientId = undefined
-        logWarning(
-          [
-            'Was not able to read clientId from manifest, falling back to info file:',
-            err
-          ],
-          LogPrefix.Gog
-        )
-        clientId = this.readInfoFile(appName, install.install_path)?.clientId
-      }
-    } else {
-      clientId = this.readInfoFile(appName, install.install_path)?.clientId
-    }
-
-    if (!clientId) {
-      logWarning(
-        `No clientId in goggame-${appName}.info file. Cannot resolve save path`
-      )
-      return
-    }
-
-    let response: GOGClientsResponse | undefined
-    try {
-      response = (
-        await axiosClient.get(
-          `https://remote-config.gog.com/components/galaxy_client/clients/${clientId}?component_version=2.0.45`
-        )
-      ).data
-    } catch (error) {
-      logError(
-        ['Failed to get remote config information for', appName, ':', error],
-        LogPrefix.Gog
-      )
-    }
-    if (!response) {
-      return
-    }
-    const platformInfo = response.content[syncPlatform]
-    const savesInfo = platformInfo.cloudStorage
-    if (!savesInfo.enabled) {
-      return
-    }
-    return savesInfo.locations
-  }
-
   private defaultExecResult = {
     stderr: '',
     stdout: ''
@@ -511,18 +436,6 @@ export default class GOGLibraryManager implements LibraryManager {
           gamesObjects.push(unifiedObject)
 
           const installedInfo = installedGames.get(String(game.external_id))
-          // If game is installed, verify if installed game supports cloud saves
-          if (installedInfo && installedInfo?.platform !== 'linux') {
-            const saveLocations = await this.getSaveSyncLocation(
-              unifiedObject.app_name,
-              installedInfo
-            )
-
-            if (saveLocations) {
-              unifiedObject.cloud_save_enabled = true
-              unifiedObject.gog_save_location = saveLocations
-            }
-          }
           // Create new object to not write install data into library store
           const copyObject = Object.assign({}, unifiedObject)
           if (installedInfo) {
@@ -756,20 +669,7 @@ export default class GOGLibraryManager implements LibraryManager {
       }
     }
 
-    if (
-      !libraryArray[gameObjectIndex]?.gog_save_location &&
-      installedGames.get(appName) &&
-      installedGames.get(appName)?.platform !== 'linux'
-    ) {
-      gameData.gog_save_location = await this.getSaveSyncLocation(
-        appName,
-        installedGames.get(appName)!
-      )
-    }
-
     libraryArray[gameObjectIndex].folder_name = gogInfo.folder_name
-    libraryArray[gameObjectIndex].gog_save_location =
-      gameData?.gog_save_location
     gameData.folder_name = gogInfo.folder_name
     libraryStore.set('games', libraryArray)
     library.set(appName, gameData)

@@ -70,11 +70,6 @@ interface GameManifest {
   builds?: BuildItem[]
 }
 
-export interface GOGCloudSavesLocation {
-  name: string
-  location: string
-}
-
 // Data inside the `goggame-appName.info` file in the game installation directory
 export interface GOGGameDotInfoFile {
   version: number
@@ -117,38 +112,6 @@ type TaskCategory = 'game' | 'tool' | 'document' | 'launcher' | 'other'
 export interface GOGGameDotIdFile {
   buildId: string
 }
-
-// Data returned from https://remote-config.gog.com/components/galaxy_client/clients/clientId?component_version=2.0.45
-export interface GOGClientsResponse {
-  version: string
-  content: {
-    MacOS: FeatureSupport
-    Windows: FeatureSupport
-    cloudStorage: {
-      quota: number
-    }
-    bases: unknown[]
-  }
-}
-
-interface FeatureSupport {
-  overlay: {
-    supported: boolean
-  }
-  cloudStorage: {
-    enabled: boolean
-    locations: GOGCloudSavesLocation[]
-  }
-}
-
-export type SaveFolderVariable =
-  | 'INSTALL'
-  | 'SAVED_GAMES'
-  | 'APPLICATION_DATA_LOCAL'
-  | 'APPLICATION_DATA_LOCAL_LOW'
-  | 'APPLICATION_DATA_ROAMING'
-  | 'DOCUMENTS'
-  | 'APPLICATION_SUPPORT'
 
 // Data returned from https://users.gog.com/users/${user_id}
 export interface UserData {
@@ -427,69 +390,6 @@ export interface ProductsEndpointData {
     bonus_content: Array<ProductsEndpointBonusContent>
   }
   changelog?: string
-}
-
-// MANIFESTS
-
-export interface GOGv1Manifest {
-  version: 1
-  product: {
-    timestamp: number
-    depots: Array<
-      | {
-          languages: string[]
-          size: string
-          gameIDs: string[]
-          systems: string[]
-          manifest: string
-        }
-      | { redist: string; executable: string; argument: string; size: string }
-    >
-
-    support_commands: {
-      languages: string[]
-      executable: string
-      gameID: string
-      argument: string
-      systems: string[]
-    }[]
-    installDirectory: string
-    rootGameID: string
-    gameIDs: {
-      gameID: string
-      name: { [lang: string]: string }
-      dependencies: string[]
-      standalone: boolean
-    }[]
-    projectName: string
-  }
-}
-
-export interface GOGv2Manifest {
-  version: 2
-  baseProductId: string
-  buildId: string
-  clientId?: string
-  clientSecret?: string
-  dependencies?: string[]
-  depots: Array<{
-    compressedSize: number
-    languages: string[]
-    manifest: string
-    productId: string
-    size: number
-    isGogDepot?: boolean
-  }>
-  platform: GogInstallPlatform
-  installDirectory: string
-  products: Array<{
-    name: string
-    productId: string
-    temp_arguments: string
-    temp_executable: string
-  }>
-  tags?: string[]
-  scriptInterpreter?: boolean
 }
 
 export interface GOGCredentials {
