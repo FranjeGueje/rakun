@@ -522,6 +522,16 @@ describe('config', () => {
     ])
   })
 
+  test('says a setting read at start applies when relicd restarts', async () => {
+    const { ctx, lines } = fakeCtx({
+      requestAppSettings: { ...settings, webAccess: 'local' }
+    })
+    await config(ctx, ['webAccess', 'network'], opts)
+    expect(lines).toEqual([
+      'webAccess = network (se aplica al reiniciar relicd)'
+    ])
+  })
+
   test('refuses unknown keys and values of the wrong type', async () => {
     expect(() => settingKey(settings as never, 'nope')).toThrow(CliError)
     expect(parseValue(true, 'false')).toBe(false)

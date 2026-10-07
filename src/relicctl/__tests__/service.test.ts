@@ -4,6 +4,7 @@ import { join } from 'path'
 import { CliError } from '../client'
 import { checkServe, runCli } from '../cli'
 import {
+  logFile,
   relicdCommand,
   relicdFlags,
   startRelicd,
@@ -24,6 +25,15 @@ describe('relicdCommand', () => {
       cmd: process.execPath,
       args: [join(dir, 'relicd.cjs')]
     })
+  })
+})
+
+describe('logFile', () => {
+  test('is the log of relicd, in the XDG state folder or in ~/.local/state', () => {
+    expect(logFile({ XDG_STATE_HOME: '/x/state' })).toBe(
+      '/x/state/Relicd/logs/relicd.log'
+    )
+    expect(logFile({})).toMatch(/\.local\/state\/Relicd\/logs\/relicd\.log$/)
   })
 })
 
@@ -61,7 +71,7 @@ describe('startRelicd', () => {
         () => ({ pid: 4321, exited: () => 1 }),
         () => Promise.resolve(false)
       )
-    ).rejects.toThrow(/relicctl logs/)
+    ).rejects.toThrow(/relicd\.log/)
   })
 })
 

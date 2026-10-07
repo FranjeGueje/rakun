@@ -337,7 +337,7 @@ export default class ZoomGame implements Game {
       }
     } else {
       const downloadPath = join(downloadRoot, installers[0].filename)
-      const protonPath = GlobalConfig.get().getSettings().protonPath
+      const protonPath = GlobalConfig.get().getProtonPath()
       if (!protonPath) {
         logWarning(
           'No GE-Proton configured for Windows installer. Set it with: relicctl config protonPath <folder>',

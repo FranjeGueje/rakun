@@ -1,6 +1,7 @@
 import { startDaemon } from './daemon'
+import { reportStartFailure } from './start_failure'
 
 startDaemon().catch((error: unknown) => {
-  console.error('relicd failed to start:', error)
+  reportStartFailure(error)
   process.exit(1)
 })

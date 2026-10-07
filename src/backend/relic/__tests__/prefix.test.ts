@@ -40,7 +40,7 @@ jest.mock('../steam_shortcuts/add_game', () => ({
 jest.mock('backend/config', () => ({
   GlobalConfig: {
     get: jest.fn(() => ({
-      getSettings: jest.fn(() => ({ protonPath: '/usr/bin/proton' }))
+      getProtonPath: jest.fn(() => '/usr/bin/proton')
     }))
   }
 }))

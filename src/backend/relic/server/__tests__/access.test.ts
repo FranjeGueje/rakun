@@ -72,7 +72,14 @@ describe('isBlockedFromNetwork', () => {
       'resetRelic',
       'stopRelicd',
       'steamgriddb.setApiKey',
-      'importSessionsFromRelic'
+      'importSessionsFromRelic',
+      'getPrivateBranchPassword',
+      'setPrivateBranchPassword',
+      'getLogContent',
+      'listFolders',
+      'importGame',
+      'moveInstall',
+      'changeInstallPath'
     ])
       expect(isBlockedFromNetwork(channel, remote, 'network')).toBe(true)
   })

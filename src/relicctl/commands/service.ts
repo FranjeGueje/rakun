@@ -1,5 +1,6 @@
 import { spawn } from 'child_process'
 import { existsSync } from 'fs'
+import { homedir } from 'os'
 import { join } from 'path'
 import type { DMQueueElement, Runner } from 'common/types'
 import {
@@ -17,6 +18,12 @@ const WAIT_MS = 15000
 const POLL_MS = 100
 
 type Io = Pick<Ctx, 'log'>
+
+/** Where relicd writes its log: `relicctl logs` needs relicd running, and it just failed to start */
+export function logFile(env: NodeJS.ProcessEnv = process.env): string {
+  const state = env.XDG_STATE_HOME || join(homedir(), '.local', 'state')
+  return join(state, 'Relicd', 'logs', 'relicd.log')
+}
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -80,7 +87,7 @@ export async function startRelicd(
   )
   if (!up || !(await running()))
     throw new CliError(
-      `relicd no ha arrancado (código ${launched.exited() ?? 'sin respuesta'}): mira "relicctl logs"`
+      `relicd no ha arrancado (código ${launched.exited() ?? 'sin respuesta'}): mira ${logFile()}`
     )
   return launched.exited() === undefined ? launched.pid : undefined
 }

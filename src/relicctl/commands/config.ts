@@ -31,6 +31,9 @@ export function parseValue(
   return raw
 }
 
+/** Read when relicd starts: saving it changes nothing until then */
+const AT_START = new Set<keyof AppSettings>(['webAccess'])
+
 const line = (key: string, value: unknown, note = '') =>
   `${key} = ${String(value)}${note}`
 
@@ -62,5 +65,11 @@ export const config: Command = async (ctx, args) => {
   }
   const value = parseValue(settings[key], args[1])
   await ctx.api.call('setSetting', { key, value })
-  ctx.log(line(key, value))
+  ctx.log(
+    line(
+      key,
+      value,
+      AT_START.has(key) ? ' (se aplica al reiniciar relicd)' : ''
+    )
+  )
 }

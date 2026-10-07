@@ -138,7 +138,7 @@ async function prepareUmuPrefix(
     return
   }
 
-  const protonPath = GlobalConfig.get().getSettings().protonPath
+  const protonPath = GlobalConfig.get().getProtonPath()
   if (!protonPath) {
     logInfo('No GE-Proton configured, skipping UMU prefix', LOG_PREFIX)
     return

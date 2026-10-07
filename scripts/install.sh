@@ -120,4 +120,9 @@ Arrancarlo, cuando lo necesites:
 
 Comprobarlo:
   relicctl status         (o: curl http://127.0.0.1:17370/health)
+
+La web, en un navegador de este equipo:  http://127.0.0.1:17370
+  Por defecto solo este equipo puede abrirla. Para toda la red (SIN protección,
+  solo uso doméstico) o para apagarla:  relicctl start --web network | off
+  Con el ajuste guardado:               relicctl config webAccess network | off
 MSG

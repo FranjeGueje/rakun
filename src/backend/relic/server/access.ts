@@ -4,17 +4,28 @@ import type { WebAccess } from 'common/relic/web'
 const LOOPBACK_NAMES = ['localhost', '127.0.0.1', '[::1]']
 
 /**
- * What changes the settings or stops relicd. Setting `altLegendaryBin` makes
- * relicd run that program, so with the web open to the network these are only
- * answered to this machine.
+ * What changes the settings, stops relicd, reads a secret or walks the disk.
+ * Setting `altLegendaryBin` makes relicd run that program, so with the web open
+ * to the network these are only answered to this machine. `install` with a
+ * `path` is not here: it is how the web installs, and it stays open.
  */
 const LOCAL_ONLY_CHANNELS: ReadonlySet<string> = new Set([
+  // Settings, reset and stop
   'writeConfig',
   'setSetting',
   'resetRelic',
   'stopRelicd',
   'steamgriddb.setApiKey',
-  'importSessionsFromRelic'
+  'importSessionsFromRelic',
+  // Secrets and what is on the disk
+  'getPrivateBranchPassword',
+  'setPrivateBranchPassword',
+  'getLogContent',
+  'listFolders',
+  // Move or register game folders anywhere
+  'importGame',
+  'moveInstall',
+  'changeInstallPath'
 ])
 
 export function isLoopback(address: string | undefined): boolean {

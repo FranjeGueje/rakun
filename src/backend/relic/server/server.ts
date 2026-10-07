@@ -89,7 +89,7 @@ async function handleCall(
   }
   if (isBlockedFromNetwork(channel, req.socket.remoteAddress, mode)) {
     return sendJson(res, 403, {
-      error: `"${channel}" can only be called from the machine relicd runs on`
+      error: `"${channel}" can only be called from the machine relicd runs on: open the web there as http://127.0.0.1:${req.socket.localPort}`
     })
   }
 

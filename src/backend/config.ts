@@ -1,10 +1,11 @@
-import { existsSync, readFileSync, readdirSync, writeFileSync } from 'fs'
+import { existsSync, readFileSync, writeFileSync } from 'fs'
 
 import { AppSettings, GlobalConfigVersion } from 'common/types'
 import { currentGlobalConfigVersion } from 'backend/constants/others'
 
 import { logError, logInfo, LogPrefix } from './logger'
 import { backendEvents } from './backend_events'
+import { detectGeProton, resolveProtonPath } from './relic/proton'
 import { configStore } from './constants/key_value_stores'
 
 import {
@@ -137,6 +138,11 @@ abstract class GlobalConfig {
    *
    * @returns AppSettings
    */
+  /** The Proton folder in use: the saved one, or the first GE-Proton found now when it is empty */
+  public getProtonPath(): string {
+    return resolveProtonPath(this.getSettings().protonPath, steamCompatDir)
+  }
+
   public abstract getFactoryDefaults(): AppSettings
 
   /**
@@ -212,17 +218,6 @@ class GlobalConfigV0 extends GlobalConfig {
     return settings
   }
 
-  private detectGeProton(): string {
-    try {
-      if (!existsSync(steamCompatDir)) return ''
-      const dirs = readdirSync(steamCompatDir)
-      const geProton = dirs.find((d: string) => /proton/i.test(d))
-      return geProton ? join(steamCompatDir, geProton) : ''
-    } catch {
-      return ''
-    }
-  }
-
   public getFactoryDefaults(): AppSettings {
     const settings: Partial<AppSettings> = {
       autoUpdateGames: true,
@@ -230,7 +225,7 @@ class GlobalConfigV0 extends GlobalConfig {
       defaultSteamPath: getSteamCompatFolder(),
       language: 'en',
       maxWorkers: 0,
-      protonPath: this.detectGeProton(),
+      protonPath: detectGeProton(steamCompatDir),
       steamGridDbApiKey: '',
       webAccess: 'local'
     }
