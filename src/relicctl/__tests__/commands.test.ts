@@ -13,6 +13,7 @@ import {
 } from '../commands/games'
 import { parseCallArgs, call } from '../commands/call'
 import { cancel, pause, queue, resume } from '../commands/queue'
+import { cache, reset } from '../commands/maintenance'
 import { logs } from '../commands/logs'
 import { config, parseValue, settingKey } from '../commands/config'
 import { parseCli, runCli } from '../cli'
@@ -520,5 +521,33 @@ describe('queue control', () => {
       ['cancelDownload', [true]],
       ['clearFinishedDMQueue', []]
     ])
+  })
+})
+
+describe('maintenance', () => {
+  test('cache clear sends the store, or nothing for all', async () => {
+    const { ctx, calls } = fakeCtx()
+    await cache(ctx, ['clear'], opts)
+    await cache(ctx, ['clear', 'epic'], opts)
+    expect(calls).toEqual([
+      ['clearCache', []],
+      ['clearCache', ['legendary']]
+    ])
+    await expect(cache(ctx, [], opts)).rejects.toThrow(CliError)
+  })
+
+  test('reset asks first and --yes skips the question', async () => {
+    const no = fakeCtx()
+    no.ctx.ask = () => Promise.resolve('n')
+    await reset(no.ctx, [], opts)
+    expect(no.calls).toEqual([])
+
+    const yes = fakeCtx()
+    yes.ctx.ask = () => Promise.resolve('s')
+    await reset(yes.ctx, [], opts)
+    const forced = fakeCtx()
+    await reset(forced.ctx, [], { ...opts, yes: true })
+    expect(yes.calls).toEqual([['resetRelic', []]])
+    expect(forced.calls).toEqual([['resetRelic', []]])
   })
 })

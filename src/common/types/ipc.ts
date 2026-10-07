@@ -31,6 +31,8 @@ import type { GetLogFileArgs } from 'backend/logger/paths'
 interface SyncIPCFunctions {
   removeFromDMQueue: (appName: string) => void
   clearFinishedDMQueue: () => void
+  clearCache: (library?: Runner) => void
+  resetRelic: () => void
   'set-connectivity-online': () => void
   setSetting: (args: { key: keyof AppSettings; value: unknown }) => void
   resumeCurrentDownload: () => void

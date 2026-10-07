@@ -8,6 +8,7 @@ import { install, repair, uninstall, update } from './commands/games'
 import { library, refresh } from './commands/library'
 import { cancel, pause, queue, resume } from './commands/queue'
 import { logs } from './commands/logs'
+import { cache, reset } from './commands/maintenance'
 import { config } from './commands/config'
 
 export const HELP = `Uso: relicctl <comando> [argumentos]
@@ -24,6 +25,8 @@ export const HELP = `Uso: relicctl <comando> [argumentos]
   pause | resume                  pausa o reanuda la cola
   cancel [--remove-files]         cancela la descarga actual
   logs [tienda [appName]] [--type T]  registro de relicd, de una tienda o de un juego
+  cache clear [tienda]            vacía la caché de las bibliotecas
+  reset [--yes]                   borra sesiones y ajustes y detiene relicd
   config [clave [valor]]          ver o cambiar ajustes (p. ej. defaultInstallPath)
   events                          sigue los eventos de relicd
   call <canal> [json]             llama a un canal de la API
@@ -47,6 +50,8 @@ export const commands: Record<string, Command> = {
   pause,
   resume,
   cancel,
+  cache,
+  reset,
   config,
   logs,
   events,
@@ -64,6 +69,7 @@ export function parseCli(argv: string[]) {
       type: { type: 'string' },
       'skip-dlcs': { type: 'boolean' },
       'remove-files': { type: 'boolean' },
+      yes: { type: 'boolean' },
       'no-wait': { type: 'boolean' },
       installed: { type: 'boolean' },
       help: { type: 'boolean', short: 'h' }
@@ -75,6 +81,7 @@ export function parseCli(argv: string[]) {
     type: values.type,
     skipDlcs: values['skip-dlcs'],
     removeFiles: values['remove-files'],
+    yes: values.yes,
     wait: !values['no-wait'],
     installed: !!values.installed
   }

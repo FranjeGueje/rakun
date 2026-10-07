@@ -17,6 +17,7 @@ export type Options = {
   type?: string
   skipDlcs?: boolean
   removeFiles?: boolean
+  yes?: boolean
   wait: boolean
   installed: boolean
 }

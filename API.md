@@ -87,7 +87,10 @@ to be reinstalled to get them).
 
 **Settings and status:** `requestAppSettings`, `writeConfig(config)`,
 `setSetting({key, value})` (all settings are global; `relicctl config [key [value]]`
-reads and sets them),
+reads and sets them), `clearCache(library?)` (library caches, all stores or one;
+`relicctl cache clear [store]`), `resetRelic` (forgets sessions, settings, the
+queue and per-game data, keeps installed games and `api.json`, then relicd
+stops; `relicctl reset`),
 `getRelicVersion`, `getEpicGamesStatus`, `get-connectivity-status`,
 `getSystemInfo`, `getLogContent` (see Logs below; `relicctl logs`), and the helper versions `getLegendaryVersion`,
 `getGogdlVersion`, `getNileVersion`, `getCometVersion`. There are no
