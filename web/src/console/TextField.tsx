@@ -73,11 +73,16 @@ export function TextField({
             else if (event.key === 'Escape') onClose()
           }}
         />
-        {paste && (
-          <button className="button" onClick={() => void pasteAndSave()}>
-            {paste.label}
+        <div className="buttons">
+          <button className="button" onClick={() => void save(value)}>
+            {t('common.ok')}
           </button>
-        )}
+          {paste && (
+            <button className="button" onClick={() => void pasteAndSave()}>
+              {paste.label}
+            </button>
+          )}
+        </div>
         <p className="muted small">{hint ?? t('field.hint')}</p>
         {error && <p className="errorText">{error}</p>}
       </div>

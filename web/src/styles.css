@@ -3,7 +3,8 @@
   --panel: #1b1b22;
   --text: #eae8e5;
   --muted: #9a98a0;
-  --accent: #3b82f6;
+  --accent: #b02818;
+  --accent-bright: color-mix(in srgb, var(--accent) 70%, white);
   --danger: #e5484d;
   --ok: #3fb950;
   --card-width: clamp(120px, 10vw, 200px);
@@ -57,16 +58,27 @@ button {
 
 .topBar {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 16px;
   padding: 14px 28px 6px;
 }
 
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wordmark {
+  height: 26px;
+  width: auto;
+}
+
 .logo {
-  width: 28px;
-  height: 28px;
-  color: var(--accent);
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
 }
 
 .chips {
@@ -165,7 +177,7 @@ button {
 }
 
 .card.focused {
-  outline-color: var(--accent);
+  outline-color: var(--accent-bright);
   transform: scale(1.04);
 }
 
@@ -429,7 +441,7 @@ kbd {
 }
 
 .row.focused {
-  border-color: var(--accent);
+  border-color: var(--accent-bright);
   background: rgba(255, 255, 255, 0.12);
 }
 
@@ -446,7 +458,7 @@ kbd {
   width: 100%;
   box-sizing: border-box;
   padding: 12px 16px;
-  border: 2px solid var(--accent);
+  border: 2px solid var(--accent-bright);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.06);
   color: inherit;
@@ -459,6 +471,20 @@ kbd {
   align-items: center;
   gap: 24px;
   font-size: 1.3em;
+}
+
+.choice .arrow {
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 1.4em;
+  line-height: 1;
+  color: var(--text);
+  border-radius: 8px;
+}
+
+.choice .arrow:hover,
+.choice .arrow:focus-visible {
+  color: var(--accent-bright);
 }
 
 .closeX {
@@ -476,7 +502,7 @@ kbd {
 .loginLink {
   display: inline-block;
   margin: 8px 0 16px;
-  color: var(--accent);
+  color: var(--accent-bright);
 }
 
 .networkWarning {
@@ -501,11 +527,13 @@ kbd {
 /* Narrow windows (a phone, a half screen): a one-row bar with the stores and a ☰ for the rest, no key hints */
 @media (max-width: 800px) {
   .topBar {
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: 1fr auto auto;
     padding: 10px 14px 4px;
   }
 
   .topBar .chips:not(.right) {
+    grid-column: 1;
+    grid-row: 1;
     flex-wrap: nowrap;
     overflow-x: auto;
     scrollbar-width: none;
@@ -519,6 +547,20 @@ kbd {
     display: inline-flex;
     grid-column: 3;
     grid-row: 1;
+  }
+
+  .wordmark {
+    display: none;
+  }
+
+  .brand {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .logo {
+    width: 30px;
+    height: 30px;
   }
 
   .more {

@@ -398,6 +398,9 @@ with `HOME=` empty rakun writes its folders relative to the current directory.
 - [Relic](https://github.com/FranjeGueje/Relic) and
   [Heroic Games Launcher](https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher)
 - Everyone listed in [AUTHORS](AUTHORS)
+- [Lilita One](https://github.com/google/fonts/tree/main/ofl/lilitaone) by Juan
+  Montoreano (SIL Open Font License 1.1, `web/LilitaOne-OFL.txt`): the "Rakun"
+  lettering of the web is drawn from its outlines
 - [Legendary](https://github.com/derrod/legendary)
 - [GOGdl](https://github.com/Heroic-Games-Launcher/heroic-gogdl)
 - [Nile](https://github.com/imLinguin/nile)

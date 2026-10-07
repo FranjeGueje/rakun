@@ -10,6 +10,10 @@ import { FolderPicker } from './FolderPicker'
 import { LanguageSelect, languageLabel } from './LanguageSelect'
 import { TextField } from './TextField'
 
+/** The page of the user's profile where SteamGridDB shows the API key */
+const STEAMGRIDDB_KEY_URL =
+  'https://www.steamgriddb.com/profile/preferences/api'
+
 type Entry = MenuEntry
 const ENTRIES: Entry[] = [
   'accounts',
@@ -117,6 +121,19 @@ export function Menu({
           title={title}
           initial={settings.steamGridDbApiKey}
           t={t}
+          intro={
+            <>
+              <p>{t('steamGridDb.instructions')}</p>
+              <a
+                className="loginLink"
+                href={STEAMGRIDDB_KEY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t('steamGridDb.open')}
+              </a>
+            </>
+          }
           onSave={(value) => save('steamGridDb', value)}
           onClose={close}
         />

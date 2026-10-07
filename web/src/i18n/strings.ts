@@ -70,6 +70,7 @@ export const en = {
   'hint.refresh': 'Refresh',
   'hint.menu': 'Menu',
   'common.close': '✕ Close',
+  'common.ok': 'OK',
   'login.title': 'Sign in to {store}',
   'login.open': 'Open the login page',
   'login.hint':
@@ -84,6 +85,9 @@ export const en = {
   'menu.downloadPath': 'Download folder',
   'menu.protonPath': 'Proton folder',
   'menu.steamGridDb': 'SteamGridDB key',
+  'steamGridDb.instructions':
+    'rakun downloads the covers of your games from SteamGridDB. Log in there, open your profile preferences (API tab), copy your API key and paste it below.',
+  'steamGridDb.open': 'Open the SteamGridDB API page',
   'menu.language': 'Download language',
   'menu.automatic': 'Automatic',
   'menu.configured': 'Set',
@@ -94,6 +98,8 @@ export const en = {
   'folders.empty': 'No folders here.',
   'field.hint':
     'Enter or A saves · Esc or B cancels. An empty text removes it.',
+  'language.previous': 'Previous language',
+  'language.next': 'Next language',
   'language.hint': '← → change · A save · B cancel',
   'settings.failed': 'Could not save: {error}',
   'accounts.title': 'Accounts',

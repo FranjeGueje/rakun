@@ -22,7 +22,7 @@
     "build": "pnpm build:daemon && pnpm build:ctl && pnpm build:web",
     "build:daemon": "esbuild src/backend/rakun/main.ts --bundle --platform=node --format=cjs --target=node24 --outfile=build/rakun.cjs --log-level=warning",
     "build:ctl": "esbuild src/rakunctl/main.ts --bundle --platform=node --format=cjs --target=node24 --outfile=build/rakunctl.cjs --log-level=warning",
-    "build:web": "esbuild web/src/main.tsx --bundle --format=esm --jsx=automatic --target=es2023 --minify --outfile=build/web/app.js --log-level=warning && cp web/index.html build/web/index.html",
+    "build:web": "esbuild web/src/main.tsx --bundle --format=esm --jsx=automatic --target=es2023 --minify --outfile=build/web/app.js --log-level=warning && cp web/index.html web/icon.png web/wordmark.svg web/LilitaOne-OFL.txt build/web/",
     "package": "bash scripts/package.sh",
     "codecheck": "tsc --noEmit && tsc --noEmit -p web",
     "test": "jest",

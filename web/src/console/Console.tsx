@@ -120,20 +120,6 @@ export function Console({ state, actions, t, layout }: Props) {
   return (
     <div className="console">
       <header className={`topBar${barOpen ? ' open' : ''}`}>
-        {/* A temporary icon (a joystick-like glyph); the real one comes later */}
-        <svg
-          className="logo"
-          viewBox="0 0 24 24"
-          width="28"
-          height="28"
-          role="img"
-          aria-hidden="true"
-        >
-          <path
-            fill="currentColor"
-            d="M7 9h2v2h2v2H9v2H7v-2H5v-2h2V9Zm9 1.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm3 2a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM6 6h12a5 5 0 0 1 4.9 4l.7 4.2A3.3 3.3 0 0 1 20.4 18c-1.2 0-2.2-.6-2.8-1.6L16.9 15H7.1l-.7 1.4c-.6 1-1.6 1.6-2.8 1.6a3.3 3.3 0 0 1-3.2-3.8l.7-4.2A5 5 0 0 1 6 6Z"
-          />
-        </svg>
         <nav className="chips">
           {storeOptions.map((id) => (
             <button
@@ -158,6 +144,16 @@ export function Console({ state, actions, t, layout }: Props) {
             {filters.ascending ? t('sort.az') : t('sort.za')}
           </button>
         </nav>
+        <div className="brand">
+          <img
+            className="logo"
+            src="./icon.png"
+            alt="rakun"
+            width="36"
+            height="36"
+          />
+          <img className="wordmark" src="./wordmark.svg" alt="" height="26" />
+        </div>
         <nav className="chips right more">
           <button className="chip" onClick={() => setDownloadsOpen(true)}>
             {t('header.downloads')}

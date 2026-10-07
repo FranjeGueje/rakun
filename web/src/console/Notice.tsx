@@ -23,7 +23,7 @@ export function Notice({
         <p>{notice.message}</p>
         <div className="buttons">
           <button className="button focused" onClick={onDismiss}>
-            OK
+            {t('common.ok')}
           </button>
         </div>
       </div>

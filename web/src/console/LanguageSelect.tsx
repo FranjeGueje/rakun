@@ -41,9 +41,11 @@ export function LanguageSelect({
     if (reason) setError(t('settings.failed', { error: reason }))
   }
 
+  const go = (step: number) => setIndex((index + step + count) % count)
+
   useLayer((action) => {
-    if (action === 'left') setIndex((index - 1 + count) % count)
-    else if (action === 'right') setIndex((index + 1) % count)
+    if (action === 'left') go(-1)
+    else if (action === 'right') go(1)
     else if (action === 'confirm') void save()
     else if (action === 'back') onClose()
   })
@@ -54,10 +56,27 @@ export function LanguageSelect({
         <CloseButton t={t} onClose={onClose} />
         <h1>{title}</h1>
         <p className="choice">
-          <span aria-hidden="true">‹</span>
+          <button
+            className="arrow"
+            aria-label={t('language.previous')}
+            onClick={() => go(-1)}
+          >
+            ‹
+          </button>
           <strong>{languageLabel(supportedLanguages[index])}</strong>
-          <span aria-hidden="true">›</span>
+          <button
+            className="arrow"
+            aria-label={t('language.next')}
+            onClick={() => go(1)}
+          >
+            ›
+          </button>
         </p>
+        <div className="buttons">
+          <button className="button" onClick={() => void save()}>
+            {t('common.ok')}
+          </button>
+        </div>
         <p className="muted small">{t('language.hint')}</p>
         {error && <p className="errorText">{error}</p>}
       </div>

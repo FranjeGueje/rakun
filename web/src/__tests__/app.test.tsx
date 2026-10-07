@@ -627,6 +627,18 @@ describe('settings in the menu', () => {
     )
   })
 
+  test('the key screen explains where to get the key and links to the page', async () => {
+    await open({}, 3)
+    press('Enter')
+    const link = await screen.findByRole('link', {
+      name: 'Open the SteamGridDB API page'
+    })
+    expect(link.getAttribute('href')).toBe(
+      'https://www.steamgriddb.com/profile/preferences/api'
+    )
+    expect(screen.getByText(/copy your API key/)).toBeTruthy()
+  })
+
   test('the key is typed in a field without the letters acting as shortcuts', async () => {
     const rakun = await open({}, 3)
     press('Enter')
@@ -656,6 +668,27 @@ describe('settings in the menu', () => {
     press('Enter')
     press('ArrowRight')
     press('Enter')
+    await waitFor(() =>
+      expect(rakun.setSetting).toHaveBeenCalledWith('language', 'et')
+    )
+  })
+
+  test('the arrows change it and OK saves it', async () => {
+    const rakun = await open({}, 4)
+    press('Enter')
+    await screen.findByText('Spanish (es)', { selector: 'strong' })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next language' }))
+    expect(
+      screen.getByText('Estonian (et)', { selector: 'strong' })
+    ).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Previous language' }))
+    expect(
+      screen.getByText('Spanish (es)', { selector: 'strong' })
+    ).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next language' }))
+    fireEvent.click(screen.getByRole('button', { name: 'OK' }))
     await waitFor(() =>
       expect(rakun.setSetting).toHaveBeenCalledWith('language', 'et')
     )
@@ -693,6 +726,26 @@ describe('login', () => {
       )
     )
     await waitFor(() => expect(screen.queryByRole('textbox')).toBeNull())
+  })
+
+  test('OK sits right before the paste button and signs in with what is typed', async () => {
+    const rakun = await openLogin()
+    const ok = await screen.findByRole('button', { name: 'OK' })
+    const paste = screen.getByRole('button', {
+      name: 'Paste from clipboard and sign in'
+    })
+    expect(ok.nextElementSibling).toBe(paste)
+
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'https://end?code=3' }
+    })
+    fireEvent.click(ok)
+    await waitFor(() =>
+      expect(rakun.login.submit).toHaveBeenCalledWith(
+        'gog',
+        'https://end?code=3'
+      )
+    )
   })
 
   test('a login that rakun refuses says why and stays open', async () => {
@@ -781,6 +834,21 @@ describe('the web open to the network', () => {
     await screen.findByTitle('Alpha')
     expect(screen.queryByRole('note')).toBeNull()
     remove()
+  })
+})
+
+describe('the app icon', () => {
+  test('sits in the middle of the header, between the store chips and the buttons', async () => {
+    setup()
+    await screen.findByTitle('Alpha')
+    const icon = screen.getByRole('img', { name: 'rakun' })
+    expect(icon.getAttribute('src')).toBe('./icon.png')
+    const brand = icon.parentElement
+    expect(brand?.className).toBe('brand')
+    expect(brand?.previousElementSibling?.className).toBe('chips')
+    expect(brand?.nextElementSibling?.classList.contains('right')).toBe(true)
+    // The lettering sits right after the icon; the icon already names it
+    expect(icon.nextElementSibling?.getAttribute('src')).toBe('./wordmark.svg')
   })
 })
 

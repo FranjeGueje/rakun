@@ -21,6 +21,15 @@ repository.
   (`drive_c/Launchers`, `%LAUNCHERS%` in the `.bat` files, runner version 5).
   Existing Steam shortcuts and prefixes are not migrated: delete the old shortcut
   and reinstall the game.
+- The web uses the rakun mascot as its icon (centred in the top bar) and the red of its
+  helmet as the accent colour, with the "Rakun" lettering next to it (drawn from
+  the outlines of Lilita One, SIL OFL).
+- The SteamGridDB key screen of the web explains where to get the key and
+  links to the page of the profile that shows it.
+- The download language screen of the web can be used with a mouse or touch:
+  ‹ › are buttons and there is an OK button.
+- The login screen of the web has an OK button, with the paste button right
+  next to it.
 - Everything is now in English: `rakunctl` (help, messages, errors, the `reset`
   confirmation is `[y/N]`), the scripts and the documentation. The Spanish
   README is `README.es.md`; `GUIA.md` is now `GUIDE.md`.
