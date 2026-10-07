@@ -288,7 +288,9 @@ export default class LegendaryLibraryManager implements LibraryManager {
         }
       }
     } catch (error) {
-      throw Error(`Failed to parse install info for ${appName} with: ${error}`)
+      throw Error(
+        `Failed to parse install info for ${appName} with: ${String(error)}`
+      )
     }
   }
 

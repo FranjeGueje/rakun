@@ -53,7 +53,7 @@ export function symlinkPrefix(
     return true
   } catch (error) {
     logError(
-      `Failed to symlink prefix for Steam ID ${steamAppId}: ${error}`,
+      `Failed to symlink prefix for Steam ID ${steamAppId}: ${String(error)}`,
       LOG_PREFIX
     )
     return false
@@ -76,7 +76,7 @@ export function removePrefixSymlink(steamAppId: number): void {
     }
   } catch (error) {
     logError(
-      `Failed to remove prefix symlink for Steam ID ${steamAppId}: ${error}`,
+      `Failed to remove prefix symlink for Steam ID ${steamAppId}: ${String(error)}`,
       LOG_PREFIX
     )
   }

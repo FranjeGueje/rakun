@@ -58,7 +58,7 @@ export default class ZoomGame implements Game {
       list = await fs.promises.readdir(dir, { withFileTypes: true })
     } catch (error) {
       logError(
-        `Error reading directory ${dir} for dosbox.exe: ${error}`,
+        `Error reading directory ${dir} for dosbox.exe: ${String(error)}`,
         LogPrefix.Zoom
       )
       return undefined // Cannot read dir, so stop here for this branch
@@ -92,7 +92,10 @@ export default class ZoomGame implements Game {
         }
       }
     } catch (error) {
-      logError(`Error finding .conf files in ${dir}: ${error}`, LogPrefix.Zoom)
+      logError(
+        `Error finding .conf files in ${dir}: ${String(error)}`,
+        LogPrefix.Zoom
+      )
     }
     return confFiles
   }
@@ -288,7 +291,7 @@ export default class ZoomGame implements Game {
           logError(['Failed to download installer:', error], LogPrefix.Zoom)
           return {
             status: 'error',
-            error: `Failed to download installer: ${error}`
+            error: `Failed to download installer: ${String(error)}`
           }
         }
       } else {
@@ -440,7 +443,7 @@ export default class ZoomGame implements Game {
             }
           } catch (error) {
             logError(
-              `Error finding .exe files in ${dir}: ${error}`,
+              `Error finding .exe files in ${dir}: ${String(error)}`,
               LogPrefix.Zoom
             )
           }

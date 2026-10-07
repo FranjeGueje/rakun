@@ -76,7 +76,7 @@ export class GOGUser {
       // shows up in the traceback.
       logError(
         `GOG login failed to parse std output from gogdl. stdout: ${stdout.trim()}, ` +
-          `stderr: ${redactAuthSecrets(stderr.trim())}, error ${err}`,
+          `stderr: ${redactAuthSecrets(stderr.trim())}, error ${String(err)}`,
         LogPrefix.Gog
       )
       return { status: 'error' }

@@ -13,6 +13,7 @@ import type { Migration } from '..'
 export class MoveCacheToXdgMigration implements Migration {
   identifier = 'move-cache-to-xdg-cache'
 
+  // eslint-disable-next-line @typescript-eslint/require-await -- the Migration interface is async
   async run(): Promise<boolean> {
     const moves: Array<[string, string]> = [
       [join(userDataPath, 'store_cache'), storeCachePath],

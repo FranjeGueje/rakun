@@ -27,7 +27,10 @@ export function deleteGrids(steamAppId: number): void {
           logInfo(`Deleted grid file: ${filePath}`, LOG_PREFIX)
         }
       } catch (e) {
-        logError(`Failed to delete grid file ${filePath}: ${e}`, LOG_PREFIX)
+        logError(
+          `Failed to delete grid file ${filePath}: ${String(e)}`,
+          LOG_PREFIX
+        )
       }
     }
   }

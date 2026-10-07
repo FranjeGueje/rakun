@@ -45,7 +45,7 @@ export class ZoomUser {
       configStore.set('isLoggedIn', true)
       return { status: 'done' }
     } catch (err) {
-      logError(`Failed to save Zoom token: ${err}`, LogPrefix.Zoom)
+      logError(`Failed to save Zoom token: ${String(err)}`, LogPrefix.Zoom)
       return { status: 'error' }
     }
   }

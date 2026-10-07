@@ -87,8 +87,8 @@ async function installQueueElement(params: InstallParams): Promise<{
 
     return { status, error }
   } catch (error) {
-    errorMessage(`${error}`)
-    return { status: 'error', error: `${error}` }
+    errorMessage(`${String(error)}`)
+    return { status: 'error', error: `${String(error)}` }
   } finally {
     sendGameStatusUpdate({
       appName,
@@ -155,7 +155,7 @@ async function updateQueueElement(params: InstallParams): Promise<{
 
     return { status }
   } catch (error) {
-    errorMessage(`${error}`)
+    errorMessage(`${String(error)}`)
     return { status: 'error' }
   } finally {
     sendGameStatusUpdate({

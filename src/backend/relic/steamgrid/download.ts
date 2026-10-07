@@ -33,7 +33,7 @@ export async function downloadGrids(
     logInfo(`Downloaded grid images for ${gameInfo.title}`, LOG_PREFIX)
     return true
   } catch (error) {
-    logError(`Failed to download grid images: ${error}`, LOG_PREFIX)
+    logError(`Failed to download grid images: ${String(error)}`, LOG_PREFIX)
     return false
   }
 }

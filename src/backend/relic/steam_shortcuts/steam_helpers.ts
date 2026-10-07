@@ -51,7 +51,7 @@ export function readShortcutsVdf(
       })
     } catch (error) {
       if (i === READ_RETRIES - 1) {
-        logError(`Failed to parse ${filePath}: ${error}`, LOG_PREFIX)
+        logError(`Failed to parse ${filePath}: ${String(error)}`, LOG_PREFIX)
         return null
       }
     }
@@ -135,7 +135,7 @@ export function checkSteamProtocolHandler(): void {
     }
   } catch (error) {
     logError(
-      `Failed to read ${mimeFile}: ${error}. Cannot verify steam:// handler.`,
+      `Failed to read ${mimeFile}: ${String(error)}. Cannot verify steam:// handler.`,
       LOG_PREFIX
     )
   }

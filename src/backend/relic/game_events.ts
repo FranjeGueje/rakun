@@ -37,7 +37,7 @@ function refreshInstallPath(gameInfo: GameInfo): string {
     }
   } catch (e) {
     logError(
-      `Failed to refresh game info for ${gameInfo.runner}: ${e}`,
+      `Failed to refresh game info for ${gameInfo.runner}: ${String(e)}`,
       LOG_PREFIX
     )
   }
@@ -206,7 +206,7 @@ export async function onGameRepaired(game: Game): Promise<void> {
     logInfo(`Updated ${runnerPath}`, LOG_PREFIX)
   } catch (e) {
     logError(
-      `Failed to update runner file for "${known.gameName}": ${e}`,
+      `Failed to update runner file for "${known.gameName}": ${String(e)}`,
       LOG_PREFIX
     )
   }
@@ -236,7 +236,10 @@ export async function onGameMoved(
     unlinkSync(oldLink)
     logInfo(`Removed old symlink: ${oldLink}`, LOG_PREFIX)
   } catch (e) {
-    logError(`Failed to remove old symlink ${oldLink}: ${e}`, LOG_PREFIX)
+    logError(
+      `Failed to remove old symlink ${oldLink}: ${String(e)}`,
+      LOG_PREFIX
+    )
   }
 
   try {
@@ -244,7 +247,7 @@ export async function onGameMoved(
     symlinkSync(newInstallPath, newLink)
     logInfo(`Created symlink: ${newLink} -> ${newInstallPath}`, LOG_PREFIX)
   } catch (e) {
-    logError(`Failed to create symlink ${newLink}: ${e}`, LOG_PREFIX)
+    logError(`Failed to create symlink ${newLink}: ${String(e)}`, LOG_PREFIX)
     return
   }
 
@@ -276,7 +279,7 @@ export async function onGameUninstalled(game: Game) {
         logInfo(`Deleted ${known.execPath}`, LOG_PREFIX)
       }
     } catch (e) {
-      logError(`Failed to delete ${known.execPath}: ${e}`, LOG_PREFIX)
+      logError(`Failed to delete ${known.execPath}: ${String(e)}`, LOG_PREFIX)
     }
   }
 

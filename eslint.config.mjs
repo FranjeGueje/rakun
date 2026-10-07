@@ -62,6 +62,15 @@ export default tseslint.config(
     files: ['**/__tests__/**/*.ts', '**/__mocks__/**/*.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
+      // Mocks and fixtures are loosely typed on purpose
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/restrict-template-expressions': 'off',
+      '@typescript-eslint/no-base-to-string': 'off',
+      '@typescript-eslint/require-await': 'off',
       // False positive: `expect(obj.method).toHaveBeenCalledWith(...)` passes
       // an unbound method reference, but Jest never calls it as `obj.method()`
       // -- it only inspects the mock, so there's no `this` to lose.
@@ -70,6 +79,13 @@ export default tseslint.config(
     }
   },
   {
-    ignores: ['build/', '**/*.js', 'eslint.config.mjs', '.github/scripts/']
+    ignores: [
+      'build/',
+      'dist/',
+      'coverage/',
+      '**/*.js',
+      'eslint.config.mjs',
+      '.github/scripts/'
+    ]
   }
 )

@@ -24,7 +24,7 @@ function save(shortcuts: SteamShortcut[]): void {
   try {
     writeFileSync(STORE_FILE, JSON.stringify(shortcuts, null, 2), 'utf-8')
   } catch (error) {
-    logError(`Failed to write ${STORE_FILE}: ${error}`, LOG_PREFIX)
+    logError(`Failed to write ${STORE_FILE}: ${String(error)}`, LOG_PREFIX)
   }
   cache = shortcuts
 }

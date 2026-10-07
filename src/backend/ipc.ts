@@ -64,6 +64,7 @@ function addHandler<ChannelName extends keyof AsyncIPCFunctions>(
 }
 
 /** Calls the handler registered with `addHandler`, as `ipcRenderer.invoke` did */
+// eslint-disable-next-line @typescript-eslint/require-await -- always a Promise, also when the handler is synchronous
 async function invokeHandler(
   channel: string,
   ...args: unknown[]

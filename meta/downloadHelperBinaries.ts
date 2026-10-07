@@ -202,7 +202,7 @@ async function downloadDummyService() {
 
   await downloadFile(url, zipPath)
 
-  mkdir(destDir, { recursive: true })
+  await mkdir(destDir, { recursive: true })
   console.log('Extracting', zipPath, 'to', destDir)
   execSync(`unzip -o "${zipPath}" -d "${destDir}"`, { stdio: 'inherit' })
 

@@ -29,6 +29,7 @@ function showDialogBoxModalAuto(props: {
  * ask, so it always picks the first one, which callers keep as the safe
  * choice ("No").
  */
+// eslint-disable-next-line @typescript-eslint/require-await -- callers await it: a dialog could be a question again
 async function askQuestion(props: {
   title: string
   message: string

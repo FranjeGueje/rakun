@@ -51,7 +51,7 @@ const addInstalledGame = async (appName: string, platform: string) => {
       installedAppNames.push(...(JSON.parse(buffer) as [string, string][]))
     } catch (err) {
       logWarning(
-        `Failed to read third-party-installed.json ${err}`,
+        `Failed to read third-party-installed.json ${String(err)}`,
         LogPrefix.Legendary
       )
     }
@@ -65,7 +65,7 @@ const addInstalledGame = async (appName: string, platform: string) => {
     )
   } catch (err) {
     logError(
-      `Failed to write third-party-installed.json ${err}`,
+      `Failed to write third-party-installed.json ${String(err)}`,
       LogPrefix.Legendary
     )
   }

@@ -630,7 +630,7 @@ export default class LegendaryGame implements Game {
           dest: installerPath
         })
       } catch (e) {
-        return { status: 'error', error: `${e}` }
+        return { status: 'error', error: `${String(e)}` }
       }
     }
 

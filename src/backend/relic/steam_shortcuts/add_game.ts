@@ -59,8 +59,8 @@ export function createRunnerFile(
     )
     return { path: runnerPath }
   } catch (e) {
-    logError(`Failed to create runner file: ${e}`, LOG_PREFIX)
-    return { error: `Failed to create runner file: ${e}` }
+    logError(`Failed to create runner file: ${String(e)}`, LOG_PREFIX)
+    return { error: `Failed to create runner file: ${String(e)}` }
   }
 }
 
@@ -249,8 +249,11 @@ export function createGameSymlink(
     logInfo(`Created symlink: ${linkPath} -> ${installPath}`, LOG_PREFIX)
     return { linkPath }
   } catch (error) {
-    logError(`Failed to create symlink ${linkPath}: ${error}`, LOG_PREFIX)
-    return { error: `Failed to create symlink: ${error}` }
+    logError(
+      `Failed to create symlink ${linkPath}: ${String(error)}`,
+      LOG_PREFIX
+    )
+    return { error: `Failed to create symlink: ${String(error)}` }
   }
 }
 
@@ -276,7 +279,7 @@ function makeExecutable(runnerPath: string): void {
   try {
     chmodSync(runnerPath, 0o755)
   } catch (error) {
-    logError(`Failed to chmod ${runnerPath}: ${error}`, LOG_PREFIX)
+    logError(`Failed to chmod ${runnerPath}: ${String(error)}`, LOG_PREFIX)
   }
 }
 
@@ -341,8 +344,11 @@ async function sendToSteam(
     await spawnAsync('xdg-open', [steamUrl])
     logInfo(`Opened ${steamUrl}`, LOG_PREFIX)
   } catch (error) {
-    logError(`Failed to open steam:// URL: ${error}`, LOG_PREFIX)
-    return { success: false, error: `Failed to open steam:// URL: ${error}` }
+    logError(`Failed to open steam:// URL: ${String(error)}`, LOG_PREFIX)
+    return {
+      success: false,
+      error: `Failed to open steam:// URL: ${String(error)}`
+    }
   }
 
   logInfo(`Waiting for "${gameName}" to be added to Steam...`, LOG_PREFIX)

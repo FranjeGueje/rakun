@@ -136,7 +136,7 @@ export function windowify(gameInfo: GameInfo, installPath: string): void {
       config.transform
     )
   } catch (error) {
-    logError(`Failed to windowify: ${error}`, LOG_PREFIX)
+    logError(`Failed to windowify: ${String(error)}`, LOG_PREFIX)
   }
 }
 
@@ -153,7 +153,10 @@ export function createRelicSymlinks(linksPath: string): void {
 
     logInfo(`Created symlinks in ${linksPath}`, LOG_PREFIX)
   } catch (error) {
-    logError(`Failed to create symlinks in ${linksPath}: ${error}`, LOG_PREFIX)
+    logError(
+      `Failed to create symlinks in ${linksPath}: ${String(error)}`,
+      LOG_PREFIX
+    )
     throw error
   }
 }

@@ -32,7 +32,10 @@ export async function searchUmuGameId(
     }
     return null
   } catch (error) {
-    logError(`UMU database lookup failed for ${appName}: ${error}`, LOG_PREFIX)
+    logError(
+      `UMU database lookup failed for ${appName}: ${String(error)}`,
+      LOG_PREFIX
+    )
     return null
   }
 }

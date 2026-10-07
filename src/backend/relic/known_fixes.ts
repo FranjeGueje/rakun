@@ -17,7 +17,7 @@ export function readKnownFixes(appName: string, runner: Runner) {
 
     return fixesContent
   } catch (error) {
-    logWarning(`Known fixes could not be applied, ignoring.\n${error}`)
+    logWarning(`Known fixes could not be applied, ignoring.\n${String(error)}`)
     return null
   }
 }

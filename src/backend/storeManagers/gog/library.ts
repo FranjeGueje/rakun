@@ -325,16 +325,9 @@ export default class GOGLibraryManager implements LibraryManager {
       .filter((product) => product !== appName)
       .sort()
     const installedDLCs = (installedGame.installedDLCs || []).sort()
-    let dlcChanged = installedDLCs.length !== dlcs.length
-
-    if (!dlcChanged) {
-      for (const index in installedDLCs) {
-        dlcChanged = installedDLCs[index] !== dlcs[index]
-        if (dlcChanged) {
-          break
-        }
-      }
-    }
+    const dlcChanged =
+      installedDLCs.length !== dlcs.length ||
+      installedDLCs.some((dlc, index) => dlc !== dlcs[index])
 
     if (dlcChanged) {
       installedGame.installedDLCs = dlcs
@@ -906,7 +899,7 @@ export default class GOGLibraryManager implements LibraryManager {
         return { status: metaResponse.status, etag: metaResponse.headers.etag }
       } catch (e) {
         logDebug(
-          `Failed to obtain manifest from CDN for ${appName}, ignoring ${e}`,
+          `Failed to obtain manifest from CDN for ${appName}, ignoring ${String(e)}`,
           {
             prefix: LogPrefix.Gog
           }

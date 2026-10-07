@@ -47,7 +47,7 @@ export class LegendaryUser {
       const userInfo = this.getUserInfo()
       return { status: 'done', data: userInfo }
     } catch (error) {
-      return errorMessage(`${error}`)
+      return errorMessage(`${String(error)}`)
     }
   }
 
