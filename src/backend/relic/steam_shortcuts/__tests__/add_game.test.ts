@@ -7,7 +7,7 @@ import {
 } from 'fs'
 import { tmpdir } from 'os'
 import { basename, dirname, join } from 'path'
-import { DirResult, dirSync } from 'tmp'
+import { DirResult, dirSync } from '../../../__tests__/tmp_dir'
 import { addGameToSteam, createRelicBat, createRunnerFile } from '../add_game'
 import { GameInfo } from 'common/types'
 import * as steamHelpers from '../steam_helpers'
@@ -60,7 +60,7 @@ describe('addGameToSteam', () => {
   let tmpDir: DirResult
 
   beforeEach(() => {
-    tmpDir = dirSync({ unsafeCleanup: true })
+    tmpDir = dirSync()
     jest.clearAllMocks()
     mockedFindGameInAllUsers.mockReturnValue({ entry: null, found: false })
   })
@@ -209,7 +209,7 @@ describe('createRelicBat', () => {
   let tmpDir: DirResult
 
   beforeEach(() => {
-    tmpDir = dirSync({ unsafeCleanup: true })
+    tmpDir = dirSync()
     mockRelicRunnerPath = tmpDir.name
     jest.clearAllMocks()
   })
@@ -351,9 +351,9 @@ describe('createRunnerFile', () => {
   let runnerDir: DirResult
 
   beforeEach(() => {
-    installDir = dirSync({ unsafeCleanup: true })
-    gamesDir = dirSync({ unsafeCleanup: true })
-    runnerDir = dirSync({ unsafeCleanup: true })
+    installDir = dirSync()
+    gamesDir = dirSync()
+    runnerDir = dirSync()
     mockRelicGamesPath = gamesDir.name
     mockRelicRunnerPath = runnerDir.name
   })

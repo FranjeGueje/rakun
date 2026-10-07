@@ -1,9 +1,9 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
-import { dirSync } from 'tmp'
+import { dirSync } from '../../../__tests__/tmp_dir'
 
-const tmpConfig = dirSync({ unsafeCleanup: true })
-const tmpCache = dirSync({ unsafeCleanup: true })
+const tmpConfig = dirSync()
+const tmpCache = dirSync()
 jest.mock('backend/constants/paths', () => ({
   get userDataPath() {
     return tmpConfig.name

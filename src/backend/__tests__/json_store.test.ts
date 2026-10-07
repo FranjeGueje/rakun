@@ -1,6 +1,6 @@
-import { dirSync } from 'tmp'
+import { dirSync } from './tmp_dir'
 
-const tmpUserData = dirSync({ unsafeCleanup: true })
+const tmpUserData = dirSync()
 jest.mock('backend/constants/paths', () => ({
   get userDataPath() {
     return tmpUserData.name
@@ -38,7 +38,7 @@ describe('JsonStore - file location', () => {
   })
 
   test('uses an absolute cwd as-is', () => {
-    const absolute = dirSync({ unsafeCleanup: true })
+    const absolute = dirSync()
     const store = new JsonStore({ cwd: absolute.name, name: 'abs' })
     store.set('foo', 'bar')
 

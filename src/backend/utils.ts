@@ -3,7 +3,7 @@ import { Runner, GameInfo, GameStatus } from 'common/types'
 import axios from 'axios'
 import https from 'node:https'
 import { exec, spawn, SpawnOptions, spawnSync } from 'child_process'
-import { existsSync, mkdirSync, rmSync } from 'fs'
+import { createWriteStream, existsSync, mkdirSync, rmSync } from 'fs'
 import { promisify } from 'util'
 
 import { logError, logInfo, LogPrefix, logWarning } from 'backend/logger'
@@ -33,7 +33,8 @@ import { GlobalConfig } from './config'
 import { libraryManagerMap } from 'backend/storeManagers'
 import { readdir, lstat } from 'fs/promises'
 import { backendEvents } from './backend_events'
-import EasyDl from 'easydl'
+import { pipeline } from 'stream/promises'
+import type { Readable } from 'stream'
 
 import {
   deviceNameCache,
@@ -636,161 +637,36 @@ function sendProgressUpdate(payload: GameStatus) {
   backendEvents.emit(`progressUpdate-${payload.appName}`, payload)
 }
 
-interface ProgressCallback {
-  (
-    downloadedBytes: number,
-    downloadSpeed: number,
-    progress: number,
-    diskWriteSpeed: number
-  ): void
-}
-
-interface DownloadArgs {
-  url: string
-  dest: string
-  abortSignal?: AbortSignal
-  progressCallback?: ProgressCallback
-  ignoreFailure?: boolean
-}
-
 /**
- * Downloads a file from a given URL to a specified destination path.
- * @param {string} url - The URL of the file to download.
- * @param {string} dest - The destination path to save the downloaded file.
- * @param {AbortSignal} abortSignal - The AbortSignal instance to cancel the download.
- * @param {ProgressCallback} [progressCallback] - An optional callback function to track the download progress.
- * @param {boolean} ignoreFailure - When "true", failure to download the file is ignore (no log and no thrown error).
- * @returns {Promise<void>} - A Promise that resolves when the download is complete.
- * @throws {Error} - If the download fails or is incomplete.
+ * Downloads a file to `dest`, replacing it. A partial file is removed when the
+ * download fails.
+ * @throws {Error} - If the download fails.
  */
 export async function downloadFile({
   url,
-  dest,
-  abortSignal,
-  progressCallback,
-  ignoreFailure
-}: DownloadArgs): Promise<void> {
-  let lastProgressUpdateTime = Date.now()
-  let lastBytesWritten = 0
-  let fileSize = 0
-
-  const connections = 5
+  dest
+}: {
+  url: string
+  dest: string
+}): Promise<void> {
   try {
-    const response = await axiosClient.head(url)
-    fileSize = parseInt(String(response.headers['content-length']), 10)
-  } catch (err) {
-    if (!ignoreFailure) {
-      logError(
-        `Downloader: Failed to get headers for ${url}. \nError: ${err}`,
-        LogPrefix.DownloadManager
-      )
-      throw new Error('Failed to get headers')
-    } else {
-      return
-    }
-  }
-
-  try {
-    const dl = new EasyDl(url, dest, {
-      existBehavior: 'overwrite',
-      connections
-    }).start()
-
-    abortSignal?.addEventListener('abort', () => {
-      dl.destroy()
+    const { data } = await axiosClient.get<Readable>(url, {
+      responseType: 'stream',
+      timeout: 0
     })
-
-    dl.on('error', (error) => {
-      logError(error, LogPrefix.Backend)
-    })
-
-    dl.on('retry', (retry) => {
-      logInfo(`Retrying download: ${retry}`, LogPrefix.Backend)
-    })
-
-    const throttledProgressCallback = throttle(
-      (
-        bytes: number,
-        speed: number,
-        percentage: number,
-        writingSpeed: number
-      ) => {
-        if (progressCallback) {
-          logInfo(
-            `Downloaded: ${bytesToSize(bytes)} / ${bytesToSize(
-              fileSize
-            )}  @${bytesToSize(speed)}/s (${percentage.toFixed(2)}%)`,
-            LogPrefix.Backend
-          )
-          progressCallback(bytes, speed, percentage, writingSpeed)
-        }
-      },
-      1000
-    ) // Throttle progress reporting to 1 second
-
-    dl.on('progress', ({ total }) => {
-      const { bytes = 0, speed = 0, percentage = 0 } = total
-      const currentTime = Date.now()
-      const timeElapsed = currentTime - lastProgressUpdateTime
-
-      if (timeElapsed >= 1000) {
-        const bytesWrittenSinceLastUpdate = bytes - lastBytesWritten
-        const writingSpeed = bytesWrittenSinceLastUpdate / (timeElapsed / 1000) // Bytes per second
-
-        throttledProgressCallback(bytes, speed, percentage, writingSpeed)
-
-        lastProgressUpdateTime = currentTime
-        lastBytesWritten = bytes
-      }
-    })
-
-    const downloaded = await dl.wait()
-
-    if (!downloaded) {
-      logWarning(
-        `Downloader: Download stopped or paused`,
-        LogPrefix.DownloadManager
-      )
-      throw new Error('Download stopped or paused')
-    }
-
+    await pipeline(data, createWriteStream(dest))
     logInfo(
       `Downloader: Finished downloading ${url}`,
       LogPrefix.DownloadManager
     )
   } catch (err) {
-    if (!ignoreFailure) {
-      logError(
-        `Downloader: Download Failed with: ${err}`,
-        LogPrefix.DownloadManager
-      )
-      throw new Error(`Download failed with ${err}`)
-    } else {
-      return
-    }
+    rmSync(dest, { force: true })
+    logError(
+      `Downloader: Download Failed with: ${err}`,
+      LogPrefix.DownloadManager
+    )
+    throw new Error(`Download failed with ${err}`)
   }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function throttle<T extends (...args: any[]) => any>(
-  callback: T,
-  limit: number
-): (...args: Parameters<T>) => void {
-  let lastCall = 0
-  return (...args: Parameters<T>) => {
-    const now = Date.now()
-    if (now - lastCall >= limit) {
-      lastCall = now
-      callback(...args)
-    }
-  }
-}
-
-function bytesToSize(bytes: number) {
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
-  if (bytes === 0) return `0 ${sizes[0]}`
-  const i = Math.floor(Math.log(bytes) / Math.log(1024))
-  return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(2))} ${sizes[i]}`
 }
 
 function parseSize(size: string): number {

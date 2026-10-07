@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'fs'
-import { DirResult, dirSync } from 'tmp'
+import { DirResult, dirSync } from '../../../__tests__/tmp_dir'
 import { join } from 'path'
 import type { SteamShortcut } from '../types'
 
@@ -51,7 +51,7 @@ function readStoreFile(): SteamShortcut[] {
 }
 
 beforeEach(() => {
-  currentTmpDir = dirSync({ unsafeCleanup: true })
+  currentTmpDir = dirSync()
   mockAppFolder = currentTmpDir.name
   jest.resetModules()
   store = require('../store')

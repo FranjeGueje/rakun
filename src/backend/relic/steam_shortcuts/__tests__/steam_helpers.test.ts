@@ -1,6 +1,6 @@
 import { copyFileSync, mkdirSync } from 'fs'
 import { join } from 'path'
-import { DirResult, dirSync } from 'tmp'
+import { DirResult, dirSync } from '../../../__tests__/tmp_dir'
 import { GlobalConfig } from 'backend/config'
 import {
   getAppName,
@@ -30,7 +30,7 @@ function copyValidTestVdf(): string {
 
 describe('steam_helpers', () => {
   beforeEach(() => {
-    tmpDir = dirSync({ unsafeCleanup: true })
+    tmpDir = dirSync()
     GlobalConfig.setConfigValue('defaultSteamPath', tmpDir.name)
     tmpUserdataDir = join(tmpDir.name, 'userdata', 'steam_user')
     tmpConfigDir = join(tmpUserdataDir, 'config')
@@ -126,7 +126,7 @@ describe('steam_helpers', () => {
     })
 
     test('returns error when no Steam userdata directories exist', () => {
-      const emptyDir = dirSync({ unsafeCleanup: true })
+      const emptyDir = dirSync()
       GlobalConfig.setConfigValue('defaultSteamPath', emptyDir.name)
 
       const result = findGameInAllUsers('MyGame')

@@ -1,8 +1,8 @@
-import { dirSync } from 'tmp'
+import { dirSync } from './tmp_dir'
 
 // Keep the stores inside a temp dir instead of the real ~/.config/relic
-const tmpUserData = dirSync({ unsafeCleanup: true })
-const tmpStoreCache = dirSync({ unsafeCleanup: true })
+const tmpUserData = dirSync()
+const tmpStoreCache = dirSync()
 jest.mock('backend/constants/paths', () => ({
   get userDataPath() {
     return tmpUserData.name
