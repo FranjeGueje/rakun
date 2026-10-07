@@ -223,6 +223,29 @@ describe('game sheet', () => {
     expect(screen.getByRole('button', { name: 'Cancel download' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Install' })).toBeNull()
   })
+
+  test('cancelling a download asks first and deletes what was downloaded', async () => {
+    const rakun = setup()
+    await screen.findByTitle('Alpha')
+    act(() =>
+      rakun.emit({
+        event: 'progressUpdate',
+        args: [
+          { appName: 'alpha', status: 'installing', progress: { percent: 40 } }
+        ]
+      })
+    )
+    press('Enter')
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel download' }))
+    expect(
+      screen.getByText(/files downloaded so far will be deleted/)
+    ).toBeTruthy()
+    expect(rakun.called('cancelDownload')).toHaveLength(0)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Yes' }))
+    await waitFor(() => expect(rakun.called('cancelDownload')).toHaveLength(1))
+    expect(rakun.called('cancelDownload')[0][1]).toEqual([true])
+  })
 })
 
 describe('downloads', () => {
@@ -268,6 +291,22 @@ describe('downloads', () => {
     expect(screen.getByRole('heading', { name: /Downloads/ })).toBeTruthy()
     expect(screen.getByText('Failed: rakun has no screen')).toBeTruthy()
     expect(screen.getAllByText('Alpha').length).toBeGreaterThan(0)
+  })
+
+  test('cancelling from the panel asks first and deletes what was downloaded', async () => {
+    const rakun = setup({ queue })
+    await screen.findByTitle('Alpha')
+
+    press('d')
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Cancel the current one' })
+    )
+    expect(screen.getByText('Cancel the download of Alpha?')).toBeTruthy()
+    expect(rakun.called('cancelDownload')).toHaveLength(0)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Yes' }))
+    await waitFor(() => expect(rakun.called('cancelDownload')).toHaveLength(1))
+    expect(rakun.called('cancelDownload')[0][1]).toEqual([true])
   })
 
   test('pause asks rakun to pause; escape closes the panel', async () => {

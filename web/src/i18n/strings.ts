@@ -35,7 +35,8 @@ export const en = {
   'confirm.uninstall.title': 'Uninstall {title}?',
   'confirm.uninstall.message': "The game's files will be deleted.",
   'confirm.cancel.title': 'Cancel the download of {title}?',
-  'confirm.cancel.message': 'The operation in progress will stop.',
+  'confirm.cancel.message':
+    'The operation in progress will stop and the files downloaded so far will be deleted.',
   'confirm.remove.title': 'Remove {title} from the queue?',
   'confirm.remove.message': 'It will not be downloaded.',
   'downloads.title': 'Downloads',

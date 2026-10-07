@@ -7,6 +7,7 @@ import type { State } from '../state/reducer'
 import type { Actions } from '../state/useRakun'
 import { statusText } from './Card'
 import { CloseButton } from './CloseButton'
+import { ConfirmDialog } from './ConfirmDialog'
 
 type Control = 'toggle' | 'cancel' | 'clear'
 const CONTROLS: Control[] = ['toggle', 'cancel', 'clear']
@@ -80,6 +81,7 @@ export function Downloads({
 }) {
   const { elements, finished, state: queueState } = state.queue
   const [focus, setFocus] = useState(0)
+  const [asking, setAsking] = useState(false)
   const paused = queueState === 'paused'
 
   const enabled: Record<Control, boolean> = {
@@ -92,7 +94,7 @@ export function Downloads({
     if (control === 'toggle') {
       if (paused) actions.resume()
       else actions.pause()
-    } else if (control === 'cancel') actions.cancelCurrent()
+    } else if (control === 'cancel') setAsking(true)
     else actions.clearFinished()
   }
 
@@ -170,6 +172,20 @@ export function Downloads({
           )}
         </div>
       </div>
+      {asking && (
+        <ConfirmDialog
+          title={t('confirm.cancel.title', {
+            title: elements[0]?.params.gameInfo.title ?? ''
+          })}
+          message={t('confirm.cancel.message')}
+          t={t}
+          onYes={() => {
+            setAsking(false)
+            actions.cancelCurrent()
+          }}
+          onNo={() => setAsking(false)}
+        />
+      )}
     </div>
   )
 }

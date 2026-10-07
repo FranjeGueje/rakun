@@ -24,6 +24,9 @@ repository.
 - The web uses the rakun mascot as its icon (centred in the top bar) and the red of its
   helmet as the accent colour, with the "Rakun" lettering next to it (drawn from
   the outlines of Lilita One, SIL OFL).
+- Cancelling a download from the web deletes the files left half downloaded,
+  like `rakunctl cancel --remove-files`; the downloads panel now asks first, as
+  the game sheet already did.
 - The SteamGridDB key screen of the web explains where to get the key and
   links to the page of the profile that shows it.
 - The download language screen of the web can be used with a mouse or touch:

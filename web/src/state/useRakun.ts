@@ -203,7 +203,8 @@ export function useRakun(): { state: State; actions: Actions } {
         await window.rakun.call('uninstall', game.app_name, game.runner, true)
         await loadLibrary(game.runner)
       }),
-    cancelCurrent: () => run(() => window.rakun.call('cancelDownload', false)),
+    // Like `rakunctl cancel --remove-files`: what was half downloaded is deleted
+    cancelCurrent: () => run(() => window.rakun.call('cancelDownload', true)),
     removeFromQueue: (appName) =>
       run(() => window.rakun.call('removeFromDMQueue', appName)),
     pause: () => run(() => window.rakun.call('pauseCurrentDownload')),
