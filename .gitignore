@@ -36,4 +36,8 @@ vite-plugin-electron.log
 playwright-report
 
 # herramientas personales, no forman parte del repo
-/release.sh
+/scripts/release.sh
+/scripts/rebuild.sh
+
+# ficheros temporales de Kate
+*.kate-swp

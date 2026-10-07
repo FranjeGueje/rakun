@@ -307,7 +307,7 @@ pnpm build && pnpm start         # runs build/relicd.cjs from the checkout
 node build/relicctl.cjs start    # or: relicctl from the checkout starts that same build
 pnpm test                        # jest
 pnpm package [x64|arm64|all]     # tarballs in dist/ (default: both)
-./review.sh                      # clean build: tsc, lint, prettier, tests, package
+pnpm codecheck && pnpm lint && pnpm prettier && pnpm test
 ```
 
 `RELICD_PORT` changes the API port (default 17370). The token lives in

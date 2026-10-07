@@ -75,8 +75,6 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
   `os.release()` en lugar de `process.getSystemVersion()`.
 - Los diálogos se registran y se publican como evento `showDialog`;
   `askQuestion` elige siempre la primera opción (la segura).
-- `review.sh` y `release.sh` construyen el tarball; `release.sh` solo publica en
-  GitHub si se define `RELICD_REPO`.
 - **Instalar un juego que ya está instalado se rechaza** (`500 already installed:
 use repair or update`; `relicctl` dice «ya está instalado») en vez de descargarlo
   entero otra vez.
@@ -210,8 +208,6 @@ use repair or update`; `relicctl` dice «ya está instalado») en vez de descarg
   `os.release()` instead of `process.getSystemVersion()`.
 - Dialogs are logged and published as a `showDialog` event; `askQuestion` always
   picks the first (safe) option.
-- `review.sh` and `release.sh` build the tarball; `release.sh` only publishes to
-  GitHub when `RELICD_REPO` is set.
 - **Installing a game that is already installed is refused** (`500 already
 installed: use repair or update`; `relicctl` says "ya está instalado") instead
   of downloading it all again.
