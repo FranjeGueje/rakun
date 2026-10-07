@@ -1,6 +1,6 @@
 # relicd API
 
-relicd is a local service. Clients (the Invasor module, `relicctl`, `scripts/smoke.sh`) talk
+relicd is a local service. Clients (`relicd-client`, the Invasor module, `relicctl`, `scripts/smoke.sh`) talk
 to it over HTTP on the loopback address. Channels and payloads are the ones
 typed in `src/common/types/ipc.ts` (`AsyncIPCFunctions`, `SyncIPCFunctions`,
 `FrontendMessages`); the channels reachable over HTTP are listed in
