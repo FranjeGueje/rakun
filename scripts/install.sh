@@ -14,7 +14,7 @@ machine_arch() {
         x86_64) echo x64 ;;
         aarch64 | arm64) echo arm64 ;;
         *)
-            echo "Error: arquitectura no soportada: $(uname -m) (hay x64 y arm64)." >&2
+            echo "Error: unsupported architecture: $(uname -m) (x64 and arm64 are available)." >&2
             exit 1
             ;;
     esac
@@ -27,8 +27,8 @@ newest_tarball() {
     local dir="$1" found
     found=$(ls "$dir"/rakun-*-linux-"$ARCH".tar.gz 2>/dev/null | sort -V | tail -n 1 || true)
     [ -n "$found" ] || {
-        echo "Error: no hay ningún rakun-*-linux-$ARCH.tar.gz en $dir." >&2
-        echo "       Constrúyelo con: pnpm package $ARCH" >&2
+        echo "Error: there is no rakun-*-linux-$ARCH.tar.gz in $dir." >&2
+        echo "       Build it with: pnpm package $ARCH" >&2
         exit 1
     }
     echo "$found"
@@ -40,7 +40,7 @@ refuse_other_arch() {
     name=$(basename "$1")
     for other in x64 arm64; do
         if [ "$other" != "$ARCH" ] && [[ "$name" == *"-linux-$other."* ]]; then
-            echo "Error: $name es para $other y esta máquina es $ARCH." >&2
+            echo "Error: $name is for $other and this machine is $ARCH." >&2
             exit 1
         fi
     done
@@ -53,7 +53,7 @@ elif [ -d "$SOURCE" ]; then
     SOURCE=$(newest_tarball "$SOURCE")
 fi
 refuse_other_arch "$SOURCE"
-echo "Instalando $(basename "$SOURCE") (${ARCH})"
+echo "Installing $(basename "$SOURCE") (${ARCH})"
 
 PREFIX="$HOME/.local/opt/rakun"
 BIN_DIR="$HOME/.local/bin"
@@ -63,13 +63,13 @@ trap 'rm -rf "$WORK"' EXIT
 TARBALL="$WORK/rakun.tar.gz"
 case "$SOURCE" in
     http://* | https://*)
-        echo "Descargando $SOURCE..."
+        echo "Downloading $SOURCE..."
         curl -fsSL -o "$TARBALL" "$SOURCE"
         curl -fsSL -o "$WORK/rakun.sha256" "$SOURCE.sha256" 2>/dev/null || true
         ;;
     *)
         [ -f "$SOURCE" ] || {
-            echo "Error: no existe $SOURCE" >&2
+            echo "Error: $SOURCE does not exist" >&2
             exit 1
         }
         cp "$SOURCE" "$TARBALL"
@@ -81,23 +81,23 @@ if [ -f "$WORK/rakun.sha256" ]; then
     expected=$(cut -d' ' -f1 "$WORK/rakun.sha256")
     actual=$(sha256sum "$TARBALL" | cut -d' ' -f1)
     [ "$expected" = "$actual" ] || {
-        echo "Error: el checksum no coincide." >&2
+        echo "Error: the checksum does not match." >&2
         exit 1
     }
-    echo "Checksum correcto."
+    echo "Checksum OK."
 else
-    echo "Aviso: sin .sha256, no se verifica la integridad."
+    echo "Warning: no .sha256 file, the integrity is not checked."
 fi
 
 tar -xzf "$TARBALL" -C "$WORK"
 [ -x "$WORK/rakun/rakun" ] || {
-    echo "Error: el tarball no contiene rakun/rakun." >&2
+    echo "Error: the tarball does not contain rakun/rakun." >&2
     exit 1
 }
 # A tarball of another architecture (or a broken one) is found here, before the
 # installation that works is replaced
 "$WORK/rakun/node" --version >/dev/null 2>&1 || {
-    echo "Error: el Node del tarball no se ejecuta en esta máquina ($ARCH)." >&2
+    echo "Error: the Node of the tarball does not run on this machine ($ARCH)." >&2
     exit 1
 }
 
@@ -111,18 +111,18 @@ ln -sf "$PREFIX/rakunctl" "$BIN_DIR/rakunctl"
 
 cat <<MSG
 
-rakun instalado en $PREFIX (enlaces: $BIN_DIR/rakun y $BIN_DIR/rakunctl).
+rakun installed in $PREFIX (links: $BIN_DIR/rakun and $BIN_DIR/rakunctl).
 
-Arrancarlo, cuando lo necesites:
-  rakun                                    en primer plano (Ctrl+C lo para)
-  systemd-run --user --unit=rakun $PREFIX/rakun   en segundo plano, sin instalar nada
-                                            (systemctl --user stop rakun lo para)
+Start it whenever you need it:
+  rakun                                    in the foreground (Ctrl+C stops it)
+  rakunctl start                           in the background
+  rakunctl install-service                 as a user service, started at every login
 
-Comprobarlo:
-  rakunctl status         (o: curl http://127.0.0.1:17370/health)
+Check it:
+  rakunctl status         (or: curl http://127.0.0.1:17370/health)
 
-La web, en un navegador de este equipo:  http://127.0.0.1:17370
-  Por defecto solo este equipo puede abrirla. Para toda la red (SIN protección,
-  solo uso doméstico) o para apagarla:  rakunctl start --web network | off
-  Con el ajuste guardado:               rakunctl config webAccess network | off
+The web, in a browser on this machine:  http://127.0.0.1:17370
+  By default only this machine can open it. For the whole network (WITHOUT
+  protection, home use only) or to turn it off:  rakunctl start --web network | off
+  With the saved setting:                        rakunctl config webAccess network | off
 MSG

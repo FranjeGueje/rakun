@@ -35,7 +35,9 @@ describe('credentials', () => {
   })
 
   test('a missing file asks whether rakun is running', () => {
-    expect(() => readCredentials('/no/such/api.json')).toThrow(/rakun parado/)
+    expect(() => readCredentials('/no/such/api.json')).toThrow(
+      /rakun is stopped/
+    )
   })
 
   test.each(['not json', '{"port": 1}', '{"token": "x"}'])(
@@ -49,8 +51,8 @@ describe('credentials', () => {
 describe('messageForStatus', () => {
   test.each([
     [401, '', /token/],
-    [403, '', /no expone el canal "ch"/],
-    [404, '', /no tiene manejador/],
+    [403, '', /does not expose the channel "ch"/],
+    [404, '', /has no handler/],
     [500, '{"error":"boom"}', /boom \(500\)/],
     [400, 'plain text', /plain text \(400\)/]
   ])('%i', (status, body, expected) => {
@@ -104,14 +106,14 @@ describe('call', () => {
     })
 
     await expect(createApi(creds).call('resetRakun')).rejects.toThrow(
-      /no expone el canal "resetRakun"/
+      /does not expose the channel "resetRakun"/
     )
   })
 
   test('nothing listening says rakun may be stopped', async () => {
     await expect(
       createApi({ port: 1, token: 'x' }).call('getLibrary')
-    ).rejects.toThrow(/rakun parado/)
+    ).rejects.toThrow(/rakun is stopped/)
   })
 })
 

@@ -8,7 +8,7 @@ export function settingKey(
 ): keyof AppSettings {
   if (!(key in settings))
     throw new CliError(
-      `Ajuste desconocido "${key}". Los que hay: ${Object.keys(settings).join(', ')}`
+      `Unknown setting "${key}". Available: ${Object.keys(settings).join(', ')}`
     )
   return key as keyof AppSettings
 }
@@ -20,12 +20,12 @@ export function parseValue(
 ): string | number | boolean {
   if (typeof current === 'boolean') {
     if (raw !== 'true' && raw !== 'false')
-      throw new CliError('El valor debe ser true o false')
+      throw new CliError('The value must be true or false')
     return raw === 'true'
   }
   if (typeof current === 'number') {
     if (raw.trim() === '' || Number.isNaN(Number(raw)))
-      throw new CliError('El valor debe ser un número')
+      throw new CliError('The value must be a number')
     return Number(raw)
   }
   return raw
@@ -40,7 +40,7 @@ const line = (key: string, value: unknown, note = '') =>
 /** `maxWorkers` is only meaningful next to how many CPUs there are */
 async function maxWorkersNote(ctx: Ctx, key: string) {
   if (key !== 'maxWorkers') return ''
-  return ` (máx. ${await ctx.api.call<number>('getMaxCpus')})`
+  return ` (max. ${await ctx.api.call<number>('getMaxCpus')})`
 }
 
 async function listLines(ctx: Ctx, settings: AppSettings) {
@@ -66,6 +66,6 @@ export const config: Command = async (ctx, args) => {
   const value = parseValue(settings[key], args[1])
   await ctx.api.call('setSetting', { key, value })
   ctx.log(
-    line(key, value, AT_START.has(key) ? ' (se aplica al reiniciar rakun)' : '')
+    line(key, value, AT_START.has(key) ? ' (applies when rakun restarts)' : '')
   )
 }

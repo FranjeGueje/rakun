@@ -41,6 +41,6 @@ export function requireArg(
   name: string
 ): string {
   const value = args[index]
-  if (!value) throw new CliError(`Falta el argumento <${name}>`)
+  if (!value) throw new CliError(`Missing argument <${name}>`)
   return value
 }

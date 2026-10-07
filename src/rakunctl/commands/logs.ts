@@ -16,5 +16,5 @@ export const logs: Command = async (ctx, args, opts) => {
     'getLogContent',
     await logArgs(ctx, args, opts.type)
   )
-  ctx.log(text.trimEnd() || 'No hay registro')
+  ctx.log(text.trimEnd() || 'No log found')
 }

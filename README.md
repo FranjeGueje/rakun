@@ -1,5 +1,7 @@
 # rakun
 
+[Español](README.es.md)
+
 rakun is a headless fork of [Relic](https://github.com/FranjeGueje/Relic) (itself a
 Linux-only fork of [Heroic Games Launcher](https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher)):
 Heroic → Relic → rakun. The git history of all three is kept in this repository, and
@@ -19,17 +21,6 @@ rakun is **not** a launcher. When an install finishes it runs the Steam integrat
 > and `~/Games/Rakun`. Inside each game's Proton prefix the mount is called
 > `C:\Launchers` (`drive_c/Launchers`; the `.bat` runners use that name via `%LAUNCHERS%`).
 
-## Español
-
-rakun es un fork **solo backend** de Relic (que viene de Heroic Games Launcher: Heroic → Relic → rakun; el historial de git de los tres se conserva y las personas que contribuyeron están en [AUTHORS](AUTHORS)): un servicio Node sin Electron ni ventana. Una
-API HTTP local permite a un cliente (la web de rakun, `rakunctl` o el módulo `invasor-relic` de Invasor) iniciar sesión en las
-tiendas, ver la biblioteca e instalar, actualizar, reparar y desinstalar juegos. No lanza
-juegos: al terminar cada instalación hace la integración con Steam y el juego aparece en
-Steam. `relicd-client`, la app de Electron que fue el primer cliente, está **archivada y sin mantenimiento**: la
-reemplaza la web de rakun. No comparte nada con Relic (rutas `rakun`, no `relic`). `rakunctl` es el
-cliente de línea de comandos (ver la sección _rakunctl_; la guía de pruebas está en
-[GUIA.md](GUIA.md)).
-
 ---
 
 ## Features
@@ -46,7 +37,7 @@ cliente de línea de comandos (ver la sección _rakunctl_; la guía de pruebas e
 - GOG achievements (experimental, via [Comet](https://github.com/imLinguin/comet))
 - Linux native game support (GOG)
 
-The API (connection, channels, login flow and events) is documented in [API.md](API.md); a step-by-step test walkthrough (in Spanish) is in [GUIA.md](GUIA.md).
+The API (connection, channels, login flow and events) is documented in [API.md](API.md); a step-by-step test walkthrough (in Spanish) is in [GUIDE.md](GUIDE.md).
 
 ---
 
@@ -362,7 +353,7 @@ with `HOME=` empty rakun writes its folders relative to the current directory.
 | Symptom                                                        | What it means / what to do                                                                                                                                                                  |
 | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `rakunctl` says "rakun parado"                                 | rakun is not running: `rakunctl start`.                                                                                                                                                     |
-| `rakun no ha arrancado (código 1)`                             | Read the log it points to (`~/.local/state/Rakun/logs/rakun.log`); the reason is the last `failed to start` line. A busy port is `EADDRINUSE`: use `--port`.                                |
+| `rakun did not start (code 1)`                                 | Read the log it points to (`~/.local/state/Rakun/logs/rakun.log`); the reason is the last `failed to start` line. A busy port is `EADDRINUSE`: use `--port`.                                |
 | `403` with `Host "…" is not allowed`                           | In `network` mode open the web by the IP or the name of the machine, not by another name (a router alias is not in the list).                                                               |
 | `403` with `can only be called from the machine rakun runs on` | In `network` mode settings, folders, logs and a few more channels only answer to this machine: open `http://127.0.0.1:<port>` there. Opening it by the machine's own LAN IP does not count. |
 | `No GE-Proton configured` in the log (older versions)          | A GE-Proton installed later was never looked for. Update rakun, or set it: `rakunctl config protonPath <folder>`.                                                                           |

@@ -17,7 +17,7 @@ const WEB_MODES = ['local', 'network', 'off']
 type Systemctl = (args: string[]) => Promise<void>
 
 const ZOOM_WARNING =
-  'AVISO: el servicio no tiene pantalla (DISPLAY): los instaladores de Zoom abren una ventana y no funcionarán con él. Para Zoom, para el servicio y arranca rakun desde el escritorio.'
+  'WARNING: the service has no screen (DISPLAY): Zoom installers open a window and will not work with it. For Zoom, stop the service and start rakun from the desktop.'
 
 /** Where systemd looks for the units of the user */
 export function unitPath(env: NodeJS.ProcessEnv = process.env): string {
@@ -74,7 +74,7 @@ export const systemctl: Systemctl = async (args) => {
     await run('systemctl', ['--user', ...args])
   } catch (error) {
     throw new CliError(
-      `systemctl --user ${args.join(' ')} ha fallado: ${String(error)}`
+      `systemctl --user ${args.join(' ')} failed: ${String(error)}`
     )
   }
 }
@@ -82,10 +82,10 @@ export const systemctl: Systemctl = async (args) => {
 /** rakun refuses a bad value when it starts: the service would fail at every login, so say it now */
 export function checkFlags(opts: Flags): void {
   if (opts.web && !WEB_MODES.includes(opts.web))
-    throw new CliError(`--web debe ser ${WEB_MODES.join(', ')}`)
+    throw new CliError(`--web must be ${WEB_MODES.join(', ')}`)
   const port = Number(opts.port)
   if (opts.port && !(Number.isInteger(port) && port >= 1 && port <= 65535))
-    throw new CliError('--port debe ser un número entre 1 y 65535')
+    throw new CliError('--port must be a number between 1 and 65535')
 }
 
 export async function installService(
@@ -111,8 +111,8 @@ export async function installService(
   await ctl(running ? ['enable', UNIT] : ['enable', '--now', UNIT])
   ctx.log(
     running
-      ? 'Servicio instalado: arrancará en el próximo inicio de sesión (rakun ya está arrancado)'
-      : 'Servicio instalado y arrancado: rakun arranca solo al iniciar sesión'
+      ? 'Service installed: it will start at your next login (rakun is already running)'
+      : 'Service installed and started: rakun now starts by itself at login'
   )
   const web = opts.web ?? (deps.web ?? savedWebAccess)()
   if (web === 'network') ctx.log(NETWORK_WARNING)
@@ -125,9 +125,9 @@ export async function uninstallService(
 ): Promise<void> {
   const file = deps.file ?? unitPath()
   const ctl = deps.ctl ?? systemctl
-  if (!serviceInstalled(file)) return ctx.log('El servicio no está instalado')
+  if (!serviceInstalled(file)) return ctx.log('The service is not installed')
   await ctl(['disable', '--now', UNIT])
   rmSync(file, { force: true })
   await ctl(['daemon-reload'])
-  ctx.log('Servicio desinstalado y rakun parado')
+  ctx.log('Service uninstalled and rakun stopped')
 }

@@ -59,9 +59,9 @@ describe('format', () => {
 
   test('library lists store and install state', () => {
     expect(libraryText([game({ is_installed: true })], STORES)).toBe(
-      'g1  GOG  Game One  instalado'
+      'g1  GOG  Game One  installed'
     )
-    expect(libraryText([], STORES)).toMatch(/vacía/)
+    expect(libraryText([], STORES)).toMatch(/empty/)
   })
 })
 
@@ -80,9 +80,9 @@ describe('accounts commands', () => {
     await status(ctx, [], opts)
 
     expect(lines[0]).toContain('rakun 1.2.3')
-    expect(lines[0]).toContain('Epic: sesión iniciada (ann)')
-    expect(lines[0]).toContain('GOG: sin sesión')
-    expect(lines[0]).toContain('Cola: 2 pendientes')
+    expect(lines[0]).toContain('Epic: logged in (ann)')
+    expect(lines[0]).toContain('GOG: not logged in')
+    expect(lines[0]).toContain('Queue: 2 pending')
   })
 
   test('login asks for the paste and submits it with the runner name', async () => {
@@ -133,7 +133,7 @@ describe('accounts commands', () => {
 
   test('a missing argument is a usage error', async () => {
     const { ctx } = fakeCtx()
-    await expect(login(ctx, [], opts)).rejects.toThrow('<tienda>')
+    await expect(login(ctx, [], opts)).rejects.toThrow('<store>')
   })
 })
 
@@ -157,7 +157,7 @@ describe('library commands', () => {
     await refresh(ctx, ['gog'], opts)
 
     expect(calls).toEqual([['refreshLibrary', ['gog']]])
-    expect(lines).toEqual(['GOG actualizada'])
+    expect(lines).toEqual(['GOG refreshed'])
   })
 
   test('refresh of all waits for the four stores', async () => {
@@ -291,7 +291,7 @@ describe('game commands', () => {
     )
 
     await expect(install(ctx, ['gog', 'g1'], opts)).rejects.toThrow(
-      /ha fallado/
+      /download failed/
     )
   })
 
@@ -314,7 +314,7 @@ describe('game commands', () => {
     )
 
     await expect(install(ctx, ['gog', 'g1'], opts)).rejects.toThrow(
-      'La descarga ha fallado: rakun has no screen'
+      'The download failed: rakun has no screen'
     )
   })
 
@@ -325,7 +325,7 @@ describe('game commands', () => {
     })
 
     await expect(install(ctx, ['gog', 'g1'], opts)).rejects.toThrow(
-      'Game One ya está instalado: usa repair o update'
+      'Game One is already installed: use repair or update'
     )
     expect(calls.map(([channel]) => channel)).not.toContain('install')
   })
@@ -399,8 +399,8 @@ describe('game commands', () => {
       await update(ctx, [], opts)
 
       expect(updated(calls)).toEqual(['e1', 'g1', 'g2'])
-      expect(lines).toContain('Actualizando Epic One (1/3)')
-      expect(lines).toContain('Actualizando Game Two (3/3)')
+      expect(lines).toContain('Updating Epic One (1/3)')
+      expect(lines).toContain('Updating Game Two (3/3)')
     })
 
     test('only the store that is named', async () => {
@@ -427,7 +427,7 @@ describe('game commands', () => {
 
       await update(ctx, [], opts)
 
-      expect(lines).toEqual(['Todo está al día'])
+      expect(lines).toEqual(['Everything is up to date'])
       expect(updated(calls)).toEqual([])
     })
 
@@ -444,7 +444,7 @@ describe('game commands', () => {
       ])
 
       await expect(update(ctx, [], opts)).rejects.toThrow(
-        /1 de 3 han fallado:\n- e1: Terminó con estado "error"/
+        /1 of 3 failed:\n- e1: Ended with status "error"/
       )
       expect(updated(calls)).toEqual(['e1', 'g1', 'g2'])
     })
@@ -518,7 +518,7 @@ describe('stores of rakun', () => {
       Promise.resolve([{ id: 'legendary', name: 'epic', label: 'Epic' }])
 
     await expect(login(ctx, ['steam'], opts)).rejects.toThrow(
-      'Tienda desconocida "steam" (epic)'
+      'Unknown store "steam" (epic)'
     )
   })
 
@@ -569,7 +569,7 @@ describe('cli', () => {
       log: (l) => lines.push(l),
       ask: () => Promise.resolve('')
     })
-    expect(lines[0]).toMatch(/^Uso: rakunctl/)
+    expect(lines[0]).toMatch(/^Usage: rakunctl/)
   })
 
   test('an unknown command is an error', async () => {
@@ -578,7 +578,7 @@ describe('cli', () => {
         log: () => undefined,
         ask: () => Promise.resolve('')
       })
-    ).rejects.toThrow(/Comando desconocido "dance"/)
+    ).rejects.toThrow(/Unknown command "dance"/)
   })
 })
 
@@ -589,7 +589,7 @@ describe('config', () => {
       getMaxCpus: 8
     })
     await config(all.ctx, [], opts)
-    expect(all.lines[0]).toBe('maxWorkers = 0 (máx. 8)')
+    expect(all.lines[0]).toBe('maxWorkers = 0 (max. 8)')
   })
 
   const settings = {
@@ -620,16 +620,14 @@ describe('config', () => {
       requestAppSettings: { ...settings, webAccess: 'local' }
     })
     await config(ctx, ['webAccess', 'network'], opts)
-    expect(lines).toEqual([
-      'webAccess = network (se aplica al reiniciar rakun)'
-    ])
+    expect(lines).toEqual(['webAccess = network (applies when rakun restarts)'])
   })
 
   test('refuses unknown keys and values of the wrong type', async () => {
     expect(() => settingKey(settings as never, 'nope')).toThrow(CliError)
     expect(parseValue(true, 'false')).toBe(false)
     expect(parseValue(0, '4')).toBe(4)
-    expect(() => parseValue(true, 'si')).toThrow(CliError)
+    expect(() => parseValue(true, 'yes')).toThrow(CliError)
     expect(() => parseValue(0, 'x')).toThrow(CliError)
   })
 })
@@ -651,7 +649,7 @@ describe('logs', () => {
   test('says so when there is no log', async () => {
     const { ctx, lines } = fakeCtx({ getLogContent: '' })
     await logs(ctx, [], opts)
-    expect(lines).toEqual(['No hay registro'])
+    expect(lines).toEqual(['No log found'])
   })
 })
 
@@ -690,7 +688,7 @@ describe('maintenance', () => {
     expect(no.calls).toEqual([])
 
     const yes = fakeCtx()
-    yes.ctx.ask = () => Promise.resolve('s')
+    yes.ctx.ask = () => Promise.resolve('y')
     await reset(yes.ctx, [], opts)
     const forced = fakeCtx()
     await reset(forced.ctx, [], { ...opts, yes: true })

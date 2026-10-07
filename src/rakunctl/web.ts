@@ -1,7 +1,7 @@
 import { networkInterfaces } from 'os'
 
 export const NETWORK_WARNING =
-  'AVISO: la web está abierta a toda la red SIN protección: cualquiera que llegue a este equipo controla rakun. Solo para uso experimental o doméstico.'
+  'WARNING: the web is open to the whole network WITHOUT protection: anyone who can reach this machine controls rakun. For experimental or home use only.'
 
 /** The addresses other machines can reach this one by */
 export function lanAddresses(): string[] {
@@ -17,7 +17,7 @@ export function webLines(
   port: number,
   addresses: string[] = lanAddresses()
 ): string[] {
-  if (web === 'off') return ['Web: desactivada']
+  if (web === 'off') return ['Web: disabled']
   if (web === 'network')
     return [
       `Web: ${[`http://127.0.0.1:${port}`, ...addresses.map((a) => `http://${a}:${port}`)].join('  ')}`,

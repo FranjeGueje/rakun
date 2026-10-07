@@ -21,64 +21,65 @@ import { ServeDeps, serveDir, processAlive, withServe } from './serve'
 import { config } from './commands/config'
 import { installService, uninstallService } from './commands/systemd'
 
-export const HELP = `Uso: rakunctl [opciones] <comando> [argumentos]
+export const HELP = `Usage: rakunctl [options] <command> [arguments]
 
-Servicio
-  start [--web MODO] [--port N]     Arranca rakun en segundo plano
-  stop [--force]                    Lo para (--force: aunque esté descargando)
-  status                            Estado de rakun, sesiones y cola
-  install-service [--web MODO] [--port N]
-                                    Lo instala como servicio de usuario de
-                                    systemd (arranca al iniciar sesión)
-  uninstall-service                 Quita el servicio y para rakun
+Service
+  start [--web MODE] [--port N]     Start rakun in the background
+  stop [--force]                    Stop it (--force: even while downloading)
+  status                            Show rakun, sessions and queue
+  install-service [--web MODE] [--port N]
+                                    Install it as a systemd user service
+                                    (starts at login)
+  uninstall-service                 Remove the service and stop rakun
 
-Cuentas
-  login <tienda>                    Inicia sesión
-  logout <tienda>                   Cierra la sesión
-  import-relic                      Copia las sesiones de Relic
+Accounts
+  login <store>                     Log in
+  logout <store>                    Log out
+  import-relic                      Copy the sessions of Relic
 
-Biblioteca
-  library [tienda] [--installed]    Lista los juegos
-  refresh [tienda]                  Actualiza la biblioteca y espera
+Library
+  library [store] [--installed]     List the games
+  refresh [store]                   Refresh the library and wait
 
-Juegos
-  install <tienda> <appName> [--path DIR] [--lang CODE] [--skip-dlcs]
-                                    Instala un juego
-  update [tienda [appName]]         Actualiza un juego, los de una tienda o
-                                    todos los que tengan versión nueva
-  repair <tienda> <appName>         Repara un juego
-  uninstall <tienda> <appName>      Desinstala un juego y borra sus archivos
+Games
+  install <store> <appName> [--path DIR] [--lang CODE] [--skip-dlcs]
+                                    Install a game
+  update [store [appName]]          Update one game, a store's games, or every
+                                    game with a new version
+  repair <store> <appName>          Repair a game
+  uninstall <store> <appName>       Uninstall a game and delete its files
 
-Cola de descargas
-  queue [clear]                     Muestra la cola (clear: vacía las
-                                    terminadas)
-  pause | resume                    Pausa o reanuda la cola
-  cancel [--remove-files]           Cancela la descarga actual
+Download queue
+  queue [clear]                     Show the queue (clear: empty the finished
+                                    list)
+  pause | resume                    Pause or resume the queue
+  cancel [--remove-files]           Cancel the current download
 
-Mantenimiento
-  config [clave [valor]]            Muestra o cambia ajustes (p. ej.
+Maintenance
+  config [key [value]]              Show or change settings (e.g.
                                     defaultInstallPath)
-  logs [tienda [appName]] [--type T]
-                                    Muestra el registro de rakun, de una tienda
-                                    o de un juego
-  cache clear [tienda]              Vacía la caché de las bibliotecas
-  reset [--yes]                     Borra sesiones y ajustes y para rakun
+  logs [store [appName]] [--type T]
+                                    Show the log of rakun, of a store or of a
+                                    game
+  cache clear [store]               Clear the library cache
+  reset [--yes]                     Delete sessions and settings, and stop
+                                    rakun
 
-Avanzado
-  events                            Sigue los eventos de rakun
-  call <canal> [json]               Llama a un canal de la API
+Advanced
+  events                            Follow the events of rakun
+  call <channel> [json]             Call a channel of the API
 
-Opciones
-  --json            Salida para scripts
-  --no-wait         No espera a que termine lo que se encola
-  -s                Si rakun está parado, lo arranca solo para este comando y lo
-                    para al acabar
-  -h, --help        Esta ayuda
+Options
+  --json            Output for scripts
+  --no-wait         Do not wait for what is queued to finish
+  -s                If rakun is stopped, start it just for this command and stop
+                    it afterwards
+  -h, --help        This help
 
-MODO de --web: local (solo este equipo), network (toda la red, SIN protección) u
-off. Sin él se usa el ajuste webAccess.
-Las tiendas son las que informa rakun (rakunctl call getStores).
-Variable: RAKUN_API_FILE (api.json de otro rakun)`
+MODE of --web: local (this machine only), network (the whole network, WITHOUT
+protection) or off. Without it the webAccess setting is used.
+The stores are the ones rakun reports (rakunctl call getStores).
+Variable: RAKUN_API_FILE (api.json of another rakun)`
 
 export const commands: Record<string, Command> = {
   status,
@@ -171,12 +172,12 @@ const SERVICE_COMMANDS = [
 /** -s cannot work with what outlives the command or has no end */
 export function checkServe(command: string, opts: Options) {
   if (SERVICE_COMMANDS.includes(command))
-    throw new CliError(`-s no se usa con ${command}`)
+    throw new CliError(`-s cannot be used with ${command}`)
   if (command === 'events')
-    throw new CliError('-s no se puede usar con events: no termina')
+    throw new CliError('-s cannot be used with events: it never ends')
   if (!opts.wait)
     throw new CliError(
-      '-s no se puede usar con --no-wait: rakun pararía lo que acabas de encolar'
+      '-s cannot be used with --no-wait: rakun would stop what you just queued'
     )
 }
 
@@ -204,8 +205,7 @@ export async function runCli(
   if (command === 'install-service') return installService(io, opts)
   if (command === 'uninstall-service') return uninstallService(io)
   const handler = commands[command]
-  if (!handler)
-    throw new CliError(`Comando desconocido "${command}"\n\n${HELP}`)
+  if (!handler) throw new CliError(`Unknown command "${command}"\n\n${HELP}`)
   if (opts.serve) {
     return withServe(serve(), () => runCommand(io, handler, args, opts, json))
   }
@@ -213,7 +213,7 @@ export async function runCli(
     return io.log(
       json
         ? JSON.stringify({ running: false })
-        : 'rakun parado; arráncalo con "rakunctl start"'
+        : 'rakun is stopped; start it with "rakunctl start"'
     )
   await runCommand(io, handler, args, opts, json)
 }

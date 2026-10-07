@@ -88,7 +88,7 @@ describe('with rakun stopped', () => {
   test('stop says it is already stopped', async () => {
     const lines: string[] = []
     await stop({ log: (line) => lines.push(line) }, {})
-    expect(lines).toEqual(['rakun ya está parado'])
+    expect(lines).toEqual(['rakun is already stopped'])
   })
 
   test('status reports it as stopped, also for scripts', async () => {
@@ -100,7 +100,7 @@ describe('with rakun stopped', () => {
     await runCli(['status'], io)
     await runCli(['status', '--json'], io)
     expect(lines).toEqual([
-      'rakun parado; arráncalo con "rakunctl start"',
+      'rakun is stopped; start it with "rakunctl start"',
       '{"running":false}'
     ])
   })

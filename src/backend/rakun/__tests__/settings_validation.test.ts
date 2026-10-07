@@ -18,26 +18,28 @@ const check = (key: string, value: unknown) =>
 
 describe('validateSetting', () => {
   test('refuses unknown keys and values of another type', () => {
-    expect(() => check('nope', 1)).toThrow('desconocido')
+    expect(() => check('nope', 1)).toThrow('Unknown setting')
     expect(() => check('autoUpdateGames', 'yes')).toThrow('boolean')
     expect(() => check('maxWorkers', '2')).toThrow('number')
   })
 
   test('language has to be one of the supported ones', () => {
     expect(() => check('language', 'es')).not.toThrow()
-    expect(() => check('language', 'xx')).toThrow('no soportado')
+    expect(() => check('language', 'xx')).toThrow('Unsupported language')
   })
 
   test('maxWorkers is an integer from 0 up to the CPUs', () => {
     expect(() => check('maxWorkers', 1)).not.toThrow()
-    expect(() => check('maxWorkers', 1.5)).toThrow('entero')
-    expect(() => check('maxWorkers', -1)).toThrow('entero')
-    expect(() => check('maxWorkers', 99999)).toThrow('entero')
+    expect(() => check('maxWorkers', 1.5)).toThrow('must be an integer')
+    expect(() => check('maxWorkers', -1)).toThrow('must be an integer')
+    expect(() => check('maxWorkers', 99999)).toThrow('must be an integer')
   })
 
   test('the install path has to be absolute', () => {
     expect(() => check('defaultInstallPath', '/mnt/sd')).not.toThrow()
-    expect(() => check('defaultInstallPath', 'sd/games')).toThrow('absoluta')
+    expect(() => check('defaultInstallPath', 'sd/games')).toThrow(
+      'must be absolute'
+    )
   })
 
   test('protonPath is empty or a folder with the proton script', () => {
@@ -51,12 +53,14 @@ describe('validateSetting', () => {
 
   test('binary paths are empty or exist', () => {
     expect(() => check('altGogdlBin', '')).not.toThrow()
-    expect(() => check('altGogdlBin', '/tmp/nada-aqui')).toThrow('no existe')
+    expect(() => check('altGogdlBin', '/tmp/nada-aqui')).toThrow(
+      'does not exist'
+    )
   })
 
   test('validateSettings checks every key', () => {
     expect(() =>
       validateSettings({ language: 'es', maxWorkers: -3 }, current)
-    ).toThrow('entero')
+    ).toThrow('must be an integer')
   })
 })

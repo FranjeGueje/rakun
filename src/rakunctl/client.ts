@@ -31,10 +31,10 @@ export function parseCredentials(raw: string, file: string): Credentials {
   try {
     parsed = JSON.parse(raw) as Partial<Credentials>
   } catch {
-    throw new CliError(`${file} no es un JSON válido`)
+    throw new CliError(`${file} is not valid JSON`)
   }
   if (!parsed.port || !parsed.token) {
-    throw new CliError(`${file} no tiene puerto y token`)
+    throw new CliError(`${file} has no port and token`)
   }
   return { port: parsed.port, token: parsed.token }
 }
@@ -45,7 +45,7 @@ export function readCredentials(file = credentialsFile()): Credentials {
     raw = readFileSync(file, 'utf-8')
   } catch {
     throw new CliError(
-      `rakun parado (no existe ${file}); arráncalo con "rakunctl start"`
+      `rakun is stopped (${file} does not exist); start it with "rakunctl start"`
     )
   }
   return parseCredentials(raw, file)
@@ -56,10 +56,11 @@ export function messageForStatus(
   channel: string,
   body: string
 ): string {
-  if (status === 401) return 'rakun ha rechazado el token (401)'
-  if (status === 403) return `la API no expone el canal "${channel}" (403)`
-  if (status === 404) return `rakun no tiene manejador para "${channel}" (404)`
-  return `${errorOf(body) ?? 'error desconocido'} (${status})`
+  if (status === 401) return 'rakun rejected the token (401)'
+  if (status === 403)
+    return `the API does not expose the channel "${channel}" (403)`
+  if (status === 404) return `rakun has no handler for "${channel}" (404)`
+  return `${errorOf(body) ?? 'unknown error'} (${status})`
 }
 
 function errorOf(body: string): string | undefined {
@@ -95,7 +96,7 @@ function send(
     req.once('error', () =>
       reject(
         new CliError(
-          `rakun parado (no responde en 127.0.0.1:${creds.port}); arráncalo con "rakunctl start"`
+          `rakun is stopped (no answer at 127.0.0.1:${creds.port}); start it with "rakunctl start"`
         )
       )
     )

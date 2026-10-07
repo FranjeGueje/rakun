@@ -24,7 +24,7 @@ async function waitForRefresh(
     if (event !== 'refreshLibrary' || !pending.delete(args[0] as Runner)) {
       continue
     }
-    log(`${storeLabel(stores, args[0] as Runner)} actualizada`)
+    log(`${storeLabel(stores, args[0] as Runner)} refreshed`)
     if (!pending.size) return
   }
 }

@@ -88,7 +88,7 @@ export async function startRakun(
   )
   if (!up || !(await running()))
     throw new CliError(
-      `rakun no ha arrancado (código ${launched.exited() ?? 'sin respuesta'}): mira ${logFile()}`
+      `rakun did not start (code ${launched.exited() ?? 'no answer'}): see ${logFile()}`
     )
   return launched.exited() === undefined ? launched.pid : undefined
 }
@@ -109,11 +109,11 @@ export async function stopRakun(force = false): Promise<void> {
   const api = createApi(readCredentials())
   if (!force && (await isBusy(api)))
     throw new CliError(
-      'rakun está descargando o actualizando la biblioteca: pausa o cancela antes, o usa --force'
+      'rakun is downloading or refreshing the library: pause or cancel first, or use --force'
     )
   await api.call('stopRakun')
   if (!(await waitFor(async () => !(await isRunning()))))
-    throw new CliError('rakun no ha terminado a tiempo')
+    throw new CliError('rakun did not stop in time')
 }
 
 /** `--web` and `--port` of `rakunctl start`, as the arguments of rakun (which checks them) */
@@ -125,9 +125,9 @@ export function rakunFlags(opts: Pick<Options, 'web' | 'port'>): string[] {
 }
 
 export async function start(ctx: Io, opts: Pick<Options, 'web' | 'port'> = {}) {
-  if (await isRunning()) return ctx.log('rakun ya está arrancado')
+  if (await isRunning()) return ctx.log('rakun is already running')
   await startRakun(() => launchRakun(__dirname, rakunFlags(opts)))
-  ctx.log('rakun arrancado')
+  ctx.log('rakun started')
   const creds = readCredentials()
   const { web } = await createApi(creds).health()
   webLines(web, creds.port).forEach((line) => ctx.log(line))
@@ -137,12 +137,10 @@ export async function stop(
   ctx: Io,
   opts: Pick<Options, 'force'>
 ): Promise<void> {
-  if (!(await isRunning())) return ctx.log('rakun ya está parado')
+  if (!(await isRunning())) return ctx.log('rakun is already stopped')
   await stopRakun(opts.force)
   forgetStarted()
-  ctx.log('rakun parado')
+  ctx.log('rakun stopped')
   if (serviceInstalled())
-    ctx.log(
-      'El servicio sigue instalado: arrancará en el próximo inicio de sesión'
-    )
+    ctx.log('The service is still installed: it will start at your next login')
 }

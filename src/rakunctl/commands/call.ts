@@ -7,10 +7,10 @@ export function parseCallArgs(raw: string | undefined): unknown[] {
   try {
     parsed = JSON.parse(raw)
   } catch {
-    throw new CliError('Los argumentos deben ser un JSON válido: \'["gog"]\'')
+    throw new CliError('The arguments must be valid JSON: \'["gog"]\'')
   }
   if (!Array.isArray(parsed)) {
-    throw new CliError('Los argumentos deben ser un array JSON')
+    throw new CliError('The arguments must be a JSON array')
   }
   return parsed as unknown[]
 }
@@ -25,5 +25,5 @@ export const events: Command = async (ctx) => {
   for await (const { event, args } of await ctx.api.events()) {
     ctx.log(`${event} ${JSON.stringify(args)}`)
   }
-  throw new CliError('rakun cerró la conexión')
+  throw new CliError('rakun closed the connection')
 }

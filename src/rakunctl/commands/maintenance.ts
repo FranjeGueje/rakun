@@ -8,22 +8,22 @@ async function storeToClear(ctx: Ctx, name: string | undefined) {
 
 export const cache: Command = async (ctx, args) => {
   if (args[0] !== 'clear')
-    throw new CliError('Uso: rakunctl cache clear [tienda]')
+    throw new CliError('Usage: rakunctl cache clear [store]')
   const library = await storeToClear(ctx, args[1])
   await ctx.api.call('clearCache', ...(library ? [library] : []))
-  ctx.log('Caché vaciada')
+  ctx.log('Cache cleared')
 }
 
 async function confirmed(ctx: Ctx, opts: Options) {
   if (opts.yes) return true
   const answer = await ctx.ask(
-    'Esto borra sesiones, ajustes y cola (no los juegos instalados). ¿Seguro? [s/N] '
+    'This deletes sessions, settings and the queue (not installed games). Continue? [y/N] '
   )
-  return /^(s|si|sí|y|yes)$/i.test(answer.trim())
+  return /^(y|yes)$/i.test(answer.trim())
 }
 
 export const reset: Command = async (ctx, _args, opts) => {
-  if (!(await confirmed(ctx, opts))) return ctx.log('Cancelado')
+  if (!(await confirmed(ctx, opts))) return ctx.log('Canceled')
   await ctx.api.call('resetRakun')
-  ctx.log('rakun restablecido y detenido; arráncalo de nuevo')
+  ctx.log('rakun was reset and stopped; start it again')
 }

@@ -26,13 +26,13 @@ case "${1:-all}" in
     arm64) ARCHS=(arm64) ;;
     all) ARCHS=(x64 arm64) ;;
     *)
-        echo "Uso: $0 [x64|arm64|all]" >&2
+        echo "Usage: $0 [x64|arm64|all]" >&2
         exit 1
         ;;
 esac
 
 if [ -n "${RAKUN_NODE_BINARY:-}" ] && [ "${#ARCHS[@]}" -ne 1 ]; then
-    echo "Error: RAKUN_NODE_BINARY solo vale con una arquitectura (x64 o arm64)." >&2
+    echo "Error: RAKUN_NODE_BINARY only works with a single architecture (x64 or arm64)." >&2
     exit 1
 fi
 

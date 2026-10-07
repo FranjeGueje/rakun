@@ -39,5 +39,5 @@ playwright-report
 /scripts/release.sh
 /scripts/rebuild.sh
 
-# ficheros temporales de Kate
+# Kate temporary files
 *.kate-swp

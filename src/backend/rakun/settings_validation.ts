@@ -15,37 +15,37 @@ const emptyOrFile =
   (value: string) =>
     value === '' || existsSync(value)
       ? undefined
-      : `${what}: no existe ${value}`
+      : `${what}: ${value} does not exist`
 
 const rules: Partial<Record<keyof AppSettings, Rule>> = {
   language: (value: string) =>
     supportedLanguages.some((lang) => lang === value)
       ? undefined
-      : `Idioma no soportado "${value}"`,
+      : `Unsupported language "${value}"`,
   maxWorkers: (value: number) =>
     Number.isInteger(value) && value >= 0 && value <= cpus().length
       ? undefined
-      : `maxWorkers debe ser un entero entre 0 y ${cpus().length}`,
+      : `maxWorkers must be an integer between 0 and ${cpus().length}`,
   defaultInstallPath: (value: string) =>
-    isAbsolute(value) ? undefined : 'La ruta debe ser absoluta',
+    isAbsolute(value) ? undefined : 'The path must be absolute',
   protonPath: (value: string) =>
     value === '' || (isFolder(value) && existsSync(join(value, 'proton')))
       ? undefined
-      : `${value} no es una carpeta de Proton (falta el ejecutable "proton")`,
+      : `${value} is not a Proton folder (the "proton" executable is missing)`,
   webAccess: (value: string) =>
     isWebAccess(value)
       ? undefined
-      : `webAccess debe ser uno de: ${WEB_ACCESS_MODES.join(', ')}`,
+      : `webAccess must be one of: ${WEB_ACCESS_MODES.join(', ')}`,
   altGogdlBin: emptyOrFile('altGogdlBin'),
   altLegendaryBin: emptyOrFile('altLegendaryBin'),
   altNileBin: emptyOrFile('altNileBin')
 }
 
 function checkType(key: string, value: unknown, current: AppSettings) {
-  if (!(key in current)) throw new Error(`Ajuste desconocido "${key}"`)
+  if (!(key in current)) throw new Error(`Unknown setting "${key}"`)
   const expected = typeof current[key as keyof AppSettings]
   if (typeof value !== expected)
-    throw new Error(`${key} debe ser de tipo ${expected}`)
+    throw new Error(`${key} must be of type ${expected}`)
 }
 
 /** Throws with a readable message when the value is not valid for the setting */

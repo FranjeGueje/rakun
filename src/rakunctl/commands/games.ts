@@ -28,8 +28,7 @@ async function loadGame(ctx: Ctx, appName: string, runner: Runner) {
     runner
   )
   // The stores answer an empty object for a game they don't know, Epic null
-  if (!game?.app_name)
-    throw new CliError(`No hay ningún juego "${appName}" en ${runner}`)
+  if (!game?.app_name) throw new CliError(`No game "${appName}" in ${runner}`)
   return game
 }
 
@@ -74,7 +73,7 @@ export async function followGame(
       if (FINAL_STATUSES.has(update.status)) return update.status
     }
   }
-  throw new CliError('rakun cerró la conexión antes de terminar')
+  throw new CliError('rakun closed the connection before finishing')
 }
 
 // rakun reports `done` even when a download failed: the queue keeps the truth
@@ -92,7 +91,7 @@ async function failureInQueue(
 }
 
 export const failureMessage = (reason: string) =>
-  `La descarga ha fallado: ${reason || 'mira los logs de rakun'}`
+  `The download failed: ${reason || 'see the rakun logs'}`
 
 /** Starts the work and, unless --no-wait, follows it until it ends */
 async function run(
@@ -109,13 +108,13 @@ async function run(
     followGame(ctx, events, appName),
     started
   ])
-  if (ending !== 'done') throw new CliError(`Terminó con estado "${ending}"`)
+  if (ending !== 'done') throw new CliError(`Ended with status "${ending}"`)
   const failure = queued ? await failureInQueue(ctx, appName) : undefined
   if (failure !== undefined) throw new CliError(failureMessage(failure))
 }
 
 async function gameArgs(ctx: Ctx, args: string[]): Promise<[Runner, string]> {
-  const store = parseStore(await ctx.stores(), requireArg(args, 0, 'tienda'))
+  const store = parseStore(await ctx.stores(), requireArg(args, 0, 'store'))
   return [store.id, requireArg(args, 1, 'appName')]
 }
 
@@ -124,7 +123,7 @@ export const install: Command = async (ctx, args, opts) => {
   const params = await installParams(ctx, appName, runner, opts)
   if (params.gameInfo.is_installed)
     throw new CliError(
-      `${params.gameInfo.title} ya está instalado: usa repair o update`
+      `${params.gameInfo.title} is already installed: use repair or update`
     )
   await run(
     ctx,
@@ -159,12 +158,12 @@ export async function pendingUpdates(
 /** One at a time (the queue is sequential anyway); a failure does not stop the rest */
 async function updateAll(ctx: Ctx, runner: Runner | undefined, wait: boolean) {
   const pending = await pendingUpdates(ctx, runner)
-  if (!pending.length) return ctx.log('Todo está al día')
+  if (!pending.length) return ctx.log('Everything is up to date')
   const failures: string[] = []
   for (const [index, { appName, runner: owner }] of pending.entries()) {
     try {
       const game = await loadGame(ctx, appName, owner)
-      ctx.log(`Actualizando ${game.title} (${index + 1}/${pending.length})`)
+      ctx.log(`Updating ${game.title} (${index + 1}/${pending.length})`)
       await updateGame(ctx, game, wait)
     } catch (error) {
       failures.push(`${appName}: ${(error as Error).message}`)
@@ -172,7 +171,7 @@ async function updateAll(ctx: Ctx, runner: Runner | undefined, wait: boolean) {
   }
   if (failures.length)
     throw new CliError(
-      `${failures.length} de ${pending.length} han fallado:\n- ${failures.join('\n- ')}`
+      `${failures.length} of ${pending.length} failed:\n- ${failures.join('\n- ')}`
     )
 }
 

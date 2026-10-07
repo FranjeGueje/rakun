@@ -1,39 +1,17 @@
 # Changelog
 
-El historial de Relic (y de la limpieza de Heroic) está en el repositorio
-`upstream`. / The history of Relic (and of the Heroic cleanup) lives in the
-`upstream` repository.
+The history of Relic (and of the Heroic cleanup) lives in the `upstream`
+repository.
 
-## Sin publicar / Unreleased — Rakun
+## Unreleased — Rakun
 
-### Español
-
-#### Añadido
-
-- `rakunctl update [tienda [appName]]`: sin argumentos actualiza todos los juegos instalados con versión nueva, con una tienda solo los de ella; un fallo no detiene el resto. Canal nuevo `getUpdateableGames`.
-- `rakunctl install-service` y `uninstall-service`: rakun como servicio de usuario de systemd (sin `DISPLAY`: los instaladores de Zoom no funcionan con él).
-- `AUTHORS` y una nota sobre el origen (Heroic → Relic → rakun); se conserva el historial de git.
-
-#### Cambiado
-
-- **relicd pasa a llamarse rakun** y `relicctl` a `rakunctl`. Corte limpio, sin
-  migración: rutas `~/.config/rakun`, `~/.cache/rakun`, `~/.local/state/Rakun`,
-  `~/.local/share/rakun`, `~/Games/Rakun`; variables `RAKUN_*`; cabecera
-  `x-rakun-token`; canales `getRakunVersion` y `resetRakun`.
-- El montaje dentro del prefijo de cada juego es ahora `C:\Launchers`
-  (`drive_c/Launchers`, variable `%LAUNCHERS%` en los `.bat`, runner versión 5).
-  Los atajos de Steam y prefijos anteriores no se migran: borra el atajo viejo y
-  reinstala el juego.
-
-### English
-
-#### Added
+### Added
 
 - `rakunctl update [store [app]]`: with no arguments it updates every installed game that has a new version, with a store only that store's; a failure does not stop the rest. New channel `getUpdateableGames`.
 - `rakunctl install-service` and `uninstall-service`: rakun as a systemd user service (no `DISPLAY`: Zoom installers do not work with it).
 - `AUTHORS` and a note on the origin (Heroic → Relic → rakun); the git history is kept.
 
-#### Changed
+### Changed
 
 - **relicd is now called rakun** and `relicctl` is `rakunctl`. Clean break, no
   migration: paths `~/.config/rakun`, `~/.cache/rakun`, `~/.local/state/Rakun`,
@@ -43,164 +21,13 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
   (`drive_c/Launchers`, `%LAUNCHERS%` in the `.bat` files, runner version 5).
   Existing Steam shortcuts and prefixes are not migrated: delete the old shortcut
   and reinstall the game.
+- Everything is now in English: `rakunctl` (help, messages, errors, the `reset`
+  confirmation is `[y/N]`), the scripts and the documentation. The Spanish
+  README is `README.es.md`; `GUIA.md` is now `GUIDE.md`.
 
 ## 0.1.0 — Headless
 
-### Español
-
-#### Añadido
-
-- **relicd**, fork solo backend de Relic: servicio Node sin Electron ni ventana,
-  con identidad propia (`~/.config/relicd`, `~/.cache/relicd`,
-  `~/.local/state/Relicd`, `~/.local/share/relicd`, `~/Games/Relicd`).
-- **API HTTP local** (`127.0.0.1`, puerto 17370 o `RELICD_PORT`): `POST
-/api/<canal>`, `GET /events` (SSE) y `GET /health`. Token en
-  `~/.config/relicd/api.json` (modo 0600), `Host` propio del equipo, `Origin` solo el de
-  la propia web de relicd y lista blanca de canales y eventos. Documentada en
-  `API.md`.
-- **`getLibrary`**: biblioteca de una o todas las tiendas con el estado de
-  instalación y los overrides (antes la leía el frontend de los stores).
-- **`refreshLibrary` no bloquea**: responde al instante, refresca en segundo
-  plano, une las peticiones de una tienda que ya se está refrescando y avisa con
-  el evento `refreshLibrary` al terminar; `getRefreshingLibraries` dice qué
-  tiendas están refrescando.
-- **`steamgriddb.hasApiKey` y `steamgriddb.setApiKey`** expuestos en la API:
-  sin clave de SteamGridDB no se descargan las portadas al añadir un juego.
-- **`getAccounts`**: quién tiene sesión en cada tienda y con qué nombre, sin
-  red.
-- **Login sin ventana**: `getLoginInfo` da la URL de login y `submitLogin`
-  acepta la dirección final, el JSON de Epic o el código suelto.
-- **`scripts/package.sh`**: tarball `relicd-<v>-linux-x64.tar.gz` (+ `.sha256`)
-  con el bundle de esbuild, los binarios auxiliares y un Node 24 propio
-  verificado contra su checksum. **`scripts/install.sh`** lo instala en
-  `~/.local/opt/relicd` sin crear ningún servicio. **`scripts/smoke.sh`**
-  comprueba un relicd en marcha.
-- **`relicctl`**, cliente de línea de comandos (solo habla HTTP con relicd):
-  `status`, `login`/`logout`, `import-relic`, `library`, `refresh`,
-  `install`/`update`/`repair`/`uninstall` (esperan a que acabe; `--lang`,
-  `--skip-dlcs`, `--no-wait`), `queue`, `pause`/`resume`/`cancel`, `config`,
-  `logs`, `cache clear`, `reset`, `events`, `call` y `--json`. Las tiendas salen
-  de `getStores`, así que añadir una no toca `relicctl`.
-- **`relicctl start`, `stop` y `-s`**: arrancar y parar relicd sin systemd.
-  `relicctl -s <comando>` lo arranca si está parado y lo para al acabar; con
-  varios `-s` a la vez lo para el último, y solo si lo arrancó un `-s`.
-  Si relicd está parado, los demás comandos lo dicen.
-- **Ajustes globales validados** (`setSetting`/`writeConfig`): una clave
-  desconocida, un tipo erróneo, un idioma no soportado, `maxWorkers` fuera de
-  rango o una ruta inexistente responden `500` con el motivo. Cambiar `language`
-  surte efecto al instante. `getMaxCpus` indica el máximo de `maxWorkers`.
-- **`clearCache`, `resetRakun` y `stopRelicd`** en la API. `resetRakun` olvida
-  sesiones, ajustes y cola (no los juegos instalados ni `api.json`) y detiene
-  relicd.
-- **Cola de descargas**: `clearFinishedDMQueue`, y un fallo guarda su motivo en
-  `DMQueueElement.error` (`relicctl install` lo muestra en vez de «mira los
-  logs»).
-- **`getStores` y `logout(runner)`** genéricos, `getLogContent` y
-  `importSessionsFromRelic` (copia las sesiones de `~/.config/relic`), y la
-  rama privada de GOG con las versiones de los binarios auxiliares.
-- **Los DLC se instalan por defecto** en Epic y GOG (`installDlcs` omitido = todos,
-  `[]` = ninguno, una lista = solo esos en GOG).
-- **Zoom (experimental)**: relicd comprueba que hay pantalla antes de descargar
-  un juego de Windows y falla al instante sin `DISPLAY`, con el servidor gráfico
-  caído o en modo juego. La documentación explica que esos instaladores
-  necesitan pantalla.
-- **Una tienda es una carpeta más una línea en el registro** (descriptor
-  `Store`), con un contrato de tests para todas y una guía en `AGENTS.md`.
-- **La web de relicd** (`web/`, React con esbuild): biblioteca, descargas, cuentas
-  (login por pegado, con botón de portapapeles) y ajustes, usable con ratón, teclado o
-  mando, con cabecera de una fila y menú ☰ en pantallas estrechas. Nació como copia de la
-  interfaz de `relicd-client`, que queda **archivado y sin mantenimiento**. La sirve
-  `GET /` (el token y el modo van en `<meta>`); sin la carpeta `web/` relicd funciona igual.
-- **Quién puede abrir la web**: `local` (por defecto), `network` (toda la red, **sin
-  protección**, solo uso doméstico o experimental) y `off`. Se elige con `relicd --web=…
---port=…` (que `relicctl start` reenvía), `RELICD_WEB`/`RELICD_PORT` o el ajuste
-  `webAccess`. En `network` relicd solo acepta su propio `Host`, y ajustes, parada,
-  reset, carpetas, registros, secretos y mover o importar juegos solo responden a este
-  equipo. Avisa en el log, en `relicctl start`/`status` y con un banner en la web;
-  `/health` informa de `web`.
-- **`listFolders`**: lista las carpetas de una ruta (para elegir carpetas con el mando o el ratón).
-
-#### Cambiado
-
-- `ipc.ts` pasa a registros en memoria en lugar de `ipcMain`; los handlers de
-  `main.ts` se reparten en `relic/api/` y el arranque está en `relic/daemon.ts`.
-- GPU por `lspci` (antes `app.getGPUInfo`); `online_monitor` sin `net`;
-  `os.release()` en lugar de `process.getSystemVersion()`.
-- Los diálogos se registran y se publican como evento `showDialog`;
-  `askQuestion` elige siempre la primera opción (la segura).
-- **Instalar un juego que ya está instalado se rechaza** (`500 already installed:
-use repair or update`; `relicctl` dice «ya está instalado») en vez de descargarlo
-  entero otra vez.
-- **Arranque más rápido y ligero**: `syncMountBin` ya no lee y hashea los binarios de
-  Windows (56 MB) en cada arranque, solo compara tamaño y fecha. Arranque en frío
-  de 0,24 s a 0,13 s y pico de memoria de 128 MB a 81 MB.
-- Un solo tarball por arquitectura: `pnpm package [x64|arm64|all]` genera
-  `relicd-<v>-linux-<arch>.tar.gz`, cada uno solo con sus binarios y su Node.
-- Sin traducciones: los mensajes del daemon van en inglés; `language` solo elige
-  el idioma por defecto de GOG.
-- Los comandos de `relicctl` ya no dicen «¿está arrancado?»: dicen «relicd
-  parado» y cómo arrancarlo.
-- El registro de la API deja de tener canales por tienda (`login`, `authGOG`,
-  `isLoggedIn`, `logoutLegendary`…): se usan `getStores`, `getAccounts`,
-  `getLoginInfo`, `submitLogin` y `logout`.
-
-#### Corregido
-
-- **Zoom: una descarga cortada dejaba un instalador truncado** que el siguiente
-  intento daba por bueno. Ahora se descarga a un `.part` y solo se renombra si
-  llega entero.
-- **`getLibrary` de Epic y Amazon** no reflejaba instalar o desinstalar hasta el
-  siguiente refresco (sus stores solo se reescriben al refrescar); ahora se
-  completa con el estado que mantiene cada manager.
-- **Reparar un juego nativo de Linux** creaba un `.bat` que no le corresponde
-  (su shortcut apunta a `start.sh`); ahora lo omite.
-- **Reinstalar un juego cuyo prefijo se conservó** fallaba con `EEXIST` al crear
-  los enlaces del prefijo, y se saltaba el resto de la preparación. Ahora
-  reemplaza los enlaces existentes.
-- **Zoom: un instalador de Windows que fallaba se daba por instalado**: el juego
-  quedaba registrado y se añadía a Steam sin existir. Ahora la instalación
-  termina en error. Cerrar la sesión de Zoom también vacía la biblioteca
-  cacheada.
-- **GOG: instalar sin idioma enviaba el texto «undefined» a gogdl**, que se caía.
-  Usa `en-US` por defecto y guarda el idioma usado (`relicctl install --lang`).
-- **Reinstalar un juego de GOG o Zoom (y los de terceros de Epic) repetía su
-  registro** en `installed.json`: tres instalaciones dejaban tres entradas, y
-  desinstalar solo quitaba una, así que el juego seguía figurando como instalado.
-  Ahora hay una entrada por juego, desinstalar las quita todas y un refresco
-  limpia los duplicados ya existentes. Además, quitar un juego de terceros que no
-  estaba en la lista borraba el último.
-- **Epic ignoraba `installDlcs`** y siempre pasaba `--skip-dlcs`.
-- **`checkGameUpdates` avisaba de juegos ya encolados** por la actualización
-  automática, y Amazon sin sesión se registraba como error (es el estado normal).
-- **La carpeta de Proton vacía ahora es de verdad «automática»**: se busca GE-Proton cuando
-  hace falta, no solo al crear la configuración. Antes un GE-Proton instalado después dejaba
-  el prefijo sin inicializar (`No GE-Proton configured`).
-- **Un fallo al arrancar (p. ej. el puerto ocupado) queda en el log** de relicd, y
-  `relicctl start` dice en qué fichero mirar (`relicctl logs` necesita relicd en marcha).
-
-#### Eliminado
-
-- Electron, el frontend (React), el preload, la ventana principal, la bandeja,
-  `images_cache`, Playwright, electron-vite, electron-builder y sus
-  dependencias; los canales de ventana, atajos, portapapeles, gamepad y zoom.
-- i18next y las traducciones (`public/locales`), `easydl`, `tmp`, `undici`
-  (el proxy lo gestiona `NODE_USE_ENV_PROXY`), el soporte e2e heredado de Relic,
-  el parche de `@types/node` y código sin uso. `node_modules` pasa de 605 MB a
-  171 MB.
-- El Comet nativo de Linux (`getCometVersion`, `altCometBin`, el registro de
-  `comet`); queda `comet.exe`, que corre dentro del prefijo.
-- La configuración por juego (`GameConfig`, `GameSettings`), los mods de
-  Cyberpunk, los guardados en la nube de GOG y los canales heredados de la
-  interfaz.
-- Los `.exe` de arm64 de Windows (nadie los usaba).
-- `zod` (los tipos con marca de los comandos de legendary son ahora un módulo
-  propio, `backend/schemas.ts`), exportaciones y tipos sin uso, y 140 de los 279
-  avisos de eslint (los de los tests, que usan mocks sueltos, y los mecánicos del
-  código).
-
-### English
-
-#### Added
+### Added
 
 - **relicd**, a backend-only fork of Relic: a Node service with no Electron and
   no window, with its own identity (`~/.config/relicd`, `~/.cache/relicd`,
@@ -272,7 +99,7 @@ use repair or update`; `relicctl` dice «ya está instalado») en vez de descarg
   web; `/health` reports `web`.
 - **`listFolders`**: lists the folders of a path (to pick folders with a gamepad or the mouse).
 
-#### Changed
+### Changed
 
 - `ipc.ts` moves to in-memory registries instead of `ipcMain`; the handlers of
   `main.ts` are split into `relic/api/` and start-up lives in `relic/daemon.ts`.
@@ -281,7 +108,7 @@ use repair or update`; `relicctl` dice «ya está instalado») en vez de descarg
 - Dialogs are logged and published as a `showDialog` event; `askQuestion` always
   picks the first (safe) option.
 - **Installing a game that is already installed is refused** (`500 already
-installed: use repair or update`; `relicctl` says "ya está instalado") instead
+installed: use repair or update`; `relicctl` says it is already installed) instead
   of downloading it all again.
 - **Faster, lighter start-up**: `syncMountBin` no longer reads and hashes the
   Windows binaries (56 MB) on every start, it only compares size and date. Cold
@@ -296,7 +123,7 @@ installed: use repair or update`; `relicctl` says "ya está instalado") instead
   `logoutLegendary`…): use `getStores`, `getAccounts`, `getLoginInfo`,
   `submitLogin` and `logout`.
 
-#### Fixed
+### Fixed
 
 - **Zoom: an aborted download left a truncated installer** that the next attempt
   took for the finished one. It is now downloaded to a `.part` file and renamed
@@ -330,7 +157,7 @@ installed: use repair or update`; `relicctl` says "ya está instalado") instead
 - **A failure to start (a busy port, say) is written to relicd's log**, and `relicctl
 start` says which file to read (`relicctl logs` needs relicd running).
 
-#### Removed
+### Removed
 
 - Electron, the React frontend, the preload, the main window, the tray,
   `images_cache`, Playwright, electron-vite, electron-builder and their

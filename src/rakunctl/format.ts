@@ -18,13 +18,13 @@ export function table(rows: string[][]): string {
 }
 
 export function libraryText(games: GameInfo[], stores: StoreInfo[]): string {
-  if (!games.length) return 'La biblioteca está vacía.'
+  if (!games.length) return 'The library is empty.'
   return table(
     games.map((game) => [
       game.app_name,
       storeLabel(stores, game.runner),
       game.title,
-      game.is_installed ? 'instalado' : ''
+      game.is_installed ? 'installed' : ''
     ])
   )
 }
@@ -36,7 +36,7 @@ export function accountsText(
   return stores
     .map(({ id, label }) => {
       const { loggedIn, name } = accounts[id]
-      return `${label}: ${loggedIn ? `sesión iniciada${name ? ` (${name})` : ''}` : 'sin sesión'}`
+      return `${label}: ${loggedIn ? `logged in${name ? ` (${name})` : ''}` : 'not logged in'}`
     })
     .join('\n')
 }
@@ -46,15 +46,15 @@ export function queueText(
   stores: StoreInfo[]
 ): string {
   const { elements, finished } = queue
-  if (!elements.length) return `Cola vacía (${finished.length} terminadas).`
+  if (!elements.length) return `Queue is empty (${finished.length} finished).`
   const rows = elements.map(({ params, type, status }) => [
     params.appName,
     storeLabel(stores, params.runner),
     params.gameInfo.title,
     type,
-    status ?? 'en cola'
+    status ?? 'queued'
   ])
-  return `${table(rows)}\n(${finished.length} terminadas)`
+  return `${table(rows)}\n(${finished.length} finished)`
 }
 
 export function statusLine({ status, context }: GameStatus): string {
@@ -64,7 +64,7 @@ export function statusLine({ status, context }: GameStatus): string {
 export function progressLine({ progress }: GameStatus): string {
   if (!progress) return ''
   const percent = progress.percent === undefined ? '' : `${progress.percent}% `
-  return `${percent}${progress.bytes} ${progress.eta ? `(quedan ${progress.eta})` : ''}`.trim()
+  return `${percent}${progress.bytes} ${progress.eta ? `(${progress.eta} left)` : ''}`.trim()
 }
 
 export function sessionsImportText(

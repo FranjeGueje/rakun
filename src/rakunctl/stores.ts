@@ -10,7 +10,7 @@ export function parseStore(
   const store = stores.find((s) => s.name === name || s.id === name)
   if (!store) {
     const valid = stores.map((s) => s.name).join(', ')
-    throw new CliError(`Tienda desconocida "${name ?? ''}" (${valid})`)
+    throw new CliError(`Unknown store "${name ?? ''}" (${valid})`)
   }
   return store
 }

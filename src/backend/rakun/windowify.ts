@@ -187,10 +187,7 @@ export function syncMountBin(): void {
     copied++
   }
 
-  logInfo(
-    `syncMountBin: ${files.length} ficheros, ${copied} copiados`,
-    LOG_PREFIX
-  )
+  logInfo(`syncMountBin: ${files.length} files, ${copied} copied`, LOG_PREFIX)
 }
 
 /**

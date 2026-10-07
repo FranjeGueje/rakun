@@ -39,14 +39,14 @@ describe('settings handlers', () => {
   test('setSetting refuses an invalid value before saving', () => {
     expect(() =>
       dispatchListener('setSetting', { key: 'language', value: 'xx' })
-    ).toThrow('no soportado')
+    ).toThrow('Unsupported language')
     expect(globalConfig.setSetting).not.toHaveBeenCalledWith('language', 'xx')
   })
 
   test('writeConfig refuses an invalid value before saving', async () => {
     await expect(
       invokeHandler('writeConfig', { maxWorkers: -1 })
-    ).rejects.toThrow('entero')
+    ).rejects.toThrow('must be an integer')
     expect(writeConfig).not.toHaveBeenCalledWith({ maxWorkers: -1 })
   })
 

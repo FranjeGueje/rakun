@@ -25,7 +25,7 @@ export const status: Command = async (ctx) => {
       `rakun ${health.version}`,
       ...webLines(health.web, ctx.api.port),
       accountsText(accounts, stores),
-      `Cola: ${queue.elements.length} pendientes`
+      `Queue: ${queue.elements.length} pending`
     ].join('\n')
   )
 }
@@ -33,20 +33,20 @@ export const status: Command = async (ctx) => {
 export const login: Command = async (ctx, args) => {
   const { id: runner } = parseStore(
     await ctx.stores(),
-    requireArg(args, 0, 'tienda')
+    requireArg(args, 0, 'store')
   )
   const info = await ctx.api.call<LoginInfo>('getLoginInfo', runner)
   ctx.log(`${info.instructions}\n\n${info.url}\n`)
-  const pasted = await ctx.ask('Pega aquí el resultado: ')
+  const pasted = await ctx.ask('Paste the result here: ')
   const result = await ctx.api.call<LoginResult>('submitLogin', runner, pasted)
-  if (!result.ok) throw new CliError(result.error ?? 'Login rechazado')
-  ctx.log('Sesión iniciada.')
+  if (!result.ok) throw new CliError(result.error ?? 'Login rejected')
+  ctx.log('Logged in.')
 }
 
 export const logout: Command = async (ctx, args) => {
-  const store = parseStore(await ctx.stores(), requireArg(args, 0, 'tienda'))
+  const store = parseStore(await ctx.stores(), requireArg(args, 0, 'store'))
   await ctx.api.call('logout', store.id)
-  ctx.log(`Sesión de ${store.label} cerrada.`)
+  ctx.log(`Logged out of ${store.label}.`)
 }
 
 export const importRelic: Command = async (ctx) => {

@@ -5,7 +5,7 @@ import { Command, show } from '../context'
 export const queue: Command = async (ctx, args) => {
   if (args[0] === 'clear') {
     await ctx.api.call('clearFinishedDMQueue')
-    return ctx.log('Lista de terminadas vaciada')
+    return ctx.log('Finished list cleared')
   }
   const info = await ctx.api.call<{
     elements: DMQueueElement[]
@@ -17,15 +17,15 @@ export const queue: Command = async (ctx, args) => {
 
 export const pause: Command = async (ctx) => {
   await ctx.api.call('pauseCurrentDownload')
-  ctx.log('Descarga pausada')
+  ctx.log('Download paused')
 }
 
 export const resume: Command = async (ctx) => {
   await ctx.api.call('resumeCurrentDownload')
-  ctx.log('Cola reanudada')
+  ctx.log('Queue resumed')
 }
 
 export const cancel: Command = async (ctx, _args, opts) => {
   await ctx.api.call('cancelDownload', opts.removeFiles)
-  ctx.log('Descarga cancelada')
+  ctx.log('Download canceled')
 }

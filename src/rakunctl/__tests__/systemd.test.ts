@@ -95,7 +95,7 @@ describe('installService', () => {
       ['enable', '--now', 'rakun.service']
     ])
     expect(r.lines.join('\n')).toMatch(/Zoom/)
-    expect(r.lines.join('\n')).not.toMatch(/SIN protección/)
+    expect(r.lines.join('\n')).not.toMatch(/WITHOUT protection/)
   })
 
   test('with rakun already running it only enables the unit', async () => {
@@ -131,7 +131,7 @@ describe('installService', () => {
     expect(readFileSync(file, 'utf-8')).toMatch(
       /ExecStart=.*"--web=network" "--port=18000"\n/
     )
-    expect(r.lines.join('\n')).toMatch(/SIN protección/)
+    expect(r.lines.join('\n')).toMatch(/WITHOUT protection/)
   })
 
   test('refuses a bad --web or --port before writing anything', async () => {
@@ -160,7 +160,7 @@ describe('installService', () => {
         web: () => 'network'
       }
     )
-    expect(r.lines.join('\n')).toMatch(/SIN protección/)
+    expect(r.lines.join('\n')).toMatch(/WITHOUT protection/)
   })
 })
 
@@ -181,13 +181,17 @@ describe('uninstallService', () => {
     const r = recorder()
     await uninstallService(r, { file: join(tmp(), 'no.service'), ctl: r.ctl })
     expect(r.calls).toEqual([])
-    expect(r.lines).toEqual(['El servicio no está instalado'])
+    expect(r.lines).toEqual(['The service is not installed'])
   })
 })
 
 describe('checkServe', () => {
   test('-s is refused with the service commands', () => {
-    expect(() => checkServe('install-service', opts)).toThrow(/-s no se usa/)
-    expect(() => checkServe('uninstall-service', opts)).toThrow(/-s no se usa/)
+    expect(() => checkServe('install-service', opts)).toThrow(
+      /-s cannot be used/
+    )
+    expect(() => checkServe('uninstall-service', opts)).toThrow(
+      /-s cannot be used/
+    )
   })
 })
