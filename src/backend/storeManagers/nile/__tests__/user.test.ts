@@ -1,4 +1,6 @@
 import { NileUser } from '../user'
+import { configStore } from '../electronStores'
+import { logError } from 'backend/logger'
 
 jest.mock('backend/logger', () => ({
   logDebug: jest.fn(),
@@ -9,6 +11,11 @@ jest.mock('backend/logger', () => ({
 }))
 
 jest.mock('backend/utils')
+
+jest.mock('fs', () => ({
+  ...jest.requireActual('fs'),
+  existsSync: jest.fn()
+}))
 
 jest.mock('../electronStores', () => ({
   configStore: { get_nodefault: jest.fn(), delete: jest.fn(), set: jest.fn() }
@@ -66,5 +73,14 @@ describe('NileUser.getLoginData', () => {
 
     const result = await NileUser.getLoginData()
     expect(result).toEqual(loginData)
+  })
+})
+
+describe('NileUser.getUserData', () => {
+  test('no user file is a normal state, not an error', () => {
+    expect(NileUser.getUserData()).toBeUndefined()
+
+    expect(logError).not.toHaveBeenCalled()
+    expect(configStore.delete).toHaveBeenCalledWith('userData')
   })
 })

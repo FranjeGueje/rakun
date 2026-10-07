@@ -23,7 +23,7 @@ addHandler('checkGameUpdates', async (): Promise<string[]> => {
   ) as (keyof typeof libraryManagerMap)[]) {
     let gamesToUpdate = await libraryManagerMap[runner].listUpdateableGames()
     if (autoUpdateGames) {
-      gamesToUpdate = autoUpdate(runner, gamesToUpdate)
+      gamesToUpdate = await autoUpdate(runner, gamesToUpdate)
     }
     oldGames = [...oldGames, ...gamesToUpdate]
   }

@@ -106,7 +106,8 @@ export class NileUser {
 
   static getUserData(): NileUserData | undefined {
     if (!existsSync(nileUserData)) {
-      logError('user.json does not exist', LogPrefix.Nile)
+      // Normal when nobody is logged in, and getAccounts asks every time
+      logDebug('No current_user.json: not logged in', LogPrefix.Nile)
       configStore.delete('userData')
       return
     }

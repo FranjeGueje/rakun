@@ -3,7 +3,7 @@ import { legendary } from 'backend/storeManagers/legendary/store'
 import { nile } from 'backend/storeManagers/nile/store'
 import { zoom } from 'backend/storeManagers/zoom/store'
 
-import { logInfo, RunnerToLogPrefixMap } from 'backend/logger'
+import { logError, logInfo, RunnerToLogPrefixMap } from 'backend/logger'
 import { addToQueue } from 'backend/downloadmanager/downloadqueue'
 
 import type { DMQueueElement, GameInfo, Runner } from 'common/types'
@@ -53,23 +53,40 @@ function getDMElement(gameInfo: GameInfo, appName: string) {
   return dmQueueElement
 }
 
-export function autoUpdate(runner: Runner, gamesToUpdate: string[]) {
+/** Queues the update of one game; false when it could not be queued */
+async function queueUpdate(runner: Runner, appName: string): Promise<boolean> {
   const logPrefix = RunnerToLogPrefixMap[runner]
-  gamesToUpdate.forEach(async (appName) => {
+  try {
     const game = libraryManagerMap[runner].getGame(appName)
     const gameInfo = game.getGameInfo()
-    const gameIsAvailable = await game.isGameAvailable()
-    if (gameIsAvailable) {
-      logInfo(`Auto-Updating ${gameInfo.title}`, logPrefix)
-      const dmQueueElement: DMQueueElement = getDMElement(gameInfo, appName)
-      void addToQueue(dmQueueElement)
-      // remove from the array to avoid downloading the same game twice
-      gamesToUpdate = gamesToUpdate.filter((game) => game !== appName)
-    } else {
+    if (!(await game.isGameAvailable())) {
       logInfo(`Skipping auto-update for ${gameInfo.title}`, logPrefix)
+      return false
     }
-  })
-  return gamesToUpdate
+    logInfo(`Auto-Updating ${gameInfo.title}`, logPrefix)
+    // Queueing asks the store for the download size: do not wait for it here
+    addToQueue(getDMElement(gameInfo, appName)).catch((error: unknown) =>
+      logError([`Could not queue ${appName}:`, error], logPrefix)
+    )
+    return true
+  } catch (error) {
+    logError([`Auto-update of ${appName} failed:`, error], logPrefix)
+    return false
+  }
+}
+
+/**
+ * Queues the update of every game that can be updated and returns the ones
+ * that were not queued, which the user still has to update by hand.
+ */
+export async function autoUpdate(
+  runner: Runner,
+  gamesToUpdate: string[]
+): Promise<string[]> {
+  const queued = await Promise.all(
+    gamesToUpdate.map((appName) => queueUpdate(runner, appName))
+  )
+  return gamesToUpdate.filter((_, index) => !queued[index])
 }
 
 export async function initStoreManagers() {
