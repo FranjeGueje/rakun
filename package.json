@@ -18,6 +18,7 @@
   "packageManager": "pnpm@11.15.1",
   "scripts": {
     "start": "node build/rakun.cjs",
+    "start:ctl": "node build/rakunctl.cjs",
     "build": "pnpm build:daemon && pnpm build:ctl && pnpm build:web",
     "build:daemon": "esbuild src/backend/rakun/main.ts --bundle --platform=node --format=cjs --target=node24 --outfile=build/rakun.cjs --log-level=warning",
     "build:ctl": "esbuild src/rakunctl/main.ts --bundle --platform=node --format=cjs --target=node24 --outfile=build/rakunctl.cjs --log-level=warning",

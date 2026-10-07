@@ -338,7 +338,7 @@ language GOG installs by default, and it applies at once.
 pnpm install
 pnpm download-helper-binaries    # honours HTTPS_PROXY; x64 and arm64 Linux helpers + x64 Windows ones
 pnpm build && pnpm start         # runs build/rakun.cjs from the checkout
-node build/rakunctl.cjs start    # or: rakunctl from the checkout starts that same build
+pnpm start:ctl start             # or: rakunctl from the checkout starts that same build
 pnpm test                        # jest
 pnpm package [x64|arm64|all]     # tarballs in dist/ (default: both)
 pnpm codecheck && pnpm lint && pnpm prettier && pnpm test
