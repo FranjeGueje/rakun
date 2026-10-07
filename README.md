@@ -20,7 +20,9 @@ relicd es un fork **solo backend** de Relic: un servicio Node sin Electron ni ve
 API HTTP local permite a un cliente (el plan es un módulo de Invasor) iniciar sesión en las
 tiendas, ver la biblioteca e instalar, actualizar, reparar y desinstalar juegos. No lanza
 juegos: al terminar cada instalación hace la integración con Steam y el juego aparece en
-Steam. No comparte nada con Relic (rutas `relicd`, no `relic`).
+Steam. No comparte nada con Relic (rutas `relicd`, no `relic`). `relicctl` es el
+cliente de línea de comandos (ver la sección _relicctl_; la guía de pruebas está en
+[GUIA.md](GUIA.md)).
 
 ---
 
@@ -28,12 +30,41 @@ Steam. No comparte nada con Relic (rutas `relicd`, no `relic`).
 
 - Login: Epic Games, GOG, Amazon Games, Zoom Platform (paste the code or address your
   browser ends on; no embedded browser)
-- Library, download queue, install, update, repair and uninstall
+- Library, download queue (pause, resume, cancel), install, update, repair and uninstall
+- `relicctl`, a command line client for all of it, and a way to start relicd only
+  while a command runs (`relicctl -s`)
+- Global settings (install path, GE-Proton, workers, language…) with validation
 - Automatic Steam integration (shortcuts, grids, prefixes)
 - GOG achievements (experimental, via [Comet](https://github.com/imLinguin/comet))
 - Linux native game support (GOG)
 
 The API (connection, channels, login flow and events) is documented in [API.md](API.md); a step-by-step test walkthrough (in Spanish) is in [GUIA.md](GUIA.md).
+
+---
+
+## relicctl
+
+`relicctl` talks to a running relicd over HTTP (it reads `~/.config/relicd/api.json`;
+`RELICD_API_FILE` points it at another one). Stores are `epic`, `gog`, `amazon` and
+`zoom`; `--json` prints for scripts.
+
+| Command                                       | What it does                                                       |
+| --------------------------------------------- | ------------------------------------------------------------------ |
+| `start` / `stop [--force]`                    | start relicd in the background / stop it                           |
+| `status`                                      | version, sessions, queue (or "relicd parado")                      |
+| `login <store>`, `logout <store>`             | log in (paste what the browser ends on) / out                      |
+| `import-relic`                                | copy the sessions of Relic (`~/.config/relic`)                     |
+| `library [store] [--installed]`, `refresh`    | list the library / refresh it and wait                             |
+| `install <store> <app> [--path] [--lang]`     | install (every DLC unless `--skip-dlcs`); waits unless `--no-wait` |
+| `update`, `repair`, `uninstall <store> <app>` | the same, one game                                                 |
+| `queue [clear]`, `pause`, `resume`, `cancel`  | download queue (`cancel --remove-files` deletes what was fetched)  |
+| `config [key [value]]`                        | list, read or change the global settings                           |
+| `logs [store [app]] [--type T]`               | relicd's log, a store's or one game's                              |
+| `cache clear [store]`, `reset [--yes]`        | empty library caches / forget sessions and settings (stops relicd) |
+| `events`, `call <channel> [json]`             | follow the events / call any exposed channel                       |
+
+`-s` runs one command with relicd up even if it was stopped, and stops it afterwards
+(see Installation). The channels behind each command are in [API.md](API.md).
 
 ---
 
@@ -94,7 +125,7 @@ Game install completed
                          │
                          ▼
                   Save shortcut to
-                  ~/.config/relic/steam_shortcuts.json
+                  ~/.config/relicd/steam_shortcuts.json
                          │
                          ▼
                   Download Steam grids
@@ -223,10 +254,20 @@ puts it in `~/.local/opt/relicd` and links `~/.local/bin/relicd`. It creates **n
 service**; start it when you want it:
 
 ```bash
+relicctl start                                   # background, detached
+relicctl stop                                    # stops it (--force if a download is running)
+relicctl -s library                              # starts relicd only if stopped, runs the
+                                                 # command, then stops it again
 relicd                                           # foreground, Ctrl+C stops it
 systemd-run --user --unit=relicd ~/.local/opt/relicd/relicd   # background, transient
-systemctl --user stop relicd                     # stop the background one
+systemctl --user stop relicd                     # stop that one (not relicctl stop)
 ```
+
+`-s` works with any command that ends (not `events`, nor `--no-wait`). Several `-s`
+at once are safe: relicd stops when the **last** one finishes, and only if a `-s`
+started it. A relicd you started yourself, or systemd did, is never stopped by `-s`.
+Every other command tells you when relicd is stopped. The files `-s` uses to
+coordinate live in `~/.local/state/Relicd/serve/`.
 
 Check it with `relicctl status` (or `scripts/smoke.sh`, or `curl http://127.0.0.1:17370/health`).
 
@@ -234,6 +275,16 @@ Check it with `relicctl status` (or `scripts/smoke.sh`, or `curl http://127.0.0.
 
 - Linux and Steam
 - `curl` (installer and smoke script), `xdg-open`
+- For Windows games: GE-Proton in `~/.local/share/Steam/compatibilitytools.d`
+  (relicd picks the first `*proton*` folder it finds; change it with
+  `relicctl config protonPath <folder>`, the folder must contain the `proton` script).
+  Zoom Platform's Windows installers also need it.
+
+### Language
+
+relicd has no translations: its messages (including the `showDialog` events) are in
+English. The `language` setting (`relicctl config language es`) only chooses the
+language GOG installs by default, and it applies at once.
 
 ---
 
@@ -241,9 +292,11 @@ Check it with `relicctl status` (or `scripts/smoke.sh`, or `curl http://127.0.0.
 
 ```bash
 pnpm install
-pnpm download-helper-binaries
+pnpm download-helper-binaries    # honours HTTPS_PROXY; x64 and arm64 Linux helpers + x64 Windows ones
 pnpm build && pnpm start         # runs build/relicd.cjs from the checkout
+node build/relicctl.cjs start    # or: relicctl from the checkout starts that same build
 pnpm test                        # jest
+pnpm package [x64|arm64|all]     # tarballs in dist/ (default: both)
 ./review.sh                      # clean build: tsc, lint, prettier, tests, package
 ```
 
@@ -258,14 +311,18 @@ pnpm test                        # jest
 ~/.config/relicd/
 ├── api.json                 — API port and token (mode 0600)
 ├── config.json              — Settings
+├── steam_shortcuts.json     — Games added to Steam
 ├── store/                   — Timestamps, download queue
+├── icons/, tools/           — Game icons, helper tools
 ├── legendaryConfig/         — Epic login + installed.json
-├── gogdlConfig/             — GOG login + installed.json
-├── nile_config/             — Amazon login + installed.json
+├── gogdlConfig/, gog_store/ — GOG login + installed.json
+├── nile_config/, nile_store/— Amazon login + installed.json
 └── zoom_store/              — Zoom Platform login
 
 ~/.cache/relicd/             — Regenerable caches ($XDG_CACHE_HOME)
-~/.local/state/Relicd/logs/  — Logs ($XDG_STATE_HOME)
+~/.local/state/Relicd/       — ($XDG_STATE_HOME)
+├── logs/                    — relicd.log, runners/<store>.log, games/<app>_<store>/
+└── serve/                   — files `relicctl -s` uses to know who is running
 
 ~/.local/share/relicd/
 ├── games/                   — Symlinks to installed game dirs

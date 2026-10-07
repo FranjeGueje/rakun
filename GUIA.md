@@ -15,6 +15,8 @@ scripts/install.sh dist/relicd-0.1.0-linux-x64.tar.gz   # instala en ~/.local/op
 
 relicd                                                  # en primer plano, Ctrl+C lo para
 systemd-run --user --unit=relicd ~/.local/opt/relicd/relicd   # en segundo plano, transitorio
+relicctl start | stop                                         # alternativa sin systemd
+relicctl -s library                                           # arranca si hace falta y para al acabar
 systemctl --user stop relicd                            # para el de segundo plano
 ```
 
@@ -35,23 +37,32 @@ Con relicd instalado, `relicctl` (o `node build/relicctl.cjs` desde el
 repositorio) evita escribir el JSON a mano. Usa el mismo `api.json` y la misma
 variable `RELICD_API_FILE`.
 
-| Quieres…                    | `relicctl`                                                                |
-| --------------------------- | ------------------------------------------------------------------------- |
-| ver si está vivo y sesiones | `relicctl status`                                                         |
-| iniciar sesión              | `relicctl login gog` (epic, gog, amazon, zoom)                            |
-| traer las sesiones de Relic | `relicctl import-relic`                                                   |
-| listar la biblioteca        | `relicctl library [tienda] [--installed]`                                 |
-| refrescarla y esperar       | `relicctl refresh [tienda]`                                               |
-| instalar                    | `relicctl install gog <appName> [--path DIR] [--lang CODE] [--skip-dlcs]` |
-| actualizar o reparar        | `relicctl update` / `repair <tienda> <appName>`                           |
-| desinstalar                 | `relicctl uninstall <tienda> <appName>`                                   |
-| ver la cola                 | `relicctl queue`                                                          |
-| seguir los eventos          | `relicctl events`                                                         |
-| cualquier otro canal        | `relicctl call <canal> '[args]'`                                          |
+| Quieres…                     | `relicctl`                                                                |
+| ---------------------------- | ------------------------------------------------------------------------- |
+| arrancar / parar relicd      | `relicctl start` / `relicctl stop [--force]`                              |
+| ver si está vivo y sesiones  | `relicctl status` (dice «relicd parado» si no lo está)                    |
+| iniciar sesión               | `relicctl login gog` (epic, gog, amazon, zoom)                            |
+| traer las sesiones de Relic  | `relicctl import-relic`                                                   |
+| listar la biblioteca         | `relicctl library [tienda] [--installed]`                                 |
+| refrescarla y esperar        | `relicctl refresh [tienda]`                                               |
+| instalar                     | `relicctl install gog <appName> [--path DIR] [--lang CODE] [--skip-dlcs]` |
+| actualizar o reparar         | `relicctl update` / `repair <tienda> <appName>`                           |
+| desinstalar                  | `relicctl uninstall <tienda> <appName>`                                   |
+| ver la cola                  | `relicctl queue`                                                          |
+| pausar / reanudar / cancelar | `relicctl pause` / `resume` / `cancel [--remove-files]`                   |
+| vaciar la lista de acabadas  | `relicctl queue clear`                                                    |
+| ver o cambiar ajustes        | `relicctl config [clave [valor]]` (p. ej. `config protonPath RUTA`)       |
+| leer los registros           | `relicctl logs [tienda [appName]] [--type install]`                       |
+| vaciar la caché              | `relicctl cache clear [tienda]`                                           |
+| borrar sesiones y ajustes    | `relicctl reset [--yes]` (detiene relicd; los juegos no se tocan)         |
+| seguir los eventos           | `relicctl events`                                                         |
+| cualquier otro canal         | `relicctl call <canal> '[args]'`                                          |
 
 `install`, `update`, `repair` y `uninstall` esperan a que acabe y devuelven un
 código distinto de 0 si falla (`--no-wait` para no esperar). `--json` da la
-salida para scripts. `uninstall` borra los ficheros del juego. `--lang` elige el
+salida para scripts. `-s` delante de cualquier comando que termine (no vale con
+`events` ni con `--no-wait`) arranca relicd si estaba parado y lo para al
+acabar; si ya estaba arrancado, no lo toca. `uninstall` borra los ficheros del juego. `--lang` elige el
 idioma de la instalación (en GOG, `en-US` si no se indica). Por defecto se
 instalan los DLC; `--skip-dlcs` los omite.
 
@@ -196,5 +207,6 @@ desde la biblioteca de Steam.
 | Log general              | `~/.local/state/Relicd/logs/relicd.log`                       |
 | Log de una tienda        | `~/.local/state/Relicd/logs/runners/<tienda>.log`             |
 | Log de una instalación   | `~/.local/state/Relicd/logs/games/<app>_<runner>/install.log` |
-| Proceso en segundo plano | `journalctl --user -u relicd -f`                              |
+| Proceso en segundo plano | `journalctl --user -u relicd -f` (con `systemd-run`)          |
+| Cualquier registro       | `relicctl logs [tienda [appName]] [--type install]`           |
 | Puerto y token           | `~/.config/relicd/api.json` (`RELICD_PORT` cambia el puerto)  |

@@ -18,7 +18,9 @@ port. The server only listens on `127.0.0.1`.
 | `POST /api/<channel>` | yes         | call a channel                  |
 | `GET /events`         | yes         | Server-Sent Events stream       |
 
-The token goes in the `x-relicd-token` header. Requests with an `Origin`
+The token goes in the `x-relicd-token` header. If nothing answers on the port,
+relicd is stopped: start it (`relicctl start`, or run `relicd`) and read `api.json`
+after it answers `/health`. Requests with an `Origin`
 header (browsers) or a `Host` other than `127.0.0.1:<port>` / `localhost:<port>`
 get `403`.
 
@@ -47,7 +49,7 @@ ends, `refreshLibrary` fires on `/events` with the store name: call
 now. Logging in refreshes that store by itself.
 `getGameInfo(appName, runner)`, `getExtraInfo`, `getInstallInfo(appName,
 runner, platform, build?, branch?)`, `isGameAvailable`, `isNative`,
-`checkGameUpdates`, `checkDiskSpace(folder)`, `getKnownFixes`.
+`checkGameUpdates` (nothing runs by itself: a client calls it; with `autoUpdateGames` it queues the updates), `checkDiskSpace(folder)`, `getKnownFixes`.
 
 **Install, update, repair, uninstall:** `install(InstallParams)` (`installDlcs` omitted installs every DLC, `[]` none, and
 a list only those on GOG; Epic cannot pick, so any non-empty list means all) and
@@ -85,19 +87,38 @@ Without a SteamGridDB key relicd skips the grid images when it adds a game to
 Steam (it is stored in `config.json`, so a game installed before setting it has
 to be reinstalled to get them).
 
-**Settings and status:** `requestAppSettings`, `writeConfig(config)`,
-`getMaxCpus` (the most `maxWorkers` can be), `setSetting({key, value})` (all
-settings are global and validated: an unknown key, a wrong type, an unsupported
-`language`, a `maxWorkers` out of range or a path that does not exist answers
-`500` with the reason; changing `language` takes effect at once; `relicctl config [key [value]]`
-reads and sets them), `clearCache(library?)` (library caches, all stores or one;
-`relicctl cache clear [store]`), `resetRelic` (forgets sessions, settings, the
-queue and per-game data, keeps installed games and `api.json`, then relicd
-stops; `relicctl reset`),
-`getRelicVersion`, `getEpicGamesStatus`, `get-connectivity-status`,
-`getSystemInfo`, `getLogContent` (see Logs below; `relicctl logs`), and the helper versions `getLegendaryVersion`,
-`getGogdlVersion`, `getNileVersion`. There are no
-per-game settings: relicd does not launch games.
+**Settings:** `requestAppSettings` returns them all; `setSetting({key, value})`
+changes one and `writeConfig(partial)` several. They are global (relicd does not
+launch games, so there are no per-game settings) and **validated**: an unknown
+key, a value of another type or one that breaks its rule answers `500` with the
+reason and saves nothing. `relicctl config [key [value]]` wraps them.
+
+| Key                                            | Rule                                                                         |
+| ---------------------------------------------- | ---------------------------------------------------------------------------- |
+| `defaultInstallPath`                           | absolute path (default `~/Games/Relicd`)                                     |
+| `protonPath`                                   | empty, or a folder with the `proton` script (default: first GE-Proton found) |
+| `maxWorkers`                                   | integer from 0 (automatic) to `getMaxCpus`                                   |
+| `language`                                     | one of the supported codes; takes effect at once (GOG default language)      |
+| `autoUpdateGames`                              | boolean: when true, `checkGameUpdates` queues the updates itself             |
+| `steamGridDbApiKey`                            | text (also `steamgriddb.setApiKey`)                                          |
+| `defaultSteamPath`                             | Steam folder (default `~/.steam/steam`)                                      |
+| `altLegendaryBin`, `altGogdlBin`, `altNileBin` | empty, or an existing file                                                   |
+
+**Maintenance:** `clearCache(library?)` empties the library caches (all stores or
+one; `relicctl cache clear [store]`). `resetRelic` forgets sessions, settings,
+the queue and per-game data, keeps installed games and `api.json`, and then
+relicd stops (`relicctl reset`). `stopRelicd` answers and stops relicd a second
+later (`relicctl stop`); relicd has to be started again by the client
+(`relicctl start`) unless a service manager does it.
+
+**Status:** `getRelicVersion`, `getEpicGamesStatus`, `get-connectivity-status`
+and `set-connectivity-online` (tell relicd the network is back instead of
+waiting for its next check), `getSystemInfo`, `getLogContent` (see Logs below;
+`relicctl logs`) and the helper versions `getLegendaryVersion`,
+`getGogdlVersion`, `getNileVersion`. `getGOGLinuxInstallersLangs(appName)` lists
+the languages of a GOG Linux installer. `getMaxCpus` returns the number of CPUs.
+
+relicd has no translations: the text of its messages and of `showDialog` is in English.
 
 ## Logs
 
