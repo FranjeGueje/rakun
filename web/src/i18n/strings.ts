@@ -7,6 +7,7 @@ export const en = {
   'header.downloads': 'Downloads',
   'header.refresh': 'Refresh',
   'header.settings': 'Settings',
+  'header.more': 'More',
   'grid.empty': 'No games to show.',
   'grid.loading': 'Loading your library…',
   'badge.update': 'Update available',

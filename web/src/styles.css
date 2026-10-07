@@ -493,15 +493,55 @@ kbd {
   pointer-events: none;
 }
 
-/* Narrow windows (a phone, a half screen): less padding, the bar on two rows, no key hints */
+/* The ☰ only exists on narrow windows */
+.burger {
+  display: none;
+}
+
+/* Narrow windows (a phone, a half screen): a one-row bar with the stores and a ☰ for the rest, no key hints */
 @media (max-width: 800px) {
   .topBar {
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto 1fr auto;
     padding: 10px 14px 4px;
   }
 
-  .chips.right {
+  .topBar .chips:not(.right) {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .topBar .chip {
+    flex-shrink: 0;
+  }
+
+  .burger {
+    display: inline-flex;
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .more {
+    display: none;
+  }
+
+  .topBar.open .chips:not(.right) {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .topBar.open .chip.more {
+    display: inline-flex;
+  }
+
+  .topBar.open .divider.more {
+    display: block;
+  }
+
+  .topBar.open .chips.right.more {
+    display: flex;
     grid-column: 1 / -1;
+    grid-row: 2;
     justify-content: flex-start;
   }
 

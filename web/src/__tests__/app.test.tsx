@@ -783,3 +783,26 @@ describe('the web open to the network', () => {
     remove()
   })
 })
+
+describe('the header on a narrow window', () => {
+  test('the ☰ opens and closes the rest of the bar, which keeps working', async () => {
+    setup()
+    await screen.findByTitle('Alpha')
+    const burger = screen.getByRole('button', { name: 'More' })
+    expect(burger.getAttribute('aria-expanded')).toBe('false')
+    expect(document.querySelector('.topBar')?.classList.contains('open')).toBe(
+      false
+    )
+
+    fireEvent.click(burger)
+    expect(burger.getAttribute('aria-expanded')).toBe('true')
+    expect(document.querySelector('.topBar')?.classList.contains('open')).toBe(
+      true
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
+    expect(screen.getByRole('heading', { name: 'Menu' })).toBeTruthy()
+
+    fireEvent.click(burger)
+    expect(burger.getAttribute('aria-expanded')).toBe('false')
+  })
+})

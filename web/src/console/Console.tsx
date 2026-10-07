@@ -45,6 +45,8 @@ export function Console({ state, actions, t, layout }: Props) {
   const [openGame, setOpenGame] = useState<GameInfo | null>(null)
   const [downloadsOpen, setDownloadsOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  // On a narrow window the bar shows the stores only; the rest hides behind the ☰
+  const [barOpen, setBarOpen] = useState(false)
   const gridRef = useRef<HTMLDivElement>(null)
   const [stage, setStage] = useState<HTMLElement | null>(null)
 
@@ -117,7 +119,7 @@ export function Console({ state, actions, t, layout }: Props) {
 
   return (
     <div className="console">
-      <header className="topBar">
+      <header className={`topBar${barOpen ? ' open' : ''}`}>
         {/* A temporary icon (a joystick-like glyph); the real one comes later */}
         <svg
           className="logo"
@@ -142,21 +144,21 @@ export function Console({ state, actions, t, layout }: Props) {
               {id === 'all' ? t('store.all') : tabLabel(tabs, id)}
             </button>
           ))}
-          <span className="divider" />
+          <span className="divider more" />
           <button
-            className={`chip${filters.installedOnly ? ' active' : ''}`}
+            className={`chip more${filters.installedOnly ? ' active' : ''}`}
             onClick={() => change({ installedOnly: !filters.installedOnly })}
           >
             {t('filter.installed')}
           </button>
           <button
-            className="chip"
+            className="chip more"
             onClick={() => change({ ascending: !filters.ascending })}
           >
             {filters.ascending ? t('sort.az') : t('sort.za')}
           </button>
         </nav>
-        <nav className="chips right">
+        <nav className="chips right more">
           <button className="chip" onClick={() => setDownloadsOpen(true)}>
             {t('header.downloads')}
             {state.queue.elements.length > 0 && (
@@ -174,6 +176,14 @@ export function Console({ state, actions, t, layout }: Props) {
             {state.refreshing ? '…' : t('header.refresh')}
           </button>
         </nav>
+        <button
+          className="chip burger"
+          aria-label={t('header.more')}
+          aria-expanded={barOpen}
+          onClick={() => setBarOpen((open) => !open)}
+        >
+          ☰
+        </button>
       </header>
 
       <h2 className="focusTitle">{games[index]?.title ?? ''}</h2>
