@@ -43,7 +43,7 @@ const EXPECTED_FILES = {
   legendary: join('x64', 'linux', 'legendary'),
   gogdl: join('x64', 'linux', 'gogdl'),
   nile: join('x64', 'linux', 'nile'),
-  comet: join('x64', 'linux', 'comet'),
+  comet: join('x64', 'win32', 'comet.exe'),
   'epic-integration': join('x64', 'win32', 'EpicGamesLauncher.exe'),
   'zoom-platform': join('zoom', 'zoom-platform.sh'),
   umu: join('umu', 'umu-run')
@@ -184,13 +184,9 @@ async function downloadComet() {
       }
     ),
     downloadGithubAssets('comet', REPOS['comet'], RELEASE_TAGS['comet'], {
-      x64: {
-        linux: 'comet-x86_64-unknown-linux-gnu',
-        win32: 'comet-x86_64-pc-windows-msvc.exe'
-      },
-      arm64: {
-        linux: 'comet-aarch64-unknown-linux-gnu'
-      }
+      // Only the Windows build: it runs inside the game's prefix
+      x64: { win32: 'comet-x86_64-pc-windows-msvc.exe' },
+      arm64: {}
     }),
     downloadDummyService()
   ])

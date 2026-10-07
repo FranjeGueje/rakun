@@ -2,7 +2,6 @@ import { homedir } from 'os'
 import { join } from 'path'
 
 import type { Runner } from 'common/types'
-import type { RunnerOrComet } from './types'
 
 /**
  * Returns the base directory to store all logs
@@ -27,7 +26,7 @@ type GetLogFileArgs =
   // Relic log
   | { appName?: undefined; runner?: undefined }
   // Runner log
-  | { appName?: undefined; runner: RunnerOrComet }
+  | { appName?: undefined; runner: Runner }
   // Game log
   | { appName: string; runner: Runner; type?: GameLogType }
 

@@ -53,7 +53,6 @@ interface AsyncIPCFunctions {
   getRelicVersion: () => string
   getLegendaryVersion: () => Promise<string>
   getGogdlVersion: () => Promise<string>
-  getCometVersion: () => Promise<string>
   getNileVersion: () => Promise<string>
   getGameInfo: (appName: string, runner: Runner) => Promise<GameInfo | null>
   getExtraInfo: (appName: string, runner: Runner) => Promise<ExtraInfo | null>

@@ -12,7 +12,6 @@ import { getOsInfo } from './osInfo'
 import { getSteamDeckInfo, type SteamDeckInfo } from './steamDeck'
 import { getRelicVersion } from './relicVersion'
 import {
-  getCometVersion,
   getGogdlVersion,
   getLegendaryVersion,
   getNileVersion
@@ -59,7 +58,6 @@ interface SystemInformation {
     relicVersion: string
     legendaryVersion: string
     gogdlVersion: string
-    cometVersion: string
     nileVersion: string
   }
 }
@@ -83,7 +81,6 @@ async function getSystemInfo(cache = true): Promise<SystemInformation> {
     getGogdlVersion(),
     getNileVersion()
   ])
-  const cometVersion = getCometVersion()
 
   const sysinfo: SystemInformation = {
     CPU: {
@@ -110,7 +107,6 @@ async function getSystemInfo(cache = true): Promise<SystemInformation> {
       relicVersion: getRelicVersion(),
       legendaryVersion: legendaryVersion,
       gogdlVersion: gogdlVersion,
-      cometVersion: cometVersion,
       nileVersion: nileVersion
     }
   }
@@ -146,7 +142,6 @@ Software Versions:
   Relic: ${info.softwareInUse.relicVersion}
   Legendary: ${info.softwareInUse.legendaryVersion}
   gogdl: ${info.softwareInUse.gogdlVersion}
-  comet: ${info.softwareInUse.cometVersion}
   Nile: ${info.softwareInUse.nileVersion}`
 }
 

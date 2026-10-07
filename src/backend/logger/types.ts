@@ -1,7 +1,4 @@
-import type { Runner } from 'common/types'
 import type { LogPrefix } from './constants'
-
-type RunnerOrComet = Runner | 'comet'
 
 interface FullLogOptions {
   prefix?: LogPrefix
@@ -9,4 +6,4 @@ interface FullLogOptions {
 }
 type LogOptions = FullLogOptions | LogPrefix
 
-export type { RunnerOrComet, LogOptions }
+export type { LogOptions }

@@ -1,7 +1,4 @@
 import { libraryManagerMap } from '../../storeManagers'
-import { spawnSync } from 'node:child_process'
-import { getCometBin } from 'backend/utils'
-import { join } from 'path'
 
 async function getLegendaryVersion(): Promise<string> {
   const { stdout, error, abort } = await libraryManagerMap[
@@ -39,15 +36,6 @@ async function getGogdlVersion(): Promise<string> {
   return trimmed
 }
 
-function getCometVersion(): string {
-  const path = getCometBin()
-  const { stdout, error } = spawnSync(join(path.dir, path.bin), ['--version'])
-
-  if (error) return 'invalid'
-
-  return stdout.toString().trimEnd()
-}
-
 async function getNileVersion(): Promise<string> {
   const { stdout, error } = await libraryManagerMap['nile'].runRunnerCommand(
     ['--version'],
@@ -63,4 +51,4 @@ async function getNileVersion(): Promise<string> {
   return trimmed
 }
 
-export { getLegendaryVersion, getGogdlVersion, getNileVersion, getCometVersion }
+export { getLegendaryVersion, getGogdlVersion, getNileVersion }

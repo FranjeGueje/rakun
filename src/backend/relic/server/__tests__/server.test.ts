@@ -100,8 +100,7 @@ describe('API server', () => {
       'setPrivateBranchPassword',
       'getLegendaryVersion',
       'getGogdlVersion',
-      'getNileVersion',
-      'getCometVersion'
+      'getNileVersion'
     ]
     exposed.forEach((channel) =>
       expect(exposedChannels.has(channel)).toBe(true)

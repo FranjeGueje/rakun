@@ -32,7 +32,6 @@ const rules: Partial<Record<keyof AppSettings, Rule>> = {
       ? undefined
       : `${value} no es una carpeta de Proton (falta el ejecutable "proton")`,
   altGogdlBin: emptyOrFile('altGogdlBin'),
-  altCometBin: emptyOrFile('altCometBin'),
   altLegendaryBin: emptyOrFile('altLegendaryBin'),
   altNileBin: emptyOrFile('altNileBin')
 }

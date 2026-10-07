@@ -314,18 +314,6 @@ function getGOGdlBin(): { dir: string; bin: string } {
   return splitPathAndName(defaultGogdlPath)
 }
 
-let defaultCometPath: string | undefined = undefined
-function getCometBin(): { dir: string; bin: string } {
-  const settings = GlobalConfig.get().getSettings()
-  if (settings?.altCometBin) {
-    return splitPathAndName(settings.altCometBin)
-  }
-
-  if (!defaultCometPath) defaultCometPath = archSpecificBinary('comet')
-
-  return splitPathAndName(defaultCometPath)
-}
-
 let defaultNilePath: string | undefined = undefined
 function getNileBin(): { dir: string; bin: string } {
   const settings = GlobalConfig.get().getSettings()
@@ -729,7 +717,6 @@ export {
   clearCache,
   getLegendaryBin,
   getGOGdlBin,
-  getCometBin,
   getNileBin,
   formatEpicStoreUrl,
   quoteIfNecessary,

@@ -60,8 +60,7 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   'getLogContent',
   'getLegendaryVersion',
   'getGogdlVersion',
-  'getNileVersion',
-  'getCometVersion'
+  'getNileVersion'
 ])
 
 // Events published on GET /events

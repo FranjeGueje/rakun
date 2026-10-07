@@ -7,10 +7,9 @@ import { gamesListText } from './games_list'
 import { GameLogType, getLogFilePath } from './paths'
 
 import type { GameInfo, Runner } from 'common/types'
-import type { RunnerOrComet } from './types'
 
 let relicLogWriter: LogWriter
-const runnerLogWriters = new Map<RunnerOrComet, LogWriter>()
+const runnerLogWriters = new Map<Runner, LogWriter>()
 
 const logDebug = (...params: Parameters<LogWriter['logDebug']>) => {
   void relicLogWriter.logDebug(...params)
@@ -25,7 +24,7 @@ const logError = (...params: Parameters<LogWriter['logError']>) => {
   void relicLogWriter.logError(...params)
 }
 
-function getRunnerLogWriter(runner: RunnerOrComet) {
+function getRunnerLogWriter(runner: Runner) {
   const writer = runnerLogWriters.get(runner)
   if (writer) return writer
 

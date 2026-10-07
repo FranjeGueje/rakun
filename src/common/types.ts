@@ -63,7 +63,6 @@ export type Release = {
 
 export interface AppSettings {
   altGogdlBin: string
-  altCometBin: string
   altLegendaryBin: string
   altNileBin: string
   autoUpdateGames: boolean

@@ -4,7 +4,6 @@ describe('isSafeLogRequest', () => {
   test.each([
     [{}],
     [{ runner: 'gog' }],
-    [{ runner: 'comet' }],
     [{ appName: '1423049311', runner: 'gog' }],
     [{ appName: 'Fortnite_v1.2', runner: 'legendary', type: 'install' }]
   ])('accepts %j', (args) => {

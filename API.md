@@ -96,14 +96,14 @@ queue and per-game data, keeps installed games and `api.json`, then relicd
 stops; `relicctl reset`),
 `getRelicVersion`, `getEpicGamesStatus`, `get-connectivity-status`,
 `getSystemInfo`, `getLogContent` (see Logs below; `relicctl logs`), and the helper versions `getLegendaryVersion`,
-`getGogdlVersion`, `getNileVersion`, `getCometVersion`. There are no
+`getGogdlVersion`, `getNileVersion`. There are no
 per-game settings: relicd does not launch games.
 
 ## Logs
 
 `getLogContent(args)` returns the text of a log file, or `""` when it does not
 exist or `args` is not valid. `{}` is relicd's own log, `{runner}` (`legendary`,
-`gog`, `nile`, `zoom`, `comet`) is that store's helper, and `{appName, runner,
+`gog`, `nile`, `zoom`) is that store's helper, and `{appName, runner,
 type}` is one game's log (`type`: `install`, `import`, `repair`, `update`,
 `setup`; `launch` by default). Names must be plain: anything with a path
 separator is refused.
