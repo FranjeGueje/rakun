@@ -2,7 +2,7 @@ import type { GameInfo } from 'common/types'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { stores } from '..'
+import { getStore, stores } from '..'
 import { tokenPath } from '../zoom/constants'
 import { LegendaryUser } from '../legendary/user'
 import { GOGUser } from '../gog/user'
@@ -81,6 +81,14 @@ describe('store identity', () => {
       ['nile', 'amazon', 'Amazon'],
       ['zoom', 'zoom', 'Zoom']
     ])
+  })
+})
+
+describe('getStore', () => {
+  test('finds a store by id and refuses one that is not ours', () => {
+    expect(getStore('nile')).toBe(stores.nile)
+    expect(() => getStore('steam')).toThrow('Unknown store "steam"')
+    expect(() => getStore('toString')).toThrow('Unknown store "toString"')
   })
 })
 

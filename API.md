@@ -63,14 +63,16 @@ or update with that `branch`.
 `pauseCurrentDownload`, `resumeCurrentDownload`, `cancelDownload`,
 `removeFromDMQueue`.
 
-**Accounts:** `getAccounts` → `{legendary, gog, nile, zoom}`, each `{loggedIn, name?}`
-from what is stored locally (no network), `isLoggedIn` (Epic), `getUserInfo`, `getAmazonUserInfo`,
-`getZoomUserInfo`, `logoutLegendary`, `logoutGOG`, `logoutAmazon`,
-`logoutZoom`, `importSessionsFromRelic` and the two-step login below.
+**Accounts:** `getStores` → `[{id, name, label}]` (the stores relicd supports, in
+the order to show them; `id` is the `runner` every channel takes, `name` the
+short name to type or show, e.g. `epic` for `legendary`). `getAccounts` →
+`{<id>: {loggedIn, name?}}` from what is stored locally (no network),
+`logout(runner)`, `importSessionsFromRelic` and the two-step login below. A
+`runner` that is not one of the stores answers `500` with `Unknown store`.
 
 `importSessionsFromRelic` (no arguments) copies the store sessions from
 `~/.config/relic` once and never overwrites a session relicd already has. It
-returns `{legendary, gog, nile, zoom}`, each `imported`, `already`, `missing`
+returns `{<id>: result}`, each `imported`, `already`, `missing`
 (Relic has none) or `invalid` (the store rejected it, or no connection to check;
 nothing is kept). Installed games are not imported. The copy shares the refresh
 token, so the store may end the session in Relic.

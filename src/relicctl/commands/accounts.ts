@@ -34,7 +34,7 @@ export const login: Command = async (ctx, args) => {
 
 export const logout: Command = async (ctx, args) => {
   const store = parseStore(requireArg(args, 0, 'tienda'))
-  await ctx.api.call(store.logout)
+  await ctx.api.call('logout', store.runner)
   ctx.log(`Sesión de ${store.label} cerrada.`)
 }
 

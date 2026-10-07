@@ -41,15 +41,6 @@ describe('stores', () => {
     expect(() => parseStore('steam')).toThrow(/epic, gog, amazon, zoom/)
     expect(() => parseStore(undefined)).toThrow(CliError)
   })
-
-  test('every store has a logout channel', () => {
-    expect(STORES.map((s) => s.logout)).toEqual([
-      'logoutLegendary',
-      'logoutGOG',
-      'logoutAmazon',
-      'logoutZoom'
-    ])
-  })
 })
 
 describe('format', () => {
@@ -116,7 +107,7 @@ describe('accounts commands', () => {
   test('logout calls the store channel', async () => {
     const { ctx, calls } = fakeCtx()
     await logout(ctx, ['epic'], opts)
-    expect(calls).toEqual([['logoutLegendary', []]])
+    expect(calls).toEqual([['logout', ['legendary']]])
   })
 
   test('import-relic prints each store', async () => {

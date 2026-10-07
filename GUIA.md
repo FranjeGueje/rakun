@@ -64,7 +64,7 @@ scripts/smoke.sh getLoginInfo '["gog"]'     # bien
 scripts/smoke.sh getLoginInfo '[gog]'       # mal: HTTP 400 (JSON inválido)
 ```
 
-Sin argumentos se omite el segundo parámetro: `scripts/smoke.sh isLoggedIn`.
+Sin argumentos se omite el segundo parámetro: `scripts/smoke.sh getAccounts`.
 
 ## 1. ¿Está vivo?
 
@@ -81,7 +81,7 @@ sesión) y un `403` al final (canal no expuesto). Si dice que no encuentra
 Pide la URL de login y ábrela en el navegador:
 
 ```bash
-scripts/smoke.sh getLoginInfo '["gog"]'     # también: legendary, nile, zoom
+scripts/smoke.sh getLoginInfo '["gog"]'     # también: legendary, nile, zoom (ver getStores)
 ```
 
 Inicia sesión y pega lo que el navegador deja al terminar:
@@ -102,10 +102,11 @@ Debe responder `{"result":{"ok":true}}`.
 Comprobar la sesión:
 
 ```bash
-scripts/smoke.sh isLoggedIn                 # solo Epic
-scripts/smoke.sh getAmazonUserInfo
-scripts/smoke.sh getZoomUserInfo
+scripts/smoke.sh getAccounts                # quién ha iniciado sesión en cada tienda
+scripts/smoke.sh getStores                  # las tiendas que soporta relicd
 ```
+
+Para cerrar la sesión de una tienda: `scripts/smoke.sh logout '["gog"]'`.
 
 Si falla:
 

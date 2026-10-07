@@ -34,7 +34,7 @@ case "${1:-}" in
         echo "== health";  curl -fsS "$BASE/health"; echo
         echo "== version"; call getRelicVersion
         echo "== queue";   call getDMQueueInformation
-        echo "== epic logged in?"; call isLoggedIn
+        echo "== accounts"; call getAccounts
         echo "== library (first 300 chars)"; call getLibrary '["all"]' | head -c 300; echo
         echo "== not exposed (expect 403)"
         curl -s -o /dev/null -w '%{http_code}\n' -X POST -H "x-relicd-token: $TOKEN" "$BASE/api/resetRelic"

@@ -20,6 +20,14 @@ export const stores = { legendary, gog, nile, zoom } satisfies Record<
 
 export const RUNNERS = Object.keys(stores) as Runner[]
 
+/** The store for a name a client sent, which may not be one of ours */
+export function getStore(runner: string): Store {
+  if (!Object.hasOwn(stores, runner)) {
+    throw new Error(`Unknown store "${runner}"`)
+  }
+  return stores[runner as Runner]
+}
+
 export const libraryManagerMap = Object.fromEntries(
   Object.values(stores).map((store) => [store.id, store.library])
 ) as { [R in Runner]: (typeof stores)[R]['library'] }

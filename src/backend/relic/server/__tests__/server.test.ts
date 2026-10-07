@@ -128,16 +128,16 @@ describe('API server', () => {
 
   test('dispatches a listener channel and answers null', async () => {
     const listener = jest.fn()
-    addListener('logoutGOG', listener)
+    addListener('resumeCurrentDownload', listener)
 
-    const reply = await call('POST', '/api/logoutGOG')
+    const reply = await call('POST', '/api/resumeCurrentDownload')
 
     expect(reply).toEqual({ status: 200, body: { result: null } })
     expect(listener).toHaveBeenCalledTimes(1)
   })
 
   test('404 for an exposed channel nobody handles, 400 for bad JSON, 500 on error', async () => {
-    expect((await call('POST', '/api/logoutZoom')).status).toBe(404)
+    expect((await call('POST', '/api/cancelDownload')).status).toBe(404)
     expect(
       (await call('POST', '/api/getEpicGamesStatus', { body: '{oops' })).status
     ).toBe(400)

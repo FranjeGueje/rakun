@@ -37,10 +37,10 @@ describe('ipc registry', () => {
 
   test('a one-time listener is called only once', () => {
     const listener = jest.fn()
-    addOneTimeListener('logoutGOG', listener)
+    addOneTimeListener('pauseCurrentDownload', listener)
 
-    dispatchListener('logoutGOG')
-    dispatchListener('logoutGOG')
+    dispatchListener('pauseCurrentDownload')
+    dispatchListener('pauseCurrentDownload')
 
     expect(listener).toHaveBeenCalledTimes(1)
   })

@@ -21,18 +21,15 @@ import type {
   Runner,
   RunnerCommandStub,
   StatusPromise,
-  UpdateParams,
-  UserInfo
+  UpdateParams
 } from '../types'
-import type { UserData } from './gog'
 import type { AccountsStatus, SessionsImport } from 'common/relic/accounts'
 import type { LoginInfo, LoginResult } from 'common/relic/login'
-import type { NileLoginData, NileRegisterData, NileUserData } from './nile'
+import type { StoreInfo } from 'common/relic/stores'
 import type { GetLogFileArgs } from 'backend/logger/paths'
 
 // ts-prune-ignore-next
 interface SyncIPCFunctions {
-  logoutGOG: () => void
   removeFromDMQueue: (appName: string) => void
   'set-connectivity-online': () => void
   setSetting: (args: {
@@ -48,7 +45,6 @@ interface SyncIPCFunctions {
     runner: Runner,
     status: boolean
   ) => void
-  logoutZoom: () => void
 }
 
 /*
@@ -87,27 +83,10 @@ interface AsyncIPCFunctions {
     branch?: string,
     build?: string
   ) => Promise<InstallInfo | null>
-  getUserInfo: () => Promise<UserInfo | undefined>
-  getAmazonUserInfo: () => Promise<NileUserData | undefined>
-  getZoomUserInfo: () => Promise<{ username: string } | undefined>
-  isLoggedIn: () => boolean
-  login: (sid: string) => Promise<{
-    status: 'done' | 'failed'
-    data: UserInfo | undefined
-  }>
-  authGOG: (code: string) => Promise<{
-    status: 'done' | 'error'
-    data?: UserData
-  }>
-  authAmazon: (data: NileRegisterData) => Promise<{
-    status: 'done' | 'failed'
-    user: NileUserData | undefined
-  }>
-  authZoom: (url: string) => Promise<{ status: 'done' | 'error' }>
-  logoutLegendary: () => Promise<void>
-  logoutAmazon: () => Promise<void>
   getLibrary: (library?: Runner | 'all') => GameInfo[]
+  getStores: () => StoreInfo[]
   getAccounts: () => AccountsStatus
+  logout: (runner: Runner) => Promise<void>
   importSessionsFromRelic: () => Promise<SessionsImport>
   getLoginInfo: (runner: Runner) => Promise<LoginInfo>
   submitLogin: (runner: Runner, pasted: string) => Promise<LoginResult>
@@ -145,8 +124,6 @@ interface AsyncIPCFunctions {
     appName: string
     runner: Runner
   }) => Promise<boolean>
-
-  getAmazonLoginData: () => Promise<NileLoginData>
 
   setPrivateBranchPassword: (appName: string, password: string) => void
   getPrivateBranchPassword: (appName: string) => string

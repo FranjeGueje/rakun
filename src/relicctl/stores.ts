@@ -1,18 +1,17 @@
 import type { Runner } from 'common/types'
 import { CliError } from './client'
 
-type Store = { name: string; runner: Runner; label: string; logout: string }
+type Store = { name: string; runner: Runner; label: string }
 
 export const STORES: readonly Store[] = [
   {
     name: 'epic',
     runner: 'legendary',
-    label: 'Epic',
-    logout: 'logoutLegendary'
+    label: 'Epic'
   },
-  { name: 'gog', runner: 'gog', label: 'GOG', logout: 'logoutGOG' },
-  { name: 'amazon', runner: 'nile', label: 'Amazon', logout: 'logoutAmazon' },
-  { name: 'zoom', runner: 'zoom', label: 'Zoom', logout: 'logoutZoom' }
+  { name: 'gog', runner: 'gog', label: 'GOG' },
+  { name: 'amazon', runner: 'nile', label: 'Amazon' },
+  { name: 'zoom', runner: 'zoom', label: 'Zoom' }
 ]
 
 /** Accepts the friendly name (`epic`) and the runner's (`legendary`) */
