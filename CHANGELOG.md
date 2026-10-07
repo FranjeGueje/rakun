@@ -80,6 +80,9 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
 - **Instalar un juego que ya está instalado se rechaza** (`500 already installed:
 use repair or update`; `relicctl` dice «ya está instalado») en vez de descargarlo
   entero otra vez.
+- **Arranque más rápido y ligero**: `syncMountBin` ya no lee y hashea los binarios de
+  Windows (56 MB) en cada arranque, solo compara tamaño y fecha. Arranque en frío
+  de 0,24 s a 0,13 s y pico de memoria de 128 MB a 81 MB.
 - Un solo tarball por arquitectura: `pnpm package [x64|arm64|all]` genera
   `relicd-<v>-linux-<arch>.tar.gz`, cada uno solo con sus binarios y su Node.
 - Sin traducciones: los mensajes del daemon van en inglés; `language` solo elige
@@ -134,6 +137,10 @@ use repair or update`; `relicctl` dice «ya está instalado») en vez de descarg
   Cyberpunk, los guardados en la nube de GOG y los canales heredados de la
   interfaz.
 - Los `.exe` de arm64 de Windows (nadie los usaba).
+- `zod` (los tipos con marca de los comandos de legendary son ahora un módulo
+  propio, `backend/schemas.ts`), exportaciones y tipos sin uso, y 140 de los 279
+  avisos de eslint (los de los tests, que usan mocks sueltos, y los mecánicos del
+  código).
 
 ### English
 
@@ -208,6 +215,9 @@ use repair or update`; `relicctl` dice «ya está instalado») en vez de descarg
 - **Installing a game that is already installed is refused** (`500 already
 installed: use repair or update`; `relicctl` says "ya está instalado") instead
   of downloading it all again.
+- **Faster, lighter start-up**: `syncMountBin` no longer reads and hashes the
+  Windows binaries (56 MB) on every start, it only compares size and date. Cold
+  start from 0.24 s to 0.13 s and memory peak from 128 MB to 81 MB.
 - One tarball per architecture: `pnpm package [x64|arm64|all]` builds
   `relicd-<v>-linux-<arch>.tar.gz`, each with only its own binaries and Node.
 - No translations: the daemon's messages are in English; `language` only picks
@@ -261,3 +271,7 @@ installed: use repair or update`; `relicctl` says "ya está instalado") instead
 - Per-game settings (`GameConfig`, `GameSettings`), the Cyberpunk mods, GOG cloud
   saves and the UI-era channels.
 - The Windows arm64 `.exe` files (nothing used them).
+- `zod` (legendary's branded command types are now an own module,
+  `backend/schemas.ts`), unused exports and types, and 140 of the 279 eslint
+  warnings (the ones in tests, which use loose mocks, and the mechanical ones in
+  the code).
