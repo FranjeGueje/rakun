@@ -2,11 +2,9 @@ import { invokeHandler } from 'backend/ipc'
 import { addToQueue } from '../downloadqueue'
 import type { InstallParams } from 'common/types'
 
-const getGameInfo = jest.fn()
+const readLibrary = jest.fn()
 jest.mock('backend/storeManagers', () => ({
-  libraryManagerMap: {
-    gog: { getGameInfo: (...args: unknown[]) => getGameInfo(...args) }
-  }
+  stores: { gog: { readLibrary: () => readLibrary() } }
 }))
 jest.mock('../downloadqueue', () => ({
   addToQueue: jest.fn(),
@@ -23,7 +21,7 @@ const params = { appName: 'g1', runner: 'gog', path: '/games' } as InstallParams
 
 describe('install', () => {
   test('queues a game that is not installed', async () => {
-    getGameInfo.mockReturnValue({ is_installed: false })
+    readLibrary.mockReturnValue([{ app_name: 'g1', is_installed: false }])
 
     await invokeHandler('install', params)
 
@@ -31,7 +29,7 @@ describe('install', () => {
   })
 
   test('refuses a game that is already installed, queuing nothing', async () => {
-    getGameInfo.mockReturnValue({ is_installed: true })
+    readLibrary.mockReturnValue([{ app_name: 'g1', is_installed: true }])
 
     await expect(invokeHandler('install', params)).rejects.toThrow(
       'already installed'
@@ -39,8 +37,8 @@ describe('install', () => {
     expect(addToQueue).not.toHaveBeenCalled()
   })
 
-  test('a game the store does not know yet is not refused', async () => {
-    getGameInfo.mockReturnValue(undefined)
+  test('only the game asked for counts, not the others installed', async () => {
+    readLibrary.mockReturnValue([{ app_name: 'other', is_installed: true }])
 
     await invokeHandler('install', params)
 
