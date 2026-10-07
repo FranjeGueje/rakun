@@ -2,12 +2,9 @@ import * as path from 'path'
 import i18next from 'i18next'
 import Backend from 'i18next-fs-backend'
 import { supportedLanguages } from 'common/languages'
-import { addListener } from 'backend/ipc'
 import { GlobalConfig } from 'backend/config'
-import { backendEvents } from 'backend/backend_events'
 import { configStore } from 'backend/constants/key_value_stores'
 import { publicDir, userHome } from 'backend/constants/paths'
-import { gameInfoStore } from 'backend/storeManagers/legendary/electronStores'
 import { LegendaryUser } from 'backend/storeManagers/legendary/user'
 import { GOGUser } from 'backend/storeManagers/gog/user'
 import { initStoreManagers } from 'backend/storeManagers'
@@ -56,14 +53,6 @@ async function initTranslations() {
     fallbackLng: 'en',
     lng: language,
     supportedLngs: supportedLanguages
-  })
-
-  addListener('changeLanguage', async (_e, newLanguage) => {
-    logInfo(['Changing Language to:', newLanguage], LogPrefix.Backend)
-    await i18next.changeLanguage(newLanguage)
-    gameInfoStore.clear()
-    GlobalConfig.get().setSetting('language', newLanguage)
-    backendEvents.emit('languageChanged')
   })
 }
 

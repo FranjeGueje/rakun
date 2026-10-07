@@ -104,22 +104,6 @@ export interface ExtraInfo {
 
 export type GameConfigVersion = 'auto' | 'v0' | 'v0.1'
 
-export type GOGAchievement = {
-  achievement_id: string
-  achievement_key: string
-  visible: boolean
-  name: string
-  description: string
-  image_url_unlocked: string
-  image_url_locked: string
-  rarity: number
-  date_unlocked: string | null
-  rarity_level_description: string
-  rarity_level_slug: string
-}
-
-export type GameAchievement = GOGAchievement
-
 export interface GameInfo {
   runner: 'legendary' | 'gog' | 'nile' | 'zoom'
   store_url?: string
@@ -333,15 +317,6 @@ export interface WrapperEnv {
   appName: string
   appRunner: Runner
 }
-
-export type RecentGame = {
-  appName: string
-  title: string
-}
-
-export type HiddenGame = RecentGame
-
-export type FavouriteGame = HiddenGame
 
 export type RefreshOptions = {
   checkForUpdates?: boolean

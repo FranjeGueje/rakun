@@ -8,8 +8,7 @@ import {
   moveOnUnix,
   sendProgressUpdate,
   sendGameStatusUpdate,
-  getPathDiskSize,
-  axiosClient
+  getPathDiskSize
 } from '../../utils'
 import {
   ExtraInfo,
@@ -18,12 +17,10 @@ import {
   ExecResult,
   InstallArgs,
   InstalledInfo,
-  InstallProgress,
-  GOGAchievement
+  InstallProgress
 } from 'common/types'
 import { existsSync, rmSync } from 'fs'
 import {
-  achievementStore,
   installedGamesStore,
   playtimeSyncQueue,
   privateBranchesStore,
@@ -47,7 +44,7 @@ import {
 import { GOGCloudSavesLocation, GogInstallPlatform } from 'common/types/gog'
 import { sendFrontendMessage } from '../../ipc'
 import { Game, RemoveArgs } from 'common/types/game_manager'
-import axios, { AxiosError, AxiosResponse } from 'axios'
+import axios, { AxiosError } from 'axios'
 import { isOnline, runOnceWhenOnline } from 'backend/online_monitor'
 import { gogdlConfigPath, gogSupportPath } from './constants'
 import { isLinux } from 'backend/constants/environment'
@@ -98,36 +95,6 @@ export default class GOGGame implements Game {
       changelog: productInfo?.data.changelog
     }
     return extra
-  }
-
-  async getAchievements(lang = 'en-US'): Promise<GOGAchievement[]> {
-    const cached = achievementStore.get(this.id)
-    if (cached) return cached
-
-    if (!GOGUser.isLoggedIn()) return []
-    const credentials = await GOGUser.getCredentials()
-    if (!credentials) return []
-    const url = `https://gameplay.gog.com/clients/${this.id}/users/${credentials?.user_id}/achievements`
-
-    const response: AxiosResponse | null = await axiosClient
-      .get(url, {
-        headers: {
-          Authorization: `Bearer ${credentials.access_token}`,
-          'X-Gog-Lc': lang
-        }
-      })
-      .catch(() => {
-        return null
-      })
-
-    if (!response?.data?.items) {
-      return []
-    }
-
-    const achievements: GOGAchievement[] = response.data.items
-    achievementStore.set(this.id, achievements)
-
-    return achievements
   }
 
   getGameInfo(): GameInfo {

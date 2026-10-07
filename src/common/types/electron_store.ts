@@ -3,9 +3,6 @@ import { Get } from 'type-fest'
 import {
   InstalledInfo,
   UserInfo,
-  RecentGame,
-  HiddenGame,
-  FavouriteGame,
   DMQueueElement,
   GOGLoginData,
   AppSettings,
@@ -19,12 +16,6 @@ export interface StoreStructure {
   configStore: {
     userHome: string
     userInfo: UserInfo
-    games: {
-      recent: RecentGame[]
-      hidden: HiddenGame[]
-      favourites: FavouriteGame[]
-      customCategories: Record<string, string[]>
-    }
     theme: string
     zoomPercent: number
     contentFontFamily: string

@@ -83,9 +83,18 @@ to be reinstalled to get them).
 **Settings and status:** `requestAppSettings`, `requestGameSettings(appName)`,
 `writeConfig({appName, config})`, `setSetting({appName, key, value})`,
 `getRelicVersion`, `getEpicGamesStatus`, `get-connectivity-status`,
-`getSystemInfo`, and the helper versions `getLegendaryVersion`,
+`getSystemInfo`, `getLogContent` (see Logs below), and the helper versions `getLegendaryVersion`,
 `getGogdlVersion`, `getNileVersion`, `getCometVersion`. There are no per-game
 launch settings: relicd does not launch games.
+
+## Logs
+
+`getLogContent(args)` returns the text of a log file, or `""` when it does not
+exist or `args` is not valid. `{}` is relicd's own log, `{runner}` (`legendary`,
+`gog`, `nile`, `zoom`, `comet`) is that store's helper, and `{appName, runner,
+type}` is one game's log (`type`: `install`, `import`, `repair`, `update`,
+`setup`; `launch` by default). Names must be plain: anything with a path
+separator is refused.
 
 ## Logging in (no embedded browser)
 
@@ -112,7 +121,7 @@ A `: ping` comment is sent every 25 s.
 
 `gameStatusUpdate(status)`, `progressUpdate(status)`,
 `changedDMQueueInformation(elements, state)`, `pushGameToLibrary(info)`,
-`refreshLibrary(runner?)`, `recentGamesChanged`, `metadataChanged`,
+`refreshLibrary(runner?)`,
 `connectivity-changed`, `showDialog(title, message, type, buttons?)`.
 
 `showDialog` is how the daemon reports problems it used to show in a window

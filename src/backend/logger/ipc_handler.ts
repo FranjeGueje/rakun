@@ -1,13 +1,11 @@
-import { addHandler, addListener } from 'backend/ipc'
+import { addHandler } from 'backend/ipc'
 import { existsSync, readFileSync } from 'fs'
 
-import { logInfo, logError, LogPrefix } from '.'
+import { isSafeLogRequest } from './log_request'
 import { getLogFilePath } from './paths'
 
-addListener('logInfo', (e, message) => logInfo(message, LogPrefix.Frontend))
-addListener('logError', (e, message) => logError(message, LogPrefix.Frontend))
-
-addHandler('getLogContent', (event, appNameOrRunner) => {
-  const logPath = getLogFilePath(appNameOrRunner)
+addHandler('getLogContent', (event, args) => {
+  if (!isSafeLogRequest(args)) return ''
+  const logPath = getLogFilePath(args)
   return existsSync(logPath) ? readFileSync(logPath, 'utf-8') : ''
 })

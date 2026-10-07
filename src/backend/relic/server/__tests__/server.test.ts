@@ -89,8 +89,8 @@ describe('API server', () => {
   })
 
   test('does not reach channels outside the allow list', async () => {
-    addHandler('getShellPath', async () => '/etc')
-    const reply = await call('POST', '/api/getShellPath', { body: '{}' })
+    addHandler('notExposed' as never, () => '/etc' as never)
+    const reply = await call('POST', '/api/notExposed', { body: '{}' })
     expect(reply.status).toBe(403)
   })
 

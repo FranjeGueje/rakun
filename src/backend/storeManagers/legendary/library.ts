@@ -182,10 +182,6 @@ export default class LegendaryLibraryManager implements LibraryManager {
     return this.defaultExecResult
   }
 
-  getListOfGames() {
-    return libraryStore.get('library', [])
-  }
-
   /**
    * Get game info for a particular game.
    *

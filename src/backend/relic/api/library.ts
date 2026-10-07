@@ -1,6 +1,5 @@
 import type { GameInfo, Runner } from 'common/types'
 import { addHandler } from 'backend/ipc'
-import { attachOverrides } from 'backend/game_overrides'
 import { libraryManagerMap } from 'backend/storeManagers'
 import { libraryStore as epicLibraryStore } from 'backend/storeManagers/legendary/electronStores'
 import {
@@ -54,5 +53,5 @@ const libraries: Record<Runner, () => GameInfo[]> = {
 /** The games of one store (or all of them) as last refreshed, with install state */
 addHandler('getLibrary', (_e, library = 'all') => {
   const runners = library === 'all' ? RUNNERS : [library]
-  return runners.flatMap((runner) => libraries[runner]().map(attachOverrides))
+  return runners.flatMap((runner) => libraries[runner]())
 })

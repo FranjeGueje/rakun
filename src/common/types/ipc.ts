@@ -9,7 +9,6 @@ import type {
   DMQueueElement,
   DownloadManagerState,
   ExtraInfo,
-  GameAchievement,
   GameInfo,
   GameSettings,
   GameStatus,
@@ -19,7 +18,6 @@ import type {
   InstallPlatform,
   KnowFixesInfo,
   MoveGameArgs,
-  RecentGame,
   Runner,
   RunnerCommandStub,
   StatusPromise,
@@ -34,22 +32,8 @@ import type { GetLogFileArgs } from 'backend/logger/paths'
 
 // ts-prune-ignore-next
 interface SyncIPCFunctions {
-  changeLanguage: (language: string) => void
-  openExternalUrl: (url: string) => void
-  openFolder: (folder: string) => void
-  openLoginPage: () => void
-  openWebviewPage: (url: string) => void
-  showConfigFileInFolder: (appName: string) => void
-  removeFolder: ([path, folderName]: [string, string]) => void
-  clearCache: (showDialog?: boolean, fromVersionChange?: boolean) => void
-  clearAchievementCache: (appName: string) => void
-  resetRelic: () => void
   logoutGOG: () => void
-  logError: (message: unknown) => void
-  logInfo: (message: unknown) => void
   removeFromDMQueue: (appName: string) => void
-  abort: (id: string) => void
-  'connectivity-changed': (newStatus: ConnectivityStatus) => void
   'set-connectivity-online': () => void
   setSetting: (args: {
     appName: string
@@ -65,12 +49,6 @@ interface SyncIPCFunctions {
     status: boolean
   ) => void
   logoutZoom: () => void
-  setGameMetadataOverride: (args: {
-    appName: string
-    title?: string
-    art_cover?: string
-    art_square?: string
-  }) => void
 }
 
 /*
@@ -94,19 +72,12 @@ interface AsyncIPCFunctions {
   checkDiskSpace: (folder: string) => Promise<DiskSpaceData>
   checkGameUpdates: () => Promise<string[]>
   getEpicGamesStatus: () => Promise<boolean>
-  getMaxCpus: () => number
   getRelicVersion: () => string
   getLegendaryVersion: () => Promise<string>
   getGogdlVersion: () => Promise<string>
   getCometVersion: () => Promise<string>
   getNileVersion: () => Promise<string>
-  showUpdateSetting: () => boolean
   getGameInfo: (appName: string, runner: Runner) => Promise<GameInfo | null>
-  getAchievements: (
-    appName: string,
-    runner: Runner,
-    lang?: string
-  ) => Promise<GameAchievement[]>
   getExtraInfo: (appName: string, runner: Runner) => Promise<ExtraInfo | null>
   getGOGLinuxInstallersLangs: (appName: string) => Promise<string[]>
   getInstallInfo: (
@@ -135,7 +106,6 @@ interface AsyncIPCFunctions {
   authZoom: (url: string) => Promise<{ status: 'done' | 'error' }>
   logoutLegendary: () => Promise<void>
   logoutAmazon: () => Promise<void>
-  readConfig: (config_class: 'library' | 'user') => Promise<GameInfo[] | string>
   getLibrary: (library?: Runner | 'all') => GameInfo[]
   getAccounts: () => AccountsStatus
   importSessionsFromRelic: () => Promise<SessionsImport>
@@ -158,25 +128,9 @@ interface AsyncIPCFunctions {
   importGame: (args: ImportGameArgs) => StatusPromise
   updateGame: (args: UpdateParams) => Promise<void>
   changeInstallPath: (args: MoveGameArgs) => Promise<void>
-  getShellPath: (path: string) => Promise<string>
   isNative: (args: { appName: string; runner: Runner }) => boolean
   getLogContent: (args: GetLogFileArgs) => string
   getKnownFixes: (appName: string, runner: Runner) => KnowFixesInfo | null
-  getGameMetadataOverride: (appName: string) => Promise<{
-    title?: string
-    art_cover?: string
-    art_square?: string
-  } | null>
-  getAllGameOverrides: () => Promise<
-    Record<
-      string,
-      {
-        title?: string
-        art_cover?: string
-        art_square?: string
-      }
-    >
-  >
   getDMQueueInformation: () => {
     elements: DMQueueElement[]
     finished: DMQueueElement[]
@@ -187,15 +141,12 @@ interface AsyncIPCFunctions {
     retryIn: number
   }
   getSystemInfo: (cache?: boolean) => Promise<SystemInformation>
-  removeRecent: (appName: string) => Promise<void>
   isGameAvailable: (args: {
     appName: string
     runner: Runner
   }) => Promise<boolean>
 
-  pathExists: (path: string) => Promise<boolean>
   getAmazonLoginData: () => Promise<NileLoginData>
-  hasExecutable: (executable: string) => Promise<boolean>
 
   setPrivateBranchPassword: (appName: string, password: string) => void
   getPrivateBranchPassword: (appName: string) => string
@@ -221,15 +172,8 @@ interface FrontendMessages {
     status: ConnectivityStatus
     retryIn: number
   }) => void
-  recentGamesChanged: (newRecentGames: RecentGame[]) => void
   pushGameToLibrary: (info: GameInfo) => void
   progressUpdate: (progress: GameStatus) => void
-  metadataChanged: (
-    overrides: Record<
-      string,
-      { title?: string; art_cover?: string; art_square?: string }
-    >
-  ) => void
 
   // Used inside tests, so we can be a bit lenient with the type checking here
 }

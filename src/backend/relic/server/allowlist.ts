@@ -1,6 +1,5 @@
-// Only these channels are reachable through the HTTP API. Anything that opens
-// windows, touches arbitrary paths or restarts the daemon is deliberately left
-// out (removeFolder, getShellPath, pathExists, resetRelic, openFolder, ...).
+// Only these channels are reachable through the HTTP API. A channel that opens
+// windows, touches arbitrary paths or restarts the daemon must not be added.
 // A channel is either a handler (request/response) or a listener (fire and
 // forget); the server decides by looking at what is registered.
 
@@ -66,6 +65,7 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   'get-connectivity-status',
   'set-connectivity-online',
   'getSystemInfo',
+  'getLogContent',
   'getLegendaryVersion',
   'getGogdlVersion',
   'getNileVersion',
@@ -79,8 +79,6 @@ export const exposedEvents: ReadonlySet<string> = new Set([
   'changedDMQueueInformation',
   'pushGameToLibrary',
   'refreshLibrary',
-  'recentGamesChanged',
-  'metadataChanged',
   'connectivity-changed',
   'showDialog'
 ])

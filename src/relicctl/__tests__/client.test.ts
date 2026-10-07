@@ -122,7 +122,7 @@ describe('events', () => {
       res.write(': connected\n\nevent: refreshLibrary\nda')
       setTimeout(() => {
         res.write(
-          'ta: ["gog"]\n\n: ping\n\nevent: recentGamesChanged\ndata: []\n\n'
+          'ta: ["gog"]\n\n: ping\n\nevent: pushGameToLibrary\ndata: []\n\n'
         )
         res.end()
       }, 20)
@@ -135,7 +135,7 @@ describe('events', () => {
 
     expect(received).toEqual([
       { event: 'refreshLibrary', args: ['gog'] },
-      { event: 'recentGamesChanged', args: [] }
+      { event: 'pushGameToLibrary', args: [] }
     ])
   })
 

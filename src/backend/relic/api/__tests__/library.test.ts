@@ -12,9 +12,6 @@ const stores: Record<string, unknown[]> = {
   zoomInstalled: []
 }
 
-jest.mock('backend/game_overrides', () => ({
-  attachOverrides: (g: unknown) => g
-}))
 jest.mock('backend/storeManagers', () => ({
   libraryManagerMap: {
     legendary: { getGameInfo: jest.fn() },

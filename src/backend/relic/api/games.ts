@@ -1,14 +1,9 @@
 import type { StatusPromise } from 'common/types'
 import { existsSync, watch } from 'fs'
 import i18next from 'i18next'
-import { addHandler, addListener, sendFrontendMessage } from 'backend/ipc'
+import { addHandler, addListener } from 'backend/ipc'
 import { GlobalConfig } from 'backend/config'
-import { LegendaryUser } from 'backend/storeManagers/legendary/user'
-import {
-  isEpicServiceOffline,
-  sendGameStatusUpdate,
-  getGame
-} from 'backend/utils'
+import { isEpicServiceOffline, sendGameStatusUpdate } from 'backend/utils'
 import { uninstallGameCallback } from 'backend/utils/uninstaller'
 import { logError, logInfo, LogPrefix, logWarning } from 'backend/logger'
 import { readKnownFixes } from 'backend/launcher'
@@ -16,15 +11,9 @@ import { isOnline } from 'backend/online_monitor'
 import { showDialogBoxModalAuto } from 'backend/dialog/dialog'
 import { callAbortController } from 'backend/utils/aborthandler/aborthandler'
 import { autoUpdate, libraryManagerMap } from 'backend/storeManagers'
-import {
-  setGameOverrides,
-  getGameOverrides,
-  getAllGameOverrides,
-  attachOverrides
-} from 'backend/game_overrides'
 import { legendaryInstalled } from 'backend/storeManagers/legendary/constants'
 import { onGameRepaired } from 'backend/relic/game_events'
-import { refreshRunner, refreshingRunners, startRefresh } from './refresh'
+import { refreshingRunners, startRefresh } from './refresh'
 
 addHandler('checkGameUpdates', async (): Promise<string[]> => {
   let oldGames: string[] = []
@@ -62,15 +51,8 @@ addHandler('getGameInfo', (event, appName, runner) => {
   // The frontend can however handle being passed an explicit `null` value, so
   // we return that here instead if the game info is empty
   if (!Object.keys(tempGameInfo).length) return null
-  return attachOverrides(tempGameInfo)
+  return tempGameInfo
 })
-
-addHandler(
-  'getAchievements',
-  async (event, appName, runner, lang = 'en-US') => {
-    return getGame(appName, runner).getAchievements?.(lang) ?? []
-  }
-)
 
 addHandler('getExtraInfo', async (event, appName, runner) => {
   // Fastpath since we sometimes have to request info for a GOG game as Legendary because we don't know it's a GOG game yet
@@ -114,15 +96,6 @@ addHandler(
     }
   }
 )
-
-addHandler('readConfig', async (event, configClass) => {
-  if (configClass === 'library') {
-    await refreshRunner('legendary')
-    return libraryManagerMap['legendary'].getListOfGames()
-  }
-  const userInfo = LegendaryUser.getUserInfo()
-  return userInfo?.displayName ?? ''
-})
 
 // Watch the installed games file and trigger a refresh on the installed games if something changes
 if (existsSync(legendaryInstalled)) {
@@ -288,20 +261,6 @@ addHandler('changeInstallPath', async (event, { appName, path, runner }) => {
     `Finished changing install path of ${appName} to ${path}.`,
     LogPrefix.Backend
   )
-})
-
-addListener('setGameMetadataOverride', (e, args) => {
-  const { appName, title, art_cover, art_square } = args
-  setGameOverrides(appName, { title, art_cover, art_square })
-  sendFrontendMessage('metadataChanged', getAllGameOverrides())
-})
-
-addHandler('getGameMetadataOverride', (_e, appName) => {
-  return getGameOverrides(appName)
-})
-
-addHandler('getAllGameOverrides', () => {
-  return getAllGameOverrides()
 })
 
 addHandler('isNative', (e, { appName, runner }) => {

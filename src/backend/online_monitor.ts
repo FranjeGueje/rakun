@@ -96,14 +96,6 @@ const pingSites = () => {
 }
 
 export const initOnlineMonitor = () => {
-  // listen to events from the frontend
-  addListener(
-    'connectivity-changed',
-    (event, newStatus: ConnectivityStatus): void => {
-      setStatus(newStatus)
-    }
-  )
-
   // set initial status and ping external sites
   setStatus('check-online')
 

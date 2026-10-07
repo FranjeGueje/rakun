@@ -11,9 +11,9 @@ import {
 
 describe('ipc registry', () => {
   test('invokeHandler calls the handler with the arguments and returns its result', async () => {
-    addHandler('getMaxCpus', () => 4)
-    expect(hasHandler('getMaxCpus')).toBe(true)
-    await expect(invokeHandler('getMaxCpus')).resolves.toBe(4)
+    addHandler('getRelicVersion', () => '1.0.0')
+    expect(hasHandler('getRelicVersion')).toBe(true)
+    await expect(invokeHandler('getRelicVersion')).resolves.toBe('1.0.0')
   })
 
   test('invokeHandler rejects for a channel without handler', async () => {
@@ -26,12 +26,12 @@ describe('ipc registry', () => {
   test('dispatchListener calls every listener and tells whether there was any', () => {
     const first = jest.fn()
     const second = jest.fn()
-    addListener('openExternalUrl', first)
-    addListener('openExternalUrl', second)
+    addListener('removeFromDMQueue', first)
+    addListener('removeFromDMQueue', second)
 
-    expect(dispatchListener('openExternalUrl', 'https://a')).toBe(true)
-    expect(first).toHaveBeenCalledWith({}, 'https://a')
-    expect(second).toHaveBeenCalledWith({}, 'https://a')
+    expect(dispatchListener('removeFromDMQueue', 'game')).toBe(true)
+    expect(first).toHaveBeenCalledWith({}, 'game')
+    expect(second).toHaveBeenCalledWith({}, 'game')
     expect(dispatchListener('unknown-channel')).toBe(false)
   })
 

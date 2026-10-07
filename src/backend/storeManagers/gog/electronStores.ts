@@ -1,6 +1,6 @@
 import { TypeCheckedStoreBackend } from '../../electron_store'
 import CacheStore from '../../cache'
-import { GameInfo, GOGAchievement } from 'common/types'
+import { GameInfo } from 'common/types'
 import {
   GOGSessionSyncQueueItem,
   GamesDBData,
@@ -21,10 +21,6 @@ const configStore = new TypeCheckedStoreBackend('gogConfigStore', {
 
 const apiInfoCache = new CacheStore<GamesDBData>('gog_api_info', 60 * 24)
 const libraryStore = new CacheStore<GameInfo[], 'games'>('gog_library', null)
-const achievementStore = new CacheStore<GOGAchievement[]>(
-  'gog_achievements',
-  null
-)
 const syncStore = new TypeCheckedStoreBackend('gogSyncStore', {
   cwd: 'gog_store',
   name: 'saveTimestamps',
@@ -48,7 +44,6 @@ export {
   installedGamesStore,
   apiInfoCache,
   libraryStore,
-  achievementStore,
   syncStore,
   installInfoStore,
   playtimeSyncQueue,

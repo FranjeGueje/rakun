@@ -10,7 +10,6 @@ const LogPrefix = {
   GlobalConfig: 'GlobalConfig',
   GameConfig: 'GameConfig',
   ProtocolHandler: 'ProtocolHandler',
-  Frontend: 'Frontend',
   Backend: 'Backend',
   Runtime: 'Runtime',
   Shortcuts: 'Shortcuts',

@@ -5,8 +5,7 @@ import {
   GameSettings,
   ExecResult,
   InstallArgs,
-  InstallInfo,
-  GOGAchievement
+  InstallInfo
 } from 'common/types'
 import { GOGCloudSavesLocation } from './gog'
 
@@ -49,7 +48,6 @@ export interface Game {
   forceUninstall: () => Promise<void>
   stop: (stopWine?: boolean) => Promise<void>
   isGameAvailable: () => Promise<boolean>
-  getAchievements?: (lang: string) => Promise<GOGAchievement[]>
 }
 
 export interface LibraryManager {

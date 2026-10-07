@@ -8,14 +8,13 @@ import { promisify } from 'util'
 import i18next from 'i18next'
 
 import { logError, logInfo, LogPrefix, logWarning } from 'backend/logger'
-import { basename, dirname, join, normalize } from 'path'
+import { basename, dirname, join } from 'path'
 import {
   gameInfoStore,
   installStore,
   libraryStore
 } from 'backend/storeManagers/legendary/electronStores'
 import {
-  achievementStore as GOGAchievementStore,
   apiInfoCache as GOGapiInfoCache,
   installInfoStore as GOGinstallInfoStore,
   libraryStore as GOGlibraryStore
@@ -26,7 +25,6 @@ import {
 } from './storeManagers/nile/electronStores'
 import { formatBytes } from 'common/formatBytes'
 import { showDialogBoxModalAuto, askQuestion } from './dialog/dialog'
-import { openExternal } from './utils/open_external'
 import { sendFrontendMessage } from './ipc'
 import { GlobalConfig } from './config'
 import { GameConfig } from './game_config'
@@ -42,7 +40,6 @@ import {
 import type { AppSettings } from 'common/types'
 import { configStore } from './constants/key_value_stores'
 import {
-  configPath,
   gamesConfigPath,
   relicIconFolder,
   publicDir,
@@ -255,20 +252,10 @@ function removeSpecialcharacters(text: string): string {
   return text.replaceAll(regexp, '')
 }
 
-async function openUrlOrFile(url: string): Promise<void> {
-  // xdg-open handles URLs and local paths alike, so the `http` check that used
-  // to pick between shell.openExternal and shell.openPath is gone.
-  return openExternal(url)
-}
-
-function clearCache(
-  library?: 'gog' | 'legendary' | 'nile' | 'zoom',
-  fromVersionChange = false
-) {
+function clearCache(library?: 'gog' | 'legendary' | 'nile' | 'zoom') {
   if (library === 'gog' || !library) {
     GOGlibraryStore.clear()
     GOGinstallInfoStore.clear()
-    GOGAchievementStore.clear()
   }
   if (library === 'legendary' || !library) {
     installStore.clear()
@@ -284,26 +271,9 @@ function clearCache(
     nileLibraryStore.clear()
   }
 
-  if (!fromVersionChange) {
-    // Per-game metadata rarely changes and is slow to rebuild (one request per
-    // game), so a new version keeps it
-    if (library === 'gog' || !library) GOGapiInfoCache.clear()
-    deviceNameCache.clear()
-    vendorNameCache.clear()
-  }
-}
-
-function clearAchievementCache(appName: string) {
-  GOGAchievementStore.delete(appName)
-}
-
-function resetRelic() {
-  const appFolders = [gamesConfigPath, configPath]
-  appFolders.forEach((folder) => {
-    rmSync(folder, { recursive: true, force: true })
-  })
-  // wait a sec to avoid racing conditions; the service manager restarts us
-  setTimeout(() => process.exit(0), 1000)
+  if (library === 'gog' || !library) GOGapiInfoCache.clear()
+  deviceNameCache.clear()
+  vendorNameCache.clear()
 }
 
 function splitPathAndName(fullPath: string): { dir: string; bin: string } {
@@ -445,9 +415,6 @@ function killPattern(pattern: string) {
   logInfo(['Killed', pattern], LogPrefix.Backend)
   return ret
 }
-
-const getShellPath = async (path: string): Promise<string> =>
-  normalize((await execAsync(`echo ${path}`)).stdout.trim())
 
 export const spawnAsync = async (
   command: string,
@@ -970,11 +937,8 @@ export {
   execAsync,
   handleExit,
   isEpicServiceOffline,
-  openUrlOrFile,
   removeSpecialcharacters,
   clearCache,
-  clearAchievementCache,
-  resetRelic,
   getLegendaryBin,
   getGOGdlBin,
   getCometBin,
@@ -983,7 +947,6 @@ export {
   quoteIfNecessary,
   removeQuoteIfNecessary,
   killPattern,
-  getShellPath,
   getFileSize,
   memoryLog,
   removeFolder,
@@ -993,8 +956,7 @@ export {
   calculateEta,
   extractFiles,
   axiosClient,
-  parseSize,
-  getGame
+  parseSize
 }
 
 // Exported only for testing purpose
