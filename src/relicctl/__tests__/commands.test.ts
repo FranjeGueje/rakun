@@ -12,6 +12,7 @@ import {
   update
 } from '../commands/games'
 import { parseCallArgs, call } from '../commands/call'
+import { config, parseValue, settingKey } from '../commands/config'
 import { parseCli, runCli } from '../cli'
 import type { GameInfo } from 'common/types'
 import { fakeCtx, opts, STORES } from './helpers'
@@ -447,5 +448,38 @@ describe('cli', () => {
         ask: () => Promise.resolve('')
       })
     ).rejects.toThrow(/Comando desconocido "dance"/)
+  })
+})
+
+describe('config', () => {
+  const settings = {
+    defaultInstallPath: '/games',
+    autoUpdateGames: true,
+    maxWorkers: 0
+  }
+
+  test('lists, reads and saves a setting', async () => {
+    const all = fakeCtx({ requestAppSettings: settings })
+    await config(all.ctx, [], opts)
+    expect(all.lines[0]).toContain('defaultInstallPath = /games')
+
+    const one = fakeCtx({ requestAppSettings: settings })
+    await config(one.ctx, ['defaultInstallPath'], opts)
+    expect(one.lines).toEqual(['/games'])
+
+    const set = fakeCtx({ requestAppSettings: settings })
+    await config(set.ctx, ['defaultInstallPath', '/mnt/sd'], opts)
+    expect(set.calls[1]).toEqual([
+      'setSetting',
+      [{ key: 'defaultInstallPath', value: '/mnt/sd' }]
+    ])
+  })
+
+  test('refuses unknown keys and values of the wrong type', async () => {
+    expect(() => settingKey(settings as never, 'nope')).toThrow(CliError)
+    expect(parseValue(true, 'false')).toBe(false)
+    expect(parseValue(0, '4')).toBe(4)
+    expect(() => parseValue(true, 'si')).toThrow(CliError)
+    expect(() => parseValue(0, 'x')).toThrow(CliError)
   })
 })

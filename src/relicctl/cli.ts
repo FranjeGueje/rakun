@@ -7,6 +7,7 @@ import { importRelic, login, logout, status } from './commands/accounts'
 import { install, repair, uninstall, update } from './commands/games'
 import { library, refresh } from './commands/library'
 import { queue } from './commands/queue'
+import { config } from './commands/config'
 
 export const HELP = `Uso: relicctl <comando> [argumentos]
 
@@ -19,6 +20,7 @@ export const HELP = `Uso: relicctl <comando> [argumentos]
   install <tienda> <appName> [--path DIR] [--lang CODE] [--skip-dlcs]
   update | repair | uninstall <tienda> <appName>
   queue                           cola de descargas
+  config [clave [valor]]          ver o cambiar ajustes (p. ej. defaultInstallPath)
   events                          sigue los eventos de relicd
   call <canal> [json]             llama a un canal de la API
 
@@ -38,6 +40,7 @@ export const commands: Record<string, Command> = {
   repair,
   uninstall,
   queue,
+  config,
   events,
   call
 }

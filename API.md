@@ -84,7 +84,8 @@ Steam (it is stored in `config.json`, so a game installed before setting it has
 to be reinstalled to get them).
 
 **Settings and status:** `requestAppSettings`, `writeConfig(config)`,
-`setSetting({key, value})` (all settings are global),
+`setSetting({key, value})` (all settings are global; `relicctl config [key [value]]`
+reads and sets them),
 `getRelicVersion`, `getEpicGamesStatus`, `get-connectivity-status`,
 `getSystemInfo`, `getLogContent` (see Logs below), and the helper versions `getLegendaryVersion`,
 `getGogdlVersion`, `getNileVersion`, `getCometVersion`. There are no
