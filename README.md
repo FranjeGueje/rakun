@@ -249,7 +249,8 @@ scripts/install.sh                # picks the tarball of this machine from dist/
 ```
 
 `pnpm package x64` (or `arm64`) builds just one. Each tarball carries only its own helper
-binaries and its own Node, so nothing else is needed on SteamOS. The installer
+binaries (legendary, gogdl and nile for Linux; the Windows `.exe` ones, `comet.exe` among
+them, run inside the prefix) and its own Node, so nothing else is needed on SteamOS. The installer
 puts it in `~/.local/opt/relicd` and links `~/.local/bin/relicd`. It creates **no
 service**; start it when you want it:
 

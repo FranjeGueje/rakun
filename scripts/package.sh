@@ -4,8 +4,9 @@
 #   relicd/node          Node runtime of that architecture (SteamOS does not ship one)
 #   relicd/relicd.cjs    the bundled daemon
 #   relicd/relicctl      launcher of the command line client (relicctl.cjs)
-#   relicd/public/bin/   helper binaries: <arch>/linux, x64/win32 (they run inside
-#                        Wine/Proton, so both architectures need them), umu and zoom
+#   relicd/public/bin/   helper binaries: legendary, gogdl and nile for <arch>/linux, the
+#                        x64/win32 ones (they run inside Wine/Proton, so both architectures
+#                        need them, comet.exe among them), umu and zoom
 #
 # Usage: scripts/package.sh [x64|arm64|all]      (default: all)
 #   RELICD_NODE_BINARY=/path/to/node   use this node instead of downloading it
@@ -37,6 +38,10 @@ fi
 # Node's own name for the architecture
 node_arch() { [ "$1" = x64 ] && echo x64 || echo arm64; }
 
+# The only native binaries that ship. public/bin is not tracked by git, so a leftover
+# of an old download (the native Comet, say) must not travel just because it is there.
+LINUX_HELPERS=(legendary gogdl nile)
+
 fetch_node() { # arch, stage
     if [ -n "${RELICD_NODE_BINARY:-}" ]; then
         cp "$RELICD_NODE_BINARY" "$2/node"
@@ -66,7 +71,14 @@ fetch_node() { # arch, stage
 }
 
 check_binaries() { # arch
-    for required in "public/bin/$1/linux/legendary" public/bin/x64/win32 public/bin/zoom/zoom-platform.sh; do
+    local helper
+    for helper in "${LINUX_HELPERS[@]}"; do
+        [ -e "public/bin/$1/linux/$helper" ] || {
+            echo "Error: missing public/bin/$1/linux/$helper. Run: pnpm download-helper-binaries" >&2
+            exit 1
+        }
+    done
+    for required in public/bin/x64/win32 public/bin/zoom/zoom-platform.sh; do
         [ -e "$required" ] || {
             echo "Error: missing $required. Run: pnpm download-helper-binaries" >&2
             exit 1
@@ -86,10 +98,13 @@ LAUNCHER
 }
 
 stage_package() { # arch, stage
-    local bin="$2/relicd/public/bin"
+    local helper bin="$2/relicd/public/bin"
     mkdir -p "$bin/$1"
     cp build/relicd.cjs build/relicctl.cjs "$2/relicd/"
-    cp -r "public/bin/$1/linux" "$bin/$1/"
+    mkdir -p "$bin/$1/linux"
+    for helper in "${LINUX_HELPERS[@]}"; do
+        cp "public/bin/$1/linux/$helper" "$bin/$1/linux/"
+    done
     cp -r public/bin/umu public/bin/zoom public/bin/legendary.LICENSE "$bin/"
     mkdir -p "$bin/x64"
     cp -r public/bin/x64/win32 "$bin/x64/"
