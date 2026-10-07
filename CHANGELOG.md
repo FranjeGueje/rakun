@@ -10,6 +10,7 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
 
 #### Añadido
 
+- `rakunctl update [tienda [appName]]`: sin argumentos actualiza todos los juegos instalados con versión nueva, con una tienda solo los de ella; un fallo no detiene el resto. Canal nuevo `getUpdateableGames`.
 - `rakunctl install-service` y `uninstall-service`: rakun como servicio de usuario de systemd (sin `DISPLAY`: los instaladores de Zoom no funcionan con él).
 - `AUTHORS` y una nota sobre el origen (Heroic → Relic → rakun); se conserva el historial de git.
 
@@ -28,6 +29,7 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
 
 #### Added
 
+- `rakunctl update [store [app]]`: with no arguments it updates every installed game that has a new version, with a store only that store's; a failure does not stop the rest. New channel `getUpdateableGames`.
 - `rakunctl install-service` and `uninstall-service`: rakun as a systemd user service (no `DISPLAY`: Zoom installers do not work with it).
 - `AUTHORS` and a note on the origin (Heroic → Relic → rakun); the git history is kept.
 

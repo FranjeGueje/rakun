@@ -35,7 +35,8 @@ export const HELP = `Uso: rakunctl <comando> [argumentos]
   library [tienda] [--installed]  lista la biblioteca
   refresh [tienda]                actualiza la biblioteca y espera
   install <tienda> <appName> [--path DIR] [--lang CODE] [--skip-dlcs]
-  update | repair | uninstall <tienda> <appName>
+  update [tienda [appName]]       actualiza un juego, los de una tienda o todos los que tengan versión nueva
+  repair | uninstall <tienda> <appName>
   queue [clear]                   cola de descargas (clear vacía las terminadas)
   pause | resume                  pausa o reanuda la cola
   cancel [--remove-files]         cancela la descarga actual

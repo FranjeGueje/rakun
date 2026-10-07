@@ -39,27 +39,28 @@ Con rakun instalado, `rakunctl` (o `node build/rakunctl.cjs` desde el
 repositorio) evita escribir el JSON a mano. Usa el mismo `api.json` y la misma
 variable `RAKUN_API_FILE`.
 
-| Quieres…                     | `rakunctl`                                                                 |
-| ---------------------------- | -------------------------------------------------------------------------- |
-| arrancar / parar rakun       | `rakunctl start` / `rakunctl stop [--force]`                               |
-| elegir web y puerto          | `rakunctl start --web local\|network\|off --port N` (o `config webAccess`) |
-| ver si está vivo y sesiones  | `rakunctl status` (dice «rakun parado» si no lo está)                      |
-| iniciar sesión               | `rakunctl login gog` (epic, gog, amazon, zoom)                             |
-| traer las sesiones de Relic  | `rakunctl import-relic`                                                    |
-| listar la biblioteca         | `rakunctl library [tienda] [--installed]`                                  |
-| refrescarla y esperar        | `rakunctl refresh [tienda]`                                                |
-| instalar                     | `rakunctl install gog <appName> [--path DIR] [--lang CODE] [--skip-dlcs]`  |
-| actualizar o reparar         | `rakunctl update` / `repair <tienda> <appName>`                            |
-| desinstalar                  | `rakunctl uninstall <tienda> <appName>`                                    |
-| ver la cola                  | `rakunctl queue`                                                           |
-| pausar / reanudar / cancelar | `rakunctl pause` / `resume` / `cancel [--remove-files]`                    |
-| vaciar la lista de acabadas  | `rakunctl queue clear`                                                     |
-| ver o cambiar ajustes        | `rakunctl config [clave [valor]]` (p. ej. `config protonPath RUTA`)        |
-| leer los registros           | `rakunctl logs [tienda [appName]] [--type install]`                        |
-| vaciar la caché              | `rakunctl cache clear [tienda]`                                            |
-| borrar sesiones y ajustes    | `rakunctl reset [--yes]` (detiene rakun; los juegos no se tocan)           |
-| seguir los eventos           | `rakunctl events`                                                          |
-| cualquier otro canal         | `rakunctl call <canal> '[args]'`                                           |
+| Quieres…                     | `rakunctl`                                                                                                                    |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| arrancar / parar rakun       | `rakunctl start` / `rakunctl stop [--force]`                                                                                  |
+| elegir web y puerto          | `rakunctl start --web local\|network\|off --port N` (o `config webAccess`)                                                    |
+| ver si está vivo y sesiones  | `rakunctl status` (dice «rakun parado» si no lo está)                                                                         |
+| iniciar sesión               | `rakunctl login gog` (epic, gog, amazon, zoom)                                                                                |
+| traer las sesiones de Relic  | `rakunctl import-relic`                                                                                                       |
+| listar la biblioteca         | `rakunctl library [tienda] [--installed]`                                                                                     |
+| refrescarla y esperar        | `rakunctl refresh [tienda]`                                                                                                   |
+| instalar                     | `rakunctl install gog <appName> [--path DIR] [--lang CODE] [--skip-dlcs]`                                                     |
+| actualizar                   | `rakunctl update [tienda [appName]]`: un juego, los de una tienda o todos los que tengan versión nueva (Zoom no se actualiza) |
+| reparar                      | `rakunctl repair <tienda> <appName>`                                                                                          |
+| desinstalar                  | `rakunctl uninstall <tienda> <appName>`                                                                                       |
+| ver la cola                  | `rakunctl queue`                                                                                                              |
+| pausar / reanudar / cancelar | `rakunctl pause` / `resume` / `cancel [--remove-files]`                                                                       |
+| vaciar la lista de acabadas  | `rakunctl queue clear`                                                                                                        |
+| ver o cambiar ajustes        | `rakunctl config [clave [valor]]` (p. ej. `config protonPath RUTA`)                                                           |
+| leer los registros           | `rakunctl logs [tienda [appName]] [--type install]`                                                                           |
+| vaciar la caché              | `rakunctl cache clear [tienda]`                                                                                               |
+| borrar sesiones y ajustes    | `rakunctl reset [--yes]` (detiene rakun; los juegos no se tocan)                                                              |
+| seguir los eventos           | `rakunctl events`                                                                                                             |
+| cualquier otro canal         | `rakunctl call <canal> '[args]'`                                                                                              |
 
 `install`, `update`, `repair` y `uninstall` esperan a que acabe y devuelven un
 código distinto de 0 si falla (`--no-wait` para no esperar). `--json` da la

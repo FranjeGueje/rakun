@@ -92,7 +92,7 @@ ends, `refreshLibrary` fires on `/events` with the store name: call
 now. Logging in refreshes that store by itself.
 `getGameInfo(appName, runner)`, `getExtraInfo`, `getInstallInfo(appName,
 runner, platform, build?, branch?)`, `isGameAvailable`, `isNative`,
-`checkGameUpdates` (nothing runs by itself: a client calls it; with `autoUpdateGames` it queues the updates), `checkDiskSpace(folder)`, `getKnownFixes`.
+`checkGameUpdates` (nothing runs by itself: a client calls it; with `autoUpdateGames` it queues the updates), `getUpdateableGames` (`{ runner, appName }[]` of the installed games with a newer version; it queues nothing and Zoom never lists any), `checkDiskSpace(folder)`, `getKnownFixes`.
 
 **Install, update, repair, uninstall:** `install(InstallParams)` (answers `500` `already installed: use repair or update` if the game is installed; `installDlcs` omitted installs every DLC, `[]` none, and
 a list only those on GOG; Epic cannot pick, so any non-empty list means all) and

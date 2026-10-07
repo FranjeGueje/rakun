@@ -65,7 +65,8 @@ The API (connection, channels, login flow and events) is documented in [API.md](
 | `import-relic`                                 | copy the sessions of Relic (`~/.config/relic`)                       |
 | `library [store] [--installed]`, `refresh`     | list the library / refresh it and wait                               |
 | `install <store> <app> [--path] [--lang]`      | install (every DLC unless `--skip-dlcs`); waits unless `--no-wait`   |
-| `update`, `repair`, `uninstall <store> <app>`  | the same, one game                                                   |
+| `update [store [app]]`                         | update one game, a store's games, or every game with a new version   |
+| `repair`, `uninstall <store> <app>`            | the same, one game                                                   |
 | `queue [clear]`, `pause`, `resume`, `cancel`   | download queue (`cancel --remove-files` deletes what was fetched)    |
 | `config [key [value]]`                         | list, read or change the global settings                             |
 | `logs [store [app]] [--type T]`                | rakun's log, a store's or one game's                                 |

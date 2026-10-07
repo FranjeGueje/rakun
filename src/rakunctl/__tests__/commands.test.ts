@@ -365,6 +365,99 @@ describe('game commands', () => {
     ])
   })
 
+  describe('update without a game', () => {
+    const titles: Record<string, GameInfo> = {
+      e1: game({ app_name: 'e1', runner: 'legendary', title: 'Epic One' }),
+      g1: game({ app_name: 'g1', title: 'Game One' }),
+      g2: game({ app_name: 'g2', title: 'Game Two' })
+    }
+    const replies = (queued: string[] = []) => ({
+      getUpdateableGames: [
+        { runner: 'legendary', appName: 'e1' },
+        { runner: 'gog', appName: 'g1' },
+        { runner: 'gog', appName: 'g2' }
+      ],
+      getDMQueueInformation: {
+        elements: queued.map((appName) => ({ params: { appName } })),
+        finished: []
+      },
+      getGameInfo: (appName: string) => titles[appName]
+    })
+    const done = [
+      update1('done', 'e1'),
+      update1('done', 'g1'),
+      update1('done', 'g2')
+    ]
+    const updated = (calls: [string, unknown[]][]) =>
+      calls
+        .filter(([channel]) => channel === 'updateGame')
+        .map(([, [params]]) => (params as { appName: string }).appName)
+
+    test('every store when there is no argument', async () => {
+      const { ctx, calls, lines } = fakeCtx(replies(), done)
+
+      await update(ctx, [], opts)
+
+      expect(updated(calls)).toEqual(['e1', 'g1', 'g2'])
+      expect(lines).toContain('Actualizando Epic One (1/3)')
+      expect(lines).toContain('Actualizando Game Two (3/3)')
+    })
+
+    test('only the store that is named', async () => {
+      const { ctx, calls } = fakeCtx(replies(), done)
+
+      await update(ctx, ['gog'], opts)
+
+      expect(updated(calls)).toEqual(['g1', 'g2'])
+    })
+
+    test('skips what is already in the queue', async () => {
+      const { ctx, calls } = fakeCtx(replies(['g1']), done)
+
+      await update(ctx, [], opts)
+
+      expect(updated(calls)).toEqual(['e1', 'g2'])
+    })
+
+    test('says so when everything is up to date', async () => {
+      const { ctx, calls, lines } = fakeCtx(
+        { ...replies(), getUpdateableGames: [] },
+        done
+      )
+
+      await update(ctx, [], opts)
+
+      expect(lines).toEqual(['Todo está al día'])
+      expect(updated(calls)).toEqual([])
+    })
+
+    test('a store that does not exist is an error', async () => {
+      const { ctx } = fakeCtx(replies(), done)
+      await expect(update(ctx, ['steam'], opts)).rejects.toThrow(/epic, gog/)
+    })
+
+    test('a failure does not stop the rest and is reported at the end', async () => {
+      const { ctx, calls } = fakeCtx(replies(), [
+        update1('error', 'e1'),
+        update1('done', 'g1'),
+        update1('done', 'g2')
+      ])
+
+      await expect(update(ctx, [], opts)).rejects.toThrow(
+        /1 de 3 han fallado:\n- e1: Terminó con estado "error"/
+      )
+      expect(updated(calls)).toEqual(['e1', 'g1', 'g2'])
+    })
+
+    test('--no-wait queues them all without following the events', async () => {
+      const { ctx, calls } = fakeCtx(replies())
+
+      await update(ctx, [], { ...opts, wait: false })
+
+      expect(updated(calls)).toEqual(['e1', 'g1', 'g2'])
+    })
+  })
+
   test('repair and uninstall use the runner name', async () => {
     const repaired = fakeCtx({}, [update1('done')])
     await repair(repaired.ctx, ['amazon', 'g1'], opts)

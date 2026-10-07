@@ -24,7 +24,11 @@ export function fakeCtx(
     health: () => Promise.resolve({ status: 'ok', version: '1.2.3', web }),
     call: <T>(channel: string, ...args: unknown[]) => {
       calls.push([channel, args])
-      return Promise.resolve(replies[channel] as T)
+      const reply = replies[channel]
+      // A function answers according to the arguments of the call
+      return Promise.resolve(
+        (typeof reply === 'function' ? reply(...args) : reply) as T
+      )
     },
     events: () =>
       Promise.resolve(

@@ -25,6 +25,7 @@ import type { AccountsStatus, SessionsImport } from 'common/rakun/accounts'
 import type { FolderListing } from 'common/rakun/folders'
 import type { LoginInfo, LoginResult } from 'common/rakun/login'
 import type { StoreInfo } from 'common/rakun/stores'
+import type { UpdateableGame } from 'common/rakun/updates'
 import type { GetLogFileArgs } from 'backend/logger/paths'
 
 // ts-prune-ignore-next
@@ -51,6 +52,7 @@ interface AsyncIPCFunctions {
   kill: (appName: string, runner: Runner) => Promise<void>
   checkDiskSpace: (folder: string) => Promise<DiskSpaceData>
   checkGameUpdates: () => Promise<string[]>
+  getUpdateableGames: () => Promise<UpdateableGame[]>
   getEpicGamesStatus: () => Promise<boolean>
   getRakunVersion: () => string
   getLegendaryVersion: () => Promise<string>

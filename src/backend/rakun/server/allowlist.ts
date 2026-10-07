@@ -15,6 +15,7 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   'isGameAvailable',
   'isNative',
   'checkGameUpdates',
+  'getUpdateableGames',
   'checkDiskSpace',
   'getKnownFixes',
   // Install, update, repair, uninstall

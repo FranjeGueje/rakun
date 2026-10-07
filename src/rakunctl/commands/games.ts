@@ -6,6 +6,7 @@ import type {
   Runner,
   UpdateParams
 } from 'common/types'
+import type { UpdateableGame } from 'common/rakun/updates'
 import type { ApiEvent } from '../client'
 import { CliError } from '../client'
 import { progressLine, statusLine } from '../format'
@@ -134,17 +135,57 @@ export const install: Command = async (ctx, args, opts) => {
   )
 }
 
-export const update: Command = async (ctx, args, opts) => {
-  const [runner, appName] = await gameArgs(ctx, args)
-  const gameInfo = await loadGame(ctx, appName, runner)
+async function updateGame(ctx: Ctx, gameInfo: GameInfo, wait: boolean) {
+  const { app_name: appName, runner } = gameInfo
   const params: UpdateParams = { appName, runner, gameInfo }
-  await run(
-    ctx,
-    appName,
-    opts.wait,
-    () => ctx.api.call('updateGame', params),
-    true
+  await run(ctx, appName, wait, () => ctx.api.call('updateGame', params), true)
+}
+
+/** The installed games with a newer version, of one store or of all, that are not already queued */
+export async function pendingUpdates(
+  ctx: Ctx,
+  runner?: Runner
+): Promise<UpdateableGame[]> {
+  const updateable = await ctx.api.call<UpdateableGame[]>('getUpdateableGames')
+  const { elements } = await ctx.api.call<{ elements: DMQueueElement[] }>(
+    'getDMQueueInformation'
   )
+  const queued = new Set(elements.map((element) => element.params.appName))
+  return updateable.filter(
+    (game) => (!runner || game.runner === runner) && !queued.has(game.appName)
+  )
+}
+
+/** One at a time (the queue is sequential anyway); a failure does not stop the rest */
+async function updateAll(ctx: Ctx, runner: Runner | undefined, wait: boolean) {
+  const pending = await pendingUpdates(ctx, runner)
+  if (!pending.length) return ctx.log('Todo está al día')
+  const failures: string[] = []
+  for (const [index, { appName, runner: owner }] of pending.entries()) {
+    try {
+      const game = await loadGame(ctx, appName, owner)
+      ctx.log(`Actualizando ${game.title} (${index + 1}/${pending.length})`)
+      await updateGame(ctx, game, wait)
+    } catch (error) {
+      failures.push(`${appName}: ${(error as Error).message}`)
+    }
+  }
+  if (failures.length)
+    throw new CliError(
+      `${failures.length} de ${pending.length} han fallado:\n- ${failures.join('\n- ')}`
+    )
+}
+
+/** `update`: one game, every game of a store, or every game with an update */
+export const update: Command = async (ctx, args, opts) => {
+  if (args[1]) {
+    const [runner, appName] = await gameArgs(ctx, args)
+    return updateGame(ctx, await loadGame(ctx, appName, runner), opts.wait)
+  }
+  const runner = args[0]
+    ? parseStore(await ctx.stores(), args[0]).id
+    : undefined
+  await updateAll(ctx, runner, opts.wait)
 }
 
 export const repair: Command = async (ctx, args, opts) => {
