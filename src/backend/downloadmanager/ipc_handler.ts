@@ -9,9 +9,17 @@ import {
   resumeCurrentDownload
 } from './downloadqueue'
 
-import type { DMQueueElement } from 'common/types'
+import { libraryManagerMap } from 'backend/storeManagers'
+import type { DMQueueElement, InstallParams } from 'common/types'
+
+/** Installing over an installed game would download it all again and nothing else */
+function refuseIfInstalled({ appName, runner }: InstallParams) {
+  if (libraryManagerMap[runner].getGameInfo(appName)?.is_installed)
+    throw new Error('already installed: use repair or update')
+}
 
 addHandler('install', async (_e, args) => {
+  refuseIfInstalled(args)
   const dmQueueElement: DMQueueElement = {
     params: args,
     type: 'install',

@@ -318,6 +318,18 @@ describe('game commands', () => {
     )
   })
 
+  test('an installed game is refused before asking relicd to install it', async () => {
+    const { ctx, calls } = fakeCtx({
+      getGameInfo: game({ is_installed: true }),
+      requestAppSettings: { defaultInstallPath: '/g' }
+    })
+
+    await expect(install(ctx, ['gog', 'g1'], opts)).rejects.toThrow(
+      'Game One ya está instalado: usa repair o update'
+    )
+    expect(calls.map(([channel]) => channel)).not.toContain('install')
+  })
+
   test('a game that ends in error fails the command', async () => {
     const { ctx } = fakeCtx(
       { getGameInfo: game(), requestAppSettings: { defaultInstallPath: '/g' } },

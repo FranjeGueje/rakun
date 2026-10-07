@@ -121,6 +121,10 @@ async function gameArgs(ctx: Ctx, args: string[]): Promise<[Runner, string]> {
 export const install: Command = async (ctx, args, opts) => {
   const [runner, appName] = await gameArgs(ctx, args)
   const params = await installParams(ctx, appName, runner, opts)
+  if (params.gameInfo.is_installed)
+    throw new CliError(
+      `${params.gameInfo.title} ya está instalado: usa repair o update`
+    )
   await run(
     ctx,
     appName,

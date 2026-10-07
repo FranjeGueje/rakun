@@ -51,7 +51,7 @@ now. Logging in refreshes that store by itself.
 runner, platform, build?, branch?)`, `isGameAvailable`, `isNative`,
 `checkGameUpdates` (nothing runs by itself: a client calls it; with `autoUpdateGames` it queues the updates), `checkDiskSpace(folder)`, `getKnownFixes`.
 
-**Install, update, repair, uninstall:** `install(InstallParams)` (`installDlcs` omitted installs every DLC, `[]` none, and
+**Install, update, repair, uninstall:** `install(InstallParams)` (answers `500` `already installed: use repair or update` if the game is installed; `installDlcs` omitted installs every DLC, `[]` none, and
 a list only those on GOG; Epic cannot pick, so any non-empty list means all) and
 `updateGame(InstallParams)` put the game in the download queue; when the
 install finishes relicd runs the Steam integration (see README) and the game

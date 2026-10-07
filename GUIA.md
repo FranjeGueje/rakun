@@ -62,7 +62,7 @@ variable `RELICD_API_FILE`.
 código distinto de 0 si falla (`--no-wait` para no esperar). `--json` da la
 salida para scripts. `-s` delante de cualquier comando que termine (no vale con
 `events` ni con `--no-wait`) arranca relicd si estaba parado y lo para al
-acabar; si ya estaba arrancado, no lo toca. `uninstall` borra los ficheros del juego. `--lang` elige el
+acabar; si ya estaba arrancado, no lo toca. `install` de un juego ya instalado se rechaza («ya está instalado: usa repair o update»). `uninstall` borra los ficheros del juego. `--lang` elige el
 idioma de la instalación (en GOG, `en-US` si no se indica). Por defecto se
 instalan los DLC; `--skip-dlcs` los omite.
 
