@@ -21,34 +21,62 @@ import { ServeDeps, serveDir, processAlive, withServe } from './serve'
 import { config } from './commands/config'
 import { installService, uninstallService } from './commands/systemd'
 
-export const HELP = `Uso: rakunctl <comando> [argumentos]
+export const HELP = `Uso: rakunctl [opciones] <comando> [argumentos]
 
-  start | stop [--force]          arranca o para rakun (no hace falta systemd)
-  start [--web local|network|off] [--port N]
-                                  quién abre la web (por defecto el ajuste webAccess) y el puerto
-  install-service [--web local|network|off] [--port N] | uninstall-service
-                                  rakun como servicio de usuario de systemd (arranca al iniciar sesión)
-  status                          estado de rakun, sesiones y cola
-  login <tienda>                  inicia sesión
-  logout <tienda>
-  import-relic                    copia las sesiones de Relic
-  library [tienda] [--installed]  lista la biblioteca
-  refresh [tienda]                actualiza la biblioteca y espera
+Servicio
+  start [--web MODO] [--port N]     Arranca rakun en segundo plano
+  stop [--force]                    Lo para (--force: aunque esté descargando)
+  status                            Estado de rakun, sesiones y cola
+  install-service [--web MODO] [--port N]
+                                    Lo instala como servicio de usuario de
+                                    systemd (arranca al iniciar sesión)
+  uninstall-service                 Quita el servicio y para rakun
+
+Cuentas
+  login <tienda>                    Inicia sesión
+  logout <tienda>                   Cierra la sesión
+  import-relic                      Copia las sesiones de Relic
+
+Biblioteca
+  library [tienda] [--installed]    Lista los juegos
+  refresh [tienda]                  Actualiza la biblioteca y espera
+
+Juegos
   install <tienda> <appName> [--path DIR] [--lang CODE] [--skip-dlcs]
-  update [tienda [appName]]       actualiza un juego, los de una tienda o todos los que tengan versión nueva
-  repair | uninstall <tienda> <appName>
-  queue [clear]                   cola de descargas (clear vacía las terminadas)
-  pause | resume                  pausa o reanuda la cola
-  cancel [--remove-files]         cancela la descarga actual
-  logs [tienda [appName]] [--type T]  registro de rakun, de una tienda o de un juego
-  cache clear [tienda]            vacía la caché de las bibliotecas
-  reset [--yes]                   borra sesiones y ajustes y detiene rakun
-  config [clave [valor]]          ver o cambiar ajustes (p. ej. defaultInstallPath)
-  events                          sigue los eventos de rakun
-  call <canal> [json]             llama a un canal de la API
+                                    Instala un juego
+  update [tienda [appName]]         Actualiza un juego, los de una tienda o
+                                    todos los que tengan versión nueva
+  repair <tienda> <appName>         Repara un juego
+  uninstall <tienda> <appName>      Desinstala un juego y borra sus archivos
 
-Opciones: --json (salida para scripts), --no-wait (no esperar a que termine),
-  -s (si rakun está parado, lo arranca para este comando y lo para al acabar)
+Cola de descargas
+  queue [clear]                     Muestra la cola (clear: vacía las
+                                    terminadas)
+  pause | resume                    Pausa o reanuda la cola
+  cancel [--remove-files]           Cancela la descarga actual
+
+Mantenimiento
+  config [clave [valor]]            Muestra o cambia ajustes (p. ej.
+                                    defaultInstallPath)
+  logs [tienda [appName]] [--type T]
+                                    Muestra el registro de rakun, de una tienda
+                                    o de un juego
+  cache clear [tienda]              Vacía la caché de las bibliotecas
+  reset [--yes]                     Borra sesiones y ajustes y para rakun
+
+Avanzado
+  events                            Sigue los eventos de rakun
+  call <canal> [json]               Llama a un canal de la API
+
+Opciones
+  --json            Salida para scripts
+  --no-wait         No espera a que termine lo que se encola
+  -s                Si rakun está parado, lo arranca solo para este comando y lo
+                    para al acabar
+  -h, --help        Esta ayuda
+
+MODO de --web: local (solo este equipo), network (toda la red, SIN protección) u
+off. Sin él se usa el ajuste webAccess.
 Las tiendas son las que informa rakun (rakunctl call getStores).
 Variable: RAKUN_API_FILE (api.json de otro rakun)`
 
