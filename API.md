@@ -1,16 +1,16 @@
-# relicd API
+# rakun API
 
-relicd is a local service. Clients (relicd's own web, the Invasor module, `relicctl`, `scripts/smoke.sh`) talk
+rakun is a local service. Clients (rakun's own web, the Invasor module, `rakunctl`, `scripts/smoke.sh`) talk
 to it over HTTP on the loopback address. Channels and payloads are the ones
 typed in `src/common/types/ipc.ts` (`AsyncIPCFunctions`, `SyncIPCFunctions`,
 `FrontendMessages`); the channels reachable over HTTP are listed in
-`src/backend/relic/server/allowlist.ts`.
+`src/backend/rakun/server/allowlist.ts`.
 
 ## Connecting
 
-`~/.config/relicd/api.json` (mode 0600) holds `{"port": 17370, "token": "…"}`.
+`~/.config/rakun/api.json` (mode 0600) holds `{"port": 17370, "token": "…"}`.
 The token is generated once and survives restarts. The port is the one in
-`api.json`; `RELICD_PORT` or `relicd --port=<n>` change it (and it is saved there).
+`api.json`; `RAKUN_PORT` or `rakun --port=<n>` change it (and it is saved there).
 The server listens on `127.0.0.1` unless the web is opened to the network (see below).
 
 | Request               | Needs token | Purpose                                       |
@@ -19,19 +19,19 @@ The server listens on `127.0.0.1` unless the web is opened to the network (see b
 | `POST /api/<channel>` | yes         | call a channel                                |
 | `GET /events`         | yes         | Server-Sent Events stream                     |
 
-The token goes in the `x-relicd-token` header. If nothing answers on the port,
-relicd is stopped: start it (`relicctl start`, or run `relicd`) and read `api.json`
+The token goes in the `x-rakun-token` header. If nothing answers on the port,
+rakun is stopped: start it (`rakunctl start`, or run `rakun`) and read `api.json`
 after it answers `/health`. A `Host` that is not one of this machine's (`127.0.0.1:<port>`,
 `localhost:<port>`, and in `network` mode its addresses and name) gets `403`, and so does
-an `Origin` header (a browser) that is not the page relicd itself served (`http://<Host>`).
+an `Origin` header (a browser) that is not the page rakun itself served (`http://<Host>`).
 
 ## The web
 
-relicd's own web (`web/` in the repository, built by `pnpm build` into `build/web` and
-shipped as `web/` next to `relicd.cjs`; `RELICD_WEB_DIR` points to another folder)
+rakun's own web (`web/` in the repository, built by `pnpm build` into `build/web` and
+shipped as `web/` next to `rakun.cjs`; `RAKUN_WEB_DIR` points to another folder)
 is served by `GET /`: open `http://127.0.0.1:17370` in a browser on this machine.
 The files need no token. `index.html` comes with the token inside
-(`<meta name="relicd-token" content="…">`) and the web mode (`<meta name="relicd-web">`),
+(`<meta name="rakun-token" content="…">`) and the web mode (`<meta name="rakun-web">`),
 and the page sends the token like any other client; another web cannot read it (it is
 refused by `Origin` and `Host`). Without that folder these paths answer `404`/`401` and
 everything else works the same. The web logs in by pasting (see the login below); a
@@ -45,26 +45,26 @@ browser cannot watch the page of a store.
 | `network`             | `0.0.0.0`   | yes, for anyone who can reach it | this machine only |
 | `off`                 | `127.0.0.1` | no (no page is served)           | this machine      |
 
-`off` keeps the API on this machine: `relicctl`, `start`/`stop` and the clients need it.
-Choose with `relicd --web=<mode> --port=<n>` (`relicctl start` forwards both), with
-`RELICD_WEB`, or with the saved setting `webAccess` (`relicctl config webAccess network`),
-in that order of priority. It takes effect when relicd starts; an invalid value stops it
+`off` keeps the API on this machine: `rakunctl`, `start`/`stop` and the clients need it.
+Choose with `rakun --web=<mode> --port=<n>` (`rakunctl start` forwards both), with
+`RAKUN_WEB`, or with the saved setting `webAccess` (`rakunctl config webAccess network`),
+in that order of priority. It takes effect when rakun starts; an invalid value stops it
 with the reason in the log.
 
 **`network` has no protection.** The page carries the token for whoever loads it, so
-anyone who can reach the machine controls relicd. It is for experimental or home use on a
+anyone who can reach the machine controls rakun. It is for experimental or home use on a
 network you trust, over plain HTTP. What it still does: it only accepts a `Host` that is the
-machine's own address or name (so a web on the internet cannot reach relicd through the
-visitor's browser: DNS rebinding), and `writeConfig`, `setSetting`, `resetRelic`,
-`stopRelicd`, `steamgriddb.setApiKey`, `importSessionsFromRelic`, `getPrivateBranchPassword`,
+machine's own address or name (so a web on the internet cannot reach rakun through the
+visitor's browser: DNS rebinding), and `writeConfig`, `setSetting`, `resetRakun`,
+`stopRakun`, `steamgriddb.setApiKey`, `importSessionsFromRelic`, `getPrivateBranchPassword`,
 `setPrivateBranchPassword`, `getLogContent`, `listFolders`, `importGame`, `moveInstall` and
 `changeInstallPath` answer `403` to anything that is not this machine (an `altLegendaryBin`
-setting makes relicd run that program; the others read secrets or walk the disk). The error is
-`"<channel>" can only be called from the machine relicd runs on: open the web there as
+setting makes rakun run that program; the others read secrets or walk the disk). The error is
+`"<channel>" can only be called from the machine rakun runs on: open the web there as
 http://127.0.0.1:<port>`; being on this machine but using its LAN address counts as remote.
 `install` with a `path` stays open: it is how the web installs, so anyone who can reach the
 port can write a game's files in any folder you can write to. A reverse proxy installed on this machine would make visits from outside look
-local, so do not put one in front. Warnings: the log at startup, `relicctl start` and
+local, so do not put one in front. Warnings: the log at startup, `rakunctl start` and
 `status`, a small banner in the web, and `/health` reports `"web":"network"`.
 
 ## Calling a channel
@@ -97,7 +97,7 @@ runner, platform, build?, branch?)`, `isGameAvailable`, `isNative`,
 **Install, update, repair, uninstall:** `install(InstallParams)` (answers `500` `already installed: use repair or update` if the game is installed; `installDlcs` omitted installs every DLC, `[]` none, and
 a list only those on GOG; Epic cannot pick, so any non-empty list means all) and
 `updateGame(InstallParams)` put the game in the download queue; when the
-install finishes relicd runs the Steam integration (see README) and the game
+install finishes rakun runs the Steam integration (see README) and the game
 shows up in Steam. `uninstall(appName, runner, removePrefix)`,
 `repair(appName, runner)`, `kill(appName, runner)`, `moveInstall`,
 `importGame`, `changeInstallPath`, `changeGameVersionPinnedStatus`.
@@ -108,10 +108,10 @@ or update with that `branch`.
 **Download queue:** `getDMQueueInformation` → `{elements, finished, state}`,
 `pauseCurrentDownload`, `resumeCurrentDownload`, `cancelDownload`,
 `removeFromDMQueue`, `clearFinishedDMQueue` (empties the `finished` list; installed
-games stay). `relicctl pause`, `resume`, `cancel [--remove-files]` and
+games stay). `rakunctl pause`, `resume`, `cancel [--remove-files]` and
 `queue clear` wrap them.
 
-**Accounts:** `getStores` → `[{id, name, label}]` (the stores relicd supports, in
+**Accounts:** `getStores` → `[{id, name, label}]` (the stores rakun supports, in
 the order to show them; `id` is the `runner` every channel takes, `name` the
 short name to type or show, e.g. `epic` for `legendary`). `getAccounts` →
 `{<id>: {loggedIn, name?}}` from what is stored locally (no network),
@@ -124,26 +124,26 @@ at the root. `path` has to be absolute; one that cannot be read answers `500`
 with the reason. It is for a client that lets the user pick a folder.
 
 `importSessionsFromRelic` (no arguments) copies the store sessions from
-`~/.config/relic` once and never overwrites a session relicd already has. It
+`~/.config/relic` once and never overwrites a session rakun already has. It
 returns `{<id>: result}`, each `imported`, `already`, `missing`
 (Relic has none) or `invalid` (the store rejected it, or no connection to check;
 nothing is kept). Installed games are not imported. The copy shares the refresh
 token, so the store may end the session in Relic.
 
 **Artwork:** `steamgriddb.hasApiKey` → boolean and `steamgriddb.setApiKey(key)`.
-Without a SteamGridDB key relicd skips the grid images when it adds a game to
+Without a SteamGridDB key rakun skips the grid images when it adds a game to
 Steam (it is stored in `config.json`, so a game installed before setting it has
 to be reinstalled to get them).
 
 **Settings:** `requestAppSettings` returns them all; `setSetting({key, value})`
-changes one and `writeConfig(partial)` several. They are global (relicd does not
+changes one and `writeConfig(partial)` several. They are global (rakun does not
 launch games, so there are no per-game settings) and **validated**: an unknown
 key, a value of another type or one that breaks its rule answers `500` with the
-reason and saves nothing. `relicctl config [key [value]]` wraps them.
+reason and saves nothing. `rakunctl config [key [value]]` wraps them.
 
 | Key                                            | Rule                                                                         |
 | ---------------------------------------------- | ---------------------------------------------------------------------------- |
-| `defaultInstallPath`                           | absolute path (default `~/Games/Relicd`)                                     |
+| `defaultInstallPath`                           | absolute path (default `~/Games/Rakun`)                                      |
 | `protonPath`                                   | empty, or a folder with the `proton` script (default: first GE-Proton found) |
 | `maxWorkers`                                   | integer from 0 (automatic) to `getMaxCpus`                                   |
 | `language`                                     | one of the supported codes; takes effect at once (GOG default language)      |
@@ -151,34 +151,34 @@ reason and saves nothing. `relicctl config [key [value]]` wraps them.
 | `steamGridDbApiKey`                            | text (also `steamgriddb.setApiKey`)                                          |
 | `defaultSteamPath`                             | Steam folder (default `~/.steam/steam`)                                      |
 | `altLegendaryBin`, `altGogdlBin`, `altNileBin` | empty, or an existing file                                                   |
-| `webAccess`                                    | `local`, `network` or `off`: who can open the web (read when relicd starts)  |
+| `webAccess`                                    | `local`, `network` or `off`: who can open the web (read when rakun starts)   |
 
 **Maintenance:** `clearCache(library?)` empties the library caches (all stores or
-one; `relicctl cache clear [store]`). `resetRelic` forgets sessions, settings,
+one; `rakunctl cache clear [store]`). `resetRakun` forgets sessions, settings,
 the queue and per-game data, keeps installed games and `api.json`, and then
-relicd stops (`relicctl reset`). `stopRelicd` answers and stops relicd a second
-later (`relicctl stop`); relicd has to be started again by the client
-(`relicctl start`) unless a service manager does it.
+rakun stops (`rakunctl reset`). `stopRakun` answers and stops rakun a second
+later (`rakunctl stop`); rakun has to be started again by the client
+(`rakunctl start`) unless a service manager does it.
 
-**Status:** `getRelicVersion`, `getEpicGamesStatus`, `get-connectivity-status`
-and `set-connectivity-online` (tell relicd the network is back instead of
+**Status:** `getRakunVersion`, `getEpicGamesStatus`, `get-connectivity-status`
+and `set-connectivity-online` (tell rakun the network is back instead of
 waiting for its next check), `getSystemInfo`, `getLogContent` (see Logs below;
-`relicctl logs`) and the helper versions `getLegendaryVersion`,
+`rakunctl logs`) and the helper versions `getLegendaryVersion`,
 `getGogdlVersion`, `getNileVersion`. `getGOGLinuxInstallersLangs(appName)` lists
 the languages of a GOG Linux installer. `getMaxCpus` returns the number of CPUs.
 
 Zoom Platform's Windows installers (experimental) open a window through Proton:
-relicd needs a `DISPLAY` for them (desktop mode, not game mode) and `protonPath` set,
+rakun needs a `DISPLAY` for them (desktop mode, not game mode) and `protonPath` set,
 or the install ends in error. It checks the screen before downloading anything.
 A queue entry that ends in `error` carries the reason in its `error` field (in
-`getDMQueueInformation().finished`); `relicctl install` prints it.
+`getDMQueueInformation().finished`); `rakunctl install` prints it.
 
-relicd has no translations: the text of its messages and of `showDialog` is in English.
+rakun has no translations: the text of its messages and of `showDialog` is in English.
 
 ## Logs
 
 `getLogContent(args)` returns the text of a log file, or `""` when it does not
-exist or `args` is not valid. `{}` is relicd's own log, `{runner}` (`legendary`,
+exist or `args` is not valid. `{}` is rakun's own log, `{runner}` (`legendary`,
 `gog`, `nile`, `zoom`) is that store's helper, and `{appName, runner,
 type}` is one game's log (`type`: `install`, `import`, `repair`, `update`,
 `setup`; `launch` by default). Names must be plain: anything with a path

@@ -1,18 +1,18 @@
-import type { ConnectionState, RelicdEvent } from './channels'
+import type { ConnectionState, RakunEvent } from './channels'
 import { parseSseBlock, splitBlocks } from './sse'
 
 type Fetch = typeof fetch
 
 /**
- * The event stream of relicd in a browser. `EventSource` cannot send the token
+ * The event stream of rakun in a browser. `EventSource` cannot send the token
  * header, so it is read with `fetch`. It
- * reconnects on its own and says whether relicd answers.
+ * reconnects on its own and says whether rakun answers.
  */
 export class WebLink {
   private state: ConnectionState = 'connecting'
   private running = false
   private attempt = 0
-  private readonly eventListeners = new Set<(event: RelicdEvent) => void>()
+  private readonly eventListeners = new Set<(event: RakunEvent) => void>()
   private readonly stateListeners = new Set<(state: ConnectionState) => void>()
 
   constructor(
@@ -27,7 +27,7 @@ export class WebLink {
     return this.state
   }
 
-  onEvent(listener: (event: RelicdEvent) => void): () => void {
+  onEvent(listener: (event: RakunEvent) => void): () => void {
     this.eventListeners.add(listener)
     return () => this.eventListeners.delete(listener)
   }
@@ -58,7 +58,7 @@ export class WebLink {
       try {
         await this.follow()
       } catch {
-        // relicd stopped or does not answer: the same as the stream ending
+        // rakun stopped or does not answer: the same as the stream ending
       }
       this.setState('offline')
       const last = this.retryDelays.length - 1
@@ -70,7 +70,7 @@ export class WebLink {
   /** Reads the stream until it ends */
   private async follow(): Promise<void> {
     const res = await this.fetchFn('/events', {
-      headers: { 'x-relicd-token': this.token }
+      headers: { 'x-rakun-token': this.token }
     })
     if (!res.ok || !res.body) return
     this.attempt = 0
@@ -91,7 +91,7 @@ export class WebLink {
   }
 
   private dispatch(block: string): void {
-    let event: RelicdEvent | undefined
+    let event: RakunEvent | undefined
     try {
       event = parseSseBlock(block)
     } catch {

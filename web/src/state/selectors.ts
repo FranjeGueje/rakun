@@ -35,7 +35,7 @@ export function visibleGames(games: GameInfo[], filters: Filters): GameInfo[] {
     })
 }
 
-/** The stores that have games, in the order relicd lists them */
+/** The stores that have games, in the order rakun lists them */
 export function storesWithGames(
   games: GameInfo[],
   stores: StoreInfo[]
@@ -104,7 +104,7 @@ export function actionsFor(
     : ['repair', 'uninstall']
 }
 
-/** Same rule as `relicctl`: a native Linux game gets its Linux build */
+/** Same rule as `rakunctl`: a native Linux game gets its Linux build */
 export function platformFor(game: GameInfo): InstallPlatform {
   if (game.is_linux_native) return 'linux'
   return game.runner === 'gog' || game.runner === 'zoom' ? 'windows' : 'Windows'

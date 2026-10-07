@@ -3,8 +3,8 @@ import { homedir } from 'os'
 import { isAbsolute, join, resolve } from 'path'
 import { env } from 'process'
 
-// relicd is a fork of Relic and must not share any data with it
-const appName = 'relicd'
+// rakun is a fork of Relic and must not share any data with it
+const appName = 'rakun'
 
 // Mirrors Electron's `app.getPath('appData')` on Linux: XDG_CONFIG_HOME when it
 // holds an absolute path (relative values are ignored per the XDG spec),
@@ -37,24 +37,24 @@ export const appFolder = join(configFolder, appName)
 export const userDataPath = join(appDataPath, appName)
 export const toolsPath = join(appFolder, 'tools')
 export const configPath = join(appFolder, 'config.json')
-export const relicIconFolder = join(appFolder, 'icons')
-export const relicInstallPath = join(userHome, 'Games', 'Relicd')
+export const rakunIconFolder = join(appFolder, 'icons')
+export const rakunInstallPath = join(userHome, 'Games', 'Rakun')
 export const fixesPath = join(appFolder, 'fixes')
-export const relicRunnerPath = join(
+export const rakunRunnerPath = join(
   userHome,
   '.local',
   'share',
   appName,
   'runner'
 )
-export const relicMountPath = join(
+export const rakunMountPath = join(
   userHome,
   '.local',
   'share',
   appName,
   'mount'
 )
-export const relicGamesPath = join(
+export const rakunGamesPath = join(
   userHome,
   '.local',
   'share',
@@ -69,8 +69,8 @@ export const steamCompatDir = join(
   'compatibilitytools.d'
 )
 
-// A release keeps `public` next to the bundle (relicd/relicd.cjs and
-// relicd/public); a source checkout runs build/relicd.cjs with `public` one
+// A release keeps `public` next to the bundle (rakun/rakun.cjs and
+// rakun/public); a source checkout runs build/rakun.cjs with `public` one
 // level up.
 const bundledPublicDir = join(__dirname, 'public')
 export const publicDir = existsSync(bundledPublicDir)

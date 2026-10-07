@@ -66,14 +66,14 @@ describe('initQueue', () => {
     store['finished'] = []
     jest
       .mocked(installQueueElement)
-      .mockResolvedValue({ status: 'error', error: 'relicd has no screen' })
+      .mockResolvedValue({ status: 'error', error: 'rakun has no screen' })
 
     await initQueue()
 
     expect(store['finished']).toEqual([
       expect.objectContaining({
         status: 'error',
-        error: 'relicd has no screen'
+        error: 'rakun has no screen'
       })
     ])
   })

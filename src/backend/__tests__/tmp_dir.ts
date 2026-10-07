@@ -6,7 +6,7 @@ export type DirResult = { name: string; removeCallback: () => void }
 
 /** A folder in the system temp dir that `removeCallback` deletes */
 export function dirSync(): DirResult {
-  const name = mkdtempSync(join(tmpdir(), 'relicd-test-'))
+  const name = mkdtempSync(join(tmpdir(), 'rakun-test-'))
   return {
     name,
     removeCallback: () => rmSync(name, { recursive: true, force: true })

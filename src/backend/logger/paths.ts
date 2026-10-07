@@ -9,7 +9,7 @@ import type { Runner } from 'common/types'
 function getBaseLogPath(): string {
   const stateHome =
     process.env.XDG_STATE_HOME ?? join(homedir(), '.local', 'state')
-  return join(stateHome, 'Relicd', 'logs')
+  return join(stateHome, 'Rakun', 'logs')
 }
 
 // Which game log to return. By default, the launch log is returned.
@@ -23,7 +23,7 @@ const GAME_LOG_TYPES = [
 ] as const
 type GameLogType = (typeof GAME_LOG_TYPES)[number]
 type GetLogFileArgs =
-  // Relic log
+  // Rakun log
   | { appName?: undefined; runner?: undefined }
   // Runner log
   | { appName?: undefined; runner: Runner }
@@ -31,13 +31,13 @@ type GetLogFileArgs =
   | { appName: string; runner: Runner; type?: GameLogType }
 
 /**
- * Returns the path to the log file of a game / runner / Relic
+ * Returns the path to the log file of a game / runner / Rakun
  * @param args Parameters to find the log file. See {@link GetLogFileArgs}
  */
 function getLogFilePath(args: GetLogFileArgs): string {
   let relativeFilePath: string
   if (!(args?.appName || args?.runner)) {
-    relativeFilePath = 'relicd'
+    relativeFilePath = 'rakun'
   } else if (args.runner && !args.appName) {
     relativeFilePath = join('runners', args.runner)
   } else {

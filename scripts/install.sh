@@ -1,12 +1,12 @@
 #!/bin/bash
-# Installs relicd from a release tarball of THIS machine's architecture (x64 or arm64):
+# Installs rakun from a release tarball of THIS machine's architecture (x64 or arm64):
 #   scripts/install.sh                      the newest one in this checkout's dist/
 #   scripts/install.sh <folder>             the newest one in that folder
-#   scripts/install.sh <file | URL>         that tarball (relicd-<v>-linux-<arch>.tar.gz)
+#   scripts/install.sh <file | URL>         that tarball (rakun-<v>-linux-<arch>.tar.gz)
 # If a .sha256 file sits next to the tarball (or next to the URL) it is checked.
 #
-# It installs to ~/.local/opt/relicd and links ~/.local/bin/relicd. It does not
-# create any service: start relicd yourself (see the end of this script's output).
+# It installs to ~/.local/opt/rakun and links ~/.local/bin/rakun. It does not
+# create any service: start rakun yourself (see the end of this script's output).
 set -euo pipefail
 
 machine_arch() {
@@ -22,12 +22,12 @@ machine_arch() {
 
 ARCH=$(machine_arch)
 
-# The newest relicd-*-linux-$ARCH.tar.gz of a folder
+# The newest rakun-*-linux-$ARCH.tar.gz of a folder
 newest_tarball() {
     local dir="$1" found
-    found=$(ls "$dir"/relicd-*-linux-"$ARCH".tar.gz 2>/dev/null | sort -V | tail -n 1 || true)
+    found=$(ls "$dir"/rakun-*-linux-"$ARCH".tar.gz 2>/dev/null | sort -V | tail -n 1 || true)
     [ -n "$found" ] || {
-        echo "Error: no hay ningún relicd-*-linux-$ARCH.tar.gz en $dir." >&2
+        echo "Error: no hay ningún rakun-*-linux-$ARCH.tar.gz en $dir." >&2
         echo "       Constrúyelo con: pnpm package $ARCH" >&2
         exit 1
     }
@@ -55,17 +55,17 @@ fi
 refuse_other_arch "$SOURCE"
 echo "Instalando $(basename "$SOURCE") (${ARCH})"
 
-PREFIX="$HOME/.local/opt/relicd"
+PREFIX="$HOME/.local/opt/rakun"
 BIN_DIR="$HOME/.local/bin"
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 
-TARBALL="$WORK/relicd.tar.gz"
+TARBALL="$WORK/rakun.tar.gz"
 case "$SOURCE" in
     http://* | https://*)
         echo "Descargando $SOURCE..."
         curl -fsSL -o "$TARBALL" "$SOURCE"
-        curl -fsSL -o "$WORK/relicd.sha256" "$SOURCE.sha256" 2>/dev/null || true
+        curl -fsSL -o "$WORK/rakun.sha256" "$SOURCE.sha256" 2>/dev/null || true
         ;;
     *)
         [ -f "$SOURCE" ] || {
@@ -73,12 +73,12 @@ case "$SOURCE" in
             exit 1
         }
         cp "$SOURCE" "$TARBALL"
-        [ -f "$SOURCE.sha256" ] && cp "$SOURCE.sha256" "$WORK/relicd.sha256"
+        [ -f "$SOURCE.sha256" ] && cp "$SOURCE.sha256" "$WORK/rakun.sha256"
         ;;
 esac
 
-if [ -f "$WORK/relicd.sha256" ]; then
-    expected=$(cut -d' ' -f1 "$WORK/relicd.sha256")
+if [ -f "$WORK/rakun.sha256" ]; then
+    expected=$(cut -d' ' -f1 "$WORK/rakun.sha256")
     actual=$(sha256sum "$TARBALL" | cut -d' ' -f1)
     [ "$expected" = "$actual" ] || {
         echo "Error: el checksum no coincide." >&2
@@ -90,39 +90,39 @@ else
 fi
 
 tar -xzf "$TARBALL" -C "$WORK"
-[ -x "$WORK/relicd/relicd" ] || {
-    echo "Error: el tarball no contiene relicd/relicd." >&2
+[ -x "$WORK/rakun/rakun" ] || {
+    echo "Error: el tarball no contiene rakun/rakun." >&2
     exit 1
 }
 # A tarball of another architecture (or a broken one) is found here, before the
 # installation that works is replaced
-"$WORK/relicd/node" --version >/dev/null 2>&1 || {
+"$WORK/rakun/node" --version >/dev/null 2>&1 || {
     echo "Error: el Node del tarball no se ejecuta en esta máquina ($ARCH)." >&2
     exit 1
 }
 
 mkdir -p "$(dirname "$PREFIX")" "$BIN_DIR"
 rm -rf "$PREFIX.new"
-mv "$WORK/relicd" "$PREFIX.new"
+mv "$WORK/rakun" "$PREFIX.new"
 rm -rf "$PREFIX"
 mv "$PREFIX.new" "$PREFIX"
-ln -sf "$PREFIX/relicd" "$BIN_DIR/relicd"
-ln -sf "$PREFIX/relicctl" "$BIN_DIR/relicctl"
+ln -sf "$PREFIX/rakun" "$BIN_DIR/rakun"
+ln -sf "$PREFIX/rakunctl" "$BIN_DIR/rakunctl"
 
 cat <<MSG
 
-relicd instalado en $PREFIX (enlaces: $BIN_DIR/relicd y $BIN_DIR/relicctl).
+rakun instalado en $PREFIX (enlaces: $BIN_DIR/rakun y $BIN_DIR/rakunctl).
 
 Arrancarlo, cuando lo necesites:
-  relicd                                    en primer plano (Ctrl+C lo para)
-  systemd-run --user --unit=relicd $PREFIX/relicd   en segundo plano, sin instalar nada
-                                            (systemctl --user stop relicd lo para)
+  rakun                                    en primer plano (Ctrl+C lo para)
+  systemd-run --user --unit=rakun $PREFIX/rakun   en segundo plano, sin instalar nada
+                                            (systemctl --user stop rakun lo para)
 
 Comprobarlo:
-  relicctl status         (o: curl http://127.0.0.1:17370/health)
+  rakunctl status         (o: curl http://127.0.0.1:17370/health)
 
 La web, en un navegador de este equipo:  http://127.0.0.1:17370
   Por defecto solo este equipo puede abrirla. Para toda la red (SIN protección,
-  solo uso doméstico) o para apagarla:  relicctl start --web network | off
-  Con el ajuste guardado:               relicctl config webAccess network | off
+  solo uso doméstico) o para apagarla:  rakunctl start --web network | off
+  Con el ajuste guardado:               rakunctl config webAccess network | off
 MSG

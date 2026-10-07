@@ -1,9 +1,9 @@
 import type { Translate } from '../i18n'
 
-/** relicd tells the page how the web was opened (a `<meta>`); open to the network it has no protection, and says so */
+/** rakun tells the page how the web was opened (a `<meta>`); open to the network it has no protection, and says so */
 export function NetworkBanner({ t }: { t: Translate }) {
   const mode = document
-    .querySelector('meta[name="relicd-web"]')
+    .querySelector('meta[name="rakun-web"]')
     ?.getAttribute('content')
   if (mode !== 'network') return null
   return (

@@ -11,7 +11,7 @@ const childOf = (path: string, folder: string) =>
 
 /**
  * Chooses a folder by walking through the disk with the gamepad. What is
- * valid is up to relicd: its refusal is shown and the picker stays open.
+ * valid is up to rakun: its refusal is shown and the picker stays open.
  */
 export function FolderPicker({
   title,
@@ -39,8 +39,8 @@ export function FolderPicker({
     try {
       // no path at all, not an undefined one: JSON would turn it into null
       const next = await (path === undefined
-        ? window.relicd.call('listFolders')
-        : window.relicd.call('listFolders', path))
+        ? window.rakun.call('listFolders')
+        : window.rakun.call('listFolders', path))
       setListing(next)
       setFocus(0)
       setError('')

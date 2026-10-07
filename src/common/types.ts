@@ -13,7 +13,7 @@ import {
 import { ChildProcess } from 'child_process'
 import type { Path } from 'backend/schemas'
 import type LogWriter from 'backend/logger/log_writer'
-import type { WebAccess } from 'common/relic/web'
+import type { WebAccess } from 'common/rakun/web'
 
 export type Runner = 'legendary' | 'gog' | 'nile' | 'zoom'
 
@@ -52,7 +52,7 @@ interface About {
 }
 
 export interface AppSettings {
-  /** Who can open the web (takes effect when relicd starts) */
+  /** Who can open the web (takes effect when rakun starts) */
   webAccess: WebAccess
   altGogdlBin: string
   altLegendaryBin: string

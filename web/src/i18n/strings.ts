@@ -1,4 +1,4 @@
-/** The interface is in English: the `language` setting of relicd is for the games it installs. */
+/** The interface is in English: the `language` setting of rakun is for the games it installs. */
 export const en = {
   'store.all': 'All',
   'filter.installed': 'Installed',
@@ -51,15 +51,15 @@ export const en = {
   'downloads.state.idle': 'Idle',
   'downloads.state.stopped': 'Stopped',
   'downloads.failed': 'Failed: {error}',
-  'downloads.failedNoReason': 'Failed (see relicd logs)',
+  'downloads.failedNoReason': 'Failed (see rakun logs)',
   'downloads.done': 'Done',
   'downloads.aborted': 'Cancelled',
   'downloads.kind.install': 'Install',
   'downloads.kind.update': 'Update',
-  'offline.title': 'relicd is not answering',
+  'offline.title': 'rakun is not answering',
   'offline.hint':
-    'relicd stopped. Start it again with relicctl start: this page reconnects by itself.',
-  'offline.connecting': 'Connecting to relicd…',
+    'rakun stopped. Start it again with rakunctl start: this page reconnects by itself.',
+  'offline.connecting': 'Connecting to rakun…',
   'error.title': 'It did not work',
   'hint.select': 'Select',
   'hint.back': 'Back',

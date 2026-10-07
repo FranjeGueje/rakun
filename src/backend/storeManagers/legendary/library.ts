@@ -714,7 +714,7 @@ export default class LegendaryLibraryManager implements LibraryManager {
   ): Promise<ExecResult> {
     const { dir, bin } = getLegendaryBin()
 
-    // Set LEGENDARY_CONFIG_PATH to a custom, Relic-specific location so user-made
+    // Set LEGENDARY_CONFIG_PATH to a custom, Rakun-specific location so user-made
     // changes to Legendary's main config file don't affect us
     if (!options) {
       options = {}

@@ -16,7 +16,7 @@ export function languageLabel(code: string): string {
   }
 }
 
-/** Left and right go through the languages relicd accepts; A saves */
+/** Left and right go through the languages rakun accepts; A saves */
 export function LanguageSelect({
   title,
   current,

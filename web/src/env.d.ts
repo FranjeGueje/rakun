@@ -1,7 +1,7 @@
-import type { RelicdBridge } from './api/bridge'
+import type { RakunBridge } from './api/bridge'
 
 declare global {
   interface Window {
-    relicd: RelicdBridge
+    rakun: RakunBridge
   }
 }

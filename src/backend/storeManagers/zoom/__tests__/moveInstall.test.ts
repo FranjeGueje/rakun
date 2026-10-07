@@ -15,7 +15,7 @@ jest.mock('../../../utils', () => ({
   moveOnUnix: jest.fn()
 }))
 
-jest.mock('backend/relic/game_events', () => ({
+jest.mock('backend/rakun/game_events', () => ({
   onGameMoved: jest.fn()
 }))
 
@@ -28,7 +28,7 @@ jest.mock('../../index', () => ({
 import ZoomGame from '../games'
 import { installedGamesStore } from '../electronStores'
 import { moveOnUnix } from '../../../utils'
-import { onGameMoved } from 'backend/relic/game_events'
+import { onGameMoved } from 'backend/rakun/game_events'
 import { libraryManagerMap } from '../../index'
 
 const mockedInstalledGamesStore = jest.mocked(installedGamesStore)

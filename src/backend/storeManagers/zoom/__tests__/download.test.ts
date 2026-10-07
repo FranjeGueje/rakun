@@ -5,7 +5,7 @@ import { Readable } from 'stream'
 import { saveStreamToFile } from '../download'
 
 const newDestination = () =>
-  join(mkdtempSync(join(tmpdir(), 'relicd-zoom-')), 'installer.exe')
+  join(mkdtempSync(join(tmpdir(), 'rakun-zoom-')), 'installer.exe')
 
 describe('saveStreamToFile', () => {
   test('writes the whole stream to the destination and leaves no .part file', async () => {

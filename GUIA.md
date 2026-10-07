@@ -1,69 +1,69 @@
-# Guía de pruebas de relicd
+# Guía de pruebas de rakun
 
-Todo se prueba con `relicctl`, `curl` y `scripts/smoke.sh`. Las secciones usan
-`smoke.sh` porque enseña el canal y los argumentos exactos; `relicctl` hace lo
+Todo se prueba con `rakunctl`, `curl` y `scripts/smoke.sh`. Las secciones usan
+`smoke.sh` porque enseña el canal y los argumentos exactos; `rakunctl` hace lo
 mismo con comandos (ver la tabla siguiente). Desde la raíz del repositorio.
-El script lee el puerto y el token de `~/.config/relicd/api.json`. El contrato
+El script lee el puerto y el token de `~/.config/rakun/api.json`. El contrato
 completo está en [API.md](API.md).
 
 ## Arrancar y parar
 
-relicd no instala ningún servicio: lo arrancas tú cuando lo necesites.
+rakun no instala ningún servicio: lo arrancas tú cuando lo necesites.
 
 ```bash
-scripts/install.sh                                      # instala en ~/.local/opt/relicd el tarball de tu arquitectura de dist/
+scripts/install.sh                                      # instala en ~/.local/opt/rakun el tarball de tu arquitectura de dist/
 
-relicd                                                  # en primer plano, Ctrl+C lo para
-systemd-run --user --unit=relicd ~/.local/opt/relicd/relicd   # en segundo plano, transitorio
-relicctl start | stop                                         # alternativa sin systemd
-relicctl -s library                                           # arranca si hace falta y para al acabar
-systemctl --user stop relicd                            # para el de segundo plano
+rakun                                                  # en primer plano, Ctrl+C lo para
+systemd-run --user --unit=rakun ~/.local/opt/rakun/rakun   # en segundo plano, transitorio
+rakunctl start | stop                                         # alternativa sin systemd
+rakunctl -s library                                           # arranca si hace falta y para al acabar
+systemctl --user stop rakun                            # para el de segundo plano
 ```
 
 Para reinstalar una versión nueva: `pnpm package`, volver a ejecutar
-`scripts/install.sh …` y reiniciar relicd. Los logins se conservan (viven en
-`~/.config/relicd`).
+`scripts/install.sh …` y reiniciar rakun. Los logins se conservan (viven en
+`~/.config/rakun`).
 
 Para probar sin tocar tu `$HOME` real (**con un directorio que exista y no esté vacío**: con `HOME=`
-vacío relicd crea sus carpetas en el directorio actual):
+vacío rakun crea sus carpetas en el directorio actual):
 
 ```bash
-HOME=$(mktemp -d) RELICD_PORT=17999 relicd
-HOME=<ese mismo directorio> RELICD_API_FILE=<ese>/.config/relicd/api.json scripts/smoke.sh
+HOME=$(mktemp -d) RAKUN_PORT=17999 rakun
+HOME=<ese mismo directorio> RAKUN_API_FILE=<ese>/.config/rakun/api.json scripts/smoke.sh
 ```
 
-## relicctl
+## rakunctl
 
-Con relicd instalado, `relicctl` (o `node build/relicctl.cjs` desde el
+Con rakun instalado, `rakunctl` (o `node build/rakunctl.cjs` desde el
 repositorio) evita escribir el JSON a mano. Usa el mismo `api.json` y la misma
-variable `RELICD_API_FILE`.
+variable `RAKUN_API_FILE`.
 
-| Quieres…                     | `relicctl`                                                                 |
+| Quieres…                     | `rakunctl`                                                                 |
 | ---------------------------- | -------------------------------------------------------------------------- |
-| arrancar / parar relicd      | `relicctl start` / `relicctl stop [--force]`                               |
-| elegir web y puerto          | `relicctl start --web local\|network\|off --port N` (o `config webAccess`) |
-| ver si está vivo y sesiones  | `relicctl status` (dice «relicd parado» si no lo está)                     |
-| iniciar sesión               | `relicctl login gog` (epic, gog, amazon, zoom)                             |
-| traer las sesiones de Relic  | `relicctl import-relic`                                                    |
-| listar la biblioteca         | `relicctl library [tienda] [--installed]`                                  |
-| refrescarla y esperar        | `relicctl refresh [tienda]`                                                |
-| instalar                     | `relicctl install gog <appName> [--path DIR] [--lang CODE] [--skip-dlcs]`  |
-| actualizar o reparar         | `relicctl update` / `repair <tienda> <appName>`                            |
-| desinstalar                  | `relicctl uninstall <tienda> <appName>`                                    |
-| ver la cola                  | `relicctl queue`                                                           |
-| pausar / reanudar / cancelar | `relicctl pause` / `resume` / `cancel [--remove-files]`                    |
-| vaciar la lista de acabadas  | `relicctl queue clear`                                                     |
-| ver o cambiar ajustes        | `relicctl config [clave [valor]]` (p. ej. `config protonPath RUTA`)        |
-| leer los registros           | `relicctl logs [tienda [appName]] [--type install]`                        |
-| vaciar la caché              | `relicctl cache clear [tienda]`                                            |
-| borrar sesiones y ajustes    | `relicctl reset [--yes]` (detiene relicd; los juegos no se tocan)          |
-| seguir los eventos           | `relicctl events`                                                          |
-| cualquier otro canal         | `relicctl call <canal> '[args]'`                                           |
+| arrancar / parar rakun       | `rakunctl start` / `rakunctl stop [--force]`                               |
+| elegir web y puerto          | `rakunctl start --web local\|network\|off --port N` (o `config webAccess`) |
+| ver si está vivo y sesiones  | `rakunctl status` (dice «rakun parado» si no lo está)                      |
+| iniciar sesión               | `rakunctl login gog` (epic, gog, amazon, zoom)                             |
+| traer las sesiones de Relic  | `rakunctl import-relic`                                                    |
+| listar la biblioteca         | `rakunctl library [tienda] [--installed]`                                  |
+| refrescarla y esperar        | `rakunctl refresh [tienda]`                                                |
+| instalar                     | `rakunctl install gog <appName> [--path DIR] [--lang CODE] [--skip-dlcs]`  |
+| actualizar o reparar         | `rakunctl update` / `repair <tienda> <appName>`                            |
+| desinstalar                  | `rakunctl uninstall <tienda> <appName>`                                    |
+| ver la cola                  | `rakunctl queue`                                                           |
+| pausar / reanudar / cancelar | `rakunctl pause` / `resume` / `cancel [--remove-files]`                    |
+| vaciar la lista de acabadas  | `rakunctl queue clear`                                                     |
+| ver o cambiar ajustes        | `rakunctl config [clave [valor]]` (p. ej. `config protonPath RUTA`)        |
+| leer los registros           | `rakunctl logs [tienda [appName]] [--type install]`                        |
+| vaciar la caché              | `rakunctl cache clear [tienda]`                                            |
+| borrar sesiones y ajustes    | `rakunctl reset [--yes]` (detiene rakun; los juegos no se tocan)           |
+| seguir los eventos           | `rakunctl events`                                                          |
+| cualquier otro canal         | `rakunctl call <canal> '[args]'`                                           |
 
 `install`, `update`, `repair` y `uninstall` esperan a que acabe y devuelven un
 código distinto de 0 si falla (`--no-wait` para no esperar). `--json` da la
 salida para scripts. `-s` delante de cualquier comando que termine (no vale con
-`events` ni con `--no-wait`) arranca relicd si estaba parado y lo para al
+`events` ni con `--no-wait`) arranca rakun si estaba parado y lo para al
 acabar; si ya estaba arrancado, no lo toca. `install` de un juego ya instalado se rechaza («ya está instalado: usa repair o update»). `uninstall` borra los ficheros del juego. `--lang` elige el
 idioma de la instalación (en GOG, `en-US` si no se indica). Por defecto se
 instalan los DLC; `--skip-dlcs` los omite.
@@ -88,7 +88,7 @@ scripts/smoke.sh
 
 Debe mostrar la versión, la cola en `idle`, la biblioteca (`[]` si aún no hay
 sesión) y un `403` al final (canal no expuesto). Si dice que no encuentra
-`api.json`, relicd no está arrancado con tu `HOME`.
+`api.json`, rakun no está arrancado con tu `HOME`.
 
 ## 2. Iniciar sesión en cada tienda
 
@@ -117,7 +117,7 @@ Comprobar la sesión:
 
 ```bash
 scripts/smoke.sh getAccounts                # quién ha iniciado sesión en cada tienda
-scripts/smoke.sh getStores                  # las tiendas que soporta relicd
+scripts/smoke.sh getStores                  # las tiendas que soporta rakun
 ```
 
 Para cerrar la sesión de una tienda: `scripts/smoke.sh logout '["gog"]'`.
@@ -128,7 +128,7 @@ Si falla:
   Prueba a pegar solo el valor del código.
 - `"The store rejected the login"`: el código ya se usó o caducó (valen pocos
   minutos y una sola vez). Repite con uno nuevo.
-- Otro error: mira `~/.local/state/Relicd/logs/relicd.log`.
+- Otro error: mira `~/.local/state/Rakun/logs/rakun.log`.
 
 ## 3. Biblioteca
 
@@ -159,7 +159,7 @@ Apunta el `app_name` y el `runner` de un juego pequeño para el paso siguiente.
 ```bash
 APP=1584866499; RUNNER=gog     # ejemplo: Beat Cop (GOG, nativo de Linux)
 INFO=$(scripts/smoke.sh getGameInfo "[\"$APP\",\"$RUNNER\"]" | python3 -c "import sys,json;print(json.dumps(json.load(sys.stdin)['result']))")
-scripts/smoke.sh install "[{\"appName\":\"$APP\",\"runner\":\"$RUNNER\",\"path\":\"$HOME/Games/Relicd\",\"platformToInstall\":\"linux\",\"installLanguage\":\"en-US\",\"gameInfo\":$INFO}]"
+scripts/smoke.sh install "[{\"appName\":\"$APP\",\"runner\":\"$RUNNER\",\"path\":\"$HOME/Games/Rakun\",\"platformToInstall\":\"linux\",\"installLanguage\":\"en-US\",\"gameInfo\":$INFO}]"
 ```
 
 Para un juego de Windows, `"platformToInstall":"Windows"`.
@@ -178,8 +178,8 @@ salir `Saved shortcut`.
 
 ## Portadas de Steam (SteamGridDB)
 
-Sin clave de SteamGridDB relicd no descarga las imágenes al añadir un juego a
-Steam (la clave es de relicd, no se hereda de Relic).
+Sin clave de SteamGridDB rakun no descarga las imágenes al añadir un juego a
+Steam (la clave es de rakun, no se hereda de Relic).
 
 ```bash
 scripts/smoke.sh steamgriddb.hasApiKey                  # {"result":false} si falta
@@ -200,11 +200,11 @@ scripts/smoke.sh resumeCurrentDownload
 ```
 
 Zoom (experimental): los juegos de **Windows** abren el asistente del instalador en
-una ventana, así que relicd tiene que arrancarse con pantalla (modo escritorio) y con
-`protonPath` configurado; sin ellas la instalación termina con error. relicd lo comprueba
+una ventana, así que rakun tiene que arrancarse con pantalla (modo escritorio) y con
+`protonPath` configurado; sin ellas la instalación termina con error. rakun lo comprueba
 **antes de descargar** (sin `DISPLAY`, con el servidor gráfico caído o en modo juego falla
-al instante y `relicctl install` dice el motivo); es una comprobación de mejor esfuerzo:
-tras cambiar entre escritorio y modo juego, reinicia relicd. Los de Linux no necesitan
+al instante y `rakunctl install` dice el motivo); es una comprobación de mejor esfuerzo:
+tras cambiar entre escritorio y modo juego, reinicia rakun. Los de Linux no necesitan
 pantalla.
 
 Un shortcut añadido a Steam **no se borra** al desinstalar: se quita a mano
@@ -212,45 +212,45 @@ desde la biblioteca de Steam.
 
 ## La web y sus modos
 
-relicd sirve su propia web en el puerto de la API (`http://127.0.0.1:17370`). Quién puede abrirla:
+rakun sirve su propia web en el puerto de la API (`http://127.0.0.1:17370`). Quién puede abrirla:
 
-| Modo                  | Cómo                                                    | Qué pasa                                                                     |
-| --------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `local` (por defecto) | nada                                                    | solo este equipo                                                             |
-| `network`             | `relicctl start --web network` o `relicd --web=network` | toda la red, **sin protección** (aviso en el log, en `relicctl` y en la web) |
-| `off`                 | `--web off`                                             | no se sirve la página; la API sigue en este equipo                           |
+| Modo                  | Cómo                                                   | Qué pasa                                                                     |
+| --------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| `local` (por defecto) | nada                                                   | solo este equipo                                                             |
+| `network`             | `rakunctl start --web network` o `rakun --web=network` | toda la red, **sin protección** (aviso en el log, en `rakunctl` y en la web) |
+| `off`                 | `--web off`                                            | no se sirve la página; la API sigue en este equipo                           |
 
-El parámetro manda sobre la variable `RELICD_WEB` y esta sobre el ajuste guardado
-(`relicctl config webAccess network`, que se aplica **al reiniciar** relicd). `--port N` /
-`RELICD_PORT` cambian el puerto.
+El parámetro manda sobre la variable `RAKUN_WEB` y esta sobre el ajuste guardado
+(`rakunctl config webAccess network`, que se aplica **al reiniciar** rakun). `--port N` /
+`RAKUN_PORT` cambian el puerto.
 
 ```bash
 H=$(mktemp -d -p ~/.cache); [ -n "$H" ] || exit 1          # un HOME temporal que NO esté vacío
-env HOME=$H node build/relicctl.cjs start --web network --port 17998
+env HOME=$H node build/rakunctl.cjs start --web network --port 17998
 LAN=$(ip -4 -o addr show scope global | awk '{print $4}' | cut -d/ -f1 | head -1)
-T=$(python3 -c "import json;print(json.load(open('$H/.config/relicd/api.json'))['token'])")
+T=$(python3 -c "import json;print(json.load(open('$H/.config/rakun/api.json'))['token'])")
 
 curl -s http://$LAN:17998/health                           # {"status":"ok",…,"web":"network"}
-curl -s http://$LAN:17998/ | grep -o 'relicd-web" content="[a-z]*'      # network
+curl -s http://$LAN:17998/ | grep -o 'rakun-web" content="[a-z]*'      # network
 curl -s -H "Host: evil.example:17998" http://$LAN:17998/health           # 403: Host no permitido
 for c in setSetting listFolders getLogContent; do                         # 403 desde la red
-  curl -s -X POST -H "x-relicd-token: $T" -d '{"args":[]}' http://$LAN:17998/api/$c; echo
+  curl -s -X POST -H "x-rakun-token: $T" -d '{"args":[]}' http://$LAN:17998/api/$c; echo
 done
-curl -s -X POST -H "x-relicd-token: $T" -d '{"args":["/usr"]}' http://127.0.0.1:17998/api/listFolders   # 200 desde aquí
-env HOME=$H node build/relicctl.cjs stop; rm -rf "$H"
+curl -s -X POST -H "x-rakun-token: $T" -d '{"args":["/usr"]}' http://127.0.0.1:17998/api/listFolders   # 200 desde aquí
+env HOME=$H node build/rakunctl.cjs stop; rm -rf "$H"
 ```
 
 Entrar por la IP de la red desde el propio equipo cuenta como «red» (el socket no es de
 loopback): sirve para probar el bloqueo sin otro dispositivo. Un puerto ocupado hace que
-`relicctl start` falle y diga el fichero de log (`~/.local/state/Relicd/logs/relicd.log`).
+`rakunctl start` falle y diga el fichero de log (`~/.local/state/Rakun/logs/rakun.log`).
 
 ## Dónde mirar si algo falla
 
-| Qué                      | Dónde                                                                |
-| ------------------------ | -------------------------------------------------------------------- |
-| Log general              | `~/.local/state/Relicd/logs/relicd.log` (también por qué no arrancó) |
-| Log de una tienda        | `~/.local/state/Relicd/logs/runners/<tienda>.log`                    |
-| Log de una instalación   | `~/.local/state/Relicd/logs/games/<app>_<runner>/install.log`        |
-| Proceso en segundo plano | `journalctl --user -u relicd -f` (con `systemd-run`)                 |
-| Cualquier registro       | `relicctl logs [tienda [appName]] [--type install]`                  |
-| Puerto y token           | `~/.config/relicd/api.json` (`RELICD_PORT` cambia el puerto)         |
+| Qué                      | Dónde                                                              |
+| ------------------------ | ------------------------------------------------------------------ |
+| Log general              | `~/.local/state/Rakun/logs/rakun.log` (también por qué no arrancó) |
+| Log de una tienda        | `~/.local/state/Rakun/logs/runners/<tienda>.log`                   |
+| Log de una instalación   | `~/.local/state/Rakun/logs/games/<app>_<runner>/install.log`       |
+| Proceso en segundo plano | `journalctl --user -u rakun -f` (con `systemd-run`)                |
+| Cualquier registro       | `rakunctl logs [tienda [appName]] [--type install]`                |
+| Puerto y token           | `~/.config/rakun/api.json` (`RAKUN_PORT` cambia el puerto)         |

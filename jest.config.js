@@ -18,7 +18,7 @@ module.exports = {
   coverageReporters: ['text', 'html'],
   projects: [
     '<rootDir>/src/backend',
-    '<rootDir>/src/relicctl',
+    '<rootDir>/src/rakunctl',
     '<rootDir>/web'
   ],
 

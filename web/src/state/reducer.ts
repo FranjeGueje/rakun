@@ -1,4 +1,4 @@
-import type { ConnectionState, RelicdEvent } from '../api/channels'
+import type { ConnectionState, RakunEvent } from '../api/channels'
 import type {
   AppSettings,
   DialogNotice,
@@ -64,7 +64,7 @@ export type Action =
   | { type: 'refreshing'; value: boolean }
   | { type: 'notice'; notice: DialogNotice }
   | { type: 'dismissNotice' }
-  | { type: 'event'; event: RelicdEvent }
+  | { type: 'event'; event: RakunEvent }
 
 /** A game in these states has nothing going on: it leaves the list of busy ones */
 const IDLE_STATUSES = new Set([
@@ -97,11 +97,11 @@ function withGame(games: GameInfo[], game: GameInfo): GameInfo[] {
   return games.map((g, i) => (i === index ? game : g))
 }
 
-/** A dialog argument of relicd, as text */
+/** A dialog argument of rakun, as text */
 const text = (value: unknown): string =>
   typeof value === 'string' ? value : ''
 
-function applyEvent(state: State, { event, args }: RelicdEvent): State {
+function applyEvent(state: State, { event, args }: RakunEvent): State {
   switch (event) {
     case 'gameStatusUpdate':
     case 'progressUpdate':

@@ -4,7 +4,7 @@ import type { Translate } from '../i18n'
 import { useLayer } from '../input/useInput'
 import { finishedKind, percentOf, progressText } from '../state/format'
 import type { State } from '../state/reducer'
-import type { Actions } from '../state/useRelicd'
+import type { Actions } from '../state/useRakun'
 import { statusText } from './Card'
 import { CloseButton } from './CloseButton'
 

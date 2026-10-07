@@ -15,7 +15,7 @@ import type { DMQueueElement, InstallParams } from 'common/types'
 /** Installing over an installed game would download it all again and nothing else */
 function refuseIfInstalled({ appName, runner }: InstallParams) {
   // The same reading as `getLibrary`: it comes from the files, so it is right
-  // right after relicd starts, before any refresh has filled the in-memory maps
+  // right after rakun starts, before any refresh has filled the in-memory maps
   const installed = stores[runner]
     .readLibrary()
     .some((game) => game.app_name === appName && game.is_installed)

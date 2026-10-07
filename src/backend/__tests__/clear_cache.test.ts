@@ -10,12 +10,12 @@ jest.mock('../dialog/dialog')
 jest.mock('backend/constants/paths', () => {
   const { mkdtempSync } = jest.requireActual<typeof import('fs')>('fs')
   const { tmpdir } = jest.requireActual<typeof import('os')>('os')
-  const root = mkdtempSync(`${tmpdir()}/relicd-clearcache-`)
+  const root = mkdtempSync(`${tmpdir()}/rakun-clearcache-`)
   return {
     ...jest.requireActual('backend/constants/paths'),
     storeCachePath: `${root}/store_cache`,
-    appFolder: `${root}/relicd`,
-    userDataPath: `${root}/relicd`
+    appFolder: `${root}/rakun`,
+    userDataPath: `${root}/rakun`
   }
 })
 jest.mock('../storeManagers/gog/electronStores', () => ({

@@ -13,12 +13,12 @@ describe('poster', () => {
     expect(await post('getLibrary', ['gog'])).toEqual([1])
     expect(fetchFn).toHaveBeenCalledWith('/api/getLibrary', {
       method: 'POST',
-      headers: { 'x-relicd-token': 'tok', 'content-type': 'application/json' },
+      headers: { 'x-rakun-token': 'tok', 'content-type': 'application/json' },
       body: '{"args":["gog"]}'
     })
   })
 
-  test('an error answer becomes an exception with relicd’s reason', async () => {
+  test('an error answer becomes an exception with rakun’s reason', async () => {
     const fetchFn = jest
       .fn()
       .mockResolvedValue(json({ error: 'Unknown store' }, 500))

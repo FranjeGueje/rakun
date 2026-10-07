@@ -14,8 +14,8 @@ import type {
 } from './types'
 
 /**
- * The channels of relicd the interface calls, with their arguments and what
- * they answer (the contract is relicd's API.md; relicd decides what is exposed).
+ * The channels of rakun the interface calls, with their arguments and what
+ * they answer (the contract is rakun's API.md; rakun decides what is exposed).
  */
 export type CallMap = {
   getStores: { args: []; result: StoreInfo[] }
@@ -43,7 +43,7 @@ export type CallMap = {
 
 export type CallChannel = keyof CallMap
 
-/** The events of relicd (`GET /events`) the client listens to */
+/** The events of rakun (`GET /events`) the client listens to */
 export const EVENT_CHANNELS = [
   'gameStatusUpdate',
   'progressUpdate',
@@ -55,9 +55,9 @@ export const EVENT_CHANNELS = [
 
 export type EventChannel = (typeof EVENT_CHANNELS)[number]
 
-export type RelicdEvent = { event: EventChannel; args: unknown[] }
+export type RakunEvent = { event: EventChannel; args: unknown[] }
 
-/** `offline`: relicd does not answer (stopped, or the port changed) */
+/** `offline`: rakun does not answer (stopped, or the port changed) */
 export type ConnectionState = 'connecting' | 'online' | 'offline'
 
 export function isEventChannel(event: string): event is EventChannel {

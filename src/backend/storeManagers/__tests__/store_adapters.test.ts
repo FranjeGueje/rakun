@@ -16,12 +16,12 @@ import * as zoomStores from '../zoom/electronStores'
 jest.mock('backend/constants/paths', () => {
   const { mkdtempSync } = jest.requireActual<typeof import('fs')>('fs')
   const { tmpdir } = jest.requireActual<typeof import('os')>('os')
-  const root = mkdtempSync(`${tmpdir()}/relicd-adapters-`)
+  const root = mkdtempSync(`${tmpdir()}/rakun-adapters-`)
   return {
     appDataPath: root,
-    userDataPath: `${root}/relicd`,
-    appFolder: `${root}/relicd`,
-    toolsPath: `${root}/relicd/tools`
+    userDataPath: `${root}/rakun`,
+    appFolder: `${root}/rakun`,
+    toolsPath: `${root}/rakun/tools`
   }
 })
 jest.mock('../legendary/user', () => ({
@@ -73,7 +73,7 @@ const game = (app_name: string, extra: object = {}) =>
   ({ app_name, title: app_name, is_installed: false, ...extra }) as GameInfo
 
 describe('store identity', () => {
-  test('the stores relicd ships with keep their id, name and label', () => {
+  test('the stores rakun ships with keep their id, name and label', () => {
     expect(
       Object.values(stores).map(({ id, name, label }) => [id, name, label])
     ).toEqual(
@@ -205,7 +205,7 @@ describe('Amazon', () => {
   })
 
   test('the files to copy are the user file and the device key only', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'relicd-nile-'))
+    const dir = mkdtempSync(join(tmpdir(), 'rakun-nile-'))
     ;['current_user.json', 'abc.enc', 'installed.json', 'library.json'].forEach(
       (name) => writeFileSync(join(dir, name), 'x')
     )
@@ -355,7 +355,7 @@ describe('store contract', () => {
   test.each(all)(
     '%s: its session files are plain names that include the main one',
     (_id, s) => {
-      const dir = mkdtempSync(join(tmpdir(), 'relicd-contract-'))
+      const dir = mkdtempSync(join(tmpdir(), 'rakun-contract-'))
       writeFileSync(join(dir, s.session.main), 'x')
 
       const files = s.session.files(dir)

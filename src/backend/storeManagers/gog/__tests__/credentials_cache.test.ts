@@ -12,7 +12,7 @@ jest.mock('../../index', () => ({
   libraryManagerMap: { gog: { runRunnerCommand: jest.fn() } }
 }))
 jest.mock('backend/utils', () => ({ clearCache: jest.fn() }))
-jest.mock('backend/constants/others', () => ({ relicVersion: '0.0.0' }))
+jest.mock('backend/constants/others', () => ({ rakunVersion: '0.0.0' }))
 jest.mock('../constants', () => ({ gogdlAuthConfig: '/tmp/auth.json' }))
 jest.mock('axios')
 

@@ -40,9 +40,9 @@ export const nile: Store<NileLibraryManager> = {
     dir: nileConfigPath,
     main: 'current_user.json',
     // The device key (.enc) sits next to the user file
-    files: (relicDir) => [
+    files: (rakunDir) => [
       'current_user.json',
-      ...readdirSync(relicDir).filter((name) => name.endsWith('.enc'))
+      ...readdirSync(rakunDir).filter((name) => name.endsWith('.enc'))
     ],
     // getUserData fills in the stored user that isLoggedIn reads
     account: () => {

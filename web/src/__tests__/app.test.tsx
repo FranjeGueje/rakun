@@ -15,7 +15,7 @@ import type {
   StoreInfo
 } from '../api/types'
 import App from '../App'
-import { emptyQueue, fakeRelicd, game, settings } from './fakeRelicd'
+import { emptyQueue, fakeRakun, game, settings } from './fakeRakun'
 
 const stores: StoreInfo[] = [
   { id: 'legendary', name: 'epic', label: 'Epic' },
@@ -49,7 +49,7 @@ function setup(
     login?: LoginReply
   } = {}
 ) {
-  const relicd = fakeRelicd(
+  const rakun = fakeRakun(
     {
       getStores: stores,
       getLibrary: (runner) => library.filter((g) => g.runner === runner),
@@ -66,9 +66,9 @@ function setup(
       setting: options.setting
     }
   )
-  window.relicd = relicd.bridge
+  window.rakun = rakun.bridge
   render(<App />)
-  return relicd
+  return rakun
 }
 
 const press = (key: string) =>
@@ -98,7 +98,7 @@ describe('library', () => {
     expect(screen.getByRole('button', { name: 'GOG' })).toBeTruthy()
   })
 
-  test('is in English whatever language relicd downloads in', async () => {
+  test('is in English whatever language rakun downloads in', async () => {
     setup({ settings: { language: 'es' } })
     await screen.findByTitle('Alpha')
     expect(screen.getByRole('button', { name: 'Installed' })).toBeTruthy()
@@ -144,15 +144,15 @@ describe('library', () => {
 
 describe('game sheet', () => {
   test('a game not installed offers to install it, into the default folder', async () => {
-    const relicd = setup()
+    const rakun = setup()
     await screen.findByTitle('Alpha')
 
     press('Enter')
     expect(screen.getByText('It will be installed in /juegos')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Install' }))
 
-    await waitFor(() => expect(relicd.called('install')).toHaveLength(1))
-    expect(relicd.called('install')[0][1][0]).toMatchObject({
+    await waitFor(() => expect(rakun.called('install')).toHaveLength(1))
+    expect(rakun.called('install')[0][1][0]).toMatchObject({
       appName: 'alpha',
       runner: 'gog',
       path: '/juegos',
@@ -174,7 +174,7 @@ describe('game sheet', () => {
   })
 
   test('uninstalling asks first and starts on «no»', async () => {
-    const relicd = setup()
+    const rakun = setup()
     await screen.findByTitle('Beta')
     press('ArrowRight')
     press('Enter')
@@ -183,13 +183,13 @@ describe('game sheet', () => {
 
     expect(screen.getByText('Uninstall Beta?')).toBeTruthy()
     press('Enter') // «no» is the one focused
-    expect(relicd.called('uninstall')).toHaveLength(0)
+    expect(rakun.called('uninstall')).toHaveLength(0)
 
     press('Enter') // back in the sheet, on «uninstall»
     press('ArrowLeft') // -> «yes»
     press('Enter')
-    await waitFor(() => expect(relicd.called('uninstall')).toHaveLength(1))
-    expect(relicd.called('uninstall')[0][1]).toEqual(['beta', 'gog', true])
+    await waitFor(() => expect(rakun.called('uninstall')).toHaveLength(1))
+    expect(rakun.called('uninstall')[0][1]).toEqual(['beta', 'gog', true])
   })
 
   test('escape closes the sheet', async () => {
@@ -202,11 +202,11 @@ describe('game sheet', () => {
   })
 
   test('a game being installed shows its progress and can be cancelled, not installed again', async () => {
-    const relicd = setup()
+    const rakun = setup()
     await screen.findByTitle('Alpha')
 
     act(() =>
-      relicd.emit({
+      rakun.emit({
         event: 'progressUpdate',
         args: [
           {
@@ -255,7 +255,7 @@ describe('downloads', () => {
         startTime: 0,
         endTime: 1,
         status: 'error',
-        error: 'relicd has no screen'
+        error: 'rakun has no screen'
       }
     ]
   }
@@ -266,18 +266,18 @@ describe('downloads', () => {
 
     press('d')
     expect(screen.getByRole('heading', { name: /Downloads/ })).toBeTruthy()
-    expect(screen.getByText('Failed: relicd has no screen')).toBeTruthy()
+    expect(screen.getByText('Failed: rakun has no screen')).toBeTruthy()
     expect(screen.getAllByText('Alpha').length).toBeGreaterThan(0)
   })
 
-  test('pause asks relicd to pause; escape closes the panel', async () => {
-    const relicd = setup({ queue })
+  test('pause asks rakun to pause; escape closes the panel', async () => {
+    const rakun = setup({ queue })
     await screen.findByTitle('Alpha')
 
     press('d')
     press('Enter') // first control: pause
     await waitFor(() =>
-      expect(relicd.called('pauseCurrentDownload')).toHaveLength(1)
+      expect(rakun.called('pauseCurrentDownload')).toHaveLength(1)
     )
     press('Escape')
     expect(screen.queryByRole('heading', { name: /Downloads/ })).toBeNull()
@@ -285,30 +285,30 @@ describe('downloads', () => {
 })
 
 describe('connection', () => {
-  test('while relicd does not answer the app is covered, and it reads everything again on return', async () => {
-    const relicd = setup()
+  test('while rakun does not answer the app is covered, and it reads everything again on return', async () => {
+    const rakun = setup()
     await screen.findByTitle('Alpha')
-    const loads = relicd.called('getLibrary').length
+    const loads = rakun.called('getLibrary').length
 
-    act(() => relicd.setConnection('offline'))
-    expect(screen.getByText('relicd is not answering')).toBeTruthy()
-    expect(screen.getByText(/relicctl start/)).toBeTruthy()
+    act(() => rakun.setConnection('offline'))
+    expect(screen.getByText('rakun is not answering')).toBeTruthy()
+    expect(screen.getByText(/rakunctl start/)).toBeTruthy()
 
-    act(() => relicd.setConnection('online'))
+    act(() => rakun.setConnection('online'))
     await waitFor(() =>
-      expect(screen.queryByText('relicd is not answering')).toBeNull()
+      expect(screen.queryByText('rakun is not answering')).toBeNull()
     )
     await waitFor(() =>
-      expect(relicd.called('getLibrary').length).toBeGreaterThan(loads)
+      expect(rakun.called('getLibrary').length).toBeGreaterThan(loads)
     )
   })
 
-  test('a problem relicd reports shows as a notice that any answer closes', async () => {
-    const relicd = setup()
+  test('a problem rakun reports shows as a notice that any answer closes', async () => {
+    const rakun = setup()
     await screen.findByTitle('Alpha')
 
     act(() =>
-      relicd.emit({
+      rakun.emit({
         event: 'showDialog',
         args: ['Warning', 'Epic is down', 'ERROR']
       })
@@ -320,8 +320,8 @@ describe('connection', () => {
 })
 
 describe('loading', () => {
-  const answers = (overrides: Parameters<typeof fakeRelicd>[0]) =>
-    fakeRelicd({
+  const answers = (overrides: Parameters<typeof fakeRakun>[0]) =>
+    fakeRakun({
       getStores: stores,
       requestAppSettings: settings(),
       getDMQueueInformation: emptyQueue,
@@ -331,12 +331,12 @@ describe('loading', () => {
 
   test('the games show without waiting for the update check, which comes later', async () => {
     let finishUpdates: (updates: string[]) => void = () => undefined
-    const relicd = answers({
+    const rakun = answers({
       getLibrary: (runner) => library.filter((g) => g.runner === runner),
       checkGameUpdates: (() =>
         new Promise<string[]>((resolve) => (finishUpdates = resolve))) as never
     })
-    window.relicd = relicd.bridge
+    window.rakun = rakun.bridge
     render(<App />)
 
     await screen.findByTitle('Alpha')
@@ -350,13 +350,13 @@ describe('loading', () => {
 
   test('each store shows as it arrives, the slow one does not hold the others', async () => {
     let finishEpic: (games: typeof library) => void = () => undefined
-    const relicd = answers({
+    const rakun = answers({
       getLibrary: ((runner: string) =>
         runner === 'legendary'
           ? new Promise((resolve) => (finishEpic = resolve))
           : library.filter((g) => g.runner === runner)) as never
     })
-    window.relicd = relicd.bridge
+    window.rakun = rakun.bridge
     render(<App />)
 
     await screen.findByTitle('Alpha')
@@ -370,13 +370,13 @@ describe('loading', () => {
   })
 
   test('a store that fails is reported and the others still show', async () => {
-    const relicd = answers({
+    const rakun = answers({
       getLibrary: ((runner: string) =>
         runner === 'legendary'
           ? Promise.reject(new Error('epic broke'))
           : library.filter((g) => g.runner === runner)) as never
     })
-    window.relicd = relicd.bridge
+    window.rakun = rakun.bridge
     render(<App />)
 
     await screen.findByTitle('Alpha')
@@ -385,19 +385,19 @@ describe('loading', () => {
   })
 
   test('the update check also runs after a library refresh', async () => {
-    const relicd = answers({
+    const rakun = answers({
       getLibrary: (runner) => library.filter((g) => g.runner === runner)
     })
-    window.relicd = relicd.bridge
+    window.rakun = rakun.bridge
     render(<App />)
     await screen.findByTitle('Alpha')
     await waitFor(() =>
-      expect(relicd.called('checkGameUpdates')).toHaveLength(1)
+      expect(rakun.called('checkGameUpdates')).toHaveLength(1)
     )
 
-    act(() => relicd.emit({ event: 'refreshLibrary', args: ['gog'] }))
+    act(() => rakun.emit({ event: 'refreshLibrary', args: ['gog'] }))
     await waitFor(() =>
-      expect(relicd.called('checkGameUpdates')).toHaveLength(2)
+      expect(rakun.called('checkGameUpdates')).toHaveLength(2)
     )
   })
 })
@@ -412,14 +412,14 @@ describe('covers', () => {
   ]
 
   test('the card shows the tall box art, and the banner only if that one fails', async () => {
-    const relicd = fakeRelicd({
+    const rakun = fakeRakun({
       getStores: stores,
       getLibrary: (runner) => withArt.filter((g) => g.runner === runner),
       checkGameUpdates: [],
       requestAppSettings: settings(),
       getDMQueueInformation: emptyQueue
     })
-    window.relicd = relicd.bridge
+    window.rakun = rakun.bridge
     render(<App />)
     await screen.findByTitle('Alpha')
 
@@ -459,7 +459,7 @@ describe('covers load when they get near the visible area', () => {
     const original = window.IntersectionObserver
     window.IntersectionObserver = FakeObserver as never
     try {
-      const relicd = fakeRelicd({
+      const rakun = fakeRakun({
         getStores: stores,
         getLibrary: (runner) =>
           [
@@ -469,7 +469,7 @@ describe('covers load when they get near the visible area', () => {
         requestAppSettings: settings(),
         getDMQueueInformation: emptyQueue
       })
-      window.relicd = relicd.bridge
+      window.rakun = rakun.bridge
       render(<App />)
       await screen.findByTitle('Alpha')
       await waitFor(() => expect(observers.length).toBeGreaterThan(0))
@@ -501,13 +501,13 @@ describe('menu and accounts', () => {
   })
 
   const openAccounts = async () => {
-    const relicd = setup()
+    const rakun = setup()
     await screen.findByTitle('Alpha')
     press('m')
     expect(screen.getByRole('heading', { name: 'Menu' })).toBeTruthy()
     press('Enter')
     await screen.findByText('Signed in as Ana')
-    return relicd
+    return rakun
   }
 
   test('Select opens the menu, and back closes it', async () => {
@@ -528,21 +528,21 @@ describe('menu and accounts', () => {
   })
 
   test('signing out asks first (on «no») and then reloads that store', async () => {
-    const relicd = await openAccounts()
+    const rakun = await openAccounts()
     press('Enter') // Epic is signed in
     expect(screen.getByText('Sign out of Epic?')).toBeTruthy()
     press('Enter') // «no»
-    expect(relicd.calls.some(([c]) => c === 'logout')).toBe(false)
+    expect(rakun.calls.some(([c]) => c === 'logout')).toBe(false)
 
     press('Enter')
     press('ArrowLeft')
     press('Enter')
     await waitFor(() =>
-      expect(relicd.calls).toContainEqual(['logout', ['legendary']])
+      expect(rakun.calls).toContainEqual(['logout', ['legendary']])
     )
     await waitFor(() =>
       expect(
-        relicd.calls.filter(
+        rakun.calls.filter(
           ([c, a]) => c === 'getLibrary' && a[0] === 'legendary'
         ).length
       ).toBeGreaterThan(1)
@@ -558,14 +558,14 @@ describe('settings in the menu', () => {
       steamGridDbApiKey: 'secret',
       ...options?.settings
     })
-    const relicd = setup({
+    const rakun = setup({
       ...options,
       settings: current
     })
     await screen.findByTitle('Alpha')
     press('m')
     for (let i = 0; i < entry; i++) press('ArrowDown')
-    return relicd
+    return rakun
   }
 
   test('shows each setting next to its entry, never the key itself', async () => {
@@ -578,7 +578,7 @@ describe('settings in the menu', () => {
   })
 
   test('the download folder is picked by walking the folders', async () => {
-    const relicd = await open(
+    const rakun = await open(
       {
         folders: (path) => ({
           path: path ?? '/home/deck',
@@ -590,24 +590,24 @@ describe('settings in the menu', () => {
     )
     press('Enter')
     await screen.findByText('Use this folder')
-    expect(relicd.calls).toContainEqual(['listFolders', ['/juegos']])
+    expect(rakun.calls).toContainEqual(['listFolders', ['/juegos']])
 
     press('ArrowDown') // Up
     press('ArrowDown') // rpg
     press('Enter')
     await waitFor(() =>
-      expect(relicd.calls).toContainEqual(['listFolders', ['/juegos/rpg']])
+      expect(rakun.calls).toContainEqual(['listFolders', ['/juegos/rpg']])
     )
     press('Enter') // Use this folder
     await waitFor(() =>
-      expect(relicd.setSetting).toHaveBeenCalledWith(
+      expect(rakun.setSetting).toHaveBeenCalledWith(
         'defaultInstallPath',
         '/juegos/rpg'
       )
     )
   })
 
-  test('relicd refusing the Proton folder shows why and keeps the picker open', async () => {
+  test('rakun refusing the Proton folder shows why and keeps the picker open', async () => {
     await open({ setting: { ok: false, error: 'not a Proton folder' } }, 2)
     press('Enter')
     await screen.findByText('Use this folder')
@@ -617,18 +617,18 @@ describe('settings in the menu', () => {
   })
 
   test('«Automatic» saves an empty Proton folder', async () => {
-    const relicd = await open({}, 2)
+    const rakun = await open({}, 2)
     press('Enter')
     await screen.findByText('Automatic (first GE-Proton found)')
     press('ArrowDown')
     press('Enter')
     await waitFor(() =>
-      expect(relicd.setSetting).toHaveBeenCalledWith('protonPath', '')
+      expect(rakun.setSetting).toHaveBeenCalledWith('protonPath', '')
     )
   })
 
   test('the key is typed in a field without the letters acting as shortcuts', async () => {
-    const relicd = await open({}, 3)
+    const rakun = await open({}, 3)
     press('Enter')
     const field = await screen.findByRole<HTMLInputElement>('textbox')
     fireEvent.change(field, { target: { value: 'qid' } })
@@ -638,12 +638,12 @@ describe('settings in the menu', () => {
 
     fireEvent.keyDown(field, { key: 'Enter' })
     await waitFor(() =>
-      expect(relicd.setSetting).toHaveBeenCalledWith('steamGridDbApiKey', 'qid')
+      expect(rakun.setSetting).toHaveBeenCalledWith('steamGridDbApiKey', 'qid')
     )
   })
 
   test('the language goes through the list and saves on A; B cancels', async () => {
-    const relicd = await open({}, 4)
+    const rakun = await open({}, 4)
     press('Enter')
     await screen.findByText('Spanish (es)', { selector: 'strong' })
     press('ArrowRight')
@@ -651,31 +651,31 @@ describe('settings in the menu', () => {
       screen.getByText('Estonian (et)', { selector: 'strong' })
     ).toBeTruthy()
     press('Escape')
-    expect(relicd.setSetting).not.toHaveBeenCalled()
+    expect(rakun.setSetting).not.toHaveBeenCalled()
 
     press('Enter')
     press('ArrowRight')
     press('Enter')
     await waitFor(() =>
-      expect(relicd.setSetting).toHaveBeenCalledWith('language', 'et')
+      expect(rakun.setSetting).toHaveBeenCalledWith('language', 'et')
     )
   })
 })
 
 describe('login', () => {
   const openLogin = async (options: Parameters<typeof setup>[0] = {}) => {
-    const relicd = setup(options)
+    const rakun = setup(options)
     await screen.findByTitle('Alpha')
     press('m')
     press('Enter')
     await screen.findByText('Signed in as Ana')
     press('ArrowDown') // GOG, signed out
     press('Enter')
-    return relicd
+    return rakun
   }
 
   test('open the page, paste where it ends, and it is done', async () => {
-    const relicd = await openLogin()
+    const rakun = await openLogin()
 
     const link = await screen.findByRole('link', {
       name: 'Open the login page'
@@ -687,7 +687,7 @@ describe('login', () => {
     fireEvent.change(field, { target: { value: 'https://end?code=1' } })
     fireEvent.keyDown(field, { key: 'Enter' })
     await waitFor(() =>
-      expect(relicd.login.submit).toHaveBeenCalledWith(
+      expect(rakun.login.submit).toHaveBeenCalledWith(
         'gog',
         'https://end?code=1'
       )
@@ -695,7 +695,7 @@ describe('login', () => {
     await waitFor(() => expect(screen.queryByRole('textbox')).toBeNull())
   })
 
-  test('a login that relicd refuses says why and stays open', async () => {
+  test('a login that rakun refuses says why and stays open', async () => {
     await openLogin({ login: { ok: false, error: 'No login code found' } })
     const field = await screen.findByRole<HTMLInputElement>('textbox')
     fireEvent.keyDown(field, { key: 'Enter' })
@@ -709,14 +709,14 @@ describe('login', () => {
         readText: jest.fn().mockResolvedValue(' https://end?code=2 ')
       }
     })
-    const relicd = await openLogin()
+    const rakun = await openLogin()
     fireEvent.click(
       await screen.findByRole('button', {
         name: 'Paste from clipboard and sign in'
       })
     )
     await waitFor(() =>
-      expect(relicd.login.submit).toHaveBeenCalledWith(
+      expect(rakun.login.submit).toHaveBeenCalledWith(
         'gog',
         'https://end?code=2'
       )
@@ -727,14 +727,14 @@ describe('login', () => {
     Object.assign(navigator, {
       clipboard: { readText: jest.fn().mockRejectedValue(new Error('denied')) }
     })
-    const relicd = await openLogin()
+    const rakun = await openLogin()
     fireEvent.click(
       await screen.findByRole('button', {
         name: 'Paste from clipboard and sign in'
       })
     )
     await screen.findByText(/Could not read the clipboard/)
-    expect(relicd.login.submit).not.toHaveBeenCalled()
+    expect(rakun.login.submit).not.toHaveBeenCalled()
   })
 })
 
@@ -748,12 +748,12 @@ describe('closing the panels with the mouse', () => {
   })
 })
 
-describe('without relicd', () => {
+describe('without rakun', () => {
   test('it says how to start it, and there is no button to do it', async () => {
-    const relicd = setup()
+    const rakun = setup()
     await screen.findByTitle('Alpha')
-    act(() => relicd.setConnection('offline'))
-    await screen.findByText(/Start it again with relicctl start/)
+    act(() => rakun.setConnection('offline'))
+    await screen.findByText(/Start it again with rakunctl start/)
     expect(screen.queryByRole('button', { name: /Start/ })).toBeNull()
   })
 })
@@ -761,7 +761,7 @@ describe('without relicd', () => {
 describe('the web open to the network', () => {
   const setMode = (mode: string) => {
     const meta = document.createElement('meta')
-    meta.name = 'relicd-web'
+    meta.name = 'rakun-web'
     meta.content = mode
     document.head.appendChild(meta)
     return () => meta.remove()

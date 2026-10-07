@@ -10,7 +10,7 @@ import type { DMQueueElement, GameInfo, Runner } from 'common/types'
 import type { Store } from './store'
 
 /**
- * Every store relicd supports: a new one is added here and nowhere else. The
+ * Every store rakun supports: a new one is added here and nowhere else. The
  * order is the one clients show them in.
  */
 export const stores = { legendary, gog, nile, zoom } satisfies Record<

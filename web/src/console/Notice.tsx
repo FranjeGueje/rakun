@@ -2,7 +2,7 @@ import type { DialogNotice } from '../api/types'
 import type { Translate } from '../i18n'
 import { useLayer } from '../input/useInput'
 
-/** A problem relicd or an action reported: one button, any answer closes it */
+/** A problem rakun or an action reported: one button, any answer closes it */
 export function Notice({
   notice,
   t,

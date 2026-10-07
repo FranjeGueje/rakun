@@ -23,8 +23,8 @@ describe('the event stream format', () => {
 })
 
 describe('errorOf', () => {
-  test('gives the reason relicd answers, or what the status says', () => {
+  test('gives the reason rakun answers, or what the status says', () => {
     expect(errorOf(500, '{"error":"Unknown store"}')).toBe('Unknown store')
-    expect(errorOf(502, 'not json')).toBe('relicd answered 502')
+    expect(errorOf(502, 'not json')).toBe('rakun answered 502')
   })
 })

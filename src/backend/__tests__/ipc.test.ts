@@ -11,9 +11,9 @@ import {
 
 describe('ipc registry', () => {
   test('invokeHandler calls the handler with the arguments and returns its result', async () => {
-    addHandler('getRelicVersion', () => '1.0.0')
-    expect(hasHandler('getRelicVersion')).toBe(true)
-    await expect(invokeHandler('getRelicVersion')).resolves.toBe('1.0.0')
+    addHandler('getRakunVersion', () => '1.0.0')
+    expect(hasHandler('getRakunVersion')).toBe(true)
+    await expect(invokeHandler('getRakunVersion')).resolves.toBe('1.0.0')
   })
 
   test('invokeHandler rejects for a channel without handler', async () => {

@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import type { ConnectionState, RelicdEvent } from '../channels'
+import type { ConnectionState, RakunEvent } from '../channels'
 import { WebLink } from '../link'
 
 /** A response whose body arrives in the given pieces and then ends */
@@ -17,7 +17,7 @@ function streamOf(pieces: string[]): Response {
 /** Runs the link against the answers given, one per attempt, and stops after the last */
 async function runLink(answers: (Response | Error)[]) {
   const states: ConnectionState[] = []
-  const events: RelicdEvent[] = []
+  const events: RakunEvent[] = []
   const waits: number[] = []
   const requests: { url: string; token: string | undefined }[] = []
   let attempt = 0
@@ -25,7 +25,7 @@ async function runLink(answers: (Response | Error)[]) {
   const fetchFn = ((url: string, init?: RequestInit) => {
     requests.push({
       url,
-      token: (init?.headers as Record<string, string>)['x-relicd-token']
+      token: (init?.headers as Record<string, string>)['x-rakun-token']
     })
     const answer = answers[attempt++]
     return answer instanceof Error

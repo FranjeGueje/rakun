@@ -6,7 +6,7 @@ import { addHandler } from 'backend/ipc'
 // unreliable in practice — many Linux desktops have no working keyring daemon
 // (safeStorage.isEncryptionAvailable() was false even with every
 // --password-store override tried) — so the key is now always plain text in
-// config.json, like every other setting Relic persists. A value still
+// config.json, like every other setting Rakun persists. A value still
 // carrying that prefix can't be recovered here; it's cleared once so the user
 // re-pastes their key.
 const LEGACY_ENCRYPTED_PREFIX = 'sgdb:v1:'

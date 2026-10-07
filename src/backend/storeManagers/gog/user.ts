@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { existsSync, unlinkSync } from 'fs'
 import { logError, logInfo, LogPrefix, logWarning } from 'backend/logger'
-import { relicVersion } from 'backend/constants/others'
+import { rakunVersion } from 'backend/constants/others'
 import { GOGLoginData } from 'common/types'
 import { configStore } from './electronStores'
 import { isOnline } from '../../online_monitor'
@@ -90,7 +90,7 @@ export class GOGUser {
 
   public static async getUserDetails(): Promise<UserData | undefined> {
     if (!isOnline()) {
-      logError('Unable to login information, Relic offline', LogPrefix.Gog)
+      logError('Unable to login information, Rakun offline', LogPrefix.Gog)
       return
     }
     logInfo('Checking if login is valid', LogPrefix.Gog)
@@ -107,7 +107,7 @@ export class GOGUser {
       .get(`https://users.gog.com/users/${user.user_id}`, {
         headers: {
           Authorization: `Bearer ${user.access_token}`,
-          'User-Agent': `Relic/${relicVersion}`
+          'User-Agent': `Rakun/${rakunVersion}`
         }
       })
       .catch((error) => {

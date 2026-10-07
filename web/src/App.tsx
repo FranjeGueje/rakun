@@ -5,10 +5,10 @@ import { NetworkBanner } from './console/NetworkBanner'
 import { Notice } from './console/Notice'
 import { translator } from './i18n'
 import { startInput, useControllerLayout } from './input/useInput'
-import { useRelicd } from './state/useRelicd'
+import { useRakun } from './state/useRakun'
 
 export default function App() {
-  const { state, actions } = useRelicd()
+  const { state, actions } = useRakun()
   const layout = useControllerLayout()
   const t = useMemo(() => translator(), [])
 

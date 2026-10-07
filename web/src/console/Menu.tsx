@@ -4,7 +4,7 @@ import type { Translate } from '../i18n'
 import { CloseButton } from './CloseButton'
 import { useLayer } from '../input/useInput'
 import { menuValue, type MenuEntry } from '../state/selectors'
-import type { Actions } from '../state/useRelicd'
+import type { Actions } from '../state/useRakun'
 import { Accounts } from './Accounts'
 import { FolderPicker } from './FolderPicker'
 import { LanguageSelect, languageLabel } from './LanguageSelect'
@@ -25,7 +25,7 @@ const KEYS: Record<Exclude<Entry, 'accounts'>, SettingKey> = {
   language: 'language'
 }
 
-/** What Select opens: the screens of the client, and the few settings it changes in relicd */
+/** What Select opens: the screens of the client, and the few settings it changes in rakun */
 export function Menu({
   actions,
   t,
@@ -40,15 +40,15 @@ export function Menu({
   const [settings, setSettings] = useState<AppSettings | null>(null)
 
   const load = useCallback(async () => {
-    setSettings(await window.relicd.call('requestAppSettings'))
+    setSettings(await window.rakun.call('requestAppSettings'))
   }, [])
   useEffect(() => {
     load().catch(() => undefined)
   }, [load])
 
-  /** Saves one setting; answers the reason relicd gives when it refuses it */
+  /** Saves one setting; answers the reason rakun gives when it refuses it */
   const save = async (entry: Exclude<Entry, 'accounts'>, value: string) => {
-    const reply = await window.relicd.setSetting(KEYS[entry], value)
+    const reply = await window.rakun.setSetting(KEYS[entry], value)
     if (!reply.ok) return reply.error
     if (entry === 'downloadPath') actions.reloadSettings()
     await load()

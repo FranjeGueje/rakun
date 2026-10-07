@@ -159,7 +159,7 @@ describe('actionsFor', () => {
 })
 
 describe('installing', () => {
-  test('the platform follows the rule of relicctl', () => {
+  test('the platform follows the rule of rakunctl', () => {
     expect(platformFor(game('a', { is_linux_native: true }))).toBe('linux')
     expect(platformFor(game('a'))).toBe('windows')
     expect(platformFor(game('a', { runner: 'zoom' }))).toBe('windows')

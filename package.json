@@ -1,15 +1,15 @@
 {
-  "name": "relicd",
+  "name": "rakun",
   "version": "0.1.0",
   "private": true,
   "license": "GPL-3.0-only",
-  "description": "relicd - headless Linux games installer service for GOG, Epic Games, Amazon Games and Zoom",
+  "description": "rakun - headless Linux games installer service for GOG, Epic Games, Amazon Games and Zoom",
   "repository": {
     "type": "Github",
     "url": "https://github.com/FranjeGueje/Relic"
   },
   "author": {
-    "name": "Relic",
+    "name": "Rakun",
     "email": "fjgj1@hotmail.com"
   },
   "engines": {
@@ -17,10 +17,10 @@
   },
   "packageManager": "pnpm@11.15.1",
   "scripts": {
-    "start": "node build/relicd.cjs",
+    "start": "node build/rakun.cjs",
     "build": "pnpm build:daemon && pnpm build:ctl && pnpm build:web",
-    "build:daemon": "esbuild src/backend/relic/main.ts --bundle --platform=node --format=cjs --target=node24 --outfile=build/relicd.cjs --log-level=warning",
-    "build:ctl": "esbuild src/relicctl/main.ts --bundle --platform=node --format=cjs --target=node24 --outfile=build/relicctl.cjs --log-level=warning",
+    "build:daemon": "esbuild src/backend/rakun/main.ts --bundle --platform=node --format=cjs --target=node24 --outfile=build/rakun.cjs --log-level=warning",
+    "build:ctl": "esbuild src/rakunctl/main.ts --bundle --platform=node --format=cjs --target=node24 --outfile=build/rakunctl.cjs --log-level=warning",
     "build:web": "esbuild web/src/main.tsx --bundle --format=esm --jsx=automatic --target=es2023 --minify --outfile=build/web/app.js --log-level=warning && cp web/index.html build/web/index.html",
     "package": "bash scripts/package.sh",
     "codecheck": "tsc --noEmit && tsc --noEmit -p web",
@@ -33,7 +33,7 @@
     "prettier": "prettier --check .",
     "prettier-fix": "prettier --write .",
     "download-helper-binaries": "esbuild --bundle --platform=node --target=node24 meta/downloadHelperBinaries.ts --outfile=build/meta/downloadHelperBinaries.cjs --log-level=warning && NODE_USE_ENV_PROXY=1 node build/meta/downloadHelperBinaries.cjs",
-    "check-helper-binaries": "esbuild --bundle --platform=node --target=node24 meta/downloadHelperBinaries.ts --outfile=build/meta/downloadHelperBinaries.cjs --log-level=warning && RELIC_CHECK=1 NODE_USE_ENV_PROXY=1 node build/meta/downloadHelperBinaries.cjs"
+    "check-helper-binaries": "esbuild --bundle --platform=node --target=node24 meta/downloadHelperBinaries.ts --outfile=build/meta/downloadHelperBinaries.cjs --log-level=warning && RAKUN_CHECK=1 NODE_USE_ENV_PROXY=1 node build/meta/downloadHelperBinaries.cjs"
   },
   "dependencies": {
     "axios": "^1.19.0",

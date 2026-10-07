@@ -1,5 +1,5 @@
 /**
- * @file Figures out system information (CPU, GPU, memory) and software versions (Relic, Legendary, gogdl, etc.)
+ * @file Figures out system information (CPU, GPU, memory) and software versions (Rakun, Legendary, gogdl, etc.)
  */
 
 import os from 'os'
@@ -10,7 +10,7 @@ import { getGpuInfo } from './gpu'
 import { getMemoryInfo } from './memory'
 import { getOsInfo } from './osInfo'
 import { getSteamDeckInfo, type SteamDeckInfo } from './steamDeck'
-import { getRelicVersion } from './relicVersion'
+import { getRakunVersion } from './rakunVersion'
 import {
   getGogdlVersion,
   getLegendaryVersion,
@@ -55,7 +55,7 @@ interface SystemInformation {
   steamDeckInfo: SteamDeckInfo
   isAppImage: boolean
   softwareInUse: {
-    relicVersion: string
+    rakunVersion: string
     legendaryVersion: string
     gogdlVersion: string
     nileVersion: string
@@ -104,7 +104,7 @@ async function getSystemInfo(cache = true): Promise<SystemInformation> {
     steamDeckInfo: deckInfo,
     isAppImage: !!process.env.APPIMAGE,
     softwareInUse: {
-      relicVersion: getRelicVersion(),
+      rakunVersion: getRakunVersion(),
       legendaryVersion: legendaryVersion,
       gogdlVersion: gogdlVersion,
       nileVersion: nileVersion
@@ -139,7 +139,7 @@ ${
     : ''
 }
 Software Versions:
-  Relic: ${info.softwareInUse.relicVersion}
+  Rakun: ${info.softwareInUse.rakunVersion}
   Legendary: ${info.softwareInUse.legendaryVersion}
   gogdl: ${info.softwareInUse.gogdlVersion}
   Nile: ${info.softwareInUse.nileVersion}`

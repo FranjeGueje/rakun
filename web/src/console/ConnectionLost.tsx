@@ -1,7 +1,7 @@
 import type { ConnectionState } from '../api/channels'
 import type { Translate } from '../i18n'
 
-/** Covers the app while relicd does not answer; nothing behind it can be used */
+/** Covers the app while rakun does not answer; nothing behind it can be used */
 export function ConnectionLost({
   connection,
   t

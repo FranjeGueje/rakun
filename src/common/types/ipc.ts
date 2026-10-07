@@ -21,10 +21,10 @@ import type {
   StatusPromise,
   UpdateParams
 } from '../types'
-import type { AccountsStatus, SessionsImport } from 'common/relic/accounts'
-import type { FolderListing } from 'common/relic/folders'
-import type { LoginInfo, LoginResult } from 'common/relic/login'
-import type { StoreInfo } from 'common/relic/stores'
+import type { AccountsStatus, SessionsImport } from 'common/rakun/accounts'
+import type { FolderListing } from 'common/rakun/folders'
+import type { LoginInfo, LoginResult } from 'common/rakun/login'
+import type { StoreInfo } from 'common/rakun/stores'
 import type { GetLogFileArgs } from 'backend/logger/paths'
 
 // ts-prune-ignore-next
@@ -32,8 +32,8 @@ interface SyncIPCFunctions {
   removeFromDMQueue: (appName: string) => void
   clearFinishedDMQueue: () => void
   clearCache: (library?: Runner) => void
-  resetRelic: () => void
-  stopRelicd: () => void
+  resetRakun: () => void
+  stopRakun: () => void
   'set-connectivity-online': () => void
   setSetting: (args: { key: keyof AppSettings; value: unknown }) => void
   resumeCurrentDownload: () => void
@@ -52,7 +52,7 @@ interface AsyncIPCFunctions {
   checkDiskSpace: (folder: string) => Promise<DiskSpaceData>
   checkGameUpdates: () => Promise<string[]>
   getEpicGamesStatus: () => Promise<boolean>
-  getRelicVersion: () => string
+  getRakunVersion: () => string
   getLegendaryVersion: () => Promise<string>
   getGogdlVersion: () => Promise<string>
   getNileVersion: () => Promise<string>

@@ -1,7 +1,7 @@
 import type { GameInfo, Runner } from 'common/types'
 import type { LibraryManager } from 'common/types/game_manager'
-import type { AccountStatus } from 'common/relic/accounts'
-import type { LoginInfo, LoginResult } from 'common/relic/login'
+import type { AccountStatus } from 'common/rakun/accounts'
+import type { LoginInfo, LoginResult } from 'common/rakun/login'
 
 /** How a store keeps its session on disk and how to check or end it */
 export interface StoreSession {
@@ -10,7 +10,7 @@ export interface StoreSession {
   /** File inside `dir` whose presence means there is a session */
   main: string
   /** Credential files to copy, by name, from `dir` in Relic's config */
-  files: (relicDir: string) => string[]
+  files: (rakunDir: string) => string[]
   /** Who is logged in, from local data only (no network) */
   account: () => AccountStatus
   /** Asks the store whether the credentials just copied are accepted */
@@ -29,7 +29,7 @@ interface StoreLogin {
 }
 
 /**
- * Everything the rest of relicd needs to know about a store. Adding a store is
+ * Everything the rest of rakun needs to know about a store. Adding a store is
  * a folder under `storeManagers/` with its own `store.ts` plus one line in the
  * registry (`storeManagers/index.ts`).
  */

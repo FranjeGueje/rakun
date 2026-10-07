@@ -38,7 +38,7 @@ import {
   onGameImported,
   onGameMoved,
   onGameUninstalled
-} from 'backend/relic/game_events'
+} from 'backend/rakun/game_events'
 import { GogInstallPlatform } from 'common/types/gog'
 import { sendFrontendMessage } from '../../ipc'
 import { Game, RemoveArgs } from 'common/types/game_manager'

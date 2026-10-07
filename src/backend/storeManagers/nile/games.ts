@@ -28,7 +28,7 @@ import {
   onGameImported,
   onGameMoved,
   onGameUninstalled
-} from 'backend/relic/game_events'
+} from 'backend/rakun/game_events'
 import { sendFrontendMessage } from '../../ipc'
 import { isLinux } from 'backend/constants/environment'
 

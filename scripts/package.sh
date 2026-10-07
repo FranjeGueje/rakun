@@ -1,16 +1,16 @@
 #!/bin/bash
-# Builds dist/relicd-<version>-linux-<arch>.tar.gz (+ .sha256) for x64, arm64 or both:
-#   relicd/relicd        launcher
-#   relicd/node          Node runtime of that architecture (SteamOS does not ship one)
-#   relicd/relicd.cjs    the bundled daemon
-#   relicd/relicctl      launcher of the command line client (relicctl.cjs)
-#   relicd/web/          the web relicd serves on its port (built from web/ by `pnpm build`)
-#   relicd/public/bin/   helper binaries: legendary, gogdl and nile for <arch>/linux, the
+# Builds dist/rakun-<version>-linux-<arch>.tar.gz (+ .sha256) for x64, arm64 or both:
+#   rakun/rakun        launcher
+#   rakun/node          Node runtime of that architecture (SteamOS does not ship one)
+#   rakun/rakun.cjs    the bundled daemon
+#   rakun/rakunctl      launcher of the command line client (rakunctl.cjs)
+#   rakun/web/          the web rakun serves on its port (built from web/ by `pnpm build`)
+#   rakun/public/bin/   helper binaries: legendary, gogdl and nile for <arch>/linux, the
 #                        x64/win32 ones (they run inside Wine/Proton, so both architectures
 #                        need them, comet.exe among them), umu and zoom
 #
 # Usage: scripts/package.sh [x64|arm64|all]      (default: all)
-#   RELICD_NODE_BINARY=/path/to/node   use this node instead of downloading it
+#   RAKUN_NODE_BINARY=/path/to/node   use this node instead of downloading it
 #                                      (only with a single architecture)
 set -euo pipefail
 
@@ -31,8 +31,8 @@ case "${1:-all}" in
         ;;
 esac
 
-if [ -n "${RELICD_NODE_BINARY:-}" ] && [ "${#ARCHS[@]}" -ne 1 ]; then
-    echo "Error: RELICD_NODE_BINARY solo vale con una arquitectura (x64 o arm64)." >&2
+if [ -n "${RAKUN_NODE_BINARY:-}" ] && [ "${#ARCHS[@]}" -ne 1 ]; then
+    echo "Error: RAKUN_NODE_BINARY solo vale con una arquitectura (x64 o arm64)." >&2
     exit 1
 fi
 
@@ -44,8 +44,8 @@ node_arch() { [ "$1" = x64 ] && echo x64 || echo arm64; }
 LINUX_HELPERS=(legendary gogdl nile)
 
 fetch_node() { # arch, stage
-    if [ -n "${RELICD_NODE_BINARY:-}" ]; then
-        cp "$RELICD_NODE_BINARY" "$2/node"
+    if [ -n "${RAKUN_NODE_BINARY:-}" ]; then
+        cp "$RAKUN_NODE_BINARY" "$2/node"
         return
     fi
 
@@ -99,9 +99,9 @@ LAUNCHER
 }
 
 stage_package() { # arch, stage
-    local helper bin="$2/relicd/public/bin"
+    local helper bin="$2/rakun/public/bin"
     mkdir -p "$bin/$1"
-    cp build/relicd.cjs build/relicctl.cjs "$2/relicd/"
+    cp build/rakun.cjs build/rakunctl.cjs "$2/rakun/"
     mkdir -p "$bin/$1/linux"
     for helper in "${LINUX_HELPERS[@]}"; do
         cp "public/bin/$1/linux/$helper" "$bin/$1/linux/"
@@ -109,24 +109,24 @@ stage_package() { # arch, stage
     cp -r public/bin/umu public/bin/zoom public/bin/legendary.LICENSE "$bin/"
     mkdir -p "$bin/x64"
     cp -r public/bin/x64/win32 "$bin/x64/"
-    cp COPYING API.md "$2/relicd/"
-    cp -r build/web "$2/relicd/web"
-    fetch_node "$1" "$2/relicd"
-    make_launcher "$2/relicd" relicd
-    make_launcher "$2/relicd" relicctl
-    chmod +x "$2/relicd/node"
+    cp COPYING API.md "$2/rakun/"
+    cp -r build/web "$2/rakun/web"
+    fetch_node "$1" "$2/rakun"
+    make_launcher "$2/rakun" rakun
+    make_launcher "$2/rakun" rakunctl
+    chmod +x "$2/rakun/node"
 }
 
 package_arch() { # arch
-    local tarball="$OUT_DIR/relicd-${VERSION}-linux-$1.tar.gz"
+    local tarball="$OUT_DIR/rakun-${VERSION}-linux-$1.tar.gz"
     local stage="$OUT_DIR/stage-$1"
     check_binaries "$1"
     echo "[$1] Staging..."
     rm -rf "$stage" "$tarball" "$tarball.sha256"
-    mkdir -p "$stage/relicd"
+    mkdir -p "$stage/rakun"
     stage_package "$1" "$stage"
     echo "[$1] Creating $tarball..."
-    tar -czf "$tarball" -C "$stage" relicd
+    tar -czf "$tarball" -C "$stage" rakun
     rm -rf "$stage"
     (cd "$OUT_DIR" && sha256sum "$(basename "$tarball")" >"$(basename "$tarball").sha256")
     echo "[$1] Done: $tarball ($(du -h "$tarball" | cut -f1))"

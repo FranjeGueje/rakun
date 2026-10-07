@@ -4,6 +4,34 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
 `upstream`. / The history of Relic (and of the Heroic cleanup) lives in the
 `upstream` repository.
 
+## Sin publicar / Unreleased — Rakun
+
+### Español
+
+#### Cambiado
+
+- **relicd pasa a llamarse rakun** y `relicctl` a `rakunctl`. Corte limpio, sin
+  migración: rutas `~/.config/rakun`, `~/.cache/rakun`, `~/.local/state/Rakun`,
+  `~/.local/share/rakun`, `~/Games/Rakun`; variables `RAKUN_*`; cabecera
+  `x-rakun-token`; canales `getRakunVersion` y `resetRakun`.
+- El montaje dentro del prefijo de cada juego es ahora `C:\Launchers`
+  (`drive_c/Launchers`, variable `%LAUNCHERS%` en los `.bat`, runner versión 5).
+  Los atajos de Steam y prefijos anteriores no se migran: borra el atajo viejo y
+  reinstala el juego.
+
+### English
+
+#### Changed
+
+- **relicd is now called rakun** and `relicctl` is `rakunctl`. Clean break, no
+  migration: paths `~/.config/rakun`, `~/.cache/rakun`, `~/.local/state/Rakun`,
+  `~/.local/share/rakun`, `~/Games/Rakun`; `RAKUN_*` variables; `x-rakun-token`
+  header; `getRakunVersion` and `resetRakun` channels.
+- The mount inside each game's prefix is now `C:\Launchers`
+  (`drive_c/Launchers`, `%LAUNCHERS%` in the `.bat` files, runner version 5).
+  Existing Steam shortcuts and prefixes are not migrated: delete the old shortcut
+  and reinstall the game.
+
 ## 0.1.0 — Headless
 
 ### Español
@@ -49,7 +77,7 @@ El historial de Relic (y de la limpieza de Heroic) está en el repositorio
   desconocida, un tipo erróneo, un idioma no soportado, `maxWorkers` fuera de
   rango o una ruta inexistente responden `500` con el motivo. Cambiar `language`
   surte efecto al instante. `getMaxCpus` indica el máximo de `maxWorkers`.
-- **`clearCache`, `resetRelic` y `stopRelicd`** en la API. `resetRelic` olvida
+- **`clearCache`, `resetRakun` y `stopRelicd`** en la API. `resetRakun` olvida
   sesiones, ajustes y cola (no los juegos instalados ni `api.json`) y detiene
   relicd.
 - **Cola de descargas**: `clearFinishedDMQueue`, y un fallo guarda su motivo en
@@ -201,7 +229,7 @@ use repair or update`; `relicctl` dice «ya está instalado») en vez de descarg
   wrong type, an unsupported language, a `maxWorkers` out of range or a missing
   path answers `500` with the reason. Changing `language` takes effect at once.
   `getMaxCpus` gives the most `maxWorkers` can be.
-- **`clearCache`, `resetRelic` and `stopRelicd`** in the API. `resetRelic`
+- **`clearCache`, `resetRakun` and `stopRelicd`** in the API. `resetRakun`
   forgets sessions, settings and the queue (not the installed games nor
   `api.json`) and stops relicd.
 - **Download queue**: `clearFinishedDMQueue`, and a failure keeps its reason in

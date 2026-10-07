@@ -12,7 +12,7 @@ import {
   type Filters,
   type StoreTab
 } from '../state/selectors'
-import type { Actions } from '../state/useRelicd'
+import type { Actions } from '../state/useRakun'
 import { Card } from './Card'
 import { ScrollRoot } from './Cover'
 import { Downloads } from './Downloads'

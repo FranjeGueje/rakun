@@ -179,7 +179,7 @@ describe('events', () => {
     expect(state.queue.finished).toHaveLength(1)
   })
 
-  test('a dialog of relicd becomes a notice, and can be dismissed', () => {
+  test('a dialog of rakun becomes a notice, and can be dismissed', () => {
     let state = reducer(loaded(), {
       type: 'event',
       event: { event: 'showDialog', args: ['Warning', 'Epic is down', 'ERROR'] }
@@ -200,7 +200,7 @@ describe('events', () => {
 })
 
 describe('connection', () => {
-  test('losing relicd keeps what was read, to show it behind the notice', () => {
+  test('losing rakun keeps what was read, to show it behind the notice', () => {
     const state = reducer(loaded(), { type: 'connection', state: 'offline' })
     expect(state.connection).toBe('offline')
     expect(state.games).toHaveLength(1)

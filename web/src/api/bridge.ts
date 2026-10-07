@@ -2,32 +2,32 @@ import type {
   CallChannel,
   CallMap,
   ConnectionState,
-  RelicdEvent
+  RakunEvent
 } from './channels'
 import { WebLink } from './link'
 import { errorOf } from './sse'
 import type { LoginInfo, Runner, SettingKey } from './types'
 
-/** How a login ended: the reason comes from relicd */
+/** How a login ended: the reason comes from rakun */
 export type LoginReply = { ok: true } | { ok: false; error: string }
 
-/** How saving a setting ended: the reason comes from relicd, which validates it */
+/** How saving a setting ended: the reason comes from rakun, which validates it */
 export type SettingReply = { ok: true } | { ok: false; error: string }
 
-/** What the interface uses to talk to relicd; the page keeps it as `window.relicd` */
-export type RelicdBridge = {
+/** What the interface uses to talk to rakun; the page keeps it as `window.rakun` */
+export type RakunBridge = {
   call: <C extends CallChannel>(
     channel: C,
     ...args: CallMap[C]['args']
   ) => Promise<CallMap[C]['result']>
   connection: () => Promise<ConnectionState>
-  onEvent: (listener: (event: RelicdEvent) => void) => () => void
+  onEvent: (listener: (event: RakunEvent) => void) => () => void
   onConnection: (listener: (state: ConnectionState) => void) => () => void
-  /** Saves one of the few settings the interface changes; relicd validates it */
+  /** Saves one of the few settings the interface changes; rakun validates it */
   setSetting: (key: SettingKey, value: string) => Promise<SettingReply>
   /**
    * A browser cannot watch the login page of a store, so the person opens it
-   * and pastes the address it ends on (as `relicctl login` does)
+   * and pastes the address it ends on (as `rakunctl login` does)
    */
   login: {
     info: (runner: Runner) => Promise<LoginInfo>
@@ -48,7 +48,7 @@ export function poster(
   return async (channel, args) => {
     const res = await fetchFn(`/api/${channel}`, {
       method: 'POST',
-      headers: { 'x-relicd-token': token, 'content-type': 'application/json' },
+      headers: { 'x-rakun-token': token, 'content-type': 'application/json' },
       body: JSON.stringify({ args })
     })
     const text = await res.text()
@@ -66,11 +66,11 @@ async function reply(attempt: () => Promise<unknown>): Promise<SettingReply> {
   }
 }
 
-/** The bridge to relicd: its own API with the token its page came with */
-export function createBridge(link: WebLink, post: Post): RelicdBridge {
+/** The bridge to rakun: its own API with the token its page came with */
+export function createBridge(link: WebLink, post: Post): RakunBridge {
   return {
     call: ((channel: string, ...args: unknown[]) =>
-      post(channel, args)) as RelicdBridge['call'],
+      post(channel, args)) as RakunBridge['call'],
     connection: () => Promise.resolve(link.connection),
     onEvent: (listener) => link.onEvent(listener),
     onConnection: (listener) => link.onConnection(listener),

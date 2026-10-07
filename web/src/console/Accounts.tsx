@@ -3,7 +3,7 @@ import type { AccountsStatus, LoginInfo, StoreInfo } from '../api/types'
 import type { Translate } from '../i18n'
 import { CloseButton } from './CloseButton'
 import { useLayer } from '../input/useInput'
-import type { Actions } from '../state/useRelicd'
+import type { Actions } from '../state/useRakun'
 import { ConfirmDialog } from './ConfirmDialog'
 import { TextField } from './TextField'
 
@@ -36,8 +36,8 @@ export function Accounts({
 
   const load = useCallback(async () => {
     const [list, status] = await Promise.all([
-      window.relicd.call('getStores'),
-      window.relicd.call('getAccounts')
+      window.rakun.call('getStores'),
+      window.rakun.call('getAccounts')
     ])
     setStores(list)
     setAccounts(status)
@@ -50,7 +50,7 @@ export function Accounts({
   const signIn = async (store: StoreInfo) => {
     setError('')
     try {
-      setPasting({ store, info: await window.relicd.login.info(store.id) })
+      setPasting({ store, info: await window.rakun.login.info(store.id) })
     } catch (reason) {
       setError(t('accounts.failed', { error: String(reason) }))
     }
@@ -58,7 +58,7 @@ export function Accounts({
 
   const submitPasted = async (text: string) => {
     if (!pasting) return undefined
-    const reply = await window.relicd.login.submit(pasting.store.id, text)
+    const reply = await window.rakun.login.submit(pasting.store.id, text)
     if (!reply.ok) return reply.error
     setPasting(null)
     await load()
@@ -69,7 +69,7 @@ export function Accounts({
     setAskLogout(null)
     setError('')
     try {
-      await window.relicd.call('logout', store.id)
+      await window.rakun.call('logout', store.id)
       actions.reloadStore(store.id)
     } catch (e) {
       setError(String(e))

@@ -8,20 +8,20 @@ import { GameLogType, getLogFilePath } from './paths'
 
 import type { GameInfo, Runner } from 'common/types'
 
-let relicLogWriter: LogWriter
+let rakunLogWriter: LogWriter
 const runnerLogWriters = new Map<Runner, LogWriter>()
 
 const logDebug = (...params: Parameters<LogWriter['logDebug']>) => {
-  void relicLogWriter.logDebug(...params)
+  void rakunLogWriter.logDebug(...params)
 }
 const logInfo = (...params: Parameters<LogWriter['logInfo']>) => {
-  void relicLogWriter.logInfo(...params)
+  void rakunLogWriter.logInfo(...params)
 }
 const logWarning = (...params: Parameters<LogWriter['logWarning']>) => {
-  void relicLogWriter.logWarning(...params)
+  void rakunLogWriter.logWarning(...params)
 }
 const logError = (...params: Parameters<LogWriter['logError']>) => {
-  void relicLogWriter.logError(...params)
+  void rakunLogWriter.logError(...params)
 }
 
 function getRunnerLogWriter(runner: Runner) {
@@ -53,7 +53,7 @@ function init() {
   // "just" failing to write to the streams)
   for (const channel of ['stdout', 'stderr'] as const) {
     process[channel].once('error', (error: Error) => {
-      void relicLogWriter.writeString(
+      void rakunLogWriter.writeString(
         `Error writing to ${channel}: ${error.stack}`
       )
 
@@ -63,15 +63,15 @@ function init() {
     })
   }
 
-  relicLogWriter = new LogWriter(getLogFilePath({}), true, false)
+  rakunLogWriter = new LogWriter(getLogFilePath({}), true, false)
 
-  void relicLogWriter.logInfo(
+  void rakunLogWriter.logInfo(
     ['System Information:', getSystemInfo().then(formatSystemInfo)],
     LogPrefix.Backend
   )
 
   backendEvents.on('settingChanged', ({ key, oldValue, newValue }) =>
-    relicLogWriter.logInfo([
+    rakunLogWriter.logInfo([
       'Settings key',
       key,
       'changed from',

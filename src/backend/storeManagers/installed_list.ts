@@ -1,5 +1,5 @@
 /**
- * The lists of installed games that relicd keeps itself (GOG, Zoom). An entry is
+ * The lists of installed games that rakun keeps itself (GOG, Zoom). An entry is
  * identified by its `appName`: it must appear once, however many times the game
  * is installed over itself, and removing it must remove all of it.
  */

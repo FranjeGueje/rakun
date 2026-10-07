@@ -5,12 +5,12 @@ import { currentGlobalConfigVersion } from 'backend/constants/others'
 
 import { logError, logInfo, LogPrefix } from './logger'
 import { backendEvents } from './backend_events'
-import { detectGeProton, resolveProtonPath } from './relic/proton'
+import { detectGeProton, resolveProtonPath } from './rakun/proton'
 import { configStore } from './constants/key_value_stores'
 
 import {
   configPath,
-  relicInstallPath,
+  rakunInstallPath,
   steamCompatDir,
   userHome
 } from './constants/paths'
@@ -221,7 +221,7 @@ class GlobalConfigV0 extends GlobalConfig {
   public getFactoryDefaults(): AppSettings {
     const settings: Partial<AppSettings> = {
       autoUpdateGames: true,
-      defaultInstallPath: relicInstallPath,
+      defaultInstallPath: rakunInstallPath,
       defaultSteamPath: getSteamCompatFolder(),
       language: 'en',
       maxWorkers: 0,

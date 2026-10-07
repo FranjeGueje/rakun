@@ -42,7 +42,7 @@ import {
 } from './utils/systeminfo/gpu/pci_ids'
 import type { AppSettings } from 'common/types'
 import { configStore } from './constants/key_value_stores'
-import { relicIconFolder, publicDir, toolsPath } from './constants/paths'
+import { rakunIconFolder, publicDir, toolsPath } from './constants/paths'
 
 import { gogdlAuthConfig } from './storeManagers/gog/constants'
 import { tokenPath as zoomTokenPath } from './storeManagers/zoom/constants'
@@ -337,7 +337,7 @@ export function createNecessaryFolders() {
   // stores would create it, but only on a write that happens after login.
   // legendary and nile don't need this, their binaries makedirs on their own.
   const defaultFolders = [
-    relicIconFolder,
+    rakunIconFolder,
     dirname(gogdlAuthConfig),
     dirname(zoomTokenPath)
   ]
@@ -687,7 +687,7 @@ const axiosClient = axios.create({
 })
 
 export const writeConfig = (config: Partial<AppSettings>) => {
-  logInfo('Writing config for Relic', LogPrefix.Backend)
+  logInfo('Writing config for Rakun', LogPrefix.Backend)
   const oldConfig = GlobalConfig.get().getSettings()
 
   // log only the changed setting

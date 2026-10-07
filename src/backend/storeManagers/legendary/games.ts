@@ -33,7 +33,7 @@ import {
   onGameImported,
   onGameMoved,
   onGameUninstalled
-} from 'backend/relic/game_events'
+} from 'backend/rakun/game_events'
 import { isOnline } from '../../online_monitor'
 import { Catalog, Product } from 'common/types/epic-graphql'
 import { sendFrontendMessage } from '../../ipc'

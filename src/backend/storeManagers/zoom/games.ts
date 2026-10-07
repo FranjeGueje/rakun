@@ -31,7 +31,7 @@ import {
   onGameInstalled,
   onGameMoved,
   onGameUninstalled
-} from 'backend/relic/game_events'
+} from 'backend/rakun/game_events'
 import { zoomPlatformScriptPath } from 'backend/constants/paths'
 import { GlobalConfig } from 'backend/config'
 import { ZoomInstallPlatform, ZoomDownloadFile } from 'common/types/zoom'
@@ -234,7 +234,7 @@ export default class ZoomGame implements Game {
         logError(`Not downloading: ${display.reason}`, LogPrefix.Zoom)
         return {
           status: 'error',
-          error: `${display.reason}. Zoom's Windows installers open a window: start relicd from a desktop session and try again`
+          error: `${display.reason}. Zoom's Windows installers open a window: start rakun from a desktop session and try again`
         }
       }
     }
@@ -340,7 +340,7 @@ export default class ZoomGame implements Game {
       const protonPath = GlobalConfig.get().getProtonPath()
       if (!protonPath) {
         logWarning(
-          'No GE-Proton configured for Windows installer. Set it with: relicctl config protonPath <folder>',
+          'No GE-Proton configured for Windows installer. Set it with: rakunctl config protonPath <folder>',
           LogPrefix.Zoom
         )
         installResult = {
@@ -488,7 +488,7 @@ export default class ZoomGame implements Game {
       showDialogBoxModalAuto({
         title: 'Executable not found',
         message:
-          'Relic could not find the executable for this game. Please set it manually in the game settings.',
+          'Rakun could not find the executable for this game. Please set it manually in the game settings.',
         type: 'ERROR'
       })
       return { status: 'error', error: 'Executable not found' }

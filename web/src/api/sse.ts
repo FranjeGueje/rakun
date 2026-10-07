@@ -1,7 +1,7 @@
-import { isEventChannel, type RelicdEvent } from './channels'
+import { isEventChannel, type RakunEvent } from './channels'
 
 /** One `event: x` + `data: [...]` block of the stream; a `: ping` has neither */
-export function parseSseBlock(block: string): RelicdEvent | undefined {
+export function parseSseBlock(block: string): RakunEvent | undefined {
   const lines = block.split('\n')
   const event = lines.find((line) => line.startsWith('event: '))?.slice(7)
   const data = lines.find((line) => line.startsWith('data: '))?.slice(6)
@@ -18,7 +18,7 @@ export function splitBlocks(buffer: string): {
   return { blocks: parts.slice(0, -1), rest: parts.at(-1) ?? '' }
 }
 
-/** The reason relicd gives in its error answer, or what the status says */
+/** The reason rakun gives in its error answer, or what the status says */
 export function errorOf(status: number, body: string): string {
   try {
     const { error } = JSON.parse(body) as { error?: string }
@@ -26,5 +26,5 @@ export function errorOf(status: number, body: string): string {
   } catch {
     // not JSON: the status says enough
   }
-  return `relicd answered ${status}`
+  return `rakun answered ${status}`
 }

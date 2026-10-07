@@ -20,7 +20,7 @@ function isPlainObject(value: unknown): value is StoreData {
 
 // Keys are split on every '.', matching electron-store's default
 // `accessPropertiesByDotNotation`. Escaping ('a\.b') is deliberately not
-// supported: no store in Relic relies on it.
+// supported: no store in Rakun relies on it.
 function readPath(data: StoreData, path: string): unknown {
   let current: unknown = data
   for (const segment of path.split('.')) {
@@ -69,13 +69,13 @@ function deletePath(data: StoreData, path: string): void {
 /**
  * Persistent JSON store, replacing electron-store.
  *
- * Keeps the subset of its behaviour Relic actually used: dot-notation keys,
+ * Keeps the subset of its behaviour Rakun actually used: dot-notation keys,
  * `cwd`/`name`/`clearInvalidConfig`, iteration over top-level entries, and a
  * readable/writable `store` property. Files stay byte-compatible with what
  * electron-store wrote (tab-indented, no trailing newline).
  *
  * Like electron-store (really `conf`, underneath), the file is re-read on every
- * access rather than cached. Relic depends on that: the backend and the preload
+ * access rather than cached. Rakun depends on that: the backend and the preload
  * open separate instances over the same files, and a write through one has to be
  * visible to the other.
  */

@@ -1,6 +1,6 @@
 import { dirSync } from './tmp_dir'
 
-// Keep the stores inside a temp dir instead of the real ~/.config/relic
+// Keep the stores inside a temp dir instead of the real ~/.config/rakun
 const tmpUserData = dirSync()
 const tmpStoreCache = dirSync()
 jest.mock('backend/constants/paths', () => ({

@@ -59,7 +59,7 @@ async function downloadFile(url: string, dst: string) {
   const response = await fetch(url, {
     keepalive: true,
     headers: {
-      'User-Agent': 'RelicBinaryUpdater/1.0'
+      'User-Agent': 'RakunBinaryUpdater/1.0'
     }
   })
   if (response.status !== 200) {
@@ -286,7 +286,7 @@ async function fetchLatestTag(repo: string): Promise<string> {
     `https://api.github.com/repos/${repo}/releases/latest`,
     {
       headers: {
-        'User-Agent': 'RelicBinaryUpdater/1.0',
+        'User-Agent': 'RakunBinaryUpdater/1.0',
         Accept: 'application/vnd.github+json'
       }
     }
@@ -331,7 +331,7 @@ async function storeDownloadedTags() {
 }
 
 async function main() {
-  if (process.env['RELIC_CHECK'] === '1') {
+  if (process.env['RAKUN_CHECK'] === '1') {
     await runVersionCheck()
     return
   }

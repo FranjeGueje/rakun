@@ -1,5 +1,5 @@
 /**
- * The part of relicd's types this client needs. The contract is relicd's API.md;
+ * The part of rakun's types this client needs. The contract is rakun's API.md;
  * these are copied, not imported, so the project stands on its own.
  */
 
@@ -121,17 +121,17 @@ export type QueueInfo = {
   state: DownloadManagerState
 }
 
-/** The settings of relicd the client reads (it never changes them) */
+/** The settings of rakun the client reads (it never changes them) */
 export type AppSettings = {
-  /** The language relicd asks the stores for (GOG's default); not the interface's */
+  /** The language rakun asks the stores for (GOG's default); not the interface's */
   language: string
   defaultInstallPath: string
-  /** Empty: relicd picks the first GE-Proton it finds */
+  /** Empty: rakun picks the first GE-Proton it finds */
   protonPath: string
   steamGridDbApiKey: string
 }
 
-/** The only settings the interface may change (the rest stays in relicd) */
+/** The only settings the interface may change (the rest stays in rakun) */
 export const SETTING_KEYS = [
   'language',
   'defaultInstallPath',
@@ -149,7 +149,7 @@ export type FolderListing = {
   folders: string[]
 }
 
-/** relicd's `showDialog` event: a problem it used to show in a window */
+/** rakun's `showDialog` event: a problem it used to show in a window */
 export type DialogNotice = {
   title: string
   message: string

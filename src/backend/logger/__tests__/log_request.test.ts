@@ -13,7 +13,7 @@ describe('isSafeLogRequest', () => {
   test.each([
     [undefined],
     [null],
-    ['relicd'],
+    ['rakun'],
     [{ appName: '../../x', runner: 'gog' }],
     [{ appName: '..', runner: 'gog' }],
     [{ appName: '.', runner: 'gog' }],

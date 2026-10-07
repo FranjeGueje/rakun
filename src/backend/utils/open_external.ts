@@ -10,7 +10,7 @@ import { logError, LogPrefix } from 'backend/logger'
  * propagating an error for. Problems are logged instead.
  *
  * Deliberately uses `child_process` directly rather than `spawnAsync` from
- * `backend/utils`, so that the `relic/` modules can use it without pulling in
+ * `backend/utils`, so that the `rakun/` modules can use it without pulling in
  * the whole utils barrel.
  */
 export function openExternal(target: string): Promise<void> {
