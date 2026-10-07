@@ -3,9 +3,10 @@ import { backendEvents } from 'backend/backend_events'
 
 import { LogPrefix, RunnerToLogPrefixMap } from './constants'
 import LogWriter from './log_writer'
+import { gamesListText } from './games_list'
 import { GameLogType, getLogFilePath } from './paths'
 
-import type { Runner } from 'common/types'
+import type { GameInfo, Runner } from 'common/types'
 import type { RunnerOrComet } from './types'
 
 let relicLogWriter: LogWriter
@@ -31,6 +32,11 @@ function getRunnerLogWriter(runner: RunnerOrComet) {
   const newWriter = new LogWriter(getLogFilePath({ runner }), false, false)
   runnerLogWriters.set(runner, newWriter)
   return newWriter
+}
+
+/** Writes the games a store just listed to that store's own log */
+function logGamesList(runner: Runner, games: GameInfo[]) {
+  void getRunnerLogWriter(runner).logInfo(gamesListText(games))
 }
 
 function createGameLogWriter(
@@ -84,6 +90,7 @@ export {
   logWarning,
   logError,
   getRunnerLogWriter,
+  logGamesList,
   createGameLogWriter,
   LogPrefix,
   RunnerToLogPrefixMap,

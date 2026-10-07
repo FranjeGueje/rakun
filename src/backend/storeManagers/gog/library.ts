@@ -26,7 +26,7 @@ import { dirname, join } from 'node:path'
 import { existsSync, readFileSync } from 'fs'
 
 import {
-  getRunnerLogWriter,
+  logGamesList,
   logDebug,
   logError,
   logInfo,
@@ -448,21 +448,7 @@ export default class GOGLibraryManager implements LibraryManager {
     apiInfoCache.commit() // Sync cache to drive
     libraryStore.set('games', gamesObjects)
 
-    void new Promise(() => {
-      const logLines: string[] = []
-      gamesObjects.forEach((gameData) => {
-        let line = `* ${gameData.title} (App name: ${gameData.app_name})`
-        if (gameData.install.is_dlc) line += ' - DLC'
-        logLines.push(line)
-      })
-      const sortedTitles = logLines.sort((a, b) =>
-        a.toLowerCase().localeCompare(b.toLowerCase())
-      )
-
-      const logContent = `Games List:\n${sortedTitles.join('\n')}\n\nTotal: ${logLines.length}\n`
-      const gogLogWriter = getRunnerLogWriter('gog')
-      void gogLogWriter.logInfo(logContent)
-    })
+    logGamesList('gog', gamesObjects)
 
     logInfo(
       ['Game list updated, got', `${gamesObjects.length}`, 'games'],

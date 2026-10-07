@@ -11,7 +11,7 @@ import {
 import ZoomGame from './games'
 
 import {
-  getRunnerLogWriter,
+  logGamesList,
   logDebug,
   logError,
   logInfo,
@@ -82,22 +82,11 @@ export default class ZoomLibraryManager implements LibraryManager {
 
     libraryStore.set('games', Array.from(library.values()))
 
-    const logLines: string[] = []
-    Array.from(library.values()).forEach((gameData) => {
-      let line = `* ${gameData.title} (App name: ${gameData.app_name})`
-      if (gameData.install?.is_dlc) line += ' - DLC'
-      logLines.push(line)
-    })
-    const sortedTitles = logLines.sort((a, b) =>
-      a.toLowerCase().localeCompare(b.toLowerCase())
-    )
-
-    const logContent = `Games List:\n${sortedTitles.join('\n')}\n\nTotal: ${logLines.length}\n`
-    const zoomLogWriter = getRunnerLogWriter('zoom')
-    void zoomLogWriter.logInfo(logContent)
+    const games = Array.from(library.values())
+    logGamesList('zoom', games)
 
     logInfo(
-      ['Game list updated, got', `${logLines.length}`, 'games'],
+      ['Game list updated, got', `${games.length}`, 'games'],
       LogPrefix.Zoom
     )
 
