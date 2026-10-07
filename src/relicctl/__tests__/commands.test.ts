@@ -295,6 +295,29 @@ describe('game commands', () => {
     )
   })
 
+  test('the failure message says why when relicd knows', async () => {
+    const { ctx } = fakeCtx(
+      {
+        getGameInfo: game(),
+        requestAppSettings: { defaultInstallPath: '/g' },
+        getDMQueueInformation: {
+          finished: [
+            {
+              params: { appName: 'g1' },
+              status: 'error',
+              error: 'relicd has no screen'
+            }
+          ]
+        }
+      },
+      [update1('installing'), update1('done')]
+    )
+
+    await expect(install(ctx, ['gog', 'g1'], opts)).rejects.toThrow(
+      'La descarga ha fallado: relicd has no screen'
+    )
+  })
+
   test('a game that ends in error fails the command', async () => {
     const { ctx } = fakeCtx(
       { getGameInfo: game(), requestAppSettings: { defaultInstallPath: '/g' } },

@@ -92,11 +92,12 @@ async function initQueue() {
     queueState = 'running'
     sendFrontendMessage('changedDMQueueInformation', queuedElements, queueState)
 
-    const { status } =
+    const { status, error } =
       element.type === 'install'
         ? await installQueueElement(element.params)
         : await updateQueueElement(element.params)
     element.endTime = Date.now()
+    element.error = error
 
     logQueueOutcome(element, status)
 

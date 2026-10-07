@@ -316,6 +316,8 @@ export interface DMQueueElement {
   startTime: number
   endTime: number
   status?: DMStatus
+  /** Why it ended in `error`, when the store said */
+  error?: string
 }
 
 export interface ImportGameArgs {

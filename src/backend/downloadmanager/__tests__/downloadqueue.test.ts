@@ -60,6 +60,23 @@ describe('initQueue', () => {
 
     expect(installQueueElement).toHaveBeenCalledTimes(1)
   })
+
+  test('the reason an install failed is kept in the finished list', async () => {
+    store['queue'] = [{ ...element }]
+    store['finished'] = []
+    jest
+      .mocked(installQueueElement)
+      .mockResolvedValue({ status: 'error', error: 'relicd has no screen' })
+
+    await initQueue()
+
+    expect(store['finished']).toEqual([
+      expect.objectContaining({
+        status: 'error',
+        error: 'relicd has no screen'
+      })
+    ])
+  })
 })
 
 describe('clearFinished', () => {

@@ -199,8 +199,11 @@ scripts/smoke.sh resumeCurrentDownload
 
 Zoom (experimental): los juegos de **Windows** abren el asistente del instalador en
 una ventana, así que relicd tiene que arrancarse con pantalla (modo escritorio) y con
-`protonPath` configurado; sin ellas la instalación termina con error. Los de Linux no
-necesitan pantalla.
+`protonPath` configurado; sin ellas la instalación termina con error. relicd lo comprueba
+**antes de descargar** (sin `DISPLAY`, con el servidor gráfico caído o en modo juego falla
+al instante y `relicctl install` dice el motivo); es una comprobación de mejor esfuerzo:
+tras cambiar entre escritorio y modo juego, reinicia relicd. Los de Linux no necesitan
+pantalla.
 
 Un shortcut añadido a Steam **no se borra** al desinstalar: se quita a mano
 desde la biblioteca de Steam.

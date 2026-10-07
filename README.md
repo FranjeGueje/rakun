@@ -282,7 +282,11 @@ Check it with `relicctl status` (or `scripts/smoke.sh`, or `curl http://127.0.0.
 - For Zoom Platform's **Windows** games, a screen: its installer is a normal Windows
   wizard (licence, options) that opens in a window through Proton, so relicd has to
   run with a `DISPLAY` (desktop mode, or a session that has one). Without it the
-  install fails and relicd reports the error. Zoom support is **experimental**; Zoom's
+  install fails and relicd reports the error. relicd checks this **before** downloading
+  anything and refuses at once when `DISPLAY` is empty, its X server is gone, or relicd
+  runs in Steam's game mode (a window there would not be visible). It is a best-effort
+  check: relicd keeps the environment of whoever started it, so restart it after
+  switching between desktop and game mode. Zoom support is **experimental**; Zoom's
   Linux installers do not need a screen.
 
 ### Language

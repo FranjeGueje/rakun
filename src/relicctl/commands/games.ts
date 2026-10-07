@@ -77,13 +77,21 @@ export async function followGame(
 }
 
 // relicd reports `done` even when a download failed: the queue keeps the truth
-async function failedInQueue(ctx: Ctx, appName: string): Promise<boolean> {
+/** Why the last queue entry of the game failed ('' if no reason), or undefined if it did not fail */
+async function failureInQueue(
+  ctx: Ctx,
+  appName: string
+): Promise<string | undefined> {
   const { finished } = await ctx.api.call<{ finished: DMQueueElement[] }>(
     'getDMQueueInformation'
   )
   const last = finished.filter((e) => e.params.appName === appName).at(-1)
-  return last?.status === 'error' || last?.status === 'abort'
+  if (last?.status !== 'error' && last?.status !== 'abort') return undefined
+  return last.error ?? ''
 }
+
+export const failureMessage = (reason: string) =>
+  `La descarga ha fallado: ${reason || 'mira los logs de relicd'}`
 
 /** Starts the work and, unless --no-wait, follows it until it ends */
 async function run(
@@ -101,9 +109,8 @@ async function run(
     started
   ])
   if (ending !== 'done') throw new CliError(`Terminó con estado "${ending}"`)
-  if (queued && (await failedInQueue(ctx, appName))) {
-    throw new CliError('La descarga ha fallado: mira los logs de relicd')
-  }
+  const failure = queued ? await failureInQueue(ctx, appName) : undefined
+  if (failure !== undefined) throw new CliError(failureMessage(failure))
 }
 
 async function gameArgs(ctx: Ctx, args: string[]): Promise<[Runner, string]> {

@@ -119,8 +119,10 @@ waiting for its next check), `getSystemInfo`, `getLogContent` (see Logs below;
 the languages of a GOG Linux installer. `getMaxCpus` returns the number of CPUs.
 
 Zoom Platform's Windows installers (experimental) open a window through Proton:
-relicd needs a `DISPLAY` for them (desktop mode) and `protonPath` set, or the
-install ends in error.
+relicd needs a `DISPLAY` for them (desktop mode, not game mode) and `protonPath` set,
+or the install ends in error. It checks the screen before downloading anything.
+A queue entry that ends in `error` carries the reason in its `error` field (in
+`getDMQueueInformation().finished`); `relicctl install` prints it.
 
 relicd has no translations: the text of its messages and of `showDialog` is in English.
 

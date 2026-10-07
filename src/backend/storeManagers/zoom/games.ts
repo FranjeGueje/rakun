@@ -38,6 +38,7 @@ import { ZoomInstallPlatform, ZoomDownloadFile } from 'common/types/zoom'
 import { showDialogBoxModalAuto } from '../../dialog/dialog'
 import { sendFrontendMessage } from '../../ipc'
 import { Game } from 'common/types/game_manager'
+import { displayForInstaller } from './display'
 import { isLinux } from 'backend/constants/environment'
 import { libraryManagerMap } from '..'
 
@@ -221,6 +222,17 @@ export default class ZoomGame implements Game {
         LogPrefix.Zoom
       )
       return { status: 'error', error: 'No installer found' }
+    }
+
+    if (installPlatform === 'windows') {
+      const display = displayForInstaller()
+      if (!display.ok) {
+        logError(`Not downloading: ${display.reason}`, LogPrefix.Zoom)
+        return {
+          status: 'error',
+          error: `${display.reason}. Zoom's Windows installers open a window: start relicd from a desktop session and try again`
+        }
+      }
     }
 
     const installPath = join(path, gameInfo.folder_name)
