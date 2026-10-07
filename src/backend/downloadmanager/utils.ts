@@ -2,7 +2,6 @@ import { libraryManagerMap } from 'backend/storeManagers'
 import { logError, LogPrefix, logWarning } from 'backend/logger'
 import { isEpicServiceOffline, sendGameStatusUpdate } from '../utils'
 import { DMStatus, InstallParams } from 'common/types'
-import i18next from 'i18next'
 import { showDialogBoxModalAuto } from '../dialog/dialog'
 import { isOnline } from '../online_monitor'
 import pathModule from 'path'
@@ -39,11 +38,9 @@ async function installQueueElement(params: InstallParams): Promise<{
     const epicOffline = await isEpicServiceOffline()
     if (epicOffline) {
       showDialogBoxModalAuto({
-        title: i18next.t('box.warning.title', 'Warning'),
-        message: i18next.t(
-          'box.warning.epic.install',
-          'Epic Servers are having major outage right now, the game cannot be installed!'
-        ),
+        title: 'Warning',
+        message:
+          'Epic Servers are having major outage right now, the game cannot be installed!',
         type: 'ERROR'
       })
       return { status: 'error' }
@@ -120,11 +117,9 @@ async function updateQueueElement(params: InstallParams): Promise<{
     const epicOffline = await isEpicServiceOffline()
     if (epicOffline) {
       showDialogBoxModalAuto({
-        title: i18next.t('box.warning.title', 'Warning'),
-        message: i18next.t(
-          'box.warning.epic.update',
-          'Epic Servers are having major outage right now, the game cannot be updated!'
-        ),
+        title: 'Warning',
+        message:
+          'Epic Servers are having major outage right now, the game cannot be updated!',
         type: 'ERROR'
       })
       return { status: 'error' }

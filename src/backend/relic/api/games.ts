@@ -1,6 +1,5 @@
 import type { StatusPromise } from 'common/types'
 import { existsSync, watch } from 'fs'
-import i18next from 'i18next'
 import { addHandler, addListener } from 'backend/ipc'
 import { GlobalConfig } from 'backend/config'
 import { isEpicServiceOffline, sendGameStatusUpdate } from 'backend/utils'
@@ -173,10 +172,8 @@ addHandler(
       )
 
       showDialogBoxModalAuto({
-        title: i18next.t('box.error.title', 'Error'),
-        message: i18next.t('box.error.moving', 'Error Moving Game {{error}}', {
-          error: moveRes.error
-        }),
+        title: 'Error',
+        message: `Error Moving Game ${moveRes.error}`,
         type: 'ERROR'
       })
     }
@@ -200,11 +197,9 @@ addHandler(
       const epicOffline = await isEpicServiceOffline()
       if (epicOffline) {
         showDialogBoxModalAuto({
-          title: i18next.t('box.warning.title', 'Warning'),
-          message: i18next.t(
-            'box.warning.epic.import',
-            'Epic Servers are having major outage right now, the game cannot be imported!'
-          ),
+          title: 'Warning',
+          message:
+            'Epic Servers are having major outage right now, the game cannot be imported!',
           type: 'ERROR'
         })
         return { status: 'error' }

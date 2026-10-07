@@ -1,17 +1,12 @@
 import { dispatchListener, invokeHandler } from 'backend/ipc'
 import { GlobalConfig } from 'backend/config'
 import { writeConfig } from 'backend/utils'
-import i18next from 'i18next'
 import { backendEvents } from 'backend/backend_events'
 import { gameInfoStore } from 'backend/storeManagers/legendary/electronStores'
 import './../settings'
 
 jest.mock('backend/config', () => ({ GlobalConfig: { get: jest.fn() } }))
 jest.mock('backend/utils', () => ({ writeConfig: jest.fn() }))
-jest.mock('i18next', () => ({
-  __esModule: true,
-  default: { changeLanguage: jest.fn() }
-}))
 jest.mock('backend/storeManagers/legendary/electronStores', () => ({
   gameInfoStore: { clear: jest.fn() }
 }))
@@ -59,13 +54,12 @@ describe('settings handlers', () => {
     expect(await invokeHandler('getMaxCpus')).toBeGreaterThan(0)
   })
 
-  test('changing the language changes it for i18next and drops the cache', () => {
+  test('changing the language drops the cached game info', () => {
     backendEvents.emit('settingChanged', {
       key: 'language',
       oldValue: 'en',
       newValue: 'es'
     })
-    expect(i18next.changeLanguage).toHaveBeenCalledWith('es')
     expect(gameInfoStore.clear).toHaveBeenCalled()
   })
 })

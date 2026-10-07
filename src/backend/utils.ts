@@ -5,7 +5,6 @@ import https from 'node:https'
 import { exec, spawn, SpawnOptions, spawnSync } from 'child_process'
 import { existsSync, mkdirSync, rmSync } from 'fs'
 import { promisify } from 'util'
-import i18next from 'i18next'
 
 import { logError, logInfo, LogPrefix, logWarning } from 'backend/logger'
 import { basename, dirname, join } from 'path'
@@ -170,11 +169,9 @@ export async function askForceUninstall(game: Game) {
   const { title } = game.getGameInfo()
   const response = await askQuestion({
     title,
-    message: i18next.t(
-      'box.error.folder-not-found.title',
-      'Game folder appears to be deleted, do you want to remove the game from the installed list?'
-    ),
-    buttons: [i18next.t('box.no'), i18next.t('box.yes')]
+    message:
+      'Game folder appears to be deleted, do you want to remove the game from the installed list?',
+    buttons: ['No', 'Yes']
   })
 
   if (response === 1) {
@@ -220,11 +217,7 @@ async function errorHandler(
 
     return showDialogBoxModalAuto({
       title: plat,
-      message: i18next.t(
-        'box.error.legendary.generic',
-        'An error has occurred! Try to Logout and Login on your Epic account. {{newline}}  {{error}}',
-        { error, newline: '\n' }
-      ),
+      message: `An error has occurred! Try to Logout and Login on your Epic account. \n  ${error}`,
       type: 'ERROR'
     })
   }
@@ -232,10 +225,7 @@ async function errorHandler(
   if (error.includes(expiredCredentials)) {
     return showDialogBoxModalAuto({
       title: plat,
-      message: i18next.t(
-        'box.error.credentials.message',
-        'Your Crendentials have expired, Logout and Login Again!'
-      ),
+      message: 'Your Crendentials have expired, Logout and Login Again!',
       type: 'ERROR'
     })
   }

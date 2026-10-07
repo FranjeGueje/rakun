@@ -39,10 +39,6 @@ jest.mock('node:fs', () => ({
 }))
 jest.mock('fs/promises')
 jest.mock('backend/constants/paths')
-jest.mock('i18next', () => ({
-  languages: ['en'],
-  t: (key: string) => key
-}))
 jest.mock('../constants', () => ({
   gogdlConfigPath: '/tmp/gogdl_config'
 }))

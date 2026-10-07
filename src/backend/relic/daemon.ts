@@ -1,10 +1,5 @@
-import * as path from 'path'
-import i18next from 'i18next'
-import Backend from 'i18next-fs-backend'
-import { supportedLanguages } from 'common/languages'
-import { GlobalConfig } from 'backend/config'
 import { configStore } from 'backend/constants/key_value_stores'
-import { publicDir, userHome } from 'backend/constants/paths'
+import { userHome } from 'backend/constants/paths'
 import { LegendaryUser } from 'backend/storeManagers/legendary/user'
 import { GOGUser } from 'backend/storeManagers/gog/user'
 import { initStoreManagers } from 'backend/storeManagers'
@@ -38,24 +33,6 @@ function refreshUserDetailsWhenOnline() {
   })
 }
 
-async function initTranslations() {
-  const { language } = GlobalConfig.get().getSettings()
-
-  await i18next.use(Backend).init({
-    backend: {
-      addPath: path.join(publicDir, 'locales', '{{lng}}', '{{ns}}'),
-      allowMultiLoading: false,
-      loadPath: path.join(publicDir, 'locales', '{{lng}}', '{{ns}}.json')
-    },
-    debug: false,
-    returnEmptyString: false,
-    returnNull: false,
-    fallbackLng: 'en',
-    lng: language,
-    supportedLngs: supportedLanguages
-  })
-}
-
 function logUnhandledErrors() {
   process.on('uncaughtException', (err) => logError(err, LogPrefix.Backend))
   process.on('unhandledRejection', (reason) =>
@@ -81,8 +58,6 @@ export async function startDaemon() {
   initOnlineMonitor()
   void initStoreManagers()
   refreshUserDetailsWhenOnline()
-
-  await initTranslations()
 
   createNecessaryFolders()
   configStore.set('userHome', userHome)

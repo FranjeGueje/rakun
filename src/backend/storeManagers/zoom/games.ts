@@ -35,7 +35,6 @@ import {
 import { zoomPlatformScriptPath } from 'backend/constants/paths'
 import { GlobalConfig } from 'backend/config'
 import { ZoomInstallPlatform, ZoomDownloadFile } from 'common/types/zoom'
-import { t } from 'i18next'
 import { showDialogBoxModalAuto } from '../../dialog/dialog'
 import { sendFrontendMessage } from '../../ipc'
 import { Game } from 'common/types/game_manager'
@@ -466,11 +465,9 @@ export default class ZoomGame implements Game {
     if (!finalExecutable) {
       logError(['Could not find executable for', this.id], LogPrefix.Zoom)
       showDialogBoxModalAuto({
-        title: t('box.error.executableNotFound', 'Executable not found'),
-        message: t(
-          'box.error.executableNotFoundMessage',
-          'Relic could not find the executable for this game. Please set it manually in the game settings.'
-        ),
+        title: 'Executable not found',
+        message:
+          'Relic could not find the executable for this game. Please set it manually in the game settings.',
         type: 'ERROR'
       })
       return { status: 'error', error: 'Executable not found' }

@@ -31,10 +31,9 @@ export default tseslint.config(
         { checksVoidReturn: false }
       ],
       '@typescript-eslint/unbound-method': 'error',
-      // False positive: i18next/JSON5 are used here as default-export
-      // singletons that also happen to expose named exports (`i18next.t`,
-      // `JSON5.parse`). That's the intended usage, not an ESM/CJS interop
-      // mistake.
+      // False positive: JSON5 is used here as a default-export singleton that
+      // also happens to expose named exports (`JSON5.parse`). That's the
+      // intended usage, not an ESM/CJS interop mistake.
       'import-x/no-named-as-default-member': 'off'
     },
 

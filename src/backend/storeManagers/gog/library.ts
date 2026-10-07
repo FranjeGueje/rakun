@@ -44,7 +44,6 @@ import {
 } from './electronStores'
 import { callRunner } from '../../runner_call'
 import { isOnline, runOnceWhenOnline } from '../../online_monitor'
-import i18next from 'i18next'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { unzipSync } from 'node:zlib'
 import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
@@ -53,6 +52,12 @@ import { gogdlConfigPath } from './constants'
 import { userDataPath } from 'backend/constants/paths'
 import GOGGame from './games'
 import type { LibraryManager } from 'common/types/game_manager'
+import { GlobalConfig } from 'backend/config'
+
+/** The language the user chose, then English as the fallback */
+function preferredLanguages(): string[] {
+  return [GlobalConfig.get().getSettings().language, 'en']
+}
 import { shareInFlight } from 'backend/utils/inflight'
 
 const library: Map<string, GameInfo> = new Map()
@@ -652,7 +657,7 @@ export default class GOGLibraryManager implements LibraryManager {
     library.set(appName, gameData)
 
     let language = gogInfo.languages[0]
-    const foundPreffered = i18next.languages.find((plang) =>
+    const foundPreffered = preferredLanguages().find((plang) =>
       gogInfo.languages.some((alang) => alang.startsWith(plang))
     )
     if (foundPreffered) {
@@ -1255,7 +1260,7 @@ export default class GOGLibraryManager implements LibraryManager {
     accessToken?: string
   ): Promise<AxiosResponse<ProductsEndpointData> | null> {
     expand = expand ?? []
-    const language = i18next.language
+    const [language] = preferredLanguages()
     const url = new URL(`https://api.gog.com/products/${appName}`)
     url.searchParams.set('locale', language)
     if (expand.length > 0) {

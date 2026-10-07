@@ -3,7 +3,6 @@
   "include": [
     "src/**/*.ts",
     "src/**/*.js",
-    "i18next.config.ts",
     "meta/**/*.ts",
     "eslint.config.mjs"
   ],
