@@ -6,6 +6,7 @@ export const en = {
   'sort.za': 'Z → A',
   'header.downloads': 'Downloads',
   'header.refresh': 'Refresh',
+  'header.settings': 'Settings',
   'grid.empty': 'No games to show.',
   'grid.loading': 'Loading your library…',
   'badge.update': 'Update available',

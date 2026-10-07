@@ -163,6 +163,9 @@ export function Console({ state, actions, t, layout }: Props) {
               <span className="count">{state.queue.elements.length}</span>
             )}
           </button>
+          <button className="chip" onClick={() => setMenuOpen(true)}>
+            {t('header.settings')}
+          </button>
           <button
             className="chip"
             onClick={actions.refresh}

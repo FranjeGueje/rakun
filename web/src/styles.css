@@ -6,8 +6,10 @@
   --accent: #3b82f6;
   --danger: #e5484d;
   --ok: #3fb950;
-  --card-width: clamp(150px, 13vw, 210px);
-  --gap: clamp(12px, 1.4vw, 26px);
+  --card-width: clamp(120px, 10vw, 200px);
+  --gap: clamp(10px, 1.2vw, 24px);
+  /* Everything is in rem: the whole page scales with the window, no need to zoom out */
+  font-size: clamp(12px, 0.5vw + 8px, 15px);
   font-family:
     system-ui,
     -apple-system,
@@ -489,4 +491,46 @@ kbd {
   color: #fff;
   font-size: 11px;
   pointer-events: none;
+}
+
+/* Narrow windows (a phone, a half screen): less padding, the bar on two rows, no key hints */
+@media (max-width: 800px) {
+  .topBar {
+    grid-template-columns: auto 1fr;
+    padding: 10px 14px 4px;
+  }
+
+  .chips.right {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
+  .focusTitle {
+    padding: 4px 14px;
+    font-size: 1.2rem;
+  }
+
+  .stage {
+    padding: 8px 14px 16px;
+  }
+
+  .hints {
+    display: none;
+  }
+
+  .overlay {
+    padding: 12px;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
+  .sheet {
+    grid-template-columns: 1fr;
+  }
+
+  .sheetCover {
+    width: min(50%, 220px);
+  }
 }

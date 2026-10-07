@@ -493,6 +493,13 @@ describe('covers load when they get near the visible area', () => {
 })
 
 describe('menu and accounts', () => {
+  test('the Settings button next to Downloads opens the menu, like M', async () => {
+    setup()
+    await screen.findByTitle('Alpha')
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
+    expect(screen.getByRole('heading', { name: 'Menu' })).toBeTruthy()
+  })
+
   const openAccounts = async () => {
     const relicd = setup()
     await screen.findByTitle('Alpha')
