@@ -3,6 +3,8 @@ import type {
   AppSettings,
   FolderListing,
   GameInfo,
+  HelperInfo,
+  HelpersUpdate,
   ImportParams,
   InstallParams,
   LoginInfo,
@@ -42,6 +44,9 @@ export type CallMap = {
   getLoginInfo: { args: [Runner]; result: LoginInfo }
   submitLogin: { args: [Runner, string]; result: LoginResult }
   setSetting: { args: [{ key: SettingKey; value: string }]; result: null }
+  getHelpers: { args: []; result: HelperInfo[] }
+  /** Downloads the helpers that are missing (all of them, unchecked, with `latest`) */
+  updateHelpers: { args: [{ latest?: boolean }]; result: HelpersUpdate }
 }
 
 export type CallChannel = keyof CallMap
@@ -53,8 +58,12 @@ export const EVENT_CHANNELS = [
   'changedDMQueueInformation',
   'pushGameToLibrary',
   'refreshLibrary',
+  'helpersProgress',
   'showDialog'
 ] as const
+
+/** The last `helpersProgress` line of an update: it is over */
+export const HELPERS_DONE = 'done'
 
 export type EventChannel = (typeof EVENT_CHANNELS)[number]
 

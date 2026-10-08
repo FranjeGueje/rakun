@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { AppSettings, SettingKey } from '../api/types'
+import type { AppSettings, HelperInfo, SettingKey } from '../api/types'
 import type { Translate } from '../i18n'
 import { CloseButton } from './CloseButton'
 import { useLayer } from '../input/useInput'
@@ -9,6 +9,7 @@ import { Accounts } from './Accounts'
 import { FolderPicker } from './FolderPicker'
 import { LanguageSelect, languageLabel } from './LanguageSelect'
 import { TextField } from './TextField'
+import { Helpers } from './Helpers'
 
 /** The page of the user's profile where SteamGridDB shows the API key */
 const STEAMGRIDDB_KEY_URL =
@@ -20,9 +21,10 @@ const ENTRIES: Entry[] = [
   'downloadPath',
   'protonPath',
   'steamGridDb',
-  'language'
+  'language',
+  'helpers'
 ]
-const KEYS: Record<Exclude<Entry, 'accounts'>, SettingKey> = {
+const KEYS: Record<Exclude<Entry, 'accounts' | 'helpers'>, SettingKey> = {
   downloadPath: 'defaultInstallPath',
   protonPath: 'protonPath',
   steamGridDb: 'steamGridDbApiKey',
@@ -32,10 +34,14 @@ const KEYS: Record<Exclude<Entry, 'accounts'>, SettingKey> = {
 /** What Select opens: the screens of the client, and the few settings it changes in rakun */
 export function Menu({
   actions,
+  helpers,
+  helpersUpdate,
   t,
   onClose
 }: {
   actions: Actions
+  helpers: HelperInfo[]
+  helpersUpdate: { running: boolean; line: string }
   t: Translate
   onClose: () => void
 }) {
@@ -51,7 +57,10 @@ export function Menu({
   }, [load])
 
   /** Saves one setting; answers the reason rakun gives when it refuses it */
-  const save = async (entry: Exclude<Entry, 'accounts'>, value: string) => {
+  const save = async (
+    entry: Exclude<Entry, 'accounts' | 'helpers'>,
+    value: string
+  ) => {
     const reply = await window.rakun.setSetting(KEYS[entry], value)
     if (!reply.ok) return reply.error
     if (entry === 'downloadPath') actions.reloadSettings()
@@ -96,6 +105,15 @@ export function Menu({
       </div>
       {open === 'accounts' && (
         <Accounts actions={actions} t={t} onClose={close} />
+      )}
+      {open === 'helpers' && (
+        <Helpers
+          helpers={helpers}
+          update={helpersUpdate}
+          actions={actions}
+          t={t}
+          onClose={close}
+        />
       )}
       {open === 'downloadPath' && settings && (
         <FolderPicker

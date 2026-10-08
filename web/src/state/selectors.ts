@@ -173,7 +173,12 @@ export function moveInGrid(
 }
 
 export type MenuEntry =
-  'accounts' | 'downloadPath' | 'protonPath' | 'steamGridDb' | 'language'
+  | 'accounts'
+  | 'helpers'
+  | 'downloadPath'
+  | 'protonPath'
+  | 'steamGridDb'
+  | 'language'
 
 /** What the menu shows next to an entry: the setting as it is now (the key is never shown) */
 export function menuValue(

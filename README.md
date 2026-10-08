@@ -324,7 +324,7 @@ carry them: right after installing, run
 
 ```bash
 rakunctl helpers            # which ones are installed: HELPER, PINNED, INSTALLED, STATE
-rakunctl helpers update     # downloads the missing ones (starts rakun for the time it takes)
+rakunctl helpers update     # asks rakun to download the missing ones (it starts rakun for the time it takes)
 ```
 
 `update` downloads the versions rakun was tested with and checks each file against its
@@ -333,8 +333,15 @@ of each one instead, **without checking anything**: rakun reads their output, so
 break it; use it at your own risk. The tools go to `~/.local/share/rakun/bin` (they survive a
 rakun update) and the Windows `.exe` files straight to `~/.local/share/rakun/mount/bin`, where the
 prefixes see them as `C:\Launchers\bin`. With a `-full` tarball nothing needs downloading: rakun
-puts what it carries in place when it starts. Until they are installed rakun starts and says
-what is missing (log, `rakunctl status`), and a command that needs one fails saying so.
+puts what it carries in place when it starts.
+
+rakun **starts even if some are missing** and says so: a warning in the log, a line in
+`rakunctl status` (`Helpers: all installed`, or what is missing or not at the tested version,
+and what to run) and, in the web, a notice with a **Download** button and a _Helper binaries_
+screen in the menu (the list with the state of each one, _Download missing_ and _Download
+latest_). Any client can ask rakun to update them (`updateHelpers`, see [API.md](API.md)); with
+`webAccess` set to `network` that one is only answered to this machine. A command that needs a
+helper that is not there fails saying how to install it.
 `unzip` is needed to unpack one of them.
 
 ### Requirements

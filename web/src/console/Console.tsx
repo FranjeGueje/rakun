@@ -233,7 +233,13 @@ export function Console({ state, actions, t, layout }: Props) {
         />
       )}
       {menuOpen && (
-        <Menu actions={actions} t={t} onClose={() => setMenuOpen(false)} />
+        <Menu
+          actions={actions}
+          helpers={state.helpers}
+          helpersUpdate={state.helpersUpdate}
+          t={t}
+          onClose={() => setMenuOpen(false)}
+        />
       )}
       {downloadsOpen && (
         <Downloads

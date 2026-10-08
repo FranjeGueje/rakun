@@ -21,13 +21,23 @@ export function helpersText(helpers: HelperInfo[]): string {
   ])
 }
 
-/** The line `status` shows: what is missing, and what to do about it */
+/** The line `status` shows: what is missing or is not the tested version, and what to do about it */
 export function helpersLine(helpers: HelperInfo[]): string {
   const missing = helpers
     .filter(({ state }) => state === 'missing')
     .map(({ helper }) => helper)
-  return missing.length
-    ? `Helpers: missing ${missing.join(', ')} (${HINT})`
+  const other = helpers
+    .filter(({ state }) => state === 'other')
+    .map(
+      ({ helper, installed, pinned }) =>
+        `${helper} is ${installed || 'another version'}, not the tested ${pinned}`
+    )
+  const problems = [
+    ...(missing.length ? [`missing ${missing.join(', ')}`] : []),
+    ...other
+  ]
+  return problems.length
+    ? `Helpers: ${problems.join('; ')} (${HINT})`
     : 'Helpers: all installed'
 }
 

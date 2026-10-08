@@ -10,6 +10,7 @@ import type { LoginReply, SettingReply } from '../api/bridge'
 import type {
   AccountsStatus,
   GameInfo,
+  HelperInfo,
   AppSettings,
   FolderListing,
   QueueInfo,
@@ -51,6 +52,7 @@ function setup(
     library?: GameInfo[]
     /** Called when a game is imported from a folder */
     onImport?: () => void
+    helpers?: HelperInfo[]
   } = {}
 ) {
   const rakun = fakeRakun(
@@ -59,6 +61,8 @@ function setup(
       getLibrary: (runner) =>
         (options.library ?? library).filter((g) => g.runner === runner),
       checkGameUpdates: options.updates ?? [],
+      getHelpers: options.helpers ?? [],
+      updateHelpers: { helpers: options.helpers ?? [], failures: [] },
       importGame: () => {
         options.onImport?.()
         return { status: 'done' }
@@ -671,8 +675,8 @@ describe('menu and accounts', () => {
 
   test('lists each store with its state', async () => {
     await openAccounts()
-    // the five entries of the menu plus the two stores
-    expect(document.querySelectorAll('.rows .row')).toHaveLength(7)
+    // the six entries of the menu plus the two stores
+    expect(document.querySelectorAll('.rows .row')).toHaveLength(8)
     expect(screen.getByText('Signed in as Ana')).toBeTruthy()
     expect(screen.getByText('Not signed in')).toBeTruthy()
   })
@@ -697,6 +701,79 @@ describe('menu and accounts', () => {
         ).length
       ).toBeGreaterThan(1)
     )
+  })
+})
+
+describe('helper binaries', () => {
+  const helperList: HelperInfo[] = [
+    { helper: 'legendary', pinned: '0.21.1', installed: '0.21.1', state: 'ok' },
+    { helper: 'gogdl', pinned: 'v1.3.0', installed: '', state: 'missing' },
+    { helper: 'nile', pinned: 'v1.2.0', installed: 'v9.0.0', state: 'other' }
+  ]
+
+  test('with everything there, there is no notice', async () => {
+    setup({ helpers: helperList.filter((h) => h.state !== 'missing') })
+    await screen.findByTitle('Alpha')
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  test('a notice says which are missing and the button asks rakun to download them', async () => {
+    const rakun = setup({ helpers: helperList })
+    await screen.findByTitle('Alpha')
+
+    const notice = await screen.findByRole('alert')
+    expect(notice.textContent).toContain('Missing helper binaries: gogdl')
+    expect(notice.textContent).not.toContain('legendary')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Download' }))
+    await waitFor(() => expect(rakun.called('updateHelpers')).toHaveLength(1))
+    expect(rakun.called('updateHelpers')[0][1]).toEqual([{}])
+  })
+
+  test('shows what rakun says while it downloads, and reads the helpers again when it is done', async () => {
+    const rakun = setup({ helpers: helperList })
+    await screen.findByRole('alert')
+    const before = rakun.called('getHelpers').length
+
+    act(() =>
+      rakun.emit({
+        event: 'helpersProgress',
+        args: ['Downloading gogdl v1.3.0']
+      })
+    )
+    expect(screen.getByRole('alert').textContent).toContain(
+      'Downloading gogdl v1.3.0'
+    )
+    expect(
+      screen.getByRole<HTMLButtonElement>('button', { name: 'Download' })
+        .disabled
+    ).toBe(true)
+
+    act(() => rakun.emit({ event: 'helpersProgress', args: ['done'] }))
+    await waitFor(() =>
+      expect(rakun.called('getHelpers').length).toBeGreaterThan(before)
+    )
+  })
+
+  test('the menu lists them with their state and downloads the latest on request', async () => {
+    const rakun = setup({ helpers: helperList })
+    await screen.findByTitle('Alpha')
+    press('m')
+    for (let i = 0; i < 5; i++) press('ArrowDown')
+    press('Enter')
+
+    expect(
+      await screen.findByRole('heading', { name: 'Helper binaries' })
+    ).toBeTruthy()
+    expect(screen.getByText('legendary')).toBeTruthy()
+    expect(screen.getByText('another version')).toBeTruthy()
+    expect(screen.getByText('missing')).toBeTruthy()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Download latest (not checked)' })
+    )
+    await waitFor(() => expect(rakun.called('updateHelpers')).toHaveLength(1))
+    expect(rakun.called('updateHelpers')[0][1]).toEqual([{ latest: true }])
   })
 })
 

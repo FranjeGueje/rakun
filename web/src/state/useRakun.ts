@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react'
-import type { RakunEvent } from '../api/channels'
+import { HELPERS_DONE, type RakunEvent } from '../api/channels'
 import type { GameInfo, GameStatus, Runner } from '../api/types'
 import { initialState, reducer, type State } from './reducer'
 import { installParams, platformFor, type Build } from './selectors'
@@ -21,6 +21,8 @@ export type Actions = {
   reloadStore: (runner: Runner) => void
   /** Reads the settings the sheets show (the install folder) again */
   reloadSettings: () => void
+  /** Asks rakun to download the helper binaries that are missing (all of them, unchecked, with `latest`) */
+  updateHelpers: (latest?: boolean) => void
   dismissNotice: () => void
 }
 
@@ -90,6 +92,11 @@ export function useRakun(): { state: State; actions: Actions } {
     [loadStore, loadUpdates]
   )
 
+  const loadHelpers = useCallback(async () => {
+    const helpers = await window.rakun.call('getHelpers')
+    dispatch({ type: 'helpers', helpers: helpers ?? [] })
+  }, [])
+
   const loadQueue = useCallback(async () => {
     dispatch({
       type: 'queue',
@@ -116,6 +123,8 @@ export function useRakun(): { state: State; actions: Actions } {
         bridge.call('getDMQueueInformation')
       ])
       dispatch({ type: 'basics', basics: { stores, settings, queue } })
+      // Not needed to show the games: what is missing shows when it arrives
+      void loadHelpers().catch(() => undefined)
       // Each store shows as soon as it arrives; the updates come last, in the background
       const counts = await Promise.all(
         stores.map((store) => loadStore(store.id))
@@ -127,7 +136,7 @@ export function useRakun(): { state: State; actions: Actions } {
     } finally {
       loading.current = false
     }
-  }, [fail, loadStore, loadUpdates, refresh])
+  }, [fail, loadHelpers, loadStore, loadUpdates, refresh])
 
   const later = useCallback((name: string, ms: number, work: () => void) => {
     window.clearTimeout(timers.current[name])
@@ -145,6 +154,8 @@ export function useRakun(): { state: State; actions: Actions } {
             : undefined
         later('library', 200, () => void loadLibrary(only).catch(fail))
       }
+      if (event.event === 'helpersProgress' && event.args[0] === HELPERS_DONE)
+        later('helpers', 200, () => void loadHelpers().catch(fail))
       if (event.event === 'changedDMQueueInformation')
         later('queue', 300, () => void loadQueue().catch(fail))
       if (
@@ -155,7 +166,7 @@ export function useRakun(): { state: State; actions: Actions } {
         later('queue', 500, () => void loadQueue().catch(fail))
       }
     },
-    [fail, later, loadLibrary, loadQueue]
+    [fail, later, loadHelpers, loadLibrary, loadQueue]
   )
 
   useEffect(() => {
@@ -235,6 +246,23 @@ export function useRakun(): { state: State; actions: Actions } {
       run(async () => {
         const settings = await window.rakun.call('requestAppSettings')
         dispatch({ type: 'installPath', path: settings.defaultInstallPath })
+      }),
+    updateHelpers: (latest) =>
+      run(async () => {
+        dispatch({ type: 'helpersUpdating', running: true })
+        try {
+          const result = await window.rakun.call('updateHelpers', { latest })
+          dispatch({ type: 'helpers', helpers: result.helpers })
+          if (result.failures.length)
+            throw new Error(
+              `Could not install: ${result.failures
+                .map(({ helper, error }) => `${helper} (${error})`)
+                .join(', ')}`
+            )
+          await loadLibrary()
+        } finally {
+          dispatch({ type: 'helpersUpdating', running: false })
+        }
       }),
     dismissNotice: () => dispatch({ type: 'dismissNotice' })
   }

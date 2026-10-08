@@ -37,11 +37,15 @@ repository.
   survive a rakun update) and the Windows files straight to `mount/bin`.
   `pnpm package --full` still makes a `-full` tarball that carries them
   (`scripts/install.sh --full`); rakun puts what it carries in place at start
-  (`syncMountBin` is gone: it overwrote what had been downloaded). Until they
-  are there rakun starts and says what is missing (log, `rakunctl status`), and a
-  command that needs one fails saying how to install it. New channels
-  `getHelpers` and `updateHelpers`, event `helpersProgress`, and a `THIRD_PARTY`
-  file in the tarballs; the `-full` one also carries the texts of the licences
+  (`syncMountBin` is gone: it overwrote what had been downloaded). rakun starts
+  even if some are missing and says so: a warning in the log, a line in
+  `rakunctl status` (what is missing or is not the tested version, and what to
+  run) and, in the web, a notice with a Download button and a _Helper binaries_
+  screen in the menu. Any client can ask rakun to update them: new channels
+  `getHelpers` and `updateHelpers` (the second only from this machine when the
+  web is open to the network) and event `helpersProgress`. A command that needs
+  a helper that is not there fails saying how to install it. There is also a
+  `THIRD_PARTY` file in the tarballs; the `-full` one also carries the texts of the licences
   of what it carries (`licenses/`: GPL-3.0, Apache-2.0 for Comet, MIT for the
   Epic integration), which are the ones the projects declare.
 - One runner for every game: all the logic of the three stores is in

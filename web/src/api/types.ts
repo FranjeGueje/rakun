@@ -21,6 +21,22 @@ export type StoreInfo = {
   label: string
 }
 
+/** One helper binary (legendary, gogdl, nile, comet, epic-integration, zoom-platform, umu) */
+export type HelperInfo = {
+  helper: string
+  /** The version rakun was tested with */
+  pinned: string
+  /** The one that is installed, if it is known */
+  installed: string
+  /** `ok`, `missing`, or `other` (another version, for instance after «latest») */
+  state: 'ok' | 'missing' | 'other'
+}
+
+export type HelpersUpdate = {
+  helpers: HelperInfo[]
+  failures: { helper: string; error: string }[]
+}
+
 export type InstallPlatform = 'Windows' | 'windows' | 'linux'
 
 export type GameInfo = {

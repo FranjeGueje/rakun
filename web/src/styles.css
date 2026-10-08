@@ -625,3 +625,27 @@ kbd {
     width: min(50%, 220px);
   }
 }
+
+/* Helper binaries that are missing: a bar over the hints, with the way to get them */
+.helpersBanner {
+  position: fixed;
+  left: 50%;
+  bottom: 48px;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100vw - 32px);
+  padding: 8px 12px 8px 16px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 2px solid var(--accent);
+  transform: translateX(-50%);
+  font-size: 0.9rem;
+}
+
+.helperRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+}

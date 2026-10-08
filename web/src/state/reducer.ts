@@ -1,9 +1,14 @@
-import type { ConnectionState, RakunEvent } from '../api/channels'
+import {
+  HELPERS_DONE,
+  type ConnectionState,
+  type RakunEvent
+} from '../api/channels'
 import type {
   AppSettings,
   DialogNotice,
   GameInfo,
   GameStatus,
+  HelperInfo,
   QueueInfo,
   Runner,
   StoreInfo
@@ -24,6 +29,10 @@ export type State = {
   queue: QueueInfo
   defaultInstallPath: string
   refreshing: boolean
+  /** The helper binaries (legendary, gogdl…): which are installed */
+  helpers: HelperInfo[]
+  /** An update of the helpers is going on, and the last thing rakun said about it */
+  helpersUpdate: { running: boolean; line: string }
   notice: DialogNotice | null
 }
 
@@ -44,6 +53,8 @@ export const initialState: State = {
   queue: emptyQueue,
   defaultInstallPath: '',
   refreshing: false,
+  helpers: [],
+  helpersUpdate: { running: false, line: '' },
   notice: null
 }
 
@@ -62,6 +73,8 @@ export type Action =
   | { type: 'updates'; updates: string[] }
   | { type: 'queue'; queue: QueueInfo }
   | { type: 'refreshing'; value: boolean }
+  | { type: 'helpers'; helpers: HelperInfo[] }
+  | { type: 'helpersUpdating'; running: boolean }
   | { type: 'notice'; notice: DialogNotice }
   | { type: 'dismissNotice' }
   | { type: 'event'; event: RakunEvent }
@@ -122,6 +135,14 @@ function applyEvent(state: State, { event, args }: RakunEvent): State {
       }
     case 'refreshLibrary':
       return { ...state, refreshing: false }
+    case 'helpersProgress':
+      return {
+        ...state,
+        helpersUpdate:
+          args[0] === HELPERS_DONE
+            ? { running: false, line: '' }
+            : { running: true, line: text(args[0]) }
+      }
     case 'showDialog':
       return {
         ...state,
@@ -163,6 +184,13 @@ export function reducer(state: State, action: Action): State {
       return { ...state, queue: action.queue }
     case 'refreshing':
       return { ...state, refreshing: action.value }
+    case 'helpers':
+      return { ...state, helpers: action.helpers }
+    case 'helpersUpdating':
+      return {
+        ...state,
+        helpersUpdate: { running: action.running, line: '' }
+      }
     case 'notice':
       return { ...state, notice: action.notice }
     case 'dismissNotice':

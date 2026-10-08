@@ -20,15 +20,27 @@ describe('helpersText', () => {
 
 describe('helpersLine', () => {
   test('names what is missing and what to run', () => {
-    expect(helpersLine(list as never)).toBe(
+    expect(helpersLine(list.filter((h) => h.state !== 'other') as never)).toBe(
       'Helpers: missing gogdl (run "rakunctl helpers update")'
     )
   })
 
-  test('says so when nothing is missing, even if another version is installed', () => {
-    expect(
-      helpersLine(list.filter((h) => h.state !== 'missing') as never)
-    ).toBe('Helpers: all installed')
+  test('says which are not the tested version, together with what is missing', () => {
+    expect(helpersLine(list as never)).toBe(
+      'Helpers: missing gogdl; nile is v9.0.0, not the tested v1.2.0 (run "rakunctl helpers update")'
+    )
+  })
+
+  test('says only that when nothing is missing', () => {
+    expect(helpersLine(list.filter((h) => h.state === 'other') as never)).toBe(
+      'Helpers: nile is v9.0.0, not the tested v1.2.0 (run "rakunctl helpers update")'
+    )
+  })
+
+  test('says so when everything is as tested', () => {
+    expect(helpersLine(list.filter((h) => h.state === 'ok') as never)).toBe(
+      'Helpers: all installed'
+    )
   })
 })
 

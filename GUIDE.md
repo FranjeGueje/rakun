@@ -26,7 +26,9 @@ restart rakun. The logins are kept (they live in `~/.config/rakun`) and so are t
 helper binaries (`~/.local/share/rakun/bin`).
 
 The normal tarball has no helper binaries (legendary, gogdl, nile…): after the first
-install run `rakunctl helpers update` (and `rakunctl helpers` to see what is there).
+install run `rakunctl helpers update` (and `rakunctl helpers` to see what is there). rakun
+starts without them and says what is missing: in the log, in `rakunctl status` and in the
+web, which has a notice with a Download button and a _Helper binaries_ screen in the menu.
 `pnpm package --full` makes one that carries them, and `scripts/install.sh --full` installs it.
 
 To test without touching your real `$HOME` (**with a directory that exists and
