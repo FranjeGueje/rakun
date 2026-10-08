@@ -755,6 +755,43 @@ describe('helper binaries', () => {
     )
   })
 
+  describe('with the web open to the network', () => {
+    beforeEach(() => {
+      const meta = document.createElement('meta')
+      meta.name = 'rakun-web'
+      meta.content = 'network'
+      document.head.appendChild(meta)
+    })
+    afterEach(() => document.querySelector('meta[name="rakun-web"]')?.remove())
+
+    test('the notice only says what to do: rakun would refuse the button', async () => {
+      setup({ helpers: helperList })
+      await screen.findByTitle('Alpha')
+
+      const notice = await screen.findByText(/Missing helper binaries: gogdl/)
+      expect(notice.textContent).toContain('rakunctl helpers update')
+      expect(screen.queryByRole('button', { name: 'Download' })).toBeNull()
+    })
+
+    test('the buttons of the menu are off, with the reason', async () => {
+      const rakun = setup({ helpers: helperList })
+      await screen.findByTitle('Alpha')
+      press('m')
+      for (let i = 0; i < 5; i++) press('ArrowDown')
+      press('Enter')
+
+      const button = await screen.findByRole<HTMLButtonElement>('button', {
+        name: 'Download missing'
+      })
+      expect(button.disabled).toBe(true)
+      expect(
+        screen.getByText(/can only be asked from the machine/)
+      ).toBeTruthy()
+      fireEvent.click(button)
+      expect(rakun.called('updateHelpers')).toHaveLength(0)
+    })
+  })
+
   test('the menu lists them with their state and downloads the latest on request', async () => {
     const rakun = setup({ helpers: helperList })
     await screen.findByTitle('Alpha')

@@ -240,7 +240,7 @@ export const install: Command = async (ctx, args, opts) => {
   )
 }
 
-/** Registers a game that is already on the disk. rakun answers «done» even when it failed: only the game says */
+/** Registers a game that is already on the disk. The answer of rakun is not trusted alone: only the game says it is installed */
 export const importFolder: Command = async (ctx, args, opts) => {
   const [runner, appName] = await gameArgs(ctx, args)
   const path = resolve(requireArg(args, 2, 'folder'))

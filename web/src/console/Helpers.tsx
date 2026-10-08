@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { HelperInfo } from '../api/types'
+import { isNetworkWeb } from '../api/webMode'
 import type { Translate } from '../i18n'
 import { useLayer } from '../input/useInput'
 import type { Actions } from '../state/useRakun'
@@ -23,9 +24,10 @@ export function Helpers({
   onClose: () => void
 }) {
   const [focus, setFocus] = useState(0)
+  const remote = isNetworkWeb()
 
   const choose = (choice: Choice) => {
-    if (update.running) return
+    if (update.running || remote) return
     actions.updateHelpers(choice === 'latest')
   }
 
@@ -66,8 +68,8 @@ export function Helpers({
           {CHOICES.map((choice, index) => (
             <button
               key={choice}
-              className={`button${index === focus ? ' focused' : ''}${update.running ? ' disabled' : ''}`}
-              disabled={update.running}
+              className={`button${index === focus ? ' focused' : ''}${update.running || remote ? ' disabled' : ''}`}
+              disabled={update.running || remote}
               onMouseEnter={() => setFocus(index)}
               onClick={() => choose(choice)}
             >
@@ -75,6 +77,7 @@ export function Helpers({
             </button>
           ))}
         </div>
+        {remote && <p className="muted small">{t('helpers.remoteNote')}</p>}
         {update.running && (
           <p className="muted">{update.line || t('helpers.working')}</p>
         )}

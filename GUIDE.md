@@ -78,7 +78,7 @@ for scripts. `-s` in front of any command that ends (it does not work with
 `events` or `--no-wait`) starts rakun if it was stopped and stops it afterwards;
 if it was already running, it does not touch it. `install` of an already
 installed game is refused ("is already installed: use repair or update").
-On GOG, `install --build ID [--branch NAME]` installs that version and `update --build ID` (one game) moves it there; both pin the version, so `rakunctl update` for everything does not move it again (with `--no-wait` the pin is not set). Epic, Amazon and Zoom always use the latest. `import` registers a game that is already on the disk (it also adds it to Steam); rakun answers "done" even when it could not, so `import` checks that the game ended up installed. `uninstall` deletes the game's files. `--lang` chooses the install language (on
+On GOG, `install --build ID [--branch NAME]` installs that version and `update --build ID` (one game) moves it there; both pin the version, so `rakunctl update` for everything does not move it again (with `--no-wait` the pin is not set). Epic, Amazon and Zoom always use the latest. `import` registers a game that is already on the disk (it also adds it to Steam); `import` checks that the game ended up installed, besides what rakun answers. `uninstall` deletes the game's files. `--lang` chooses the install language (on
 GOG, `en-US` if not given). A game with a Windows and a Linux build gets the Linux one unless `--platform windows` says otherwise (a build the game does not have is refused). DLCs are installed by default; `--skip-dlcs` skips
 them.
 

@@ -1,6 +1,10 @@
 import { invokeHandler, onFrontendMessage } from 'backend/ipc'
 import { downloadHelpers } from 'backend/rakun/helpers/download'
-import { currentHelpers, helpersLayout } from 'backend/rakun/helpers/locations'
+import {
+  bundleBinRoot,
+  currentHelpers,
+  helpersLayout
+} from 'backend/rakun/helpers/locations'
 import './../helpers'
 
 jest.mock('backend/logger', () => ({
@@ -11,6 +15,7 @@ jest.mock('backend/rakun/helpers/download', () => ({
   downloadHelpers: jest.fn()
 }))
 jest.mock('backend/rakun/helpers/locations', () => ({
+  bundleBinRoot: jest.fn(),
   currentHelpers: jest.fn(),
   helpersLayout: jest.fn()
 }))
@@ -40,6 +45,7 @@ describe('updateHelpers', () => {
   // The config resets the mocks before each test: what they answer is set here
   beforeEach(() => {
     mockedCurrent.mockReturnValue(state)
+    jest.mocked(bundleBinRoot).mockReturnValue('/app/public/bin')
     jest
       .mocked(helpersLayout)
       .mockReturnValue({ binRoot: '/bin', winRoot: '/win' })
@@ -62,7 +68,11 @@ describe('updateHelpers', () => {
     ])
     expect(mockedDownload).toHaveBeenCalledWith(
       { binRoot: '/bin', winRoot: '/win' },
-      expect.objectContaining({ latest: false })
+      expect.objectContaining({
+        latest: false,
+        // What a full tarball carries counts as installed
+        bundleBinRoot: '/app/public/bin'
+      })
     )
   })
 

@@ -31,7 +31,7 @@ export type CallMap = {
   requestAppSettings: { args: []; result: AppSettings }
   install: { args: [InstallParams]; result: null }
   updateGame: { args: [UpdateParams]; result: null }
-  // Answers «done» even when it failed: the library says whether it worked
+  // `error` when the store reported one; the library is what says whether it worked
   importGame: { args: [ImportParams]; result: { status: string } }
   repair: { args: [string, Runner]; result: null }
   uninstall: { args: [string, Runner, boolean]; result: null }

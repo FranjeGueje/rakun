@@ -1,3 +1,4 @@
+import { execFileSync } from 'child_process'
 import {
   chmodSync,
   existsSync,
@@ -45,6 +46,11 @@ function installAll(l: Layout) {
     recordTag(l.binRoot, helper, RELEASE_TAGS[helper])
   }
 }
+
+jest.mock('child_process', () => ({
+  ...jest.requireActual('child_process'),
+  execFileSync: jest.fn()
+}))
 
 describe('the manifest', () => {
   test('every download that can be checked has a sha256 of 64 hex digits', () => {
@@ -112,6 +118,17 @@ describe('helperStates', () => {
     expect(byName.nile).toMatchObject({ state: 'other', installed: 'v9.9.9' })
     expect(byName.gogdl.state).toBe('missing')
     expect(byName.legendary.state).toBe('ok')
+  })
+
+  test("Zoom's script is ok with whatever version it says: it cannot be told apart", () => {
+    const l = layout()
+    installAll(l)
+    recordTag(l.binRoot, 'zoom-platform', 'v9.9.9')
+
+    const zoom = helperStates(l, { arch: 'x64' }).find(
+      (s) => s.helper === 'zoom-platform'
+    )
+    expect(zoom).toMatchObject({ state: 'ok', installed: 'v9.9.9' })
   })
 
   test('the Linux tools of a full tarball count, with its tags', () => {
@@ -280,6 +297,73 @@ describe('downloadHelpers', () => {
     expect(progress).toEqual([
       'Nothing to download: the helpers are up to date'
     ])
+  })
+
+  test('what a full tarball carries is not downloaded again', async () => {
+    const l = layout()
+    const bundle = join(l.binRoot, '..', 'bundle')
+    // Everything is in place except that the Linux tools are in the bundle
+    for (const helper of HELPERS) {
+      for (const { root, file } of expectedFiles(helper, 'x64'))
+        put(
+          join(root === 'win' ? l.winRoot : root === 'bin' ? bundle : '', file)
+        )
+      recordTag(bundle, helper, RELEASE_TAGS[helper])
+    }
+    const fetchFn = fakeFetch()
+
+    expect(
+      await downloadHelpers(l, { fetchFn, bundleBinRoot: bundle })
+    ).toEqual([])
+    expect(fetchFn).not.toHaveBeenCalled()
+  })
+
+  test('without the network it says which address it could not reach and why', async () => {
+    const l = layout()
+    const fetchFn = jest.fn(() =>
+      Promise.reject(
+        Object.assign(new TypeError('fetch failed'), {
+          cause: new Error('getaddrinfo ENOTFOUND github.com')
+        })
+      )
+    ) as unknown as typeof fetch
+
+    const [failure] = await downloadHelpers(l, {
+      only: ['epic-integration'],
+      fetchFn
+    })
+
+    expect(failure.error).toContain('Could not download https://github.com/')
+    expect(failure.error).toContain(
+      'fetch failed (getaddrinfo ENOTFOUND github.com)'
+    )
+  })
+
+  test('without unzip it says that unzip is needed', async () => {
+    const l = layout()
+    // The tests run in their own copy of the environment: what Node would do
+    // with no unzip on the PATH is what is simulated
+    jest.mocked(execFileSync).mockImplementation(() => {
+      throw Object.assign(new Error('spawnSync unzip ENOENT'), {
+        code: 'ENOENT'
+      })
+    })
+    // --latest: the hash of the zip is not checked, the fake bytes are enough
+    const fetchFn = jest.fn((url: string | URL | Request) =>
+      Promise.resolve(
+        String(url).includes('/releases/latest')
+          ? new Response(JSON.stringify({ tag_name: 'v1' }))
+          : new Response(new Uint8Array(Buffer.from('not a zip')))
+      )
+    ) as unknown as typeof fetch
+
+    const [failure] = await downloadHelpers(l, {
+      only: ['comet'],
+      latest: true,
+      fetchFn
+    })
+
+    expect(failure.error).toMatch(/unzip is needed/)
   })
 
   test('--latest asks for the newest tag and does not check the hash', async () => {

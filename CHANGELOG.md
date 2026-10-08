@@ -17,7 +17,7 @@ repository.
 - Games already on the disk can be imported: `rakunctl import <store> <appName>
 <folder>` and, in the web, "Import from a folder" in the sheet of a game that
   is not installed (GOG, Epic and Amazon; Zoom has no import). Both check that
-  the game really ended up installed, because rakun answers "done" either way.
+  the game really ended up installed, besides what rakun answers.
 
 ### Changed
 
@@ -86,6 +86,19 @@ repository.
   trusts a game's overlay folder to be full: it runs `enable` first and, if its
   output has an ERROR (legendary can think an empty folder is installed), it
   removes and installs the overlay again; otherwise it only updates it.
+- Zoom's installer script is `ok` whatever version it says (its address has no
+  version): it was shown as «another version» for good once Zoom changed it, and
+  `rakunctl helpers update` downloaded it again each time.
+- `updateHelpers` with a `-full` tarball no longer downloads the Linux tools the
+  tarball already carries.
+- `importGame` answers `error` when the store reported one (GOG swallowed it and
+  said `done`).
+- A helper download without `unzip` or without a network says what is missing or
+  which address it could not reach and why, instead of `spawnSync unzip ENOENT`
+  or `fetch failed`.
+- With the web open to the network the notice of missing helper binaries and the
+  menu screen no longer offer a button that rakun would refuse: they say to run
+  `rakunctl helpers update` on the machine rakun runs on.
 - Uninstalling a game of Amazon now shows at once as not installed in the
   library (it needed a manual refresh).
 

@@ -69,9 +69,11 @@ export function helperStates(
     )
     const installed = own[helper] ?? bundled[helper] ?? ''
     const pinned = RELEASE_TAGS[helper]
+    // Zoom's script has no version in its address: whatever is there is the one
+    // that is there, and it cannot be told apart from «the tested one»
     const state: HelperState = !present
       ? 'missing'
-      : installed === pinned
+      : installed === pinned || helper === 'zoom-platform'
         ? 'ok'
         : 'other'
     return { helper, pinned, installed: present ? installed : '', state }

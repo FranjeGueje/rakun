@@ -152,6 +152,11 @@ export default class GOGGame implements Game {
       void onGameImported(this).catch((err) => logError(err, LogPrefix.Gog))
     } catch (error) {
       logError([`Failed to import ${this.id}:`, error], LogPrefix.Gog)
+      // Without this the caller would see the import as a success
+      return {
+        ...res,
+        error: error instanceof Error ? error.message : String(error)
+      }
     }
 
     return res

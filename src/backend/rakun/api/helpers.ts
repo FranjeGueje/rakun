@@ -2,7 +2,11 @@ import { HELPERS_DONE, type HelpersUpdate } from 'common/rakun/helpers'
 import { addHandler, sendFrontendMessage } from 'backend/ipc'
 import { logError, logInfo } from 'backend/logger'
 import { downloadHelpers } from 'backend/rakun/helpers/download'
-import { currentHelpers, helpersLayout } from 'backend/rakun/helpers/locations'
+import {
+  bundleBinRoot,
+  currentHelpers,
+  helpersLayout
+} from 'backend/rakun/helpers/locations'
 
 const LOG_PREFIX = 'Rakun'
 
@@ -12,6 +16,7 @@ let running: Promise<HelpersUpdate> | undefined
 async function update(latest: boolean): Promise<HelpersUpdate> {
   const failures = await downloadHelpers(helpersLayout(), {
     latest,
+    bundleBinRoot: bundleBinRoot(),
     onProgress: (line) => {
       logInfo(line, LOG_PREFIX)
       sendFrontendMessage('helpersProgress', line)

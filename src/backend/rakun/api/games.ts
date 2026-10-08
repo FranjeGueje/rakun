@@ -227,7 +227,8 @@ addHandler(
         .importGame(path, platform)
       if (abort || error) {
         abortMessage()
-        return { status: 'done' }
+        // An abort is not a failure: whoever asked for it knows
+        return { status: error ? 'error' : 'done' }
       }
     } catch (error) {
       abortMessage()

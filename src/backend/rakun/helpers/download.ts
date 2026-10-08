@@ -34,12 +34,27 @@ export type DownloadOptions = {
   /** By default, the ones that are missing or not at the pinned version (all of them with `latest`) */
   only?: HelperName[]
   onProgress?: (line: string) => void
+  /** `public/bin` of a full tarball: what it carries counts as installed */
+  bundleBinRoot?: string
   /** To test without the network */
   fetchFn?: typeof fetch
 }
 
+/** What went wrong in a network call, as the reader needs it: `fetch failed` says nothing, its cause does */
+function reason(error: unknown): string {
+  const cause = (error as { cause?: unknown })?.cause
+  const text = (value: unknown) =>
+    value instanceof Error ? value.message : String(value)
+  return cause ? `${text(error)} (${text(cause)})` : text(error)
+}
+
 async function getBuffer(fetchFn: typeof fetch, url: string): Promise<Buffer> {
-  const response = await fetchFn(url, { headers: { 'User-Agent': USER_AGENT } })
+  let response: Response
+  try {
+    response = await fetchFn(url, { headers: { 'User-Agent': USER_AGENT } })
+  } catch (error) {
+    throw new Error(`Could not download ${url}: ${reason(error)}`)
+  }
   if (response.status !== 200)
     throw new Error(`Failed to download ${url}: ${response.status}`)
   return Buffer.from(await response.arrayBuffer())
@@ -86,6 +101,13 @@ function unpack(kind: 'zip' | 'tar', data: Buffer, into: string) {
     mkdirSync(into, { recursive: true })
     if (kind === 'zip') execFileSync('unzip', ['-o', '-q', archive, '-d', into])
     else execFileSync('tar', ['-xf', archive, '-C', into])
+  } catch (error) {
+    const tool = kind === 'zip' ? 'unzip' : 'tar'
+    if ((error as NodeJS.ErrnoException)?.code === 'ENOENT')
+      throw new Error(
+        `${tool} is needed to unpack a helper: install it with your package manager`
+      )
+    throw error
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }
@@ -165,7 +187,10 @@ export async function downloadHelpers(
     options.only ??
     (options.latest
       ? HELPERS
-      : helperStates(layout, { arch: arches[0] })
+      : helperStates(layout, {
+          arch: arches[0],
+          bundleBinRoot: options.bundleBinRoot
+        })
           .filter(({ state }) => state !== 'ok')
           .map(({ helper }) => helper))
 

@@ -100,7 +100,10 @@ a list only those on GOG; Epic cannot pick, so any non-empty list means all) and
 install finishes rakun runs the Steam integration (see README) and the game
 shows up in Steam. `uninstall(appName, runner, removePrefix)`,
 `repair(appName, runner)`, `kill(appName, runner)`, `moveInstall`,
-`importGame`, `changeInstallPath`, `changeGameVersionPinnedStatus`.
+`importGame({ appName, path, runner, platform })` (registers a game that is already in
+`path`; it answers `{ status: 'error' }` when the store reported an error and `done` otherwise,
+an abort included, so a client that must be sure checks that the game is installed),
+`changeInstallPath`, `changeGameVersionPinnedStatus`.
 For a GOG private beta branch, `setPrivateBranchPassword(appName, password)`
 stores the password and `getPrivateBranchPassword(appName)` returns it; install
 or update with that `branch`.

@@ -87,6 +87,10 @@ export const en = {
   'menu.title': 'Menu',
   'menu.helpers': 'Helper binaries',
   'helpers.missing': 'Missing helper binaries: {helpers}',
+  'helpers.missingRemote':
+    'Missing helper binaries: {helpers}. Download them on the machine rakun runs on: rakunctl helpers update',
+  'helpers.remoteNote':
+    'With the web open to the network, the download can only be asked from the machine rakun runs on: rakunctl helpers update',
   'helpers.download': 'Download',
   'helpers.downloadMissing': 'Download missing',
   'helpers.downloadLatest': 'Download latest (not checked)',
