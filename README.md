@@ -37,7 +37,13 @@ rakun is a fork of [Relic](https://github.com/FranjeGueje/Relic), which is a Lin
 
 ## Install
 
-There is no release to download yet, so you build one (see [Build](#build)) and install it:
+Quick install of the latest release (x64, bash):
+
+```bash
+V=$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/FranjeGueje/rakun/releases/latest); V=${V##*/}; curl -fsSL https://raw.githubusercontent.com/FranjeGueje/rakun/$V/scripts/install.sh | bash -s -- https://github.com/FranjeGueje/rakun/releases/download/$V/rakun-${V#v}-linux-x64.tar.gz
+```
+
+Or build it yourself (see [Build](#build)) and install it:
 
 ```bash
 pnpm package          # makes dist/rakun-<version>-linux-<arch>.tar.gz
