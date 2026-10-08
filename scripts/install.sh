@@ -7,7 +7,8 @@
 #
 # The normal tarball has no helper binaries (legendary, gogdl, nile…): after
 # installing, `rakunctl helpers update` downloads them. The -full one carries them.
-# If a .sha256 file sits next to the tarball (or next to the URL) it is checked.
+# The .sha256 file next to the tarball (or next to the URL) is required: without it,
+# or if it does not match, nothing is installed. `pnpm package` creates it.
 #
 # It installs to ~/.local/opt/rakun and links ~/.local/bin/rakun. It does not
 # create any service: start rakun yourself (see the end of this script's output).
@@ -75,7 +76,10 @@ case "$SOURCE" in
     http://* | https://*)
         echo "Downloading $SOURCE..."
         curl -fsSL -o "$TARBALL" "$SOURCE"
-        curl -fsSL -o "$WORK/rakun.sha256" "$SOURCE.sha256" 2>/dev/null || true
+        curl -fsSL -o "$WORK/rakun.sha256" "$SOURCE.sha256" || {
+            echo "Error: could not download $SOURCE.sha256 (the checksum is required)." >&2
+            exit 1
+        }
         ;;
     *)
         [ -f "$SOURCE" ] || {
@@ -83,21 +87,21 @@ case "$SOURCE" in
             exit 1
         }
         cp "$SOURCE" "$TARBALL"
-        [ -f "$SOURCE.sha256" ] && cp "$SOURCE.sha256" "$WORK/rakun.sha256"
+        [ -f "$SOURCE.sha256" ] || {
+            echo "Error: $SOURCE.sha256 does not exist (the checksum is required)." >&2
+            exit 1
+        }
+        cp "$SOURCE.sha256" "$WORK/rakun.sha256"
         ;;
 esac
 
-if [ -f "$WORK/rakun.sha256" ]; then
-    expected=$(cut -d' ' -f1 "$WORK/rakun.sha256")
-    actual=$(sha256sum "$TARBALL" | cut -d' ' -f1)
-    [ "$expected" = "$actual" ] || {
-        echo "Error: the checksum does not match." >&2
-        exit 1
-    }
-    echo "Checksum OK."
-else
-    echo "Warning: no .sha256 file, the integrity is not checked."
-fi
+expected=$(cut -d' ' -f1 "$WORK/rakun.sha256")
+actual=$(sha256sum "$TARBALL" | cut -d' ' -f1)
+[ -n "$expected" ] && [ "$expected" = "$actual" ] || {
+    echo "Error: the checksum does not match." >&2
+    exit 1
+}
+echo "Checksum OK."
 
 tar -xzf "$TARBALL" -C "$WORK"
 [ -x "$WORK/rakun/rakun" ] || {

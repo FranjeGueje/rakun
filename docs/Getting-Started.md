@@ -13,6 +13,8 @@ pnpm package                     # dist/rakun-<version>-linux-<arch>.tar.gz
 scripts/install.sh               # picks the tarball of this machine from dist/
 ```
 
+`install.sh` requires the `.sha256` file that `pnpm package` leaves next to the tarball, and refuses to install if it is missing or does not match.
+
 The tarball carries its own Node, so nothing else is needed on SteamOS. The installer puts rakun in `~/.local/opt/rakun` and links `rakun` and `rakunctl` in `~/.local/bin`. It creates **no service**.
 
 For a machine with no network, `pnpm package --full` also builds a `-full` tarball that carries the [helper binaries](Helper-Binaries.md); install it with `scripts/install.sh --full`.
