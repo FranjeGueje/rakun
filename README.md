@@ -65,7 +65,7 @@ For Windows games, install [GE-Proton](https://github.com/GloriousEggroll/proton
 You need Node.js 24+, [pnpm](https://pnpm.io), git, `curl` and `unzip`.
 
 ```bash
-git clone <this repository> rakun && cd rakun
+git clone https://github.com/FranjeGueje/rakun.git && cd rakun
 pnpm install
 pnpm build            # build/rakun.cjs, build/rakunctl.cjs and build/web/
 pnpm start            # run it straight from the checkout

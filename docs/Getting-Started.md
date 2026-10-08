@@ -7,7 +7,7 @@ From nothing to a game in Steam. You need Linux, Steam and a terminal. Windows g
 rakun has no public release yet, so you build the tarball yourself (see [Development](Development.md)):
 
 ```bash
-git clone <this repository> rakun && cd rakun
+git clone https://github.com/FranjeGueje/rakun.git && cd rakun
 pnpm install
 pnpm package                     # dist/rakun-<version>-linux-<arch>.tar.gz
 scripts/install.sh               # picks the tarball of this machine from dist/

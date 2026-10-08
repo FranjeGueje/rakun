@@ -151,20 +151,20 @@ describe('JsonStore - defaults and values', () => {
 describe('JsonStore - file format and coherence', () => {
   test('writes tab-indented JSON with no trailing newline, as electron-store did', () => {
     const { store, filePath } = freshStore()
-    store.set('userHome', '/home/deck')
+    store.set('userHome', '/home/user')
 
     const raw = readFileSync(filePath, 'utf-8')
-    expect(raw).toBe('{\n\t"userHome": "/home/deck"\n}')
+    expect(raw).toBe('{\n\t"userHome": "/home/user"\n}')
   })
 
   test('reads a file written by electron-store unchanged', () => {
     const name = 'legacy'
     const legacy =
-      '{\n\t"userHome": "/home/deck",\n\t"games": {\n\t\t"recent": []\n\t}\n}'
+      '{\n\t"userHome": "/home/user",\n\t"games": {\n\t\t"recent": []\n\t}\n}'
     writeFileSync(join(tmpUserData.name, `${name}.json`), legacy, 'utf-8')
 
     const store = new JsonStore({ name })
-    expect(store.get('userHome')).toBe('/home/deck')
+    expect(store.get('userHome')).toBe('/home/user')
     expect(store.get('games.recent')).toEqual([])
   })
 

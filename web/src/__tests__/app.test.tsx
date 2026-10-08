@@ -72,7 +72,7 @@ function setup(
       getAccounts: options.accounts ?? signedIn,
       listFolders:
         options.folders ??
-        ((path) => ({ path: path ?? '/home/deck', parent: null, folders: [] }))
+        ((path) => ({ path: path ?? '/home/user', parent: null, folders: [] }))
     },
     {
       login: options.login,
@@ -845,7 +845,7 @@ describe('settings in the menu', () => {
     const rakun = await open(
       {
         folders: (path) => ({
-          path: path ?? '/home/deck',
+          path: path ?? '/home/user',
           parent: path === '/juegos' ? '/' : path ? '/juegos' : null,
           folders: path === '/juegos' ? ['rpg', 'misc'] : []
         })

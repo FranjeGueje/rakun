@@ -52,3 +52,19 @@ A store is a folder plus one line in the registry.
 ---
 
 Next: [Development](Development.md) · [API](../API.md)
+
+## The web and its host
+
+The web (`web/`) does not import anything from the backend: it talks to rakun only through `window.rakun`, a bridge object (`RakunBridge` in `web/src/api/bridge.ts`). In a browser the page builds that bridge itself over `fetch` and the token that came with `index.html`. A desktop app that embeds the web can provide its own bridge instead.
+
+Five members are always there: `call`, `connection`, `onEvent`, `onConnection` and `setSetting`. The rest are optional, and the interface only offers what the host provides:
+
+| Member         | When present, the interface shows                                |
+| -------------- | ---------------------------------------------------------------- |
+| `appName`      | the app's name in the header instead of rakun's lettering        |
+| `quit`, `owns` | a Quit button and key, with a dialog about what happens to rakun |
+| `start`        | a **Start rakun** button when rakun does not answer              |
+| `login`        | login through a window of the host, without pasting              |
+| `loginPaste`   | the paste flow (the default in a browser, where it is provided)  |
+
+Without the optional members the web behaves as a plain browser page.

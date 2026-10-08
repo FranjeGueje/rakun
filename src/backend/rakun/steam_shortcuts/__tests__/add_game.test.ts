@@ -110,7 +110,7 @@ describe('addGameToSteam', () => {
 
       await addGameToSteam({
         gameName: 'My Game',
-        runnerPath: '/home/deck/runner/My Game.bat'
+        runnerPath: '/home/user/runner/My Game.bat'
       })
 
       expect(captured).toHaveLength(1)
@@ -120,8 +120,8 @@ describe('addGameToSteam', () => {
           '[Desktop Entry]',
           'Type=Application',
           'Name=My Game',
-          'Exec="/home/deck/runner/My Game.bat"',
-          'Path=/home/deck/runner',
+          'Exec="/home/user/runner/My Game.bat"',
+          'Path=/home/user/runner',
           'Terminal=false',
           ''
         ].join('\n')
