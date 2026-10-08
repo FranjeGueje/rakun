@@ -57,7 +57,7 @@ network you trust, over plain HTTP. What it still does: it only accepts a `Host`
 machine's own address or name (so a web on the internet cannot reach rakun through the
 visitor's browser: DNS rebinding), and `writeConfig`, `setSetting`, `resetRakun`,
 `stopRakun`, `steamgriddb.setApiKey`, `importSessionsFromRelic`, `getPrivateBranchPassword`,
-`setPrivateBranchPassword`, `getLogContent`, `listFolders`, `importGame`, `moveInstall` and
+`setPrivateBranchPassword`, `getLogContent`, `listFolders`, `importGame`, `moveInstall`, `updateHelpers` (downloads programs that rakun then runs) and
 `changeInstallPath` answer `403` to anything that is not this machine (an `altLegendaryBin`
 setting makes rakun run that program; the others read secrets or walk the disk). The error is
 `"<channel>" can only be called from the machine rakun runs on: open the web there as
@@ -92,7 +92,7 @@ ends, `refreshLibrary` fires on `/events` with the store name: call
 now. Logging in refreshes that store by itself.
 `getGameInfo(appName, runner)`, `getExtraInfo`, `getInstallInfo(appName,
 runner, platform, build?, branch?)`, `isGameAvailable`, `isNative`,
-`checkGameUpdates` (nothing runs by itself: a client calls it; with `autoUpdateGames` it queues the updates), `getUpdateableGames` (`{ runner, appName }[]` of the installed games with a newer version; it queues nothing and Zoom never lists any), `checkDiskSpace(folder)`, `getKnownFixes`.
+`checkGameUpdates` (nothing runs by itself: a client calls it; with `autoUpdateGames` it queues the updates), `getHelpers` (the helper binaries: `{ helper, pinned, installed, state }[]`, `state` being `ok`, `missing` or `other`), `updateHelpers({ latest? })` (downloads the missing ones, checked by sha256, or the newest of all with `latest`, unchecked; progress arrives as `helpersProgress` events, whose last line is `done`; answers `{ helpers, failures }`), `getUpdateableGames` (`{ runner, appName }[]` of the installed games with a newer version; it queues nothing and Zoom never lists any), `checkDiskSpace(folder)`, `getKnownFixes`.
 
 **Install, update, repair, uninstall:** `install(InstallParams)` (answers `500` `already installed: use repair or update` if the game is installed; `installDlcs` omitted installs every DLC, `[]` none, and
 a list only those on GOG; Epic cannot pick, so any non-empty list means all) and
@@ -209,7 +209,7 @@ A `: ping` comment is sent every 25 s.
 
 `gameStatusUpdate(status)`, `progressUpdate(status)`,
 `changedDMQueueInformation(elements, state)`, `pushGameToLibrary(info)`,
-`refreshLibrary(runner?)`,
+`refreshLibrary(runner?)`, `helpersProgress(line)`,
 `connectivity-changed`, `showDialog(title, message, type, buttons?)`.
 
 `showDialog` is how the daemon reports problems it used to show in a window

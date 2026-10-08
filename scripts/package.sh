@@ -5,11 +5,19 @@
 #   rakun/rakun.cjs    the bundled daemon
 #   rakun/rakunctl      launcher of the command line client (rakunctl.cjs)
 #   rakun/web/          the web rakun serves on its port (built from web/ by `pnpm build`)
-#   rakun/public/bin/   helper binaries: legendary, gogdl and nile for <arch>/linux, the
-#                        x64/win32 ones (they run inside Wine/Proton, so both architectures
-#                        need them, comet.exe among them), umu and zoom
+#   rakun/THIRD_PARTY   the helper binaries rakun runs, their origin and licences
+#                        (the texts of the licences travel only with the -full tarball,
+#                        the one that carries the programs)
 #
-# Usage: scripts/package.sh [x64|arm64|all]      (default: all)
+# That is the normal tarball: it has NO helper binaries, `rakunctl helpers update`
+# downloads them (the versions rakun was tested with, checked by sha256). With
+# --full it also builds rakun-<version>-linux-<arch>-full.tar.gz, which carries them
+# and the texts of their licences (rakun/licenses/):
+#   rakun/public/bin/   legendary, gogdl and nile for <arch>/linux, the x64/win32 ones
+#                        (they run inside Wine/Proton, so both architectures need
+#                        them, comet.exe among them), umu and zoom
+#
+# Usage: scripts/package.sh [x64|arm64|all] [--full]      (default: all, normal only)
 #   RAKUN_NODE_BINARY=/path/to/node   use this node instead of downloading it
 #                                      (only with a single architecture)
 set -euo pipefail
@@ -21,14 +29,23 @@ VERSION=$(node -p "require('./package.json').version")
 OUT_DIR="dist"
 CACHE="build/cache"
 
-case "${1:-all}" in
+FULL=0
+TARGET=all
+for arg in "$@"; do
+    case "$arg" in
+        --full) FULL=1 ;;
+        x64 | arm64 | all) TARGET="$arg" ;;
+        *)
+            echo "Usage: $0 [x64|arm64|all] [--full]" >&2
+            exit 1
+            ;;
+    esac
+done
+
+case "$TARGET" in
     x64) ARCHS=(x64) ;;
     arm64) ARCHS=(arm64) ;;
     all) ARCHS=(x64 arm64) ;;
-    *)
-        echo "Usage: $0 [x64|arm64|all]" >&2
-        exit 1
-        ;;
 esac
 
 if [ -n "${RAKUN_NODE_BINARY:-}" ] && [ "${#ARCHS[@]}" -ne 1 ]; then
@@ -98,18 +115,23 @@ LAUNCHER
     chmod +x "$1/$2"
 }
 
-stage_package() { # arch, stage
+stage_helpers() { # arch, stage: what the full tarball adds
     local helper bin="$2/rakun/public/bin"
-    mkdir -p "$bin/$1"
-    cp build/rakun.cjs build/rakunctl.cjs "$2/rakun/"
     mkdir -p "$bin/$1/linux"
     for helper in "${LINUX_HELPERS[@]}"; do
         cp "public/bin/$1/linux/$helper" "$bin/$1/linux/"
     done
-    cp -r public/bin/umu public/bin/zoom public/bin/legendary.LICENSE "$bin/"
+    cp -r public/bin/umu public/bin/zoom "$bin/"
     mkdir -p "$bin/x64"
     cp -r public/bin/x64/win32 "$bin/x64/"
-    cp COPYING AUTHORS API.md "$2/rakun/"
+    cp public/bin/.release_tags "$bin/"
+    cp -r licenses "$2/rakun/licenses"
+}
+
+stage_package() { # arch, stage, full (0 or 1)
+    cp build/rakun.cjs build/rakunctl.cjs "$2/rakun/"
+    if [ "$3" -eq 1 ]; then stage_helpers "$1" "$2"; fi
+    cp COPYING AUTHORS API.md THIRD_PARTY "$2/rakun/"
     cp -r build/web "$2/rakun/web"
     fetch_node "$1" "$2/rakun"
     make_launcher "$2/rakun" rakun
@@ -117,24 +139,27 @@ stage_package() { # arch, stage
     chmod +x "$2/rakun/node"
 }
 
-package_arch() { # arch
-    local tarball="$OUT_DIR/rakun-${VERSION}-linux-$1.tar.gz"
-    local stage="$OUT_DIR/stage-$1"
-    check_binaries "$1"
-    echo "[$1] Staging..."
+package_arch() { # arch, full (0 or 1)
+    local suffix=""
+    if [ "$2" -eq 1 ]; then suffix="-full"; fi
+    local tarball="$OUT_DIR/rakun-${VERSION}-linux-$1$suffix.tar.gz"
+    local stage="$OUT_DIR/stage-$1$suffix"
+    if [ "$2" -eq 1 ]; then check_binaries "$1"; fi
+    echo "[$1$suffix] Staging..."
     rm -rf "$stage" "$tarball" "$tarball.sha256"
     mkdir -p "$stage/rakun"
-    stage_package "$1" "$stage"
-    echo "[$1] Creating $tarball..."
+    stage_package "$1" "$stage" "$2"
+    echo "[$1$suffix] Creating $tarball..."
     tar -czf "$tarball" -C "$stage" rakun
     rm -rf "$stage"
     (cd "$OUT_DIR" && sha256sum "$(basename "$tarball")" >"$(basename "$tarball").sha256")
-    echo "[$1] Done: $tarball ($(du -h "$tarball" | cut -f1))"
+    echo "[$1$suffix] Done: $tarball ($(du -h "$tarball" | cut -f1))"
 }
 
 echo "Building the bundle..."
 pnpm build
 mkdir -p "$OUT_DIR"
 for arch in "${ARCHS[@]}"; do
-    package_arch "$arch"
+    package_arch "$arch" 0
+    if [ "$FULL" -eq 1 ]; then package_arch "$arch" 1; fi
 done

@@ -29,6 +29,21 @@ repository.
   runner, the shortcut (added only if it is missing, so a deleted one comes
   back, and a game that never got in is added), the prefix and the covers. The
   properties window of Steam opens only when the shortcut was really added.
+- The helper binaries (legendary, gogdl, nile, comet, umu, Zoom's script) are no
+  longer in the normal tarball (~43 MB instead of ~107 MB): `rakunctl helpers`
+  says which are installed and `rakunctl helpers update` downloads the missing
+  ones, the versions rakun was tested with, checked by sha256 (`--latest` fetches
+  the newest ones, unchecked). They go to `~/.local/share/rakun/bin` (they
+  survive a rakun update) and the Windows files straight to `mount/bin`.
+  `pnpm package --full` still makes a `-full` tarball that carries them
+  (`scripts/install.sh --full`); rakun puts what it carries in place at start
+  (`syncMountBin` is gone: it overwrote what had been downloaded). Until they
+  are there rakun starts and says what is missing (log, `rakunctl status`), and a
+  command that needs one fails saying how to install it. New channels
+  `getHelpers` and `updateHelpers`, event `helpersProgress`, and a `THIRD_PARTY`
+  file in the tarballs; the `-full` one also carries the texts of the licences
+  of what it carries (`licenses/`: GPL-3.0, Apache-2.0 for Comet, MIT for the
+  Epic integration), which are the ones the projects declare.
 - One runner for every game: all the logic of the three stores is in
   `mount/scripts/Launcher_games.bat` (**FranjeGueje runner**, starting at v1),
   rewritten at every start, and the `.bat` of each game only sets `STORE` and

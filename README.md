@@ -267,15 +267,19 @@ rakun has no public release yet. Build the tarball and install it:
 ```bash
 git clone <this repository> rakun && cd rakun
 pnpm install
-pnpm download-helper-binaries
+pnpm download-helper-binaries    # public/bin, only needed for a -full tarball
 pnpm package                     # dist/rakun-<version>-linux-x64.tar.gz and -arm64.tar.gz
 scripts/install.sh                # picks the tarball of this machine from dist/
+rakunctl helpers update           # then, the helper binaries (a -full tarball already has them)
 ```
 
-`pnpm package x64` (or `arm64`) builds just one. Each tarball carries only its own helper
-binaries (legendary, gogdl and nile for Linux; the Windows `.exe` ones, `comet.exe` among
-them, run inside the prefix) and its own Node, so nothing else is needed on SteamOS. The installer
-puts it in `~/.local/opt/rakun` and links `~/.local/bin/rakun`. It creates **no
+`pnpm package x64` (or `arm64`) builds just one. The tarball carries its own Node, so
+nothing else is needed on SteamOS, but **not the helper binaries** (legendary, gogdl, nile,
+comet, umu…, see `THIRD_PARTY`): they are downloaded after installing, see _Helper binaries_
+below. `pnpm package --full` also builds `rakun-<version>-linux-<arch>-full.tar.gz`, which
+carries them, with the texts of their licences in `licenses/` (for a machine with no network;
+`scripts/install.sh --full` installs it).
+The installer puts it in `~/.local/opt/rakun` and links `~/.local/bin/rakun`. It creates **no
 service** unless you ask for one (`rakunctl install-service`, below); otherwise start it
 when you want it:
 
@@ -312,10 +316,31 @@ By default only this machine can open the web. `rakunctl config webAccess networ
 any protection**, for experimental or home use only; `off` turns the web off (the API stays on
 this machine). `--port <n>` (or `RAKUN_PORT`) changes the port. See _Who can open the web_ in [API.md](API.md).
 
+### Helper binaries
+
+rakun runs other programs for the stores (legendary for Epic, gogdl and Comet for GOG, nile for
+Amazon, umu for the Proton prefixes, and Zoom's installer script). The normal tarball does not
+carry them: right after installing, run
+
+```bash
+rakunctl helpers            # which ones are installed: HELPER, PINNED, INSTALLED, STATE
+rakunctl helpers update     # downloads the missing ones (starts rakun for the time it takes)
+```
+
+`update` downloads the versions rakun was tested with and checks each file against its
+`sha256` (a file that does not match is not installed). `--latest` downloads the newest release
+of each one instead, **without checking anything**: rakun reads their output, so a new version can
+break it; use it at your own risk. The tools go to `~/.local/share/rakun/bin` (they survive a
+rakun update) and the Windows `.exe` files straight to `~/.local/share/rakun/mount/bin`, where the
+prefixes see them as `C:\Launchers\bin`. With a `-full` tarball nothing needs downloading: rakun
+puts what it carries in place when it starts. Until they are installed rakun starts and says
+what is missing (log, `rakunctl status`), and a command that needs one fails saying so.
+`unzip` is needed to unpack one of them.
+
 ### Requirements
 
 - Linux and Steam
-- `curl` (installer and smoke script), `xdg-open`
+- `curl` (installer and smoke script), `xdg-open`, `unzip` (to download the helper binaries)
 - For Windows games: GE-Proton in `~/.local/share/Steam/compatibilitytools.d`
   (rakun picks the first `*proton*` folder it finds; change it with
   `rakunctl config protonPath <folder>`, the folder must contain the `proton` script).
@@ -342,11 +367,11 @@ language GOG installs by default, and it applies at once.
 
 ```bash
 pnpm install
-pnpm download-helper-binaries    # honours HTTPS_PROXY; x64 and arm64 Linux helpers + x64 Windows ones
+pnpm download-helper-binaries    # fills public/bin for the tarballs (honours HTTPS_PROXY; both archs + the Windows files)
 pnpm build && pnpm start         # runs build/rakun.cjs from the checkout
 pnpm start:ctl start             # or: rakunctl from the checkout starts that same build
 pnpm test                        # jest
-pnpm package [x64|arm64|all]     # tarballs in dist/ (default: both)
+pnpm package [x64|arm64|all] [--full]   # tarballs in dist/ (default: both archs, no helpers; --full adds the -full ones)
 pnpm codecheck && pnpm lint && pnpm prettier && pnpm test
 ```
 
@@ -400,6 +425,7 @@ with `HOME=` empty rakun writes its folders relative to the current directory.
 
 ~/.local/share/rakun/
 ├── games/                   — Symlinks to installed game dirs
+├── bin/                     — The helper binaries (rakunctl helpers update)
 ├── runner/                  — one small .bat per game for Steam (Windows games)
 └── mount/                   — Mount structure for Proton prefixes
     └── scripts/             — Launcher_games.bat (the runner) and eos-overlay.bat

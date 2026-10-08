@@ -22,7 +22,12 @@ rakunctl install-service | uninstall-service           # user service: starts at
 ```
 
 To reinstall a new version: `pnpm package`, run `scripts/install.sh …` again and
-restart rakun. The logins are kept (they live in `~/.config/rakun`).
+restart rakun. The logins are kept (they live in `~/.config/rakun`) and so are the
+helper binaries (`~/.local/share/rakun/bin`).
+
+The normal tarball has no helper binaries (legendary, gogdl, nile…): after the first
+install run `rakunctl helpers update` (and `rakunctl helpers` to see what is there).
+`pnpm package --full` makes one that carries them, and `scripts/install.sh --full` installs it.
 
 To test without touching your real `$HOME` (**with a directory that exists and
 is not empty**: with an empty `HOME=` rakun creates its folders in the current
@@ -39,30 +44,31 @@ With rakun installed, `rakunctl` (or `pnpm start:ctl` from the repository) saves
 you from typing the JSON by hand. It uses the same `api.json` and the same
 `RAKUN_API_FILE` variable.
 
-| You want to…                | `rakunctl`                                                                                                            |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| start / stop rakun          | `rakunctl start` / `rakunctl stop [--force]`                                                                          |
-| choose web and port         | `rakunctl start --web local\|network\|off --port N` (or `config webAccess`)                                           |
-| see if it is alive          | `rakunctl status` (says "rakun is stopped" if it is not)                                                              |
-| log in                      | `rakunctl login gog` (epic, gog, amazon, zoom)                                                                        |
-| bring the sessions of Relic | `rakunctl import-relic`                                                                                               |
-| list the library            | `rakunctl library [store] [--installed]`                                                                              |
-| refresh it and wait         | `rakunctl refresh [store]`                                                                                            |
-| install                     | `rakunctl install gog <appName> [--path DIR] [--lang CODE] [--skip-dlcs] [--platform windows\|linux]`                 |
-| list the versions of a game | `rakunctl versions gog <appName>` (GOG only: builds, branches, the current one marked)                                |
-| import a game from a folder | `rakunctl import <store> <appName> <folder> [--platform windows\|linux]` (not Zoom)                                   |
-| update                      | `rakunctl update [store [appName]]`: one game, a store's games or every game with a new version (Zoom is not updated) |
-| repair                      | `rakunctl repair <store> <appName>`                                                                                   |
-| uninstall                   | `rakunctl uninstall <store> <appName>`                                                                                |
-| see the queue               | `rakunctl queue`                                                                                                      |
-| pause / resume / cancel     | `rakunctl pause` / `resume` / `cancel [--remove-files]`                                                               |
-| empty the finished list     | `rakunctl queue clear`                                                                                                |
-| see or change settings      | `rakunctl config [key [value]]` (e.g. `config protonPath PATH`)                                                       |
-| read the logs               | `rakunctl logs [store [appName]] [--type install]`                                                                    |
-| clear the cache             | `rakunctl cache clear [store]`                                                                                        |
-| delete sessions, settings   | `rakunctl reset [--yes]` (stops rakun; games are not touched)                                                         |
-| follow the events           | `rakunctl events`                                                                                                     |
-| any other channel           | `rakunctl call <channel> '[args]'`                                                                                    |
+| You want to…                       | `rakunctl`                                                                                                                    |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| start / stop rakun                 | `rakunctl start` / `rakunctl stop [--force]`                                                                                  |
+| choose web and port                | `rakunctl start --web local\|network\|off --port N` (or `config webAccess`)                                                   |
+| see if it is alive                 | `rakunctl status` (says "rakun is stopped" if it is not)                                                                      |
+| log in                             | `rakunctl login gog` (epic, gog, amazon, zoom)                                                                                |
+| bring the sessions of Relic        | `rakunctl import-relic`                                                                                                       |
+| list the library                   | `rakunctl library [store] [--installed]`                                                                                      |
+| refresh it and wait                | `rakunctl refresh [store]`                                                                                                    |
+| install                            | `rakunctl install gog <appName> [--path DIR] [--lang CODE] [--skip-dlcs] [--platform windows\|linux]`                         |
+| see / download the helper binaries | `rakunctl helpers` / `rakunctl helpers update [--latest]` (the pinned versions, checked by sha256; `--latest` is not checked) |
+| list the versions of a game        | `rakunctl versions gog <appName>` (GOG only: builds, branches, the current one marked)                                        |
+| import a game from a folder        | `rakunctl import <store> <appName> <folder> [--platform windows\|linux]` (not Zoom)                                           |
+| update                             | `rakunctl update [store [appName]]`: one game, a store's games or every game with a new version (Zoom is not updated)         |
+| repair                             | `rakunctl repair <store> <appName>`                                                                                           |
+| uninstall                          | `rakunctl uninstall <store> <appName>`                                                                                        |
+| see the queue                      | `rakunctl queue`                                                                                                              |
+| pause / resume / cancel            | `rakunctl pause` / `resume` / `cancel [--remove-files]`                                                                       |
+| empty the finished list            | `rakunctl queue clear`                                                                                                        |
+| see or change settings             | `rakunctl config [key [value]]` (e.g. `config protonPath PATH`)                                                               |
+| read the logs                      | `rakunctl logs [store [appName]] [--type install]`                                                                            |
+| clear the cache                    | `rakunctl cache clear [store]`                                                                                                |
+| delete sessions, settings          | `rakunctl reset [--yes]` (stops rakun; games are not touched)                                                                 |
+| follow the events                  | `rakunctl events`                                                                                                             |
+| any other channel                  | `rakunctl call <channel> '[args]'`                                                                                            |
 
 `install`, `update`, `repair` and `uninstall` wait until they finish and return a
 non-zero code if they fail (`--no-wait` to not wait). `--json` gives the output

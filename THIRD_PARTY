@@ -1,0 +1,31 @@
+Third-party software that rakun runs
+====================================
+
+rakun does not contain this software: it downloads it from the place it comes
+from with `rakunctl helpers update` (the versions rakun was tested with, checked
+by sha256), and runs it as separate programs. The -full tarballs carry a copy,
+with the texts of the licences in the licenses/ folder. `rakunctl helpers` says
+which version of each one is installed.
+
+legendary            Epic Games store   https://github.com/legendary-gl/legendary
+                     GPL-3.0 (licenses/GPL-3.0.txt)
+gogdl                GOG store          https://github.com/Heroic-Games-Launcher/heroic-gogdl
+                     GPL-3.0 (licenses/GPL-3.0.txt)
+nile                 Amazon Games       https://github.com/imLinguin/nile
+                     GPL-3.0 (licenses/GPL-3.0.txt)
+umu-launcher         Proton prefixes    https://github.com/Open-Wine-Components/umu-launcher
+                     GPL-3.0 (licenses/GPL-3.0.txt)
+comet                GOG Galaxy         https://github.com/imLinguin/comet
+                     Apache-2.0 (licenses/comet.Apache-2.0.txt)
+heroic-epic-integration (EpicGamesLauncher.exe)
+                                        https://github.com/BananaWorks07/heroic-epic-integration
+                     MIT (licenses/heroic-epic-integration.MIT.txt)
+zoom-platform.sh     Zoom Platform      https://zoom-platform.sh/zoom-platform.sh
+                     Written by Zoom Platform; downloaded from its own site.
+                     It has no licence text that rakun knows of.
+
+The source code of each program is in its repository, at the version rakun uses
+(`rakunctl helpers` says which).
+
+The "Rakun" lettering of the web is drawn from the outlines of Lilita One by
+Juan Montoreano, under the SIL Open Font License 1.1 (web/LilitaOne-OFL.txt).

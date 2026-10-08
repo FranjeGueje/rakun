@@ -3,6 +3,10 @@
 #   scripts/install.sh                      the newest one in this checkout's dist/
 #   scripts/install.sh <folder>             the newest one in that folder
 #   scripts/install.sh <file | URL>         that tarball (rakun-<v>-linux-<arch>.tar.gz)
+#   scripts/install.sh --full [<folder>]    the newest -full one (rakun-<v>-linux-<arch>-full.tar.gz)
+#
+# The normal tarball has no helper binaries (legendary, gogdl, nile…): after
+# installing, `rakunctl helpers update` downloads them. The -full one carries them.
 # If a .sha256 file sits next to the tarball (or next to the URL) it is checked.
 #
 # It installs to ~/.local/opt/rakun and links ~/.local/bin/rakun. It does not
@@ -22,13 +26,19 @@ machine_arch() {
 
 ARCH=$(machine_arch)
 
-# The newest rakun-*-linux-$ARCH.tar.gz of a folder
+SUFFIX=""
+if [ "${1:-}" = "--full" ]; then
+    SUFFIX="-full"
+    shift
+fi
+
+# The newest rakun-*-linux-$ARCH$SUFFIX.tar.gz of a folder
 newest_tarball() {
     local dir="$1" found
-    found=$(ls "$dir"/rakun-*-linux-"$ARCH".tar.gz 2>/dev/null | sort -V | tail -n 1 || true)
+    found=$(ls "$dir"/rakun-*-linux-"$ARCH$SUFFIX".tar.gz 2>/dev/null | sort -V | tail -n 1 || true)
     [ -n "$found" ] || {
-        echo "Error: there is no rakun-*-linux-$ARCH.tar.gz in $dir." >&2
-        echo "       Build it with: pnpm package $ARCH" >&2
+        echo "Error: there is no rakun-*-linux-$ARCH$SUFFIX.tar.gz in $dir." >&2
+        echo "       Build it with: pnpm package $ARCH${SUFFIX:+ --full}" >&2
         exit 1
     }
     echo "$found"
@@ -39,7 +49,7 @@ refuse_other_arch() {
     local name other
     name=$(basename "$1")
     for other in x64 arm64; do
-        if [ "$other" != "$ARCH" ] && [[ "$name" == *"-linux-$other."* ]]; then
+        if [ "$other" != "$ARCH" ] && [[ "$name" == *"-linux-$other"[.-]* ]]; then
             echo "Error: $name is for $other and this machine is $ARCH." >&2
             exit 1
         fi
@@ -109,6 +119,17 @@ mv "$PREFIX.new" "$PREFIX"
 ln -sf "$PREFIX/rakun" "$BIN_DIR/rakun"
 ln -sf "$PREFIX/rakunctl" "$BIN_DIR/rakunctl"
 
+# A tarball with no helper binaries: rakun starts, but it cannot work until they are downloaded
+if [ ! -e "$PREFIX/public/bin/$ARCH/linux" ]; then
+    HELPERS_NOTE="
+This tarball carries no helper binaries (legendary, gogdl, nile…). Download them
+once rakun is installed:
+  rakunctl helpers update
+"
+else
+    HELPERS_NOTE=""
+fi
+
 cat <<MSG
 
 rakun installed in $PREFIX (links: $BIN_DIR/rakun and $BIN_DIR/rakunctl).
@@ -125,4 +146,5 @@ The web, in a browser on this machine:  http://127.0.0.1:17370
   By default only this machine can open it. For the whole network (WITHOUT
   protection, home use only) or to turn it off:  rakunctl start --web network | off
   With the saved setting:                        rakunctl config webAccess network | off
+$HELPERS_NOTE
 MSG
