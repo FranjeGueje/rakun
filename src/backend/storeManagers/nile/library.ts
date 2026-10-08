@@ -471,6 +471,12 @@ export default class NileLibraryManager implements LibraryManager {
     if (!state) {
       this.installedGames.delete(appName)
       installStore.delete(appName)
+      // getGameInfo answers from memory: without this it keeps saying «installed»
+      const game = this.library.get(appName)
+      if (game) {
+        game.is_installed = false
+        game.install = {}
+      }
       return
     }
 

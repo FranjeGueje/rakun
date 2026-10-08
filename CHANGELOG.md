@@ -57,6 +57,11 @@ repository.
   confirmation is `[y/N]`), the scripts and the documentation. The Spanish
   README is `README.es.md`; `GUIA.md` is now `GUIDE.md`.
 
+### Fixed
+
+- Uninstalling a game of Amazon now shows at once as not installed in the
+  library (it needed a manual refresh).
+
 ## 0.1.0 — Headless
 
 ### Added
