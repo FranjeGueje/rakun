@@ -41,3 +41,12 @@ playwright-report
 
 # Kate temporary files
 *.kate-swp
+
+# ficheros de asistentes de IA, no forman parte del repo
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.claude/
+.cursor/
+.aider*
+.github/copilot-instructions.md
