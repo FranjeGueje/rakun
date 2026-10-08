@@ -29,6 +29,7 @@ import type {
   GameRunner
 } from './types'
 import { GameInfo } from 'common/types'
+import { gameRunnerText } from '../runner_script'
 
 const LOG_PREFIX = 'Rakun'
 
@@ -75,6 +76,7 @@ function getGogUsername(): string {
   }
 }
 
+/** The `.bat` the Steam shortcut of a game runs: its variables and a call to the runner of the mount */
 export function createRakunBat(
   installPath: string,
   gameName: string,
@@ -85,148 +87,12 @@ export function createRakunBat(
 
   mkdirSync(rakunRunnerPath, { recursive: true })
 
-  const header = [
-    '@echo off',
-    'title Rakun Runner',
-    '',
-    'echo Rakun Runner version 5',
-    'echo.',
-    '',
-    'rem ============================================================',
-    'rem Configuration',
-    'rem ============================================================',
-    '',
-    'set "LAUNCHERS=C:\\Launchers"',
-    '',
-    'set "LEGENDARY_CONFIG_PATH=%LAUNCHERS%\\Legendary"',
-    'set "NILE_CONFIG_PATH=%LAUNCHERS%"',
-    'set "GOGDL_CONFIG_PATH=%LAUNCHERS%"',
-    'set "PATH=%PATH%;%LAUNCHERS%\\bin"'
-  ]
-
-  const finish = [
-    '',
-    'echo.',
-    'echo ---------------------------------------------------------',
-    "echo If you've closed the game, you can close this window now.",
-    'echo ---------------------------------------------------------'
-  ]
-
-  let sectionLines: string[]
-  let endLines = finish
-
-  switch (runner) {
-    case 'legendary':
-      sectionLines = [
-        '',
-        'rem ============================================================',
-        'rem PRECHECKS',
-        'rem ============================================================',
-        '',
-        'if not exist "%LAUNCHERS%\\bin\\legendary.exe" (',
-        '    echo [ERROR]: legendary.exe not found.',
-        '    timeout /t 2 /nobreak >nul',
-        '    exit /b 1',
-        ')',
-        '',
-        'rem ============================================================',
-        'rem START THE GAME',
-        'rem ============================================================',
-        '',
-        'legendary status',
-        '',
-        `legendary launch ${appName} %*`
-      ]
-      break
-
-    case 'gog': {
-      const winPath = `c:\\games\\${basename(installPath)}`
-      const username = getGogUsername()
-      sectionLines = [
-        '',
-        'rem ============================================================',
-        'rem PRECHECKS',
-        'rem ============================================================',
-        '',
-        'if not exist "%LAUNCHERS%\\bin\\gogdl.exe" (',
-        '    echo [ERROR]: gogdl.exe not found.',
-        '    timeout /t 2 /nobreak >nul',
-        '    exit /b 1',
-        ')',
-        '',
-        'if not exist "%LAUNCHERS%\\bin\\comet.exe" (',
-        '    echo [ERROR]: comet.exe not found.',
-        '    timeout /t 2 /nobreak >nul',
-        '    exit /b 1',
-        ')',
-        '',
-        'if not exist "%LAUNCHERS%\\gog_store\\auth.json" (',
-        '    echo [ERROR]: NOT AUTHENTICATED ON GOG. Please, login on Rakun.',
-        '    timeout /t 2 /nobreak >nul',
-        '    exit /b 1',
-        ')',
-        '',
-        'rem ============================================================',
-        'rem Start Comet',
-        'rem ============================================================',
-        '',
-        'mkdir "%APPDATA%\\heroic\\gog_store" >nul 2>&1',
-        'copy "%LAUNCHERS%\\gog_store\\*" "%APPDATA%\\heroic\\gog_store\\" >nul 2>&1',
-        'cd /d "%LAUNCHERS%\\bin\\"',
-        'comet.exe --version',
-        '',
-        `start "" /b "install-dummy-service.bat" >nul 2>&1`,
-        `start "" /b "comet.exe" --from-heroic --username "${username}" >nul 2>&1`,
-        '',
-        'timeout /t 2 /nobreak >nul',
-        '',
-        'rem ============================================================',
-        'rem START THE GAME',
-        'rem ============================================================',
-        '',
-        `for /f "delims=" %%v in ('gogdl --version') do echo gogdl version: %%v`,
-        '',
-        `@gogdl --auth-config-path c:\\Launchers\\gog_store\\auth.json launch --platform windows "${winPath}" ${appName} -- %*`
-      ]
-      endLines = [
-        '',
-        'echo.',
-        'echo ---------------------------------------------------------',
-        'echo COMET IS RUNNING.',
-        "echo If you've closed the game, you can close this window now.",
-        'echo ---------------------------------------------------------'
-      ]
-      break
-    }
-
-    case 'nile':
-      sectionLines = [
-        '',
-        'rem ============================================================',
-        'rem PRECHECKS',
-        'rem ============================================================',
-        '',
-        'if not exist "%LAUNCHERS%\\bin\\nile.exe" (',
-        '    echo [ERROR]: nile.exe not found.',
-        '    timeout /t 2 /nobreak >nul',
-        '    exit /b 1',
-        ')',
-        '',
-        'rem ============================================================',
-        'rem START THE GAME',
-        'rem ============================================================',
-        '',
-        `for /f "delims=" %%v in ('nile --version') do echo nile version: %%v`,
-        '',
-        `nile launch ${appName} -- %*`
-      ]
-      break
-
-    default:
-      sectionLines = ['', '@echo En desarrollo...']
-  }
-
-  const content = [...header, ...sectionLines, ...endLines].join('\n')
+  const content = gameRunnerText({
+    store: runner,
+    appName,
+    folder: basename(installPath),
+    username: runner === 'gog' ? getGogUsername() : undefined
+  })
   writeFileSync(runnerPath, content, 'utf-8')
 
   logInfo(`Created ${runnerPath}`, LOG_PREFIX)

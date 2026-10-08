@@ -48,6 +48,7 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
+  rmSync,
   statSync,
   writeFileSync,
   copyFileSync
@@ -243,12 +244,23 @@ describe('createEosOverlayBat', () => {
     return { path, content: String(call?.[1]) }
   }
 
-  test('writes the script into the mount root, reachable as c:\\Launchers inside the prefix', () => {
+  test('writes the script into the scripts folder of the mount, reachable as c:\\Launchers\\scripts inside the prefix', () => {
     const { path } = writtenBat()
 
-    expect(path).toBe('/mock/mount/eos-overlay.bat')
+    expect(path).toBe('/mock/mount/scripts/eos-overlay.bat')
     expect(mockedMkdirSync).toHaveBeenCalledWith('/mock/mount/eos', {
       recursive: true
+    })
+    expect(mockedMkdirSync).toHaveBeenCalledWith('/mock/mount/scripts', {
+      recursive: true
+    })
+  })
+
+  test('removes the copy that sat in the root of the mount before the scripts folder', () => {
+    writtenBat()
+
+    expect(rmSync).toHaveBeenCalledWith('/mock/mount/eos-overlay.bat', {
+      force: true
     })
   })
 

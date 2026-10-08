@@ -44,18 +44,6 @@ jest.mock('backend/constants/paths', () => ({
 const mockedFindGameInAllUsers = jest.mocked(steamHelpers.findGameInAllUsers)
 const mockedGetShortcutId = jest.mocked(steamHelpers.getShortcutId)
 
-const HEADER_LINES = [
-  '@echo off',
-  'title Rakun Runner',
-  'echo Rakun Runner version 5',
-  'echo.',
-  'set "LAUNCHERS=C:\\Launchers"',
-  'set "LEGENDARY_CONFIG_PATH=%LAUNCHERS%\\Legendary"',
-  'set "NILE_CONFIG_PATH=%LAUNCHERS%"',
-  'set "GOGDL_CONFIG_PATH=%LAUNCHERS%"',
-  'set "PATH=%PATH%;%LAUNCHERS%\\bin"'
-]
-
 describe('addGameToSteam', () => {
   let tmpDir: DirResult
 
@@ -218,7 +206,9 @@ describe('createRakunBat', () => {
     tmpDir.removeCallback()
   })
 
-  test('creates legendary bat with correct runner command', () => {
+  const lines = (path: string) => readFileSync(path, 'utf-8').split('\n')
+
+  test('a legendary game gets its store and id and a call to the runner of the mount', () => {
     const runnerPath = createRakunBat(
       tmpDir.name,
       'TestGame',
@@ -227,107 +217,51 @@ describe('createRakunBat', () => {
     )
 
     expect(runnerPath).toBe(join(tmpDir.name, 'TestGame.bat'))
-    expect(existsSync(runnerPath)).toBe(true)
-
-    const content = readFileSync(runnerPath, 'utf-8')
-    for (const line of HEADER_LINES) {
-      expect(content).toContain(line)
-    }
-    expect(content).toContain(
-      'if not exist "%LAUNCHERS%\\bin\\legendary.exe" ('
-    )
-    expect(content).toContain('legendary status')
-    expect(content).toContain('legendary launch abc123 %*')
-    expect(content).toContain(
-      "echo If you've closed the game, you can close this window now."
-    )
+    expect(lines(runnerPath)).toEqual([
+      '@echo off',
+      'rem FranjeGueje runner: the logic is in C:\\Launchers\\scripts\\Launcher_games.bat',
+      'set "STORE=legendary"',
+      'set "IDGAME=abc123"',
+      'call "C:\\Launchers\\scripts\\Launcher_games.bat" %*',
+      'exit /b %errorlevel%'
+    ])
   })
 
-  test('creates gog bat with correct runner command', () => {
-    const runnerPath = createRakunBat(tmpDir.name, 'GogGame', 'gog', 'gog123')
-
-    expect(runnerPath).toBe(join(tmpDir.name, 'GogGame.bat'))
-    expect(existsSync(runnerPath)).toBe(true)
-
-    const content = readFileSync(runnerPath, 'utf-8')
-    for (const line of HEADER_LINES) {
-      expect(content).toContain(line)
-    }
-    expect(content).toContain('if not exist "%LAUNCHERS%\\bin\\gogdl.exe" (')
-    expect(content).toContain('if not exist "%LAUNCHERS%\\bin\\comet.exe" (')
-    expect(content).toContain(
-      'if not exist "%LAUNCHERS%\\gog_store\\auth.json" ('
-    )
-    expect(content).toContain('mkdir "%APPDATA%\\heroic\\gog_store" >nul 2>&1')
-    expect(content).toContain(
-      'copy "%LAUNCHERS%\\gog_store\\*" "%APPDATA%\\heroic\\gog_store\\" >nul 2>&1'
-    )
-    expect(content).toContain('cd /d "%LAUNCHERS%\\bin\\"')
-    expect(content).toContain('comet.exe --version')
-    expect(content).toContain(
-      'start "" /b "install-dummy-service.bat" >nul 2>&1'
-    )
-    expect(content).toContain(
-      'start "" /b "comet.exe" --from-heroic --username '
-    )
-    expect(content).toContain('timeout /t 2 /nobreak >nul')
-    expect(content).toContain(
-      `for /f "delims=" %%v in ('gogdl --version') do echo gogdl version: %%v`
-    )
-    expect(content).toContain(
-      `@gogdl --auth-config-path c:\\Launchers\\gog_store\\auth.json ` +
-        `launch --platform windows "c:\\games\\${basename(tmpDir.name)}" gog123 -- %*`
-    )
-    expect(content).toContain('echo COMET IS RUNNING.')
-    expect(content).toContain(
-      "echo If you've closed the game, you can close this window now."
-    )
-  })
-
-  test('creates nile bat with correct runner command', () => {
+  test('an Amazon game needs the same two variables', () => {
     const runnerPath = createRakunBat(
       tmpDir.name,
       'AmazonGame',
       'nile',
       'nile789'
     )
-
-    expect(runnerPath).toBe(join(tmpDir.name, 'AmazonGame.bat'))
-    expect(existsSync(runnerPath)).toBe(true)
-
-    const content = readFileSync(runnerPath, 'utf-8')
-    for (const line of HEADER_LINES) {
-      expect(content).toContain(line)
-    }
-    expect(content).toContain('if not exist "%LAUNCHERS%\\bin\\nile.exe" (')
-    expect(content).toContain(
-      `for /f "delims=" %%v in ('nile --version') do echo nile version: %%v`
-    )
-    expect(content).toContain('nile launch nile789 -- %*')
-    expect(content).toContain(
-      "echo If you've closed the game, you can close this window now."
-    )
+    const content = lines(runnerPath)
+    expect(content).toContain('set "STORE=nile"')
+    expect(content).toContain('set "IDGAME=nile789"')
+    expect(content.filter((line) => line.startsWith('set '))).toHaveLength(2)
   })
 
-  test('creates default bat for unknown runner', () => {
-    const runnerPath = createRakunBat(
-      '/some/path/ZoomGame',
-      'ZoomGame',
-      'zoom',
-      ''
-    )
+  test('a GOG game also carries its folder and the user of Comet', () => {
+    const runnerPath = createRakunBat(tmpDir.name, 'GogGame', 'gog', 'gog123')
+    const content = lines(runnerPath)
 
-    expect(runnerPath).toBe(join(mockRakunRunnerPath, 'ZoomGame.bat'))
-    expect(existsSync(runnerPath)).toBe(true)
+    expect(content).toContain('set "STORE=gog"')
+    expect(content).toContain('set "IDGAME=gog123"')
+    expect(content).toContain(`set "GAMEFOLDER=${basename(tmpDir.name)}"`)
+    expect(content).toContain('set "GOGUSER="')
+  })
 
-    const content = readFileSync(runnerPath, 'utf-8')
-    for (const line of HEADER_LINES) {
-      expect(content).toContain(line)
-    }
-    expect(content).toContain('@echo En desarrollo...')
-    expect(content).toContain(
-      "echo If you've closed the game, you can close this window now."
+  test('has no logic of its own: that is in the runner', () => {
+    const content = readFileSync(
+      createRakunBat(tmpDir.name, 'G', 'legendary', 'a'),
+      'utf-8'
     )
+    expect(content).not.toMatch(/legendary launch|gogdl|goto|if not exist/)
+  })
+
+  test('Zoom has no runner', () => {
+    expect(() =>
+      createRakunBat('/some/path/ZoomGame', 'ZoomGame', 'zoom', '')
+    ).toThrow('There is no runner for the store "zoom"')
   })
 
   test('overwrites existing file with new content', () => {
@@ -344,7 +278,7 @@ describe('createRakunBat', () => {
 
     expect(result).toBe(runnerPath)
     const content = readFileSync(runnerPath, 'utf-8')
-    expect(content).toContain('legendary launch abc %*')
+    expect(content).toContain('set "IDGAME=abc"')
     expect(content).not.toBe('old content')
   })
 })

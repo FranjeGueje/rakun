@@ -25,6 +25,13 @@ repository.
   migration: paths `~/.config/rakun`, `~/.cache/rakun`, `~/.local/state/Rakun`,
   `~/.local/share/rakun`, `~/Games/Rakun`; `RAKUN_*` variables; `x-rakun-token`
   header; `getRakunVersion` and `resetRakun` channels.
+- One runner for every game: all the logic of the three stores is in
+  `mount/scripts/Launcher_games.bat` (**FranjeGueje runner**, starting at v1),
+  rewritten at every start, and the `.bat` of each game only sets `STORE` and
+  `IDGAME` (plus `GAMEFOLDER` and `GOGUSER` on GOG) and calls it. A new version
+  of the runner reaches every game at once. `eos-overlay.bat` moves to
+  `mount/scripts/` too. The `.bat` files made by the earlier runner (v5) keep
+  working: they carry their own logic.
 - The mount inside each game's prefix is now `C:\Launchers`
   (`drive_c/Launchers`, `%LAUNCHERS%` in the `.bat` files, runner version 5).
   Existing Steam shortcuts and prefixes are not migrated: delete the old shortcut

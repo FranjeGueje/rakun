@@ -14,6 +14,7 @@ import {
   LogPrefix
 } from 'backend/logger'
 import { syncMountBin, createEosOverlayBat } from './windowify'
+import { writeRunnerScript } from './runner_script'
 import { startApiServer } from './server'
 import './api'
 
@@ -51,6 +52,7 @@ export async function startDaemon() {
   stopOnSignals()
 
   syncMountBin()
+  writeRunnerScript()
   createEosOverlayBat()
 
   await MigrationSystem.get().applyMigrations()

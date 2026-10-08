@@ -31,10 +31,12 @@ import { gogdlConfigPath } from 'backend/storeManagers/gog/constants'
 import { GameInfo } from 'common/types'
 import type { GameRunner } from './steam_shortcuts/types'
 import { createGameSymlink } from './steam_shortcuts/add_game'
+import { SCRIPTS_DIR } from './runner_script'
 
 const LOG_PREFIX = 'Rakun'
 
-export const EOS_OVERLAY_BAT = 'eos-overlay.bat'
+/** Inside the scripts folder of the mount, next to the runner */
+export const EOS_OVERLAY_BAT = join(SCRIPTS_DIR, 'eos-overlay.bat')
 
 // ── Types and config ──
 
@@ -191,12 +193,15 @@ export function syncMountBin(): void {
 }
 
 /**
- * Writes the EOS Overlay setup script into the mount root, so that inside any
- * prefix it is reachable as `c:\Launchers\eos-overlay.bat`. Run once per prefix
+ * Writes the EOS Overlay setup script into the scripts folder of the mount, so
+ * that inside any prefix it is reachable as `c:\Launchers\scripts\eos-overlay.bat`. Run once per prefix
  * through umu-run, right after the prefix itself is created.
  */
 export function createEosOverlayBat(): string {
   mkdirSync(join(rakunMountPath, 'eos'), { recursive: true })
+  mkdirSync(join(rakunMountPath, SCRIPTS_DIR), { recursive: true })
+  // Before the scripts folder it sat in the root of the mount
+  rmSync(join(rakunMountPath, 'eos-overlay.bat'), { force: true })
 
   const batPath = join(rakunMountPath, EOS_OVERLAY_BAT)
 

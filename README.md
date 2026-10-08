@@ -19,7 +19,7 @@ rakun is **not** a launcher. When an install finishes it runs the Steam integrat
 > The project is an experiment. It has its own identity and shares nothing with Relic:
 > `~/.config/rakun`, `~/.cache/rakun`, `~/.local/state/Rakun`, `~/.local/share/rakun`
 > and `~/Games/Rakun`. Inside each game's Proton prefix the mount is called
-> `C:\Launchers` (`drive_c/Launchers`; the `.bat` runners use that name via `%LAUNCHERS%`).
+> `C:\Launchers` (`drive_c/Launchers`; the runner uses that name via `%LAUNCHERS%`).
 
 ---
 
@@ -117,7 +117,7 @@ Game install completed
   │                                                  │
   │                                                  ▼
   │                                              • Epic games only:
-  │                                                run c:\Launchers\eos-overlay.bat
+  │                                                run c:\Launchers\scripts\eos-overlay.bat
   │                                                through umu-run to install
   │                                                and enable the EOS Overlay
   │                                                in that prefix
@@ -145,16 +145,26 @@ Game install completed
 
 ### Runner files
 
-For Windows games, rakun creates a `.bat` file. This is the file that Steam launches.
-It sets environment variables and launches the game through the store's CLI:
+For Windows games, rakun creates a small `.bat` file per game. This is the file that
+Steam launches. It only says which store and game it is, and calls the one runner
+all the games share:
 
 ```
 @echo off
-@SET LEGENDARY_CONFIG_PATH=c:\Launchers\Legendary
-@SET GOGDL_CONFIG_PATH=c:\Launchers\
-@SET PATH=%PATH%;c:\Launchers\bin
-@legendary launch <appName> %*
+rem FranjeGueje runner: the logic is in C:\Launchers\scripts\Launcher_games.bat
+set "STORE=legendary"
+set "IDGAME=<appName>"
+call "C:\Launchers\scripts\Launcher_games.bat" %*
+exit /b %errorlevel%
 ```
+
+A GOG game also sets `GAMEFOLDER` (its folder in `c:\games`) and `GOGUSER` (the user
+Comet logs in with). The runner, `Launcher_games.bat` (**FranjeGueje runner**, with
+its version on the first line it prints), sets the environment, jumps to the block of
+the store (`legendary`, `gog` or `nile`), checks its tools and launches the game
+through the store's CLI. rakun writes it into `mount/scripts/` at every start, so a
+new version reaches every game without regenerating their `.bat` files. The EOS
+Overlay script lives next to it.
 
 For Linux native GOG games, there is no `.bat`. rakun uses the `start.sh` script
 that GOG ships with the game. Steam runs the shell script natively.
@@ -387,8 +397,9 @@ with `HOME=` empty rakun writes its folders relative to the current directory.
 
 ~/.local/share/rakun/
 ├── games/                   — Symlinks to installed game dirs
-├── runner/                  — .bat files for Steam (Windows games)
+├── runner/                  — one small .bat per game for Steam (Windows games)
 └── mount/                   — Mount structure for Proton prefixes
+    └── scripts/             — Launcher_games.bat (the runner) and eos-overlay.bat
 
 ~/Games/Rakun/              — Default game install path
 ```
