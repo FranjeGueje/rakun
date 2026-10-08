@@ -187,7 +187,7 @@ describe('addGameToSteam', () => {
         runnerPath: '/tmp/a.bat'
       })
 
-      expect(result).toEqual({ success: true, steamAppId: 7 })
+      expect(result).toEqual({ success: true, steamAppId: 7, existed: true })
       expect(spawnAsync).not.toHaveBeenCalled()
     })
   })

@@ -25,6 +25,10 @@ repository.
   migration: paths `~/.config/rakun`, `~/.cache/rakun`, `~/.local/state/Rakun`,
   `~/.local/share/rakun`, `~/Games/Rakun`; `RAKUN_*` variables; `x-rakun-token`
   header; `getRakunVersion` and `resetRakun` channels.
+- Repairing a game repeats the whole Steam integration of an install: the
+  runner, the shortcut (added only if it is missing, so a deleted one comes
+  back, and a game that never got in is added), the prefix and the covers. The
+  properties window of Steam opens only when the shortcut was really added.
 - One runner for every game: all the logic of the three stores is in
   `mount/scripts/Launcher_games.bat` (**FranjeGueje runner**, starting at v1),
   rewritten at every start, and the `.bat` of each game only sets `STORE` and

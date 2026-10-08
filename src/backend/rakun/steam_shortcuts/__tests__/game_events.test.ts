@@ -15,6 +15,7 @@ import {
 import { deleteGrids } from '../../steamgrid'
 import { preparePrefix, removePrefixSymlink } from '../../prefix'
 import { libraryManagerMap } from 'backend/storeManagers'
+import { openExternal } from 'backend/utils/open_external'
 import * as store from '../store'
 
 const mockGetGameInfo = jest.fn()
@@ -54,6 +55,10 @@ jest.mock('../add_game', () => ({
   createRakunBat: jest.fn()
 }))
 
+jest.mock('backend/utils/open_external', () => ({
+  openExternal: jest.fn()
+}))
+
 jest.mock('../store', () => ({
   findShortcut: jest.fn(),
   addShortcut: jest.fn(),
@@ -81,6 +86,7 @@ const mockedSymlinkSync = jest.mocked(symlinkSync)
 const mockedDeleteGrids = jest.mocked(deleteGrids)
 const mockedPreparePrefix = jest.mocked(preparePrefix)
 const mockedRemovePrefixSymlink = jest.mocked(removePrefixSymlink)
+const mockedOpenExternal = jest.mocked(openExternal)
 const mockedFindShortcut = jest.mocked(store.findShortcut)
 const mockedAddShortcut = jest.mocked(store.addShortcut)
 const mockedRemoveShortcut = jest.mocked(store.removeShortcut)
@@ -679,68 +685,167 @@ describe('onGameMoved', () => {
 })
 
 describe('onGameRepaired', () => {
-  test('regenerates the runner .bat for a tracked game', async () => {
-    mockGetGameInfo.mockReturnValue({
-      title: 'RepairedGame',
-      app_name: 'repaired_app',
-      runner: 'gog',
-      install: { install_path: '/games/repaired' }
-    })
+  const info = {
+    title: 'RepairedGame',
+    app_name: 'repaired_app',
+    runner: 'gog',
+    install: { install_path: '/games/repaired' }
+  }
+  const tracked = {
+    gameName: 'RepairedGame',
+    appId: 'repaired_app',
+    store: 'gog' as const,
+    steamAppId: 123,
+    execPath: '/runner/RepairedGame.bat',
+    installPath: '/games/repaired'
+  }
 
-    mockedFindShortcut.mockReturnValue({
-      gameName: 'RepairedGame',
-      appId: 'repaired_app',
-      store: 'gog',
-      steamAppId: 123,
-      execPath: '/runner/RepairedGame.bat',
-      installPath: '/games/repaired'
+  beforeEach(() => {
+    mockGetGameInfo.mockReturnValue(info)
+    mockedCreateRunnerFile.mockReturnValue({ path: '/runner/RepairedGame.bat' })
+    const gog = libraryManagerMap['gog'] as unknown as {
+      getGameInfo: jest.Mock
+    }
+    gog.getGameInfo.mockReturnValue(info)
+  })
+
+  test('a game that never got into Steam is added now, with its prefix', async () => {
+    mockedFindShortcut.mockReturnValue(undefined)
+    mockedAddGameToSteam.mockResolvedValueOnce({
+      success: true,
+      steamAppId: 321
     })
-    mockedCreateRakunBat.mockReturnValue('/runner/RepairedGame.bat')
 
     await onGameRepaired(mockGame as never)
 
-    expect(mockedCreateRakunBat).toHaveBeenCalledWith(
-      '/games/repaired',
+    expect(mockedCreateRunnerFile).toHaveBeenCalledWith(
+      expect.objectContaining({ app_name: 'repaired_app' }),
+      '/games/repaired'
+    )
+    expect(mockedAddGameToSteam).toHaveBeenCalledWith({
+      gameName: 'RepairedGame',
+      runnerPath: '/runner/RepairedGame.bat'
+    })
+    expect(mockedAddShortcut).toHaveBeenCalledWith(
       'RepairedGame',
+      'repaired_app',
       'gog',
-      'repaired_app'
+      321,
+      '/games/repaired',
+      '/runner/RepairedGame.bat'
+    )
+    expect(mockedPreparePrefix).toHaveBeenCalledWith(
+      expect.objectContaining({ app_name: 'repaired_app' }),
+      321,
+      '/games/repaired'
+    )
+    expect(mockedOpenExternal).toHaveBeenCalledWith(
+      'steam://gameproperties/321'
     )
   })
 
-  test('skips when game is not tracked', async () => {
-    mockGetGameInfo.mockReturnValue({
-      title: 'UntrackedGame',
-      app_name: 'untracked',
-      runner: 'gog',
-      install: { install_path: '/games/old' }
+  test('a game that is already in Steam repeats the work but is not added again', async () => {
+    mockedFindShortcut.mockReturnValue(tracked)
+    mockedAddGameToSteam.mockResolvedValueOnce({
+      success: true,
+      steamAppId: 123,
+      existed: true
     })
-
-    mockedFindShortcut.mockReturnValue(undefined)
 
     await onGameRepaired(mockGame as never)
 
-    expect(mockedCreateRakunBat).not.toHaveBeenCalled()
+    // The runner and the prefix are made again...
+    expect(mockedCreateRunnerFile).toHaveBeenCalled()
+    expect(mockedPreparePrefix).toHaveBeenCalledWith(
+      expect.anything(),
+      123,
+      '/games/repaired'
+    )
+    expect(mockedAddShortcut).toHaveBeenCalled()
+    // ...but the properties window of Steam does not open for a game that was there
+    expect(mockedOpenExternal).not.toHaveBeenCalled()
   })
 
-  test('skips zoom games', async () => {
-    mockGetGameInfo.mockReturnValue({
-      title: 'ZoomGame',
-      app_name: 'zoom_app',
-      runner: 'zoom',
-      install: { install_path: '/games/zoom' }
-    })
-
-    mockedFindShortcut.mockReturnValue({
-      gameName: 'ZoomGame',
-      appId: 'zoom_app',
-      store: 'zoom',
-      steamAppId: 123,
-      execPath: '/games/zoom/zoom-game',
-      installPath: '/games/zoom'
+  test('a shortcut that was deleted from Steam comes back', async () => {
+    mockedFindShortcut.mockReturnValue(tracked)
+    mockedAddGameToSteam.mockResolvedValueOnce({
+      success: true,
+      steamAppId: 456
     })
 
     await onGameRepaired(mockGame as never)
 
-    expect(mockedCreateRakunBat).not.toHaveBeenCalled()
+    expect(mockedAddShortcut).toHaveBeenCalledWith(
+      'RepairedGame',
+      'repaired_app',
+      'gog',
+      456,
+      '/games/repaired',
+      '/runner/RepairedGame.bat'
+    )
+    expect(mockedOpenExternal).toHaveBeenCalledWith(
+      'steam://gameproperties/456'
+    )
+  })
+
+  test('uses the path saved for the game when the store does not give one', async () => {
+    const gog = libraryManagerMap['gog'] as unknown as {
+      getGameInfo: jest.Mock
+    }
+    gog.getGameInfo.mockReturnValue({ ...info, install: { install_path: '' } })
+    mockedFindShortcut.mockReturnValue(tracked)
+    mockedAddGameToSteam.mockResolvedValueOnce({
+      success: true,
+      steamAppId: 123,
+      existed: true
+    })
+
+    await onGameRepaired(mockGame as never)
+
+    expect(mockedCreateRunnerFile).toHaveBeenCalledWith(
+      expect.anything(),
+      '/games/repaired'
+    )
+  })
+
+  test('zoom games go through the same steps', async () => {
+    const zoom = { ...info, runner: 'zoom', app_name: 'zoom_app' }
+    mockGetGameInfo.mockReturnValue(zoom)
+    ;(
+      libraryManagerMap['zoom'] as unknown as { getGameInfo: jest.Mock }
+    ).getGameInfo = jest.fn().mockReturnValue(zoom)
+    mockedFindShortcut.mockReturnValue(undefined)
+    mockedAddGameToSteam.mockResolvedValueOnce({
+      success: true,
+      steamAppId: 7
+    })
+
+    await onGameRepaired(mockGame as never)
+
+    expect(mockedAddGameToSteam).toHaveBeenCalled()
+    expect(mockedPreparePrefix).toHaveBeenCalled()
+  })
+
+  test('a failure in Steam does not make the repair fail', async () => {
+    mockedFindShortcut.mockReturnValue(undefined)
+    mockedAddGameToSteam.mockResolvedValueOnce({
+      success: false,
+      error: 'Steam is not running'
+    })
+
+    await expect(onGameRepaired(mockGame as never)).resolves.toBeUndefined()
+    expect(mockedAddShortcut).not.toHaveBeenCalled()
+
+    mockedAddGameToSteam.mockRejectedValueOnce(new Error('boom'))
+    await expect(onGameRepaired(mockGame as never)).resolves.toBeUndefined()
+  })
+
+  test('installing a game that is already tracked still skips everything', async () => {
+    mockedFindShortcut.mockReturnValue(tracked)
+
+    await onGameInstalled(mockGame as never)
+
+    expect(mockedAddGameToSteam).not.toHaveBeenCalled()
+    expect(mockedPreparePrefix).not.toHaveBeenCalled()
   })
 })

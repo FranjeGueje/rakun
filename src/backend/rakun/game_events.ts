@@ -8,7 +8,6 @@ import { logError, logInfo, logWarning } from 'backend/logger'
 import { openExternal } from 'backend/utils/open_external'
 import {
   addGameToSteam,
-  createRakunBat,
   createRunnerFile,
   createGameSymlink,
   findShortcut,
@@ -89,29 +88,29 @@ async function installLinuxNative(
 
     await downloadGrids(gameInfo, result.steamAppId)
 
-    void openExternal(`steam://gameproperties/${result.steamAppId}`)
+    if (!result.existed)
+      void openExternal(`steam://gameproperties/${result.steamAppId}`)
   }
 
   return result
 }
 
-export async function onGameInstalled(
+/**
+ * Everything a game needs to be in Steam: the runner, the shortcut (added only
+ * if it is not there yet), the prefix and the covers. It can be repeated: that
+ * is how a repair brings back what an install did not finish.
+ */
+async function integrateInSteam(
   game: Game,
   installPath?: string
 ): Promise<AddGameToSteamResult> {
   const gameInfo = game.getGameInfo()
   const appName = gameInfo.app_name
 
-  const known = findShortcut(appName)
-  if (known) {
-    logInfo(
-      `"${gameInfo.title}" (${appName}) is already tracked in Steam (ID ${known.steamAppId}). Skipping.`,
-      LOG_PREFIX
-    )
-    return { success: true, steamAppId: known.steamAppId }
-  }
-
-  const resolvedPath = installPath || refreshInstallPath(gameInfo)
+  const resolvedPath =
+    installPath ||
+    refreshInstallPath(gameInfo) ||
+    findShortcut(appName)?.installPath
   if (!resolvedPath) {
     logError(`No install path for "${gameInfo.title}" (${appName})`, LOG_PREFIX)
     return {
@@ -156,57 +155,52 @@ export async function onGameInstalled(
 
     await downloadGrids(gameInfo, result.steamAppId)
 
-    void openExternal(`steam://gameproperties/${result.steamAppId}`)
+    // Not again for a game that was already there
+    if (!result.existed)
+      void openExternal(`steam://gameproperties/${result.steamAppId}`)
   }
 
   return result
+}
+
+export async function onGameInstalled(
+  game: Game,
+  installPath?: string
+): Promise<AddGameToSteamResult> {
+  const gameInfo = game.getGameInfo()
+  const appName = gameInfo.app_name
+
+  const known = findShortcut(appName)
+  if (known) {
+    logInfo(
+      `"${gameInfo.title}" (${appName}) is already tracked in Steam (ID ${known.steamAppId}). Skipping.`,
+      LOG_PREFIX
+    )
+    return { success: true, steamAppId: known.steamAppId }
+  }
+
+  return integrateInSteam(game, installPath)
 }
 
 export async function onGameImported(game: Game): Promise<void> {
   await onGameInstalled(game)
 }
 
-// eslint-disable-next-line @typescript-eslint/require-await -- one of the 4 rakun entry points (AGENTS.md), all uniformly async
+/** Repeats the whole integration, even if the game was already added to Steam */
 export async function onGameRepaired(game: Game): Promise<void> {
-  const gameInfo = game.getGameInfo()
-  const appName = gameInfo.app_name
-
-  const known = findShortcut(appName)
-  if (!known) {
-    logInfo(
-      `"${gameInfo.title}" (${appName}) is not tracked in Steam. Skipping runner update.`,
-      LOG_PREFIX
-    )
-    return
-  }
-
-  if (known.store === 'zoom') {
-    logInfo(
-      `"${known.gameName}" is a Zoom game. Skipping runner update.`,
-      LOG_PREFIX
-    )
-    return
-  }
-
-  if (gameInfo.install?.platform === 'linux') {
-    logInfo(
-      `"${known.gameName}" is a Linux native game, it has no runner. Skipping runner update.`,
-      LOG_PREFIX
-    )
-    return
-  }
+  const { title, app_name: appName } = game.getGameInfo()
 
   try {
-    const runnerPath = createRakunBat(
-      known.installPath,
-      known.gameName,
-      known.store,
-      appName
+    const result = await integrateInSteam(game)
+    logInfo(
+      result.success
+        ? `Repaired the Steam integration of "${title}" (${appName})`
+        : `Could not repair the Steam integration of "${title}" (${appName}): ${result.error}`,
+      LOG_PREFIX
     )
-    logInfo(`Updated ${runnerPath}`, LOG_PREFIX)
   } catch (e) {
     logError(
-      `Failed to update runner file for "${known.gameName}": ${String(e)}`,
+      `Failed to repair the Steam integration of "${title}": ${String(e)}`,
       LOG_PREFIX
     )
   }

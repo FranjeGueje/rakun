@@ -10,6 +10,8 @@ export interface AddGameToSteamOptions {
 export interface AddGameToSteamResult {
   success: boolean
   steamAppId?: number
+  /** It was already in Steam: nothing was added */
+  existed?: boolean
   error?: string
 }
 

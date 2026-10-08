@@ -237,10 +237,12 @@ A SteamGridDB API key is required in settings.
 
 ### Repair flow
 
-Repairing a game never touches Steam or the prefix. If the repair completes without
-error, rakun only regenerates the `.bat` runner file in `~/.local/share/rakun/runner/`
-(via `createRakunBat()`), using the data already stored in `steam_shortcuts.json`.
-Zoom Platform games and games that aren't tracked in Steam are skipped.
+If the repair completes without error, rakun repeats the whole Steam integration of an
+install, even if the game was already added: it makes the `.bat` for the game
+in `~/.local/share/rakun/runner/` again, adds the shortcut to Steam **only if it is
+missing** (a deleted one comes back), sets the prefix up again and asks for the covers
+again. The properties window of Steam opens only when the shortcut was really added.
+A failure in the Steam part is logged and does not make the repair fail.
 
 ### Uninstall cleanup
 

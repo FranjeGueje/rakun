@@ -181,7 +181,7 @@ export async function addGameToSteam(
       `"${gameName}" already exists in Steam (ID ${steamAppId}). Skipping.`,
       LOG_PREFIX
     )
-    return { success: true, steamAppId }
+    return { success: true, steamAppId, existed: true }
   }
 
   try {
