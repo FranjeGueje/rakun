@@ -34,6 +34,18 @@ pnpm package [x64|arm64|all] [--full]
 
 Leaves `dist/rakun-<version>-linux-<arch>.tar.gz` (+ `.sha256`) with its own Node and the web, and **no helper binaries**. `--full` also leaves a `-full` tarball with them; for that, run `pnpm download-helper-binaries` first (it fills `public/bin`, which is not in git). `scripts/install.sh` installs the one for this machine.
 
+## Release
+
+CI (`.github/workflows/ci.yml`) runs `codecheck`, `lint`, `prettier`, the tests and the build on every push to `master` and `dev` and on every pull request.
+
+A release is made by a tag, and only a `vX.Y.Z` one (`v0.1.0-rc1` does nothing):
+
+1. Raise `version` in `package.json` and add `## X.Y.Z — Title` at the top of `CHANGELOG.md`.
+2. Commit, push, and merge `dev` into `master` with a pull request (a merge commit or a fast-forward, not a squash).
+3. On `master`: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+
+`.github/workflows/release.yml` refuses a tag whose commit is not in `master`, checks the tag against `package.json` and the changelog (`scripts/release-notes.sh vX.Y.Z` does the same locally and prints the notes), runs the tests, builds the x64 tarball (arm64 is experimental and is not published; `pnpm package arm64` builds it locally) and creates the GitHub release with them, their `.sha256` and the notes. The `-full` tarballs are not part of it.
+
 ## Try it without touching your real data
 
 ```bash
