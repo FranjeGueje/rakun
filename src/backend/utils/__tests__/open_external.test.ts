@@ -56,13 +56,13 @@ describe('openExternal', () => {
     const child = fakeChild()
     mockedSpawn.mockReturnValue(child as never)
 
-    const promise = openExternal('/home/deck/Games')
+    const promise = openExternal('/home/user/Games')
     child.emit('close', 0)
     await promise
 
     expect(mockedSpawn).toHaveBeenCalledWith(
       'xdg-open',
-      ['/home/deck/Games'],
+      ['/home/user/Games'],
       expect.anything()
     )
   })

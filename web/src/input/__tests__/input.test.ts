@@ -9,6 +9,7 @@ describe('keyToAction', () => {
     expect(keyToAction('Escape')).toBe('back')
     expect(keyToAction('PageDown')).toBe('nextStore')
     expect(keyToAction('m')).toBe('menu')
+    expect(keyToAction('q')).toBe('quit')
     expect(keyToAction('F5')).toBeUndefined()
   })
 })

@@ -8,6 +8,7 @@ import {
   menuValue,
   moveInGrid,
   platformFor,
+  quitMessageKey,
   storeTabs,
   visibleGames
 } from '../selectors'
@@ -296,5 +297,19 @@ describe('menuValue', () => {
     expect(
       menuValue('steamGridDb', { ...settings, steamGridDbApiKey: '' }, t, name)
     ).toBe('menu.notConfigured')
+  })
+})
+
+describe('quitMessageKey', () => {
+  test('says what happens to rakun when the client leaves', () => {
+    expect(quitMessageKey('none', false)).toBe('confirm.quit.keep')
+    expect(quitMessageKey('none', true)).toBe('confirm.quit.keep')
+    expect(quitMessageKey('cli', false)).toBe('confirm.quit.closeToo')
+    expect(quitMessageKey('cli', true)).toBe('confirm.quit.busy')
+  })
+
+  test('the rakun inside the app stops with it, and so do its downloads', () => {
+    expect(quitMessageKey('embedded', false)).toBe('confirm.quit.closeToo')
+    expect(quitMessageKey('embedded', true)).toBe('confirm.quit.stopsDownloads')
   })
 })

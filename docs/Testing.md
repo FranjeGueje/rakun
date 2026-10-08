@@ -1,10 +1,6 @@
-# rakun test guide
+# Manual test guide
 
-Everything is tested with `rakunctl`, `curl` and `scripts/smoke.sh`. The sections
-use `smoke.sh` because it shows the exact channel and arguments; `rakunctl` does
-the same with commands (see the table below). Run from the root of the
-repository. The script reads the port and the token from
-`~/.config/rakun/api.json`. The full contract is in [API.md](API.md).
+Everything is tested with `rakunctl`, `curl` and `scripts/smoke.sh`. The sections use `smoke.sh` because it shows the exact channel and arguments; `rakunctl` does the same with commands (see the table below). Run from the root of the repository. The script reads the port and the token from `~/.config/rakun/api.json`. The full contract is in [API.md](../API.md).
 
 ## Start and stop
 
@@ -21,19 +17,11 @@ systemctl --user stop rakun                            # stops the background on
 rakunctl install-service | uninstall-service           # user service: starts at login (not Zoom: no screen)
 ```
 
-To reinstall a new version: `pnpm package`, run `scripts/install.sh …` again and
-restart rakun. The logins are kept (they live in `~/.config/rakun`) and so are the
-helper binaries (`~/.local/share/rakun/bin`).
+To reinstall a new version: `pnpm package`, run `scripts/install.sh …` again and restart rakun. The logins are kept (they live in `~/.config/rakun`) and so are the helper binaries (`~/.local/share/rakun/bin`).
 
-The normal tarball has no helper binaries (legendary, gogdl, nile…): after the first
-install run `rakunctl helpers update` (and `rakunctl helpers` to see what is there). rakun
-starts without them and says what is missing: in the log, in `rakunctl status` and in the
-web, which has a notice with a Download button and a _Helper binaries_ screen in the menu.
-`pnpm package --full` makes one that carries them, and `scripts/install.sh --full` installs it.
+The normal tarball has no helper binaries (legendary, gogdl, nile…): after the first install run `rakunctl helpers update` (and `rakunctl helpers` to see what is there). rakun starts without them and says what is missing: in the log, in `rakunctl status` and in the web, which has a notice with a Download button and a _Helper binaries_ screen in the menu. `pnpm package --full` makes one that carries them, and `scripts/install.sh --full` installs it.
 
-To test without touching your real `$HOME` (**with a directory that exists and
-is not empty**: with an empty `HOME=` rakun creates its folders in the current
-directory):
+To test without touching your real `$HOME` (**with a directory that exists and is not empty**: with an empty `HOME=` rakun creates its folders in the current directory):
 
 ```bash
 HOME=$(mktemp -d) RAKUN_PORT=17999 rakun
@@ -42,9 +30,7 @@ HOME=<that same directory> RAKUN_API_FILE=<that>/.config/rakun/api.json scripts/
 
 ## rakunctl
 
-With rakun installed, `rakunctl` (or `pnpm start:ctl` from the repository) saves
-you from typing the JSON by hand. It uses the same `api.json` and the same
-`RAKUN_API_FILE` variable.
+With rakun installed, `rakunctl` (or `pnpm start:ctl` from the repository) saves you from typing the JSON by hand. It uses the same `api.json` and the same `RAKUN_API_FILE` variable.
 
 | You want to…                       | `rakunctl`                                                                                                                    |
 | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
@@ -72,20 +58,11 @@ you from typing the JSON by hand. It uses the same `api.json` and the same
 | follow the events                  | `rakunctl events`                                                                                                             |
 | any other channel                  | `rakunctl call <channel> '[args]'`                                                                                            |
 
-`install`, `update`, `repair` and `uninstall` wait until they finish and return a
-non-zero code if they fail (`--no-wait` to not wait). `--json` gives the output
-for scripts. `-s` in front of any command that ends (it does not work with
-`events` or `--no-wait`) starts rakun if it was stopped and stops it afterwards;
-if it was already running, it does not touch it. `install` of an already
-installed game is refused ("is already installed: use repair or update").
-On GOG, `install --build ID [--branch NAME]` installs that version and `update --build ID` (one game) moves it there; both pin the version, so `rakunctl update` for everything does not move it again (with `--no-wait` the pin is not set). Epic, Amazon and Zoom always use the latest. `import` registers a game that is already on the disk (it also adds it to Steam); `import` checks that the game ended up installed, besides what rakun answers. `uninstall` deletes the game's files. `--lang` chooses the install language (on
-GOG, `en-US` if not given). A game with a Windows and a Linux build gets the Linux one unless `--platform windows` says otherwise (a build the game does not have is refused). DLCs are installed by default; `--skip-dlcs` skips
-them.
+`install`, `update`, `repair` and `uninstall` wait until they finish and return a non-zero code if they fail (`--no-wait` to not wait). `--json` gives the output for scripts. `-s` in front of any command that ends (it does not work with `events` or `--no-wait`) starts rakun if it was stopped and stops it afterwards; if it was already running, it does not touch it. `install` of an already installed game is refused ("is already installed: use repair or update"). On GOG, `install --build ID [--branch NAME]` installs that version and `update --build ID` (one game) moves it there; both pin the version, so `rakunctl update` for everything does not move it again (with `--no-wait` the pin is not set). Epic, Amazon and Zoom always use the latest. `import` registers a game that is already on the disk (it also adds it to Steam); `import` checks that the game ended up installed, besides what rakun answers. `uninstall` deletes the game's files. `--lang` chooses the install language (on GOG, `en-US` if not given). A game with a Windows and a Linux build gets the Linux one unless `--platform windows` says otherwise (a build the game does not have is refused). DLCs are installed by default; `--skip-dlcs` skips them.
 
 ## Argument format
 
-Arguments are **JSON**: strings carry double quotes inside the array, and the
-whole array goes in single quotes.
+Arguments are **JSON**: strings carry double quotes inside the array, and the whole array goes in single quotes.
 
 ```bash
 scripts/smoke.sh getLoginInfo '["gog"]'     # right
@@ -100,9 +77,7 @@ With no arguments the second parameter is omitted: `scripts/smoke.sh getAccounts
 scripts/smoke.sh
 ```
 
-It must show the version, the queue as `idle`, the library (`[]` if there is no
-session yet) and a `403` at the end (channel not exposed). If it says it cannot
-find `api.json`, rakun is not running with your `HOME`.
+It must show the version, the queue as `idle`, the library (`[]` if there is no session yet) and a `403` at the end (channel not exposed). If it says it cannot find `api.json`, rakun is not running with your `HOME`.
 
 ## 2. Log in to each store
 
@@ -138,10 +113,8 @@ To log out of a store: `scripts/smoke.sh logout '["gog"]'`.
 
 If it fails:
 
-- `"No login code found in what was pasted"`: the address has no `code=`. Try
-  pasting just the value of the code.
-- `"The store rejected the login"`: the code was already used or has expired
-  (it is valid for a few minutes and only once). Repeat with a new one.
+- `"No login code found in what was pasted"`: the address has no `code=`. Try pasting just the value of the code.
+- `"The store rejected the login"`: the code was already used or has expired (it is valid for a few minutes and only once). Repeat with a new one.
 - Another error: look at `~/.local/state/Rakun/logs/rakun.log`.
 
 ## 3. Library
@@ -160,9 +133,7 @@ scripts/smoke.sh getRefreshingLibraries     # ["gog"] while it works
 scripts/smoke.sh --events                   # in another terminal: "refreshLibrary" arrives when it ends
 ```
 
-`refreshLibrary` does not wait for it to finish (GOG can take more than a minute
-with hundreds of games) and a refresh already running for that store is joined,
-not repeated. When the event arrives, call `getLibrary` again.
+`refreshLibrary` does not wait for it to finish (GOG can take more than a minute with hundreds of games) and a refresh already running for that store is joined, not repeated. When the event arrives, call `getLibrary` again.
 
 Note the `app_name` and the `runner` of a small game for the next step.
 
@@ -187,13 +158,11 @@ scripts/smoke.sh --events                   # progressUpdate, gameStatusUpdate, 
 scripts/smoke.sh getDMQueueInformation      # state of the queue
 ```
 
-When it finishes, the game must show up in Steam with its name and the log must
-say `Saved shortcut`.
+When it finishes, the game must show up in Steam with its name and the log must say `Saved shortcut`.
 
 ## Steam covers (SteamGridDB)
 
-Without a SteamGridDB key rakun does not download the images when it adds a game
-to Steam (the key is rakun's own, it is not inherited from Relic).
+Without a SteamGridDB key rakun does not download the images when it adds a game to Steam (the key is rakun's own, it is not inherited from Relic).
 
 ```bash
 scripts/smoke.sh steamgriddb.hasApiKey                  # {"result":false} if missing
@@ -212,16 +181,9 @@ scripts/smoke.sh pauseCurrentDownload
 scripts/smoke.sh resumeCurrentDownload
 ```
 
-Zoom (experimental): **Windows** games open the installer wizard in a window, so
-rakun has to be started with a screen (desktop mode) and with `protonPath` set;
-without them the install ends in error. rakun checks it **before downloading**
-(with no `DISPLAY`, with the graphical server down or in game mode it fails at
-once and `rakunctl install` says why); it is a best-effort check: after switching
-between desktop and game mode, restart rakun. The Linux ones do not need a
-screen.
+Zoom (experimental): **Windows** games open the installer wizard in a window, so rakun has to be started with a screen (desktop mode) and with `protonPath` set; without them the install ends in error. rakun checks it **before downloading** (with no `DISPLAY`, with the graphical server down or in game mode it fails at once and `rakunctl install` says why); it is a best-effort check: after switching between desktop and game mode, restart rakun. The Linux ones do not need a screen.
 
-A shortcut added to Steam is **not removed** on uninstall: remove it by hand from
-the Steam library.
+A shortcut added to Steam is **not removed** on uninstall: remove it by hand from the Steam library.
 
 ## The web and its modes
 
@@ -233,9 +195,7 @@ rakun serves its own web on the API port (`http://127.0.0.1:17370`). Who can ope
 | `network`         | `rakunctl start --web network` or `rakun --web=network` | the whole network, **without protection** (warning in the log, `rakunctl` and the web) |
 | `off`             | `--web off`                                             | the page is not served; the API stays on this machine                                  |
 
-The parameter wins over the `RAKUN_WEB` variable, and this over the saved setting
-(`rakunctl config webAccess network`, which applies **when rakun restarts**).
-`--port N` / `RAKUN_PORT` change the port.
+The parameter wins over the `RAKUN_WEB` variable, and this over the saved setting (`rakunctl config webAccess network`, which applies **when rakun restarts**). `--port N` / `RAKUN_PORT` change the port.
 
 ```bash
 H=$(mktemp -d -p ~/.cache); [ -n "$H" ] || exit 1          # a temporary HOME that is NOT empty
@@ -253,10 +213,7 @@ curl -s -X POST -H "x-rakun-token: $T" -d '{"args":["/usr"]}' http://127.0.0.1:1
 env HOME=$H node build/rakunctl.cjs stop; rm -rf "$H"
 ```
 
-Coming in through the network IP from the machine itself counts as "network" (the
-socket is not loopback): it lets you test the block without another device. A busy
-port makes `rakunctl start` fail and name the log file
-(`~/.local/state/Rakun/logs/rakun.log`).
+Coming in through the network IP from the machine itself counts as "network" (the socket is not loopback): it lets you test the block without another device. A busy port makes `rakunctl start` fail and name the log file (`~/.local/state/Rakun/logs/rakun.log`).
 
 ## Where to look if something fails
 

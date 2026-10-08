@@ -37,6 +37,7 @@ export type HintKeys = {
   sort: string
   refresh: string
   menu: string
+  quit: string
   move: string
 }
 
@@ -52,6 +53,7 @@ export function hintKeys(layout: ControllerLayout | null): HintKeys {
       sort: 'S',
       refresh: 'R',
       menu: 'M',
+      quit: 'Esc',
       move: '← ↑ ↓ →'
     }
   const names = buttonNames(layout)
@@ -64,6 +66,7 @@ export function hintKeys(layout: ControllerLayout | null): HintKeys {
     sort: 'R2',
     refresh: 'Start',
     menu: 'Select',
+    quit: names.back,
     move: 'D-pad'
   }
 }

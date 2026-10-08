@@ -67,16 +67,18 @@ describe('createBridge', () => {
       .mockResolvedValueOnce({ ok: false, error: 'No login code' })
     const { bridge } = make(post)
 
-    expect(await bridge.login?.info('gog')).toEqual(info)
+    expect(await bridge.loginPaste?.info('gog')).toEqual(info)
     expect(post).toHaveBeenLastCalledWith('getLoginInfo', ['gog'])
-    expect(await bridge.login?.submit('gog', 'https://end?code=1')).toEqual({
+    expect(
+      await bridge.loginPaste?.submit('gog', 'https://end?code=1')
+    ).toEqual({
       ok: true
     })
     expect(post).toHaveBeenLastCalledWith('submitLogin', [
       'gog',
       'https://end?code=1'
     ])
-    expect(await bridge.login?.submit('gog', '')).toEqual({
+    expect(await bridge.loginPaste?.submit('gog', '')).toEqual({
       ok: false,
       error: 'No login code'
     })

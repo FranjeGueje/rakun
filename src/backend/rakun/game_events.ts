@@ -206,7 +206,7 @@ export async function onGameRepaired(game: Game): Promise<void> {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/require-await -- one of the 4 rakun entry points (AGENTS.md), all uniformly async
+// eslint-disable-next-line @typescript-eslint/require-await -- one of the 4 rakun entry points, all uniformly async
 export async function onGameMoved(
   game: Game,
   newInstallPath: string
@@ -255,7 +255,7 @@ export async function onGameMoved(
   )
 }
 
-// eslint-disable-next-line @typescript-eslint/require-await -- one of the 4 rakun entry points (AGENTS.md), all uniformly async
+// eslint-disable-next-line @typescript-eslint/require-await -- one of the 4 rakun entry points, all uniformly async
 export async function onGameUninstalled(game: Game) {
   const gameInfo = game.getGameInfo()
   const appName = gameInfo.app_name
