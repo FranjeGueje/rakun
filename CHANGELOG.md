@@ -3,7 +3,7 @@
 The history of Relic (and of the Heroic cleanup) lives in the `upstream`
 repository.
 
-## Unreleased — Rakun
+## 0.2.0 — Rakun
 
 ### Added
 
