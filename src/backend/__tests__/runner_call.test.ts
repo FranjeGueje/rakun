@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events'
 import { spawn } from 'child_process'
 import { callRunner } from '../runner_call'
+import { logError, logWarning } from '../logger'
 import { memoryLog, quoteIfNecessary } from '../utils'
 import { createAbortController } from '../utils/aborthandler/aborthandler'
 
@@ -12,6 +13,7 @@ jest.mock('../utils', () => ({
 }))
 jest.mock('../logger', () => ({
   logError: jest.fn(),
+  logWarning: jest.fn(),
   logInfo: jest.fn(),
   LogPrefix: { Legendary: 'Legendary' }
 }))
@@ -69,6 +71,21 @@ describe('callRunner', () => {
     expect(result.error).toBeInstanceOf(Error)
     expect(result.stderr).toContain('/tmp/helpers/legendary')
     expect(result.stderr).toContain('rakunctl helpers update')
+    expect(logWarning).toHaveBeenCalledTimes(1)
+    expect(logError).not.toHaveBeenCalled()
+  })
+
+  test('the same missing helper is not logged again', async () => {
+    program({
+      error: Object.assign(new Error('spawn ./legendary ENOENT'), {
+        code: 'ENOENT'
+      })
+    })
+
+    const result = await callRunner(['--version'], runner, {})
+
+    expect(result.stderr).toContain('rakunctl helpers update')
+    expect(logWarning).not.toHaveBeenCalled()
   })
 
   test('another failure keeps its own message', async () => {

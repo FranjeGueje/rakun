@@ -7,10 +7,10 @@ import {
   installService,
   savedWebAccess,
   systemdQuote,
-  unitPath,
   unitText,
   uninstallService
 } from '../commands/systemd'
+import { unitPath } from '../commands/unit'
 import { opts } from './helpers'
 
 const tmp = () => mkdtempSync(join(tmpdir(), 'rakun-systemd-'))

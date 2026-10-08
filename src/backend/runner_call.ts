@@ -3,7 +3,7 @@ import { CallRunnerOptions, Runner, ExecResult } from 'common/types'
 import { join, isAbsolute } from 'path'
 
 import { quoteIfNecessary, errorHandler, memoryLog } from './utils'
-import { logError, logInfo, LogPrefix } from './logger'
+import { logError, logInfo, logWarning, LogPrefix } from './logger'
 import { spawn } from 'child_process'
 import { LegendaryCommand } from './storeManagers/legendary/commands'
 import { libraryManagerMap } from 'backend/storeManagers'
@@ -16,6 +16,15 @@ interface RunnerProps {
 }
 
 const commandsRunning: Record<string, Promise<ExecResult>> = {}
+
+/** Helpers already reported as missing: the log says it once, not per call */
+const reportedMissing = new Set<string>()
+
+function logMissingOnce(binary: string, message: string, prefix: LogPrefix) {
+  if (reportedMissing.has(binary)) return
+  reportedMissing.add(binary)
+  logWarning([message], prefix)
+}
 
 function appNameFromCommandParts(commandParts: string[], runner: Runner) {
   let appNameIndex = -1
@@ -177,7 +186,7 @@ export async function callRunner(
 
       if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') {
         const message = `Cannot run ${fullRunnerPath}: it is not there. The helper binaries are installed with: rakunctl helpers update`
-        logError([message], runner.logPrefix)
+        logMissingOnce(fullRunnerPath, message, runner.logPrefix)
         return {
           stdout: '',
           stderr: message,

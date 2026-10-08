@@ -52,9 +52,9 @@ Library
 Games
   install <store> <appName> [--path DIR] [--lang CODE] [--skip-dlcs]
           [--platform windows|linux] [--build ID] [--branch NAME]
-                                    Install a game (a game with both builds gets
-                                    the Linux one unless --platform says otherwise;
-                                    --build and --branch: GOG only, see versions)
+                                    Install a game (with both builds, the Linux
+                                    one unless --platform says otherwise;
+                                    --build, --branch: GOG only, see versions)
   versions <store> <appName>        List the builds and branches of a GOG game
   import <store> <appName> <folder> [--platform windows|linux]
                                     Register a game that is already in a folder
@@ -77,9 +77,9 @@ Maintenance
                                     Show the log of rakun, of a store or of a
                                     game
   cache clear [store]               Clear the library cache
-  helpers [update] [--latest]       Show the helper binaries (legendary, gogdl…), or
-                                    download the missing ones (--latest: the newest
-                                    ones, not checked)
+  helpers [update] [--latest]       Show the helper binaries (legendary, gogdl…),
+                                    or download the missing ones (--latest: the
+                                    newest ones, not checked)
   reset [--yes]                     Delete sessions and settings, and stop
                                     rakun
 

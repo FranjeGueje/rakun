@@ -13,7 +13,7 @@ import {
 import { Ctx, Options } from '../context'
 import { forgetStarted } from '../serve'
 import { webLines } from '../web'
-import { serviceInstalled } from './systemd'
+import { serviceInstalled } from './unit'
 
 const WAIT_MS = 15000
 const POLL_MS = 100

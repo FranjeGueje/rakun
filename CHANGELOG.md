@@ -3,7 +3,7 @@
 The history of Relic (and of the Heroic cleanup) lives in the `upstream`
 repository.
 
-## 0.2.0 — Rakun
+## Unreleased — Rakun
 
 ### Added
 
@@ -82,6 +82,7 @@ repository.
 
 ### Fixed
 
+- A helper binary that is not installed is logged once, as a warning (it was an `ERROR` per call), and the message says how to install it: `rakunctl helpers update`.
 - The EOS Overlay script (**FranjeGueje EOS Overlay Installer**, v1) no longer
   trusts a game's overlay folder to be full: it runs `enable` first and, if its
   output has an ERROR (legendary can think an empty folder is installed), it

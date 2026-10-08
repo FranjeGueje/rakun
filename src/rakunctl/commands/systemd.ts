@@ -1,5 +1,5 @@
 import { execFile } from 'child_process'
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs'
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { homedir } from 'os'
 import { dirname, join } from 'path'
 import { promisify } from 'util'
@@ -7,8 +7,7 @@ import { CliError } from '../client'
 import { Ctx, Options } from '../context'
 import { NETWORK_WARNING } from '../web'
 import { isRunning, rakunCommand, rakunFlags } from './service'
-
-const UNIT = 'rakun.service'
+import { serviceInstalled, UNIT, unitPath } from './unit'
 
 type Io = Pick<Ctx, 'log'>
 type Flags = Pick<Options, 'web' | 'port'>
@@ -18,14 +17,6 @@ type Systemctl = (args: string[]) => Promise<void>
 
 const ZOOM_WARNING =
   'WARNING: the service has no screen (DISPLAY): Zoom installers open a window and will not work with it. For Zoom, stop the service and start rakun from the desktop.'
-
-/** Where systemd looks for the units of the user */
-export function unitPath(env: NodeJS.ProcessEnv = process.env): string {
-  const config = env.XDG_CONFIG_HOME || join(homedir(), '.config')
-  return join(config, 'systemd', 'user', UNIT)
-}
-
-export const serviceInstalled = (file = unitPath()) => existsSync(file)
 
 /** One word of an `ExecStart` line: quoted, with `\`, `"` and `%` escaped */
 export function systemdQuote(word: string): string {
