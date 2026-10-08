@@ -77,7 +77,8 @@ describe('accounts commands', () => {
         nile: { loggedIn: false },
         zoom: { loggedIn: false }
       },
-      getDMQueueInformation: { elements: [1, 2], finished: [] }
+      getDMQueueInformation: { elements: [1, 2], finished: [] },
+      getHelpers: []
     })
 
     await status(ctx, [], opts)
@@ -86,6 +87,36 @@ describe('accounts commands', () => {
     expect(lines[0]).toContain('Epic: logged in (ann)')
     expect(lines[0]).toContain('GOG: not logged in')
     expect(lines[0]).toContain('Queue: 2 pending')
+    expect(lines[0]).toContain('Helpers: all installed')
+  })
+
+  test('status says which helpers are missing and what to do', async () => {
+    const signedOut = { loggedIn: false }
+    const { ctx, lines } = fakeCtx({
+      getAccounts: {
+        legendary: signedOut,
+        gog: signedOut,
+        nile: signedOut,
+        zoom: signedOut
+      },
+      getDMQueueInformation: { elements: [], finished: [] },
+      getHelpers: [
+        {
+          helper: 'legendary',
+          pinned: '0.21.1',
+          installed: '',
+          state: 'missing'
+        },
+        { helper: 'nile', pinned: 'v1.2.0', installed: 'v1.2.0', state: 'ok' },
+        { helper: 'gogdl', pinned: 'v1.3.0', installed: '', state: 'missing' }
+      ]
+    })
+
+    await status(ctx, [], opts)
+
+    expect(lines[0]).toContain(
+      'Helpers: missing legendary, gogdl (run "rakunctl helpers update")'
+    )
   })
 
   test('login asks for the paste and submits it with the runner name', async () => {

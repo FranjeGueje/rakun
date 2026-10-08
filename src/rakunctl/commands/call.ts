@@ -16,7 +16,7 @@ export function parseCallArgs(raw: string | undefined): unknown[] {
 }
 
 export const call: Command = async (ctx, args) => {
-  const channel = requireArg(args, 0, 'canal')
+  const channel = requireArg(args, 0, 'channel')
   const result = await ctx.api.call(channel, ...parseCallArgs(args[1]))
   ctx.log(JSON.stringify(result, null, 2))
 }

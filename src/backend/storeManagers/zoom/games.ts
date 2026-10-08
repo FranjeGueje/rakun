@@ -32,7 +32,7 @@ import {
   onGameMoved,
   onGameUninstalled
 } from 'backend/rakun/game_events'
-import { zoomPlatformScriptPath } from 'backend/constants/paths'
+import { helperFile } from 'backend/rakun/helpers/locations'
 import { GlobalConfig } from 'backend/config'
 import { ZoomInstallPlatform, ZoomDownloadFile } from 'common/types/zoom'
 import { showDialogBoxModalAuto } from '../../dialog/dialog'
@@ -338,6 +338,7 @@ export default class ZoomGame implements Game {
     } else {
       const downloadPath = join(downloadRoot, installers[0].filename)
       const protonPath = GlobalConfig.get().getProtonPath()
+      const zoomPlatformScript = helperFile(join('zoom', 'zoom-platform.sh'))
       if (!protonPath) {
         logWarning(
           'No GE-Proton configured for Windows installer. Set it with: rakunctl config protonPath <folder>',
@@ -348,14 +349,18 @@ export default class ZoomGame implements Game {
           stderr: 'No GE-Proton configured',
           error: 'No GE-Proton configured'
         }
+      } else if (!existsSync(zoomPlatformScript)) {
+        const error = `zoom-platform.sh is not installed (${zoomPlatformScript}). Run: rakunctl helpers update`
+        logError(error, LogPrefix.Zoom)
+        installResult = { stdout: '', stderr: error, error }
       } else {
         logInfo(
-          `Running zoom-platform.sh: PROTONPATH=${protonPath} ${zoomPlatformScriptPath} -i ${downloadPath} -d ${installPath}`,
+          `Running zoom-platform.sh: PROTONPATH=${protonPath} ${zoomPlatformScript} -i ${downloadPath} -d ${installPath}`,
           LogPrefix.Zoom
         )
         const scriptResult = await spawnAsync(
           'bash',
-          [zoomPlatformScriptPath, '-i', downloadPath, '-d', installPath],
+          [zoomPlatformScript, '-i', downloadPath, '-d', installPath],
           {
             env: { ...process.env, PROTONPATH: protonPath }
           }

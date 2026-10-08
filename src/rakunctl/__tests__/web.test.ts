@@ -38,7 +38,8 @@ describe('status', () => {
           nile: { loggedIn: false },
           zoom: { loggedIn: false }
         },
-        getDMQueueInformation: { elements: [] }
+        getDMQueueInformation: { elements: [] },
+        getHelpers: []
       },
       [],
       false,

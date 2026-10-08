@@ -16,6 +16,8 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   'isNative',
   'checkGameUpdates',
   'getUpdateableGames',
+  'getHelpers',
+  'updateHelpers',
   'checkDiskSpace',
   'getKnownFixes',
   // Install, update, repair, uninstall
@@ -73,6 +75,7 @@ export const exposedEvents: ReadonlySet<string> = new Set([
   'changedDMQueueInformation',
   'pushGameToLibrary',
   'refreshLibrary',
+  'helpersProgress',
   'connectivity-changed',
   'showDialog'
 ])

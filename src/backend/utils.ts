@@ -42,7 +42,8 @@ import {
 } from './utils/systeminfo/gpu/pci_ids'
 import type { AppSettings } from 'common/types'
 import { configStore } from './constants/key_value_stores'
-import { rakunIconFolder, publicDir, toolsPath } from './constants/paths'
+import { rakunIconFolder, toolsPath } from './constants/paths'
+import { helperExists, helperFile } from './rakun/helpers/locations'
 
 import { gogdlAuthConfig } from './storeManagers/gog/constants'
 import { tokenPath as zoomTokenPath } from './storeManagers/zoom/constants'
@@ -282,15 +283,9 @@ function splitPathAndName(fullPath: string): { dir: string; bin: string } {
 function archSpecificBinary(binaryName: string) {
   // Try to use the arch-native binary first, if that doesn't exist fall back to
   // the x64 version (assume a compatibility layer like box64 is installed)
-  const archSpecificPath = join(
-    publicDir,
-    'bin',
-    process.arch,
-    process.platform,
-    binaryName
-  )
-  if (existsSync(archSpecificPath)) return archSpecificPath
-  return join(publicDir, 'bin', 'x64', process.platform, binaryName)
+  const archSpecific = join(process.arch, process.platform, binaryName)
+  if (helperExists(archSpecific)) return helperFile(archSpecific)
+  return helperFile(join('x64', process.platform, binaryName))
 }
 
 let defaultLegendaryPath: string | undefined = undefined

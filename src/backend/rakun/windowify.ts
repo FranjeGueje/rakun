@@ -4,20 +4,16 @@ import {
   readFileSync,
   readdirSync,
   rmSync,
-  statSync,
-  type Stats,
   symlinkSync,
   unlinkSync,
-  writeFileSync,
-  copyFileSync
+  writeFileSync
 } from 'fs'
 import { basename, join } from 'path'
 import { logError, logInfo, logWarning } from 'backend/logger'
 import {
   rakunMountPath,
   rakunInstallPath,
-  userDataPath,
-  publicDir
+  userDataPath
 } from 'backend/constants/paths'
 import {
   legendaryConfigPath,
@@ -164,35 +160,6 @@ export function createRakunSymlinks(linksPath: string): void {
   }
 }
 
-export function syncMountBin(): void {
-  const sourceDir = join(publicDir, 'bin', 'x64', 'win32')
-  const targetDir = join(rakunMountPath, 'bin')
-
-  if (!existsSync(sourceDir)) {
-    logWarning(`syncMountBin: source not found: ${sourceDir}`, LOG_PREFIX)
-    return
-  }
-
-  mkdirSync(targetDir, { recursive: true })
-
-  const files = readdirSync(sourceDir)
-  let copied = 0
-
-  for (const file of files) {
-    const sourcePath = join(sourceDir, file)
-    const targetPath = join(targetDir, file)
-
-    const source = statSync(sourcePath)
-    if (!source.isFile() || isUpToDate(source, targetPath)) continue
-
-    copyFileSync(sourcePath, targetPath)
-    logInfo(`syncMountBin: ${file} copied`, LOG_PREFIX)
-    copied++
-  }
-
-  logInfo(`syncMountBin: ${files.length} files, ${copied} copied`, LOG_PREFIX)
-}
-
 /**
  * Writes the EOS Overlay setup script into the scripts folder of the mount, so
  * that inside any prefix it is reachable as `c:\Launchers\scripts\eos-overlay.bat`. Run once per prefix
@@ -268,15 +235,4 @@ function copyAndTransformInstalled(
   const transformed = transform(data)
   writeFileSync(targetPath, JSON.stringify(transformed, null, 2), 'utf-8')
   logInfo(`Windowified ${sourcePath} → ${targetPath}`, LOG_PREFIX)
-}
-
-/**
- * The copy is good when it has the same size and is not older than the source.
- * The files are tens of MB and this runs on every start: reading them all to
- * compare hashes costs more than starting everything else.
- */
-function isUpToDate(source: Stats, targetPath: string): boolean {
-  if (!existsSync(targetPath)) return false
-  const target = statSync(targetPath)
-  return target.size === source.size && target.mtimeMs >= source.mtimeMs
 }

@@ -175,6 +175,17 @@ export async function callRunner(
         }
       }
 
+      if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') {
+        const message = `Cannot run ${fullRunnerPath}: it is not there. The helper binaries are installed with: rakunctl helpers update`
+        logError([message], runner.logPrefix)
+        return {
+          stdout: '',
+          stderr: message,
+          fullCommand: safeCommand,
+          error: new Error(message)
+        }
+      }
+
       void errorHandler(error, appName, runner.name)
 
       logError(

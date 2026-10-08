@@ -5,6 +5,8 @@ import { CliError } from '../client'
 import { webLines } from '../web'
 import { accountsText, sessionsImportText } from '../format'
 import { parseStore } from '../stores'
+import type { HelperInfo } from 'common/rakun/helpers'
+import { helpersLine } from './helpers'
 import { Command, requireArg, show } from '../context'
 
 export const status: Command = async (ctx) => {
@@ -14,18 +16,21 @@ export const status: Command = async (ctx) => {
     'getDMQueueInformation'
   )
   const stores = await ctx.stores()
+  const helpers = await ctx.api.call<HelperInfo[]>('getHelpers')
   const summary = {
     running: true,
     health,
     accounts,
-    queue: queue.elements.length
+    queue: queue.elements.length,
+    helpers
   }
   show(ctx, summary, () =>
     [
       `rakun ${health.version}`,
       ...webLines(health.web, ctx.api.port),
       accountsText(accounts, stores),
-      `Queue: ${queue.elements.length} pending`
+      `Queue: ${queue.elements.length} pending`,
+      helpersLine(helpers)
     ].join('\n')
   )
 }

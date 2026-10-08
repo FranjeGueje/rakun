@@ -13,7 +13,8 @@ import {
   logInfo,
   LogPrefix
 } from 'backend/logger'
-import { syncMountBin, createEosOverlayBat } from './windowify'
+import { createEosOverlayBat } from './windowify'
+import { checkHelpersAtStart } from './helpers/locations'
 import { writeRunnerScript } from './runner_script'
 import { startApiServer } from './server'
 import './api'
@@ -51,7 +52,7 @@ export async function startDaemon() {
   logUnhandledErrors()
   stopOnSignals()
 
-  syncMountBin()
+  checkHelpersAtStart()
   writeRunnerScript()
   createEosOverlayBat()
 

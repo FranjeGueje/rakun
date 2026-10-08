@@ -26,6 +26,7 @@ import {
 } from './commands/service'
 import { ServeDeps, serveDir, processAlive, withServe } from './serve'
 import { config } from './commands/config'
+import { helpers } from './commands/helpers'
 import { installService, uninstallService } from './commands/systemd'
 
 export const HELP = `Usage: rakunctl [options] <command> [arguments]
@@ -76,6 +77,9 @@ Maintenance
                                     Show the log of rakun, of a store or of a
                                     game
   cache clear [store]               Clear the library cache
+  helpers [update] [--latest]       Show the helper binaries (legendary, gogdl…), or
+                                    download the missing ones (--latest: the newest
+                                    ones, not checked)
   reset [--yes]                     Delete sessions and settings, and stop
                                     rakun
 
@@ -114,6 +118,7 @@ export const commands: Record<string, Command> = {
   cancel,
   cache,
   reset,
+  helpers,
   config,
   logs,
   events,
@@ -131,6 +136,7 @@ export function parseCli(argv: string[]) {
       type: { type: 'string' },
       'skip-dlcs': { type: 'boolean' },
       platform: { type: 'string' },
+      latest: { type: 'boolean' },
       build: { type: 'string' },
       branch: { type: 'string' },
       'remove-files': { type: 'boolean' },
@@ -150,6 +156,7 @@ export function parseCli(argv: string[]) {
     type: values.type,
     skipDlcs: values['skip-dlcs'],
     platform: values.platform,
+    latest: values.latest,
     build: values.build,
     branch: values.branch,
     removeFiles: values['remove-files'],
@@ -228,7 +235,8 @@ export async function runCli(
   if (command === 'uninstall-service') return uninstallService(io)
   const handler = commands[command]
   if (!handler) throw new CliError(`Unknown command "${command}"\n\n${HELP}`)
-  if (opts.serve) {
+  // The helpers are fetched by rakun: it is started for the command if it is stopped
+  if (opts.serve || command === 'helpers') {
     return withServe(serve(), () => runCommand(io, handler, args, opts, json))
   }
   if (command === 'status' && !(await isRunning()))

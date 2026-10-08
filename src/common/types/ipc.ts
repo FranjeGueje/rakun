@@ -25,6 +25,7 @@ import type { AccountsStatus, SessionsImport } from 'common/rakun/accounts'
 import type { FolderListing } from 'common/rakun/folders'
 import type { LoginInfo, LoginResult } from 'common/rakun/login'
 import type { StoreInfo } from 'common/rakun/stores'
+import type { HelpersUpdate, HelperInfo } from 'common/rakun/helpers'
 import type { UpdateableGame } from 'common/rakun/updates'
 import type { GetLogFileArgs } from 'backend/logger/paths'
 
@@ -53,6 +54,8 @@ interface AsyncIPCFunctions {
   checkDiskSpace: (folder: string) => Promise<DiskSpaceData>
   checkGameUpdates: () => Promise<string[]>
   getUpdateableGames: () => Promise<UpdateableGame[]>
+  getHelpers: () => Promise<HelperInfo[]>
+  updateHelpers: (args: { latest?: boolean }) => Promise<HelpersUpdate>
   getEpicGamesStatus: () => Promise<boolean>
   getRakunVersion: () => string
   getLegendaryVersion: () => Promise<string>
@@ -136,6 +139,7 @@ interface FrontendMessages {
   }) => void
   pushGameToLibrary: (info: GameInfo) => void
   progressUpdate: (progress: GameStatus) => void
+  helpersProgress: (line: string) => void
 
   // Used inside tests, so we can be a bit lenient with the type checking here
 }

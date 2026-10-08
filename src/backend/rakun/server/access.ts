@@ -22,6 +22,8 @@ const LOCAL_ONLY_CHANNELS: ReadonlySet<string> = new Set([
   'setPrivateBranchPassword',
   'getLogContent',
   'listFolders',
+  // Downloads programs that rakun then runs
+  'updateHelpers',
   // Move or register game folders anywhere
   'importGame',
   'moveInstall',

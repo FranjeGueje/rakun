@@ -54,6 +54,8 @@ export const rakunMountPath = join(
   appName,
   'mount'
 )
+/** The helper binaries that are downloaded (`rakunctl helpers update`): they stay when the app is updated */
+export const rakunBinPath = join(userHome, '.local', 'share', appName, 'bin')
 export const rakunGamesPath = join(
   userHome,
   '.local',
@@ -76,10 +78,3 @@ const bundledPublicDir = join(__dirname, 'public')
 export const publicDir = existsSync(bundledPublicDir)
   ? bundledPublicDir
   : resolve(__dirname, '..', 'public')
-
-export const zoomPlatformScriptPath = join(
-  publicDir,
-  'bin',
-  'zoom',
-  'zoom-platform.sh'
-)

@@ -51,13 +51,11 @@ import {
   readdirSync,
   rmSync,
   statSync,
-  writeFileSync,
-  copyFileSync
+  writeFileSync
 } from 'fs'
 
 const mockedExistsSync = jest.mocked(existsSync)
 const mockedMkdirSync = jest.mocked(mkdirSync)
-const mockedCopyFileSync = jest.mocked(copyFileSync)
 const mockedReaddirSync = jest.mocked(readdirSync)
 const mockedStatSync = jest.mocked(statSync)
 const mockedWriteFileSync = jest.mocked(writeFileSync)
@@ -168,70 +166,6 @@ describe('windowify', () => {
       (mockedWriteFileSync.mock.calls[0]?.[1] as string) || '{}'
     )
     expect(written.installed[0].install_path).toBe('c:\\games\\game')
-  })
-})
-
-describe('syncMountBin', () => {
-  test('returns early when source directory does not exist', () => {
-    const { syncMountBin } = freshWindowify()
-
-    syncMountBin()
-
-    expect(logWarning).toHaveBeenCalledWith(
-      expect.stringContaining('source not found'),
-      'Rakun'
-    )
-  })
-
-  const file = (size: number, mtimeMs: number) =>
-    ({ isFile: () => true, size, mtimeMs }) as ReturnType<typeof statSync>
-
-  /** The source is `source` and the copy in the mount is `copy` (undefined: missing) */
-  function syncWith(
-    source: ReturnType<typeof statSync>,
-    copy: ReturnType<typeof statSync> | undefined
-  ) {
-    mockedExistsSync.mockImplementation((p: any) => {
-      const str = String(p)
-      if (str.includes('bin/x64/win32')) return true
-      return str.includes('/mount/bin/') && copy !== undefined
-    })
-    mockedReaddirSync.mockReturnValue(['helper.exe'] as any)
-    mockedStatSync.mockImplementation(((p: any) =>
-      String(p).includes('/mount/bin/') ? copy : source) as any)
-
-    freshWindowify().syncMountBin()
-  }
-
-  test('copies a binary that is missing from the mount', () => {
-    syncWith(file(100, 1000), undefined)
-
-    expect(mockedCopyFileSync).toHaveBeenCalledTimes(1)
-  })
-
-  test('copies it when the size differs', () => {
-    syncWith(file(100, 1000), file(99, 2000))
-
-    expect(mockedCopyFileSync).toHaveBeenCalledTimes(1)
-  })
-
-  test('copies it when the source is newer than the copy', () => {
-    syncWith(file(100, 3000), file(100, 2000))
-
-    expect(mockedCopyFileSync).toHaveBeenCalledTimes(1)
-  })
-
-  test('leaves alone a copy of the same size that is not older', () => {
-    syncWith(file(100, 1000), file(100, 1000))
-    syncWith(file(100, 1000), file(100, 5000))
-
-    expect(mockedCopyFileSync).not.toHaveBeenCalled()
-  })
-
-  test('never reads the binaries to compare them', () => {
-    syncWith(file(100, 1000), file(100, 2000))
-
-    expect(readFileSync).not.toHaveBeenCalled()
   })
 })
 

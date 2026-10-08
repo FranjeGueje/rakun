@@ -18,6 +18,8 @@ export type Options = {
   skipDlcs?: boolean
   /** Only for `install`: the build of a game that has Windows and Linux ones */
   platform?: string
+  /** Only for `helpers update`: the newest version of each helper, not the one rakun was tested with */
+  latest?: boolean
   /** Only for `install` and `update` of one GOG game: a build and a branch of it */
   build?: string
   branch?: string
