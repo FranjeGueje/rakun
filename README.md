@@ -1,5 +1,7 @@
 # rakun
 
+<img src="web/icon.png" alt="rakun" width="96" align="right">
+
 [Español](README.es.md)
 
 rakun is a headless fork of [Relic](https://github.com/FranjeGueje/Relic) (itself a
@@ -29,15 +31,21 @@ rakun is **not** a launcher. When an install finishes it runs the Steam integrat
   browser ends on; no embedded browser)
 - A web on `http://127.0.0.1:17370` (library, downloads, accounts and settings; made for the mouse, the
   keyboard and a gamepad work too), source in `web/`
-- Library, download queue (pause, resume, cancel), install, update, repair and uninstall
-- `rakunctl`, a command line client for all of it, and a way to start rakun only
-  while a command runs (`rakunctl -s`)
+- Library, download queue (pause, resume, cancel), install, update (one game, a store's
+  or all), repair and uninstall; a game with a Windows and a Linux build asks which to install
+- Games that are already on the disk can be imported from their folder, without downloading
+  them again; on GOG a game can be installed or moved to a specific build or branch
+- The helper programs rakun runs (legendary, gogdl, nile…) are downloaded when they are
+  missing, checked by `sha256`; the web, `rakunctl status` and the log say what is missing
+- `rakunctl`, a command line client for all of it, a way to start rakun only
+  while a command runs (`rakunctl -s`) and one to run it as a user service
+  (`rakunctl install-service`)
 - Global settings (install path, GE-Proton, workers, language…) with validation
 - Automatic Steam integration (shortcuts, grids, prefixes)
 - GOG achievements (experimental, via [Comet](https://github.com/imLinguin/comet))
 - Linux native game support (GOG)
 
-The API (connection, channels, login flow and events) is documented in [API.md](API.md); a step-by-step test walkthrough (in Spanish) is in [GUIDE.md](GUIDE.md).
+The API (connection, channels, login flow and events) is documented in [API.md](API.md); a step-by-step test walkthrough is in [GUIDE.md](GUIDE.md).
 
 ---
 
@@ -50,8 +58,10 @@ The API (connection, channels, login flow and events) is documented in [API.md](
 | Command                                                               | What it does                                                                                                                                                                                                     |
 | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `start` / `stop [--force]`                                            | start rakun in the background / stop it                                                                                                                                                                          |
+| `install-service` / `uninstall-service`                               | run rakun as a systemd user service, started at every login (Zoom's Windows installers do not work with it)                                                                                                      |
+| `helpers` / `helpers update [--latest]`                               | which helper binaries are installed / download the missing ones (`--latest`: the newest ones, not checked)                                                                                                       |
 | `start [--web local\|network\|off] [--port N]`                        | who can open the web (default: the `webAccess` setting) and the port                                                                                                                                             |
-| `status`                                                              | version, sessions, queue (or "rakun parado")                                                                                                                                                                     |
+| `status`                                                              | version, sessions, queue and the state of the helper binaries (or "rakun is stopped")                                                                                                                            |
 | `login <store>`, `logout <store>`                                     | log in (paste what the browser ends on) / out                                                                                                                                                                    |
 | `import-relic`                                                        | copy the sessions of Relic (`~/.config/relic`)                                                                                                                                                                   |
 | `library [store] [--installed]`, `refresh`                            | list the library / refresh it and wait                                                                                                                                                                           |
@@ -342,7 +352,9 @@ screen in the menu (the list with the state of each one, _Download missing_ and 
 latest_). Any client can ask rakun to update them (`updateHelpers`, see [API.md](API.md)); with
 `webAccess` set to `network` that one is only answered to this machine. A command that needs a
 helper that is not there fails saying how to install it.
-`unzip` is needed to unpack one of them.
+`unzip` is needed to unpack one of them. Zoom's installer script is the only one that cannot be
+checked (its address has no version, so there is no `sha256` to compare): it is downloaded from
+Zoom's own site and counts as installed whatever version it says.
 
 ### Requirements
 
@@ -399,7 +411,7 @@ with `HOME=` empty rakun writes its folders relative to the current directory.
 
 | Symptom                                                        | What it means / what to do                                                                                                                                                                  |
 | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `rakunctl` says "rakun parado"                                 | rakun is not running: `rakunctl start`.                                                                                                                                                     |
+| `rakunctl` says "rakun is stopped"                             | rakun is not running: `rakunctl start`.                                                                                                                                                     |
 | `rakun did not start (code 1)`                                 | Read the log it points to (`~/.local/state/Rakun/logs/rakun.log`); the reason is the last `failed to start` line. A busy port is `EADDRINUSE`: use `--port`.                                |
 | `403` with `Host "…" is not allowed`                           | In `network` mode open the web by the IP or the name of the machine, not by another name (a router alias is not in the list).                                                               |
 | `403` with `can only be called from the machine rakun runs on` | In `network` mode settings, folders, logs and a few more channels only answer to this machine: open `http://127.0.0.1:<port>` there. Opening it by the machine's own LAN IP does not count. |

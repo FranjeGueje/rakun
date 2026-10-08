@@ -11,4 +11,10 @@ reemplaza la web de rakun. No comparte nada con Relic (rutas `rakun`, no `relic`
 cliente de línea de comandos (ver la sección _rakunctl_; la guía de pruebas está en
 [GUIDE.md](GUIDE.md), en inglés).
 
-El resto de la documentación (instalación, API, solución de problemas) está en inglés en [README.md](README.md).
+rakun necesita unos programas auxiliares (legendary, gogdl, nile…): el tarball normal no los lleva y se
+descargan con `rakunctl helpers update` (comprobados con `sha256`); rakun arranca aunque falten y lo dice
+en el log, en `rakunctl status` y en la web, que ofrece un aviso con un botón para descargarlos.
+
+El resto de la documentación está en inglés en [README.md](README.md): la
+[instalación](README.md#installation), los [binarios auxiliares](README.md#helper-binaries), la
+[API](API.md) y la [solución de problemas](README.md#troubleshooting).
