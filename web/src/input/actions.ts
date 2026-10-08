@@ -16,6 +16,7 @@ export type Action =
   | 'downloads'
   | 'sort'
   | 'refresh'
+  | 'quit'
   | 'menu'
 
 const KEYS: Record<string, Action> = {
@@ -35,6 +36,7 @@ const KEYS: Record<string, Action> = {
   d: 'downloads',
   s: 'sort',
   r: 'refresh',
+  q: 'quit',
   m: 'menu'
 }
 

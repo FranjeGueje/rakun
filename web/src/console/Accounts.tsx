@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { AccountsStatus, LoginInfo, StoreInfo } from '../api/types'
+import type { RakunBridge } from '../api/bridge'
 import type { Translate } from '../i18n'
 import { CloseButton } from './CloseButton'
 import { useLayer } from '../input/useInput'
@@ -29,6 +30,7 @@ export function Accounts({
   const [focus, setFocus] = useState(0)
   const [error, setError] = useState('')
   const [askLogout, setAskLogout] = useState<StoreInfo | null>(null)
+  const [waiting, setWaiting] = useState(false)
   const [pasting, setPasting] = useState<{
     store: StoreInfo
     info: LoginInfo
@@ -46,11 +48,26 @@ export function Accounts({
     load().catch((e: unknown) => setError(String(e)))
   }, [load])
 
-  /** The person logs in on the store's page and pastes the address it ends on */
+  /** The host logs in in a window of its own and finishes it (a desktop app) */
+  const signInInWindow = async (
+    login: NonNullable<RakunBridge['login']>,
+    store: StoreInfo
+  ) => {
+    setWaiting(true)
+    const reply = await login(store.id)
+    setWaiting(false)
+    if (!reply.ok && !reply.cancelled)
+      setError(t('accounts.failed', { error: reply.error }))
+    await load()
+  }
+
+  /** Otherwise the person logs in on the store's page and pastes the address it ends on */
   const signIn = async (store: StoreInfo) => {
     setError('')
+    const { login, loginPaste } = window.rakun
+    if (login) return signInInWindow(login, store)
     try {
-      setPasting({ store, info: await window.rakun.login.info(store.id) })
+      setPasting({ store, info: await loginPaste!.info(store.id) })
     } catch (reason) {
       setError(t('accounts.failed', { error: String(reason) }))
     }
@@ -58,7 +75,7 @@ export function Accounts({
 
   const submitPasted = async (text: string) => {
     if (!pasting) return undefined
-    const reply = await window.rakun.login.submit(pasting.store.id, text)
+    const reply = await window.rakun.loginPaste!.submit(pasting.store.id, text)
     if (!reply.ok) return reply.error
     setPasting(null)
     await load()
@@ -78,13 +95,13 @@ export function Accounts({
   }
 
   const activate = (store: StoreInfo | undefined) => {
-    if (!store || !accounts) return
+    if (!store || !accounts || waiting) return
     if (accounts[store.id].loggedIn) setAskLogout(store)
     else void signIn(store)
   }
 
   useLayer((action) => {
-    if (askLogout || pasting) return
+    if (askLogout || pasting || waiting) return
     if (action === 'up') setFocus(Math.max(focus - 1, 0))
     else if (action === 'down') setFocus(Math.min(focus + 1, stores.length - 1))
     else if (action === 'confirm') activate(stores[focus])
@@ -112,6 +129,7 @@ export function Accounts({
             </li>
           ))}
         </ul>
+        {waiting && <p className="muted">{t('accounts.waiting')}</p>}
         {error && <p className="errorText">{error}</p>}
       </div>
       {pasting && (

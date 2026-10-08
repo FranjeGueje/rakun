@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react'
 import { HELPERS_DONE, type RakunEvent } from '../api/channels'
 import type { GameInfo, GameStatus, Runner } from '../api/types'
+import { mark } from '../perf'
 import { initialState, reducer, type State } from './reducer'
 import { installParams, platformFor, type Build } from './selectors'
 
@@ -56,6 +57,7 @@ export function useRakun(): { state: State; actions: Actions } {
       try {
         const games = await window.rakun.call('getLibrary', runner)
         dispatch({ type: 'storeLibrary', runner, games })
+        mark(`library ${runner} (${games.length})`)
         return games.length
       } catch (error) {
         dispatch({ type: 'storeLibrary', runner, games: [] })
@@ -76,6 +78,7 @@ export function useRakun(): { state: State; actions: Actions } {
         type: 'updates',
         updates: await window.rakun.call('checkGameUpdates')
       })
+      mark('updates')
     } catch {
       // without the update marks the games are all there; the next refresh asks again
     }
@@ -123,6 +126,7 @@ export function useRakun(): { state: State; actions: Actions } {
         bridge.call('getDMQueueInformation')
       ])
       dispatch({ type: 'basics', basics: { stores, settings, queue } })
+      mark('basics')
       // Not needed to show the games: what is missing shows when it arrives
       void loadHelpers().catch(() => undefined)
       // Each store shows as soon as it arrives; the updates come last, in the background
@@ -175,6 +179,7 @@ export function useRakun(): { state: State; actions: Actions } {
       dispatch({ type: 'connection', state: connection })
       if (connection === 'online') void loadSnapshot()
     }
+    mark('connecting')
     const stopConnection = bridge.onConnection(connect)
     const stopEvents = bridge.onEvent(onEvent)
     void bridge.connection().then(connect)

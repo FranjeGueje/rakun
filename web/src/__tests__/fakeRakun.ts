@@ -1,5 +1,11 @@
 import type { CallMap, ConnectionState, RakunEvent } from '../api/channels'
-import type { LoginReply, RakunBridge, SettingReply } from '../api/bridge'
+import type {
+  LoginReply,
+  Ownership,
+  RakunBridge,
+  SettingReply,
+  StartReply
+} from '../api/bridge'
 import type { AppSettings, GameInfo, LoginInfo, QueueInfo } from '../api/types'
 
 export const settings = (extra: Partial<AppSettings> = {}): AppSettings => ({
@@ -36,6 +42,17 @@ export function fakeRakun(
   options: {
     /** How a pasted login ends (by default, well) */
     login?: LoginReply
+    /**
+     * Run as a desktop app: it names itself, can quit and start rakun, and logs in in a
+     * window of its own (no pasting). Without it, the page of the web.
+     */
+    desktop?: {
+      appName?: string
+      owns?: Ownership
+      start?: StartReply
+      /** How the login in a window ends (by default, well) */
+      windowLogin?: LoginReply
+    }
     setting?: SettingReply
     /** Called when a setting is saved with success, so the next read sees it */
     onSetting?: (key: string, value: string) => void
@@ -72,10 +89,30 @@ export function fakeRakun(
     return Promise.resolve<SettingReply>(reply)
   })
 
+  const desktop = options.desktop
+  const quit = jest.fn()
+  const start = jest.fn(() =>
+    Promise.resolve<StartReply>(desktop?.start ?? { ok: true })
+  )
+  const owns = jest.fn(() =>
+    Promise.resolve<Ownership>(desktop?.owns ?? 'none')
+  )
+  const windowLogin = jest.fn(() =>
+    Promise.resolve<LoginReply>(desktop?.windowLogin ?? { ok: true })
+  )
+
   const bridge = {
     call,
-    login,
     setSetting,
+    ...(desktop
+      ? {
+          appName: desktop.appName ?? 'Relic',
+          quit,
+          owns,
+          start,
+          login: windowLogin
+        }
+      : { loginPaste: login }),
     connection: () => Promise.resolve(connection),
     onEvent: (listener: (event: RakunEvent) => void) => {
       eventListeners.add(listener)
@@ -91,6 +128,10 @@ export function fakeRakun(
     bridge,
     calls,
     login,
+    quit,
+    start,
+    owns,
+    windowLogin,
     setSetting,
     emit: (event: RakunEvent) => eventListeners.forEach((l) => l(event)),
     setConnection: (state: ConnectionState) => {

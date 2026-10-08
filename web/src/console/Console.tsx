@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { Ownership } from '../api/bridge'
 import type { GameInfo, Runner } from '../api/types'
 import type { Translate } from '../i18n'
 import type { ControllerLayout } from '../input/controller'
@@ -7,6 +8,7 @@ import type { State } from '../state/reducer'
 import {
   cycle,
   moveInGrid,
+  quitMessageKey,
   storeTabs,
   visibleGames,
   type Filters,
@@ -15,6 +17,7 @@ import {
 import type { Actions } from '../state/useRakun'
 import { Card } from './Card'
 import { ScrollRoot } from './Cover'
+import { ConfirmDialog } from './ConfirmDialog'
 import { Downloads } from './Downloads'
 import { GameSheet } from './GameSheet'
 import { Hints } from './Hints'
@@ -44,9 +47,12 @@ export function Console({ state, actions, t, layout }: Props) {
   const [focused, setFocused] = useState(0)
   const [openGame, setOpenGame] = useState<GameInfo | null>(null)
   const [downloadsOpen, setDownloadsOpen] = useState(false)
+  const [askQuit, setAskQuit] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   // On a narrow window the bar shows the stores only; the rest hides behind the ☰
   const [barOpen, setBarOpen] = useState(false)
+  const [ownsRakun, setOwnsRakun] = useState<Ownership>('none')
+  const { appName } = window.rakun
   const gridRef = useRef<HTMLDivElement>(null)
   const [stage, setStage] = useState<HTMLElement | null>(null)
 
@@ -108,6 +114,10 @@ export function Console({ state, actions, t, layout }: Props) {
     else if (action === 'downloads') setDownloadsOpen(true)
     else if (action === 'refresh') actions.refresh()
     else if (action === 'menu') setMenuOpen(true)
+    else if (window.rakun.quit && (action === 'back' || action === 'quit')) {
+      void window.rakun.owns?.().then(setOwnsRakun)
+      setAskQuit(true)
+    }
   })
 
   // The sheet shows the game as it is now, not as it was when it was opened
@@ -148,11 +158,15 @@ export function Console({ state, actions, t, layout }: Props) {
           <img
             className="logo"
             src="./icon.png"
-            alt="rakun"
+            alt={appName ?? 'rakun'}
             width="36"
             height="36"
           />
-          <img className="wordmark" src="./wordmark.svg" alt="" height="26" />
+          {appName ? (
+            <span className="appName">{appName}</span>
+          ) : (
+            <img className="wordmark" src="./wordmark.svg" alt="" height="26" />
+          )}
         </div>
         <nav className="chips right more">
           <button className="chip" onClick={() => setDownloadsOpen(true)}>
@@ -171,6 +185,14 @@ export function Console({ state, actions, t, layout }: Props) {
           >
             {state.refreshing ? '…' : t('header.refresh')}
           </button>
+          {window.rakun.quit && (
+            <button
+              className="chip danger"
+              onClick={() => window.rakun.quit?.()}
+            >
+              {t('header.quit')}
+            </button>
+          )}
         </nav>
         <button
           className="chip burger"
@@ -230,6 +252,21 @@ export function Console({ state, actions, t, layout }: Props) {
           actions={actions}
           t={t}
           onClose={() => setOpenGame(null)}
+        />
+      )}
+      {askQuit && (
+        <ConfirmDialog
+          title={t('confirm.quit.title', { app: appName ?? 'rakun' })}
+          message={t(
+            quitMessageKey(
+              ownsRakun,
+              state.queue.elements.length > 0 || state.refreshing
+            ),
+            { app: appName ?? 'rakun' }
+          )}
+          t={t}
+          onYes={() => window.rakun.quit?.()}
+          onNo={() => setAskQuit(false)}
         />
       )}
       {menuOpen && (

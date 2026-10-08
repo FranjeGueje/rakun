@@ -18,7 +18,10 @@ export function Hints({
     [keys.downloads, t('hint.downloads')],
     [keys.sort, t('hint.sort')],
     [keys.refresh, t('hint.refresh')],
-    [keys.menu, t('hint.menu')]
+    [keys.menu, t('hint.menu')],
+    ...(window.rakun.quit
+      ? [[keys.quit, t('hint.quit')] as [string, string]]
+      : [])
   ]
   return (
     <footer className="hints">
