@@ -59,6 +59,10 @@ repository.
 
 ### Fixed
 
+- The EOS Overlay script (**FranjeGueje EOS Overlay Installer**, v1) no longer
+  trusts a game's overlay folder to be full: it runs `enable` first and, if its
+  output has an ERROR (legendary can think an empty folder is installed), it
+  removes and installs the overlay again; otherwise it only updates it.
 - Uninstalling a game of Amazon now shows at once as not installed in the
   library (it needed a manual refresh).
 

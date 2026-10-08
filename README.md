@@ -118,9 +118,10 @@ Game install completed
   │                                                  ▼
   │                                              • Epic games only:
   │                                                run c:\Launchers\scripts\eos-overlay.bat
-  │                                                through umu-run to install
-  │                                                and enable the EOS Overlay
-  │                                                in that prefix
+  │                                                through umu-run to enable the
+  │                                                EOS Overlay in that prefix
+  │                                                (installing it again if its
+  │                                                folder is empty)
   │                                                  │
   │                                                ▼ (both flows converge)
   │

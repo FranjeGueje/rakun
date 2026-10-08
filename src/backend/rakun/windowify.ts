@@ -32,6 +32,7 @@ import { GameInfo } from 'common/types'
 import type { GameRunner } from './steam_shortcuts/types'
 import { createGameSymlink } from './steam_shortcuts/add_game'
 import { SCRIPTS_DIR } from './runner_script'
+import { eosOverlayScriptText } from './eos_overlay_script'
 
 const LOG_PREFIX = 'Rakun'
 
@@ -205,51 +206,7 @@ export function createEosOverlayBat(): string {
 
   const batPath = join(rakunMountPath, EOS_OVERLAY_BAT)
 
-  const content = [
-    '@echo off',
-    'title Rakun EOS Overlay',
-    '',
-    'echo Rakun EOS Overlay setup',
-    'echo.',
-    '',
-    'rem ============================================================',
-    'rem Configuration',
-    'rem ============================================================',
-    '',
-    'set "LAUNCHERS=C:\\Launchers"',
-    '',
-    'set "LEGENDARY_CONFIG_PATH=%LAUNCHERS%\\Legendary"',
-    'set "PATH=%PATH%;%LAUNCHERS%\\bin"',
-    '',
-    'rem ============================================================',
-    'rem PRECHECKS',
-    'rem ============================================================',
-    '',
-    'if not exist "%LAUNCHERS%\\bin\\legendary.exe" (',
-    '    echo [ERROR]: legendary.exe not found.',
-    '    timeout /t 2 /nobreak >nul',
-    '    exit /b 1',
-    ')',
-    '',
-    'rem ============================================================',
-    'rem EOS OVERLAY',
-    'rem ============================================================',
-    '',
-    'rem install: downloads the overlay and, from inside the prefix, also',
-    'rem writes its registry entries',
-    'legendary -y eos-overlay install --path %LAUNCHERS%\\eos',
-    '',
-    'rem update: keeps the overlay current once it is already installed',
-    'legendary -y eos-overlay update --path %LAUNCHERS%\\eos',
-    '',
-    'rem enable: required on every new prefix. install/update bail out early',
-    'rem with "up to date, nothing to do" because that state lives in the',
-    'rem shared LEGENDARY_CONFIG_PATH, so they never reach the registry setup',
-    'rem for THIS prefix. enable writes it explicitly and is idempotent.',
-    'legendary eos-overlay enable --path %LAUNCHERS%\\eos',
-    '',
-    'exit /b 0'
-  ].join('\n')
+  const content = eosOverlayScriptText()
 
   writeFileSync(batPath, content, 'utf-8')
   logInfo(`Created ${batPath}`, LOG_PREFIX)

@@ -16,9 +16,12 @@ export const RUNNER_BAT = 'Launcher_games.bat'
 const RUNNER_WINDOWS_PATH = `C:\\Launchers\\${SCRIPTS_DIR}\\${RUNNER_BAT}`
 
 const RULE = 'rem ============================================================'
-const section = (title: string) => ['', RULE, `rem ${title}`, RULE, '']
+export const section = (title: string) => ['', RULE, `rem ${title}`, RULE, '']
 
-const missingTool = (tool: string, path = `%LAUNCHERS%\\bin\\${tool}`) => [
+export const missingTool = (
+  tool: string,
+  path = `%LAUNCHERS%\\bin\\${tool}`
+) => [
   `if not exist "${path}" (`,
   `    echo [ERROR]: ${tool} not found.`,
   '    timeout /t 2 /nobreak >nul',

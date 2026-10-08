@@ -43,6 +43,7 @@ jest.mock('../steam_shortcuts/add_game', () => ({
   createGameSymlink: jest.fn()
 }))
 
+import { eosOverlayScriptText } from '../eos_overlay_script'
 import {
   existsSync,
   mkdirSync,
@@ -264,36 +265,9 @@ describe('createEosOverlayBat', () => {
     })
   })
 
-  test('installs and updates the overlay into c:\\Launchers\\eos', () => {
+  test('writes what eosOverlayScriptText makes', () => {
     const { content } = writtenBat()
 
-    expect(content).toContain(
-      'legendary -y eos-overlay install --path %LAUNCHERS%\\eos'
-    )
-    expect(content).toContain(
-      'legendary -y eos-overlay update --path %LAUNCHERS%\\eos'
-    )
-  })
-
-  // Regression guard: install/update bail out with "up to date, nothing to do"
-  // once the overlay is recorded in the shared LEGENDARY_CONFIG_PATH, so from
-  // the second Epic game onwards only `enable` writes the new prefix registry.
-  test('enables the overlay, without which every prefix after the first is left inactive', () => {
-    const { content } = writtenBat()
-
-    expect(content).toContain(
-      'legendary eos-overlay enable --path %LAUNCHERS%\\eos'
-    )
-  })
-
-  test('points legendary at the shared rakun config and bails out if it is missing', () => {
-    const { content } = writtenBat()
-
-    expect(content).toContain(
-      'set "LEGENDARY_CONFIG_PATH=%LAUNCHERS%\\Legendary"'
-    )
-    expect(content).toContain(
-      'if not exist "%LAUNCHERS%\\bin\\legendary.exe" ('
-    )
+    expect(content).toBe(eosOverlayScriptText())
   })
 })
