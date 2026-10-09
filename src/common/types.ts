@@ -106,9 +106,6 @@ export interface GameInfo {
   save_path?: string
   title: string
   canRunOffline: boolean
-  thirdPartyManagedApp?: string
-  isEAManaged?: boolean
-  isUbisoftManaged?: boolean
   is_mac_native?: boolean
   is_linux_native?: boolean
   /** The store has a Windows build (GOG, Zoom): with a Linux one too, the client lets the user choose */

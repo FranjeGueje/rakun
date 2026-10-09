@@ -34,7 +34,6 @@ import { isOnline } from 'backend/online_monitor'
 import { LegendaryCommand } from './commands'
 import { LegendaryAppName, LegendaryPlatform } from './commands/base'
 import { Path } from 'backend/schemas'
-import thirdParty from './thirdParty'
 import { Entries } from 'type-fest'
 import { legendaryConfigPath, legendaryMetadata } from './constants'
 import { LibraryManager } from 'common/types/game_manager'
@@ -100,10 +99,7 @@ export default class LegendaryLibraryManager implements LibraryManager {
     }
 
     const res = await this.runRunnerCommand(
-      {
-        subcommand: 'list',
-        '--third-party': true
-      },
+      { subcommand: 'list' },
       {
         abortId: 'legendary-refresh'
       }
@@ -139,9 +135,6 @@ export default class LegendaryLibraryManager implements LibraryManager {
     } else {
       installedCache = []
     }
-
-    const thirdPartyGames = thirdParty.getInstalledGames()
-    installedCache.push(...thirdPartyGames)
 
     installedGames = new Map(installedCache)
   }
@@ -315,7 +308,7 @@ export default class LegendaryLibraryManager implements LibraryManager {
     }
 
     const res = await this.runRunnerCommand(
-      { subcommand: 'list', '--third-party': true },
+      { subcommand: 'list' },
       {
         abortId: 'legendary-check-updates',
         logMessagePrefix: 'Checking for game updates'
@@ -568,11 +561,6 @@ export default class LegendaryLibraryManager implements LibraryManager {
     const dlcs: string[] = []
     const FolderName = customAttributes?.FolderName
     const canRunOffline = customAttributes?.CanRunOffline?.value === 'true'
-    const thirdPartyManagedApp =
-      customAttributes?.ThirdPartyManagedApp?.value ||
-      customAttributes?.ThirdPartyManagedProvider?.value ||
-      undefined
-
     if (dlcItemList) {
       dlcItemList.forEach((v: { releaseInfo: { appId: string }[] }) => {
         if (v.releaseInfo && v.releaseInfo[0]) {
@@ -667,13 +655,6 @@ export default class LegendaryLibraryManager implements LibraryManager {
       save_path,
       title,
       canRunOffline,
-      thirdPartyManagedApp,
-      isEAManaged:
-        !!thirdPartyManagedApp &&
-        ['origin', 'the ea app'].includes(thirdPartyManagedApp.toLowerCase()),
-      isUbisoftManaged:
-        !!thirdPartyManagedApp &&
-        'ubisoftconnect' == thirdPartyManagedApp.toLowerCase(),
       is_linux_native: false,
       runner: 'legendary',
       store_url: formatEpicStoreUrl(title)
@@ -792,7 +773,7 @@ export default class LegendaryLibraryManager implements LibraryManager {
   async getLaunchOptions(appName: string): Promise<LaunchOption[]> {
     const gameInfo = this.getGameInfo(appName)
     const installPlatform = gameInfo?.install.platform
-    if (!installPlatform || gameInfo.thirdPartyManagedApp) return []
+    if (!installPlatform) return []
 
     const installInfo = await this.getInstallInfo(appName, installPlatform)
     const launchOptions: LaunchOption[] = installInfo.game.launch_options

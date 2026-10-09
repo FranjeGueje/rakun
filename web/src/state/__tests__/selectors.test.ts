@@ -32,12 +32,11 @@ describe('visibleGames', () => {
   const games = [
     game('b', { is_installed: true }),
     game('a', { runner: 'legendary' }),
-    game('dlc', { install: { is_dlc: true } }),
-    game('ea', { thirdPartyManagedApp: 'EA' })
+    game('dlc', { install: { is_dlc: true } })
   ]
   const all = { store: 'all', installedOnly: false, ascending: true } as const
 
-  test('hides DLC and games of other launchers, and sorts by title', () => {
+  test('hides DLC and sorts by title', () => {
     expect(visibleGames(games, all).map((g) => g.app_name)).toEqual(['a', 'b'])
     expect(
       visibleGames(games, { ...all, ascending: false }).map((g) => g.app_name)

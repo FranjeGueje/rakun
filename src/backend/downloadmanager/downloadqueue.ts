@@ -141,27 +141,16 @@ async function addToQueue(element: DMQueueElement) {
   if (elementIndex >= 0) {
     elements[elementIndex] = element
   } else {
-    const gameInfo = libraryManagerMap[element.params.runner].getGameInfo(
-      element.params.appName
-    )
-    if (!gameInfo?.isEAManaged && !gameInfo?.isUbisoftManaged) {
-      const installInfo = await libraryManagerMap[
-        element.params.runner
-      ].getInstallInfo(
-        element.params.appName,
-        element.params.platformToInstall,
-        {
-          branch: element.params.branch,
-          build: element.params.build
-        }
-      )
+    const installInfo = await libraryManagerMap[
+      element.params.runner
+    ].getInstallInfo(element.params.appName, element.params.platformToInstall, {
+      branch: element.params.branch,
+      build: element.params.build
+    })
 
-      element.params.size = installInfo?.manifest?.download_size
-        ? getFileSize(installInfo?.manifest?.download_size)
-        : '?? MB'
-    } else {
-      element.params.size = '?? MB'
-    }
+    element.params.size = installInfo?.manifest?.download_size
+      ? getFileSize(installInfo?.manifest?.download_size)
+      : '?? MB'
     elements.push(element)
   }
 

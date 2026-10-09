@@ -51,7 +51,6 @@ export type GameInfo = {
   developer?: string
   description?: string
   /** A game managed by another launcher (EA App, Ubisoft Connect…): not installable here */
-  thirdPartyManagedApp?: string
   install: {
     install_path?: string
     install_size?: string

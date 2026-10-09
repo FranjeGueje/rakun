@@ -5,7 +5,6 @@ interface ListCommand {
   '--platform'?: LegendaryPlatform
   '--include-ue'?: true
   '-T'?: true
-  '--third-party'?: true
   '--include-non-installable'?: true
   '--csv'?: true
   '--tsv'?: true

@@ -44,10 +44,10 @@ export type Filters = {
   ascending: boolean
 }
 
-/** What the grid lists: DLC and games of other launchers are not installable here */
+/** What the grid lists: DLC is not installable on its own */
 export function visibleGames(games: GameInfo[], filters: Filters): GameInfo[] {
   return games
-    .filter((game) => !game.install.is_dlc && !game.thirdPartyManagedApp)
+    .filter((game) => !game.install.is_dlc)
     .filter((game) => filters.store === 'all' || game.runner === filters.store)
     .filter((game) => !filters.installedOnly || game.is_installed)
     .sort((a, b) => {

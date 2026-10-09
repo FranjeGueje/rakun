@@ -18,9 +18,7 @@ jest.mock('backend/storeManagers/legendary/constants', () => ({
   legendaryConfigPath: '/mock/legendary',
   legendaryInstalled: '/mock/legendary/installed.json',
   legendaryMetadata: '/mock/legendary/metadata',
-  legendaryUserInfo: '/mock/legendary/user.json',
-  thirdPartyInstalled: '/mock/legendary/third-party-installed.json',
-  epicRedistPath: '/mock/redist/legendary'
+  legendaryUserInfo: '/mock/legendary/user.json'
 }))
 
 jest.mock('backend/storeManagers/nile/constants', () => ({

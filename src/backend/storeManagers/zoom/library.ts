@@ -150,8 +150,7 @@ export default class ZoomLibraryManager implements LibraryManager {
       canRunOffline: true, // Assuming DRM-free as per zoom.py
       is_mac_native: zoomGame.operating_systems.includes('osx'),
       is_linux_native: zoomGame.operating_systems.includes('linux'),
-      is_windows_native: zoomGame.operating_systems.includes('windows'),
-      thirdPartyManagedApp: undefined
+      is_windows_native: zoomGame.operating_systems.includes('windows')
     }
     return object
   }
