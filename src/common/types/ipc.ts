@@ -1,7 +1,6 @@
 import type {
   AppSettings,
   ButtonOptions,
-  ConnectivityStatus,
   DialogType,
   DMQueueElement,
   DownloadManagerState,
@@ -111,10 +110,6 @@ interface FrontendMessages {
     state: DownloadManagerState
   ) => void
   refreshLibrary: (runner?: Runner) => void
-  'connectivity-changed': (status: {
-    status: ConnectivityStatus
-    retryIn: number
-  }) => void
   pushGameToLibrary: (info: GameInfo) => void
   progressUpdate: (progress: GameStatus) => void
   helpersProgress: (line: string) => void

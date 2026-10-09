@@ -17,8 +17,7 @@ jest.mock('../electronStores', () => ({
   libraryStore: { get: jest.fn(), set: jest.fn() },
   installedGamesStore: { get: jest.fn(), set: jest.fn() },
   installInfoStore: { get: jest.fn(), set: jest.fn(), has: jest.fn() },
-  apiInfoCache: { get: jest.fn(), set: jest.fn() },
-  playtimeSyncQueue: { get: jest.fn(), set: jest.fn() }
+  apiInfoCache: { get: jest.fn(), set: jest.fn() }
 }))
 
 jest.mock('../../../runner_call')

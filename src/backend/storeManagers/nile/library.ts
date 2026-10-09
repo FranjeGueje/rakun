@@ -511,8 +511,6 @@ export default class NileLibraryManager implements LibraryManager {
     )
   }
 
-  getLaunchOptions = () => []
-
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   changeVersionPinnedStatus(appName: string, status: boolean) {
     logWarning(

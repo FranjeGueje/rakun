@@ -1,5 +1,4 @@
 import { ConnectivityStatus } from 'common/types'
-import { sendFrontendMessage } from 'backend/ipc'
 import { logInfo, LogPrefix } from './logger'
 import axios from 'axios'
 import EventEmitter from 'node:events'
@@ -7,7 +6,6 @@ import EventEmitter from 'node:events'
 let status: ConnectivityStatus
 let abortController: AbortController
 let retryTimer: NodeJS.Timeout
-let retryIn = 0
 const defaultTimeBetweenRetries = 5
 let timeBetweenRetries = defaultTimeBetweenRetries
 const connectivityEmitter = new EventEmitter()
@@ -24,7 +22,6 @@ const setStatus = (newStatus: ConnectivityStatus) => {
       pingSites()
       break
     default:
-      retryIn = 0
       timeBetweenRetries = defaultTimeBetweenRetries
       if (abortController) {
         abortController.abort()
@@ -34,29 +31,14 @@ const setStatus = (newStatus: ConnectivityStatus) => {
       }
   }
 
-  // events
-  sendFrontendMessage('connectivity-changed', { status, retryIn })
   connectivityEmitter.emit(status)
 }
 
 const retry = (seconds: number) => {
-  retryIn = seconds
-  // dispatch event with retry countdown
-  sendFrontendMessage('connectivity-changed', {
-    status: 'check-online',
-    retryIn: seconds
-  })
-
-  if (seconds) {
-    // if still counting down, repeat
-    if (retryTimer) {
-      clearTimeout(retryTimer)
-    }
-    retryTimer = setTimeout(() => retry(seconds - 1), 1000)
-  } else {
-    // else, retry pings
-    pingSites()
+  if (retryTimer) {
+    clearTimeout(retryTimer)
   }
+  retryTimer = setTimeout(pingSites, seconds * 1000)
 }
 
 const ping = async (url: string, signal: AbortSignal) => {

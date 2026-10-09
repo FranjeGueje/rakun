@@ -101,6 +101,6 @@ On success the library of that store is refreshed.
 
 Server-Sent Events: `event: <channel>` and `data: <JSON array of arguments>`. A `: ping` comment is sent every 25 s.
 
-`gameStatusUpdate(status)`, `progressUpdate(status)`, `changedDMQueueInformation(elements, state)`, `pushGameToLibrary(info)`, `refreshLibrary(runner?)`, `helpersProgress(line)`, `connectivity-changed`, `showDialog(title, message, type, buttons?)`.
+`gameStatusUpdate(status)`, `progressUpdate(status)`, `changedDMQueueInformation(elements, state)`, `pushGameToLibrary(info)`, `refreshLibrary(runner?)`, `helpersProgress(line)`, `showDialog(title, message, type, buttons?)`.
 
 `showDialog` is how the daemon reports problems it used to show in a window (it is also logged).

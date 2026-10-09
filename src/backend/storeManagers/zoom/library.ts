@@ -1,7 +1,7 @@
 import { hasDuplicates, uniqueInstalled } from '../installed_list'
 import { sendFrontendMessage } from '../../ipc'
 import { ZoomUser } from './user'
-import { GameInfo, InstalledInfo, ExecResult, LaunchOption } from 'common/types'
+import { GameInfo, InstalledInfo, ExecResult } from 'common/types'
 import {
   ZoomGameInfo,
   ZoomLibraryResponse,
@@ -325,12 +325,6 @@ export default class ZoomLibraryManager implements LibraryManager {
       logError(['Error fetching Zoom installers:', error], LogPrefix.Zoom)
       return []
     }
-  }
-
-  getLaunchOptions(): LaunchOption[] {
-    // The original zoom.py doesn't define specific launch options beyond the main executable.
-    // If Zoom games have multiple executables or launch parameters, this needs to be expanded.
-    return []
   }
 
   async changeGameInstallPath(

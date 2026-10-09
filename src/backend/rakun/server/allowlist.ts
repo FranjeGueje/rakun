@@ -62,6 +62,5 @@ export const exposedEvents: ReadonlySet<string> = new Set([
   'pushGameToLibrary',
   'refreshLibrary',
   'helpersProgress',
-  'connectivity-changed',
   'showDialog'
 ])

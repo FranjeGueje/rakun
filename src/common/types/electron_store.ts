@@ -1,11 +1,6 @@
 import { Get } from 'type-fest'
 
-import {
-  InstalledInfo,
-  DMQueueElement,
-  GOGLoginData,
-  UploadedLogData
-} from 'common/types'
+import { InstalledInfo, DMQueueElement, GOGLoginData } from 'common/types'
 import { UserData } from 'common/types/gog'
 import { NileUserData } from './nile'
 import { ZoomCredentials } from './zoom'
@@ -16,16 +11,6 @@ export interface StoreStructure {
   }
   zoomInstalledGamesStore: {
     installed: InstalledInfo[]
-  }
-  timestampStore: {
-    [K: string]: {
-      firstPlayed: string
-      lastPlayed: string
-      totalPlayed: number
-    }
-  }
-  fontsStore: {
-    fonts: string[]
   }
   gogConfigStore: {
     userData: UserData
@@ -43,27 +28,6 @@ export interface StoreStructure {
   downloadManager: {
     queue: DMQueueElement[]
     finished: DMQueueElement[]
-  }
-  gogSyncStore: {
-    [appName: string]: {
-      [saveName: string]: string
-    }
-  }
-  zoomSyncStore: {
-    [appName: string]: {
-      [saveName: string]: string
-    }
-  }
-  uploadedLogs: Record<string, UploadedLogData>
-  gameOverridesStore: {
-    overrides: Record<
-      string,
-      {
-        title?: string
-        art_cover?: string
-        art_square?: string
-      }
-    >
   }
 }
 

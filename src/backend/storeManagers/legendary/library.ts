@@ -4,8 +4,7 @@ import {
   GameInfo,
   CallRunnerOptions,
   ExecResult,
-  InstallPlatform,
-  LaunchOption
+  InstallPlatform
 } from 'common/types'
 import {
   InstalledJsonMetadata,
@@ -768,61 +767,6 @@ export default class LegendaryLibraryManager implements LibraryManager {
     }
 
     return commandParts
-  }
-
-  async getLaunchOptions(appName: string): Promise<LaunchOption[]> {
-    const gameInfo = this.getGameInfo(appName)
-    const installPlatform = gameInfo?.install.platform
-    if (!installPlatform) return []
-
-    const installInfo = await this.getInstallInfo(appName, installPlatform)
-    const launchOptions: LaunchOption[] = installInfo.game.launch_options
-
-    // Some DLCs are also launch-able
-    for (const dlc of installInfo.game.owned_dlc) {
-      const installedInfo = installedGames.get(dlc.app_name)
-      if (!installedInfo) continue
-
-      // If the DLC itself is executable, push it onto the list
-      if (installedInfo.executable) {
-        launchOptions.push({
-          type: 'dlc',
-          dlcAppName: dlc.app_name,
-          dlcTitle: dlc.title
-        })
-        // The one example we've found using this (Unreal Editor for Fortnite)
-        // suggests that we should not look at the AdditionalCommandLine custom
-        // attribute (below) if this is set
-        continue
-      }
-
-      // Otherwise, if it specifies additional commandline parameters to pass to
-      // the main game, add it as a basic launch option
-      let metadata
-      try {
-        metadata = this.loadGameMetadata(dlc.app_name)
-      } catch (e) {
-        logWarning(
-          [
-            'Failed to load DLC metadata for',
-            dlc.app_name,
-            '(base game is',
-            `${appName}):`,
-            e
-          ],
-          LogPrefix.Legendary
-        )
-      }
-      if (!metadata?.metadata.customAttributes?.AdditionalCommandLine) continue
-      launchOptions.push({
-        type: 'basic',
-        name: dlc.title,
-        parameters:
-          metadata.metadata.customAttributes.AdditionalCommandLine.value
-      })
-    }
-
-    return launchOptions
   }
 
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */

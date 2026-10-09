@@ -6,8 +6,7 @@ import {
   InstalledInfo,
   GOGImportData,
   ExecResult,
-  CallRunnerOptions,
-  LaunchOption
+  CallRunnerOptions
 } from 'common/types'
 import {
   GOGGameDotInfoFile,
@@ -19,8 +18,7 @@ import {
   GalaxyLibraryEntry,
   ProductsEndpointData,
   GOGDLInstallInfo,
-  GOGCredentials,
-  GOGSessionSyncQueueItem
+  GOGCredentials
 } from 'common/types/gog'
 import { dirname, join } from 'node:path'
 import { existsSync, readFileSync } from 'fs'
@@ -38,8 +36,7 @@ import {
   libraryStore,
   installedGamesStore,
   installInfoStore,
-  apiInfoCache,
-  playtimeSyncQueue
+  apiInfoCache
 } from './electronStores'
 import { callRunner } from '../../runner_call'
 import { isOnline, runOnceWhenOnline } from '../../online_monitor'
@@ -165,81 +162,6 @@ export default class GOGLibraryManager implements LibraryManager {
       logError([`Unable to get data of ${appName}:`, e], LogPrefix.Gog)
       return
     }
-  }
-
-  async syncQueuedPlaytime() {
-    if (playtimeSyncQueue.has('lock')) {
-      return
-    }
-    const credentials = await GOGUser.getCredentials()
-    if (!credentials) {
-      logError('Unable to syncQueued playtime, credentials not present', {
-        prefix: LogPrefix.Gog
-      })
-      return
-    }
-    const queue = playtimeSyncQueue.get(credentials.user_id, [])
-    if (queue.length === 0) {
-      return
-    }
-    playtimeSyncQueue.set('lock', [])
-    const failed = []
-
-    for (const session of queue) {
-      if (!isOnline()) {
-        failed.push(session)
-      }
-      const response = await this.postPlaytimeSession(session)
-
-      if (!response || response.status !== 201) {
-        logError('Failed to post session', { prefix: LogPrefix.Gog })
-        failed.push(session)
-      }
-    }
-    playtimeSyncQueue.set(credentials.user_id, failed)
-    playtimeSyncQueue.delete('lock')
-    logInfo(
-      [
-        'Finished posting sessions to gameplay.gog.com',
-        'failed:',
-        failed.length
-      ],
-      {
-        prefix: LogPrefix.Gog
-      }
-    )
-  }
-
-  async postPlaytimeSession({
-    session_date,
-    time,
-    appName
-  }: GOGSessionSyncQueueItem) {
-    const credentials = await GOGUser.getCredentials().catch(() => null)
-
-    if (!credentials) {
-      logError("Couldn't fetch credentials, unable to post new session", {
-        prefix: LogPrefix.Gog
-      })
-      return null
-    }
-
-    return axios
-      .post(
-        `https://gameplay.gog.com/games/${appName}/users/${credentials.user_id}/sessions`,
-        { session_date, time },
-        {
-          headers: {
-            Authorization: `Bearer ${credentials.access_token}`
-          }
-        }
-      )
-      .catch((e: AxiosError) => {
-        logDebug(['Failed to post session', e.toJSON()], {
-          prefix: LogPrefix.Gog
-        })
-        return null
-      })
   }
 
   private defaultExecResult = {
@@ -1341,28 +1263,6 @@ export default class GOGLibraryManager implements LibraryManager {
 
   installState(appName: string, state: boolean) {
     logWarning(`installState not implemented on GOG Library Manager`)
-  }
-
-  getLaunchOptions(appName: string): LaunchOption[] {
-    const newLaunchOptions: LaunchOption[] = []
-    const infoFile = this.readInfoFile(appName)
-    infoFile?.playTasks.forEach((task, index) => {
-      if (
-        task.type === 'FileTask' &&
-        !task?.isHidden &&
-        task.category !== 'document'
-      ) {
-        newLaunchOptions.push({
-          name: task?.name || infoFile.name,
-          parameters: `--prefer-task ${index}` // gogdl parameter to launch specific task
-        })
-      }
-    })
-    if (newLaunchOptions.length < 2) {
-      return []
-    }
-
-    return newLaunchOptions
   }
 
   changeVersionPinnedStatus(appName: string, status: boolean) {
