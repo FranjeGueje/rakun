@@ -68,6 +68,7 @@ function setup(
         return { status: 'done' }
       },
       requestAppSettings: settings(options.settings),
+      getRakunVersion: '1.2.3',
       getDMQueueInformation: options.queue ?? emptyQueue,
       getAccounts: options.accounts ?? signedIn,
       listFolders:
@@ -671,6 +672,13 @@ describe('menu and accounts', () => {
     expect(screen.getByRole('button', { name: 'Accounts' })).toBeTruthy()
     press('Escape')
     expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  test('the menu ends with the version of rakun', async () => {
+    setup()
+    await screen.findByTitle('Alpha')
+    press('m')
+    expect(await screen.findByText('rakun 1.2.3')).toBeTruthy()
   })
 
   test('lists each store with its state', async () => {

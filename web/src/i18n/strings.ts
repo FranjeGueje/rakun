@@ -98,6 +98,7 @@ export const en = {
   'web.networkWarning':
     'Open to the network, no protection: experimental or home use only',
   'menu.title': 'Menu',
+  'menu.version': 'rakun {version}',
   'menu.helpers': 'Helper binaries',
   'helpers.missing': 'Missing helper binaries: {helpers}',
   'helpers.missingRemote':

@@ -48,12 +48,17 @@ export function Menu({
   const [focus, setFocus] = useState(0)
   const [open, setOpen] = useState<Entry | null>(null)
   const [settings, setSettings] = useState<AppSettings | null>(null)
+  const [version, setVersion] = useState('')
 
   const load = useCallback(async () => {
     setSettings(await window.rakun.call('requestAppSettings'))
   }, [])
   useEffect(() => {
     load().catch(() => undefined)
+    window.rakun
+      .call('getRakunVersion')
+      .then((value) => setVersion(value ?? ''))
+      .catch(() => undefined)
   }, [load])
 
   /** Saves one setting; answers the reason rakun gives when it refuses it */
@@ -102,6 +107,9 @@ export function Menu({
             </li>
           ))}
         </ul>
+        {version && (
+          <p className="muted small">{t('menu.version', { version })}</p>
+        )}
       </div>
       {open === 'accounts' && (
         <Accounts actions={actions} t={t} onClose={close} />
