@@ -21,7 +21,7 @@ import type {
   StatusPromise,
   UpdateParams
 } from '../types'
-import type { AccountsStatus, SessionsImport } from 'common/rakun/accounts'
+import type { AccountsStatus } from 'common/rakun/accounts'
 import type { FolderListing } from 'common/rakun/folders'
 import type { LoginInfo, LoginResult } from 'common/rakun/login'
 import type { StoreInfo } from 'common/rakun/stores'
@@ -76,7 +76,6 @@ interface AsyncIPCFunctions {
   listFolders: (path?: string) => FolderListing
   getAccounts: () => AccountsStatus
   logout: (runner: Runner) => Promise<void>
-  importSessionsFromRelic: () => Promise<SessionsImport>
   getLoginInfo: (runner: Runner) => Promise<LoginInfo>
   submitLogin: (runner: Runner, pasted: string) => Promise<LoginResult>
   requestAppSettings: () => AppSettings

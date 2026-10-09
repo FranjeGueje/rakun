@@ -16,7 +16,6 @@ const LOCAL_ONLY_CHANNELS: ReadonlySet<string> = new Set([
   'resetRakun',
   'stopRakun',
   'steamgriddb.setApiKey',
-  'importSessionsFromRelic',
   // Secrets and what is on the disk
   'getPrivateBranchPassword',
   'setPrivateBranchPassword',

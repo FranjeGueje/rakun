@@ -72,7 +72,6 @@ describe('isBlockedFromNetwork', () => {
       'resetRakun',
       'stopRakun',
       'steamgriddb.setApiKey',
-      'importSessionsFromRelic',
       'getPrivateBranchPassword',
       'setPrivateBranchPassword',
       'getLogContent',

@@ -1,6 +1,5 @@
 import type { GameInfo } from 'common/types'
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs'
-import { tmpdir } from 'os'
+import { mkdirSync, rmSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { getStore, RUNNERS, stores } from '..'
 import { tokenPath } from '../zoom/constants'
@@ -20,8 +19,7 @@ jest.mock('backend/constants/paths', () => {
   return {
     appDataPath: root,
     userDataPath: `${root}/rakun`,
-    appFolder: `${root}/rakun`,
-    toolsPath: `${root}/rakun/tools`
+    appFolder: `${root}/rakun`
   }
 })
 jest.mock('../legendary/user', () => ({
@@ -153,20 +151,6 @@ describe('GOG', () => {
     })
   })
 
-  test('copied credentials are accepted when the store knows the user', async () => {
-    jest.mocked(GOGUser.getUserDetails).mockResolvedValueOnce({} as never)
-    expect(await stores.gog.session.isAccepted()).toBe(true)
-    expect(gogStores.configStore.set).toHaveBeenCalledWith('isLoggedIn', true)
-
-    jest.mocked(GOGUser.getUserDetails).mockResolvedValueOnce(undefined)
-    expect(await stores.gog.session.isAccepted()).toBe(false)
-  })
-
-  test('discarding a copy logs out', () => {
-    stores.gog.session.discard([])
-    expect(GOGUser.logout).toHaveBeenCalled()
-  })
-
   test('its library carries the install info of the installed store', () => {
     jest
       .mocked(gogStores.libraryStore.get)
@@ -202,20 +186,6 @@ describe('Amazon', () => {
       name: 'cy'
     })
     expect(order).toEqual(['getUserData', 'isLoggedIn'])
-  })
-
-  test('the files to copy are the user file and the device key only', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'rakun-nile-'))
-    ;['current_user.json', 'abc.enc', 'installed.json', 'library.json'].forEach(
-      (name) => writeFileSync(join(dir, name), 'x')
-    )
-    mkdirSync(join(dir, 'SDK'))
-
-    expect(stores.nile.session.files(dir).sort()).toEqual([
-      'abc.enc',
-      'current_user.json'
-    ])
-    rmSync(dir, { recursive: true })
   })
 
   test('submitting before asking for the login says to ask first', async () => {
@@ -352,27 +322,10 @@ describe('store contract', () => {
     }
   )
 
-  test.each(all)(
-    '%s: its session files are plain names that include the main one',
-    (_id, s) => {
-      const dir = mkdtempSync(join(tmpdir(), 'rakun-contract-'))
-      writeFileSync(join(dir, s.session.main), 'x')
-
-      const files = s.session.files(dir)
-
-      expect(files).toContain(s.session.main)
-      files.forEach((file) => expect(file).not.toMatch(/[\\/]/))
-      rmSync(dir, { recursive: true })
-    }
-  )
-
   test.each(all)('%s: can log in and out', (_id, s) => {
     expect(s.login.urlParam).not.toBe('')
-    ;[
-      s.login.start,
-      s.login.submit,
-      s.session.logout,
-      s.session.isAccepted
-    ].forEach((fn) => expect(typeof fn).toBe('function'))
+    ;[s.login.start, s.login.submit, s.session.logout].forEach((fn) =>
+      expect(typeof fn).toBe('function')
+    )
   })
 })

@@ -34,7 +34,6 @@ It writes `~/.config/systemd/user/rakun.service` (`Restart=on-failure`) and runs
 | Command                            | What it does                                                    |
 | ---------------------------------- | --------------------------------------------------------------- |
 | `login <store>` / `logout <store>` | log in (paste what the browser ends on) / out                   |
-| `import-relic`                     | copy the sessions of Relic (`~/.config/relic`)                  |
 | `helpers`                          | which helper binaries are installed                             |
 | `helpers update [--latest]`        | download the missing ones (`--latest`: newest, **not checked**) |
 

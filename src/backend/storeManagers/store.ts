@@ -5,18 +5,8 @@ import type { LoginInfo, LoginResult } from 'common/rakun/login'
 
 /** How a store keeps its session on disk and how to check or end it */
 export interface StoreSession {
-  /** Folder where the store keeps its credentials (Relic uses the same layout) */
-  dir: string
-  /** File inside `dir` whose presence means there is a session */
-  main: string
-  /** Credential files to copy, by name, from `dir` in Relic's config */
-  files: (rakunDir: string) => string[]
   /** Who is logged in, from local data only (no network) */
   account: () => AccountStatus
-  /** Asks the store whether the credentials just copied are accepted */
-  isAccepted: () => Promise<boolean>
-  /** Undoes a copy the store did not accept */
-  discard: (copied: string[]) => void
   logout: () => Promise<void>
 }
 

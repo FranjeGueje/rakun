@@ -2,7 +2,6 @@
 import './system'
 import './folders'
 import './accounts'
-import './import_sessions'
 import './settings'
 import './games'
 import './library'

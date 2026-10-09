@@ -44,7 +44,6 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   'getAccounts',
   'listFolders',
   'logout',
-  'importSessionsFromRelic',
   'getLoginInfo',
   'submitLogin',
   // Settings and status

@@ -38,7 +38,6 @@ With rakun installed, `rakunctl` (or `pnpm start:ctl` from the repository) saves
 | choose web and port                | `rakunctl start --web local\|network\|off --port N` (or `config webAccess`)                                                   |
 | see if it is alive                 | `rakunctl status` (says "rakun is stopped" if it is not)                                                                      |
 | log in                             | `rakunctl login gog` (epic, gog, amazon, zoom)                                                                                |
-| bring the sessions of Relic        | `rakunctl import-relic`                                                                                                       |
 | list the library                   | `rakunctl library [store] [--installed]`                                                                                      |
 | refresh it and wait                | `rakunctl refresh [store]`                                                                                                    |
 | install                            | `rakunctl install gog <appName> [--path DIR] [--lang CODE] [--skip-dlcs] [--platform windows\|linux]`                         |
