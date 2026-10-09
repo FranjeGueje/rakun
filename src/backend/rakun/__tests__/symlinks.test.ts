@@ -52,13 +52,11 @@ jest.mock('backend/constants/environment', () => ({
 jest.mock('backend/constants/paths', () => ({
   appFolder: '/mock/rakun',
   userDataPath: '/mock/userdata',
-  toolsPath: '/mock/tools',
   rakunMountPath: '/mock/mount',
   rakunInstallPath: '/mock/games',
   rakunGamesPath: '/mock/games',
   rakunRunnerPath: '/mock/runner',
   configPath: '/mock/config.json',
-  rakunIconFolder: '/mock/icons',
   fixesPath: '/mock/fixes',
   publicDir: '/mock/public',
   webviewPreloadPath: '/mock/webview.js',

@@ -47,7 +47,6 @@ import { LegendaryCommand } from './commands'
 import { installCommand } from './install_command'
 import thirdParty from './thirdParty'
 import { Path } from 'backend/schemas'
-import { configStore } from 'backend/constants/key_value_stores'
 import { epicRedistPath, legendaryInstalled } from './constants'
 
 export default class LegendaryGame implements Game {
@@ -135,18 +134,7 @@ export default class LegendaryGame implements Game {
   }
 
   private async getExtraFromAPI(slug: string): Promise<ExtraInfo | null> {
-    let lang = configStore.get('language', '')
-    if (lang === 'pt') {
-      lang = 'pt-BR'
-    }
-    if (lang === 'zh_Hans') {
-      lang = 'zh-CN'
-    }
-    if (lang === 'es') {
-      lang = 'es-ES'
-    }
-
-    const epicUrl = `https://store-content.ak.epicgames.com/api/${lang}/content/products/${slug}`
+    const epicUrl = `https://store-content.ak.epicgames.com/api/en-US/content/products/${slug}`
 
     try {
       const { data } = await axios({ method: 'GET', url: epicUrl })

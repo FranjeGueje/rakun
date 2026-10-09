@@ -19,7 +19,7 @@ rakun/server  ──►  ipc.ts  (registry of handlers and events, no Electron)
 
 | Path                                                                                              | What it is                                                               |
 | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `src/backend/rakun/main.ts`, `daemon.ts`                                                          | Startup: logger, migrations, stores, server, download queue              |
+| `src/backend/rakun/main.ts`, `daemon.ts`                                                          | Startup: logger, stores, server, download queue                          |
 | `src/backend/ipc.ts`                                                                              | `addHandler` / `addListener` / `sendFrontendMessage` over in-memory maps |
 | `src/backend/rakun/server/`                                                                       | HTTP server, token, web access rules, `allowlist.ts`, static web         |
 | `src/backend/rakun/api/`                                                                          | The handlers every client uses (including the windowless login)          |

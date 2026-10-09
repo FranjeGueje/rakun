@@ -9,7 +9,6 @@ import { callAbortController } from 'backend/utils/aborthandler/aborthandler'
 import { onConnectivityChange } from 'backend/online_monitor'
 
 const downloadManager = new TypeCheckedStoreBackend('downloadManager', {
-  cwd: 'store',
   name: 'download-manager'
 })
 

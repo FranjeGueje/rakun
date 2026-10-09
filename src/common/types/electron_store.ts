@@ -2,10 +2,8 @@ import { Get } from 'type-fest'
 
 import {
   InstalledInfo,
-  UserInfo,
   DMQueueElement,
   GOGLoginData,
-  AppSettings,
   UploadedLogData
 } from 'common/types'
 import { UserData } from 'common/types/gog'
@@ -13,27 +11,6 @@ import { NileUserData } from './nile'
 import { ZoomCredentials } from './zoom'
 
 export interface StoreStructure {
-  configStore: {
-    userHome: string
-    userInfo: UserInfo
-    theme: string
-    zoomPercent: number
-    contentFontFamily: string
-    actionsFontFamily: string
-    allTilesInColor: boolean
-    titlesAlwaysVisible: boolean
-    disableDialogBackdropClose: boolean
-    language: string
-    'general-logs': {
-      currentLogFile: string
-      lastLogFile: string
-      legendaryLogFile: string
-      gogdlLogFile: string
-      nileLogFile: string
-    }
-    settings: AppSettings
-    skipVcRuntime: boolean
-  }
   gogInstalledGamesStore: {
     installed: InstalledInfo[]
   }
@@ -81,9 +58,6 @@ export interface StoreStructure {
     [appName: string]: string
   }
   uploadedLogs: Record<string, UploadedLogData>
-  migrationsStore: {
-    appliedMigrations: string[]
-  }
   gameOverridesStore: {
     overrides: Record<
       string,
