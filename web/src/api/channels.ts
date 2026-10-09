@@ -29,6 +29,7 @@ export type CallMap = {
   refreshLibrary: { args: [Runner | 'all']; result: null }
   checkGameUpdates: { args: []; result: string[] }
   requestAppSettings: { args: []; result: AppSettings }
+  getRakunVersion: { args: []; result: string }
   install: { args: [InstallParams]; result: null }
   updateGame: { args: [UpdateParams]; result: null }
   // `error` when the store reported one; the library is what says whether it worked

@@ -28,18 +28,14 @@ const cachePath = join(
   appName
 )
 export const storeCachePath = join(cachePath, 'store_cache')
-export const imagesCachePath = join(cachePath, 'images-cache')
 
 export const userHome = homedir()
 
 export const appFolder = join(configFolder, appName)
 // Mirrors Electron's `app.getPath('userData')`: appData + app.getName().
 export const userDataPath = join(appDataPath, appName)
-export const toolsPath = join(appFolder, 'tools')
 export const configPath = join(appFolder, 'config.json')
-export const rakunIconFolder = join(appFolder, 'icons')
 export const rakunInstallPath = join(userHome, 'Games', 'Rakun')
-export const fixesPath = join(appFolder, 'fixes')
 export const rakunRunnerPath = join(
   userHome,
   '.local',

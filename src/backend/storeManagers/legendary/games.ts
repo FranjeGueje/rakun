@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync } from 'fs'
+import { existsSync } from 'fs'
 import axios from 'axios'
 
 import {
@@ -12,7 +12,6 @@ import {
 import { GlobalConfig } from '../../config'
 import { libraryManagerMap } from '..'
 import {
-  downloadFile,
   killPattern,
   moveOnUnix,
   sendGameStatusUpdate,
@@ -26,7 +25,6 @@ import {
   createGameLogWriter
 } from 'backend/logger'
 
-import { join } from 'path'
 import { gameInfoStore } from './electronStores'
 import {
   onGameInstalled,
@@ -45,10 +43,8 @@ import {
 } from './commands/base'
 import { LegendaryCommand } from './commands'
 import { installCommand } from './install_command'
-import thirdParty from './thirdParty'
 import { Path } from 'backend/schemas'
-import { configStore } from 'backend/constants/key_value_stores'
-import { epicRedistPath, legendaryInstalled } from './constants'
+import { legendaryInstalled } from './constants'
 
 export default class LegendaryGame implements Game {
   private readonly appName: LegendaryAppName
@@ -135,18 +131,7 @@ export default class LegendaryGame implements Game {
   }
 
   private async getExtraFromAPI(slug: string): Promise<ExtraInfo | null> {
-    let lang = configStore.get('language', '')
-    if (lang === 'pt') {
-      lang = 'pt-BR'
-    }
-    if (lang === 'zh_Hans') {
-      lang = 'zh-CN'
-    }
-    if (lang === 'es') {
-      lang = 'es-ES'
-    }
-
-    const epicUrl = `https://store-content.ak.epicgames.com/api/${lang}/content/products/${slug}`
+    const epicUrl = `https://store-content.ak.epicgames.com/api/en-US/content/products/${slug}`
 
     try {
       const { data } = await axios({ method: 'GET', url: epicUrl })
@@ -343,14 +328,6 @@ export default class LegendaryGame implements Game {
   // used when downloading games, store the download size read from Legendary's output
   private currentDownloadSize: number | undefined
 
-  getCurrentDownloadSize() {
-    return this.currentDownloadSize
-  }
-
-  setCurrentDownloadSize(size: number) {
-    this.currentDownloadSize = size
-  }
-
   private defaultTmpProgres = () => ({
     bytes: '',
     eta: '',
@@ -530,20 +507,6 @@ export default class LegendaryGame implements Game {
     status: 'done' | 'error' | 'abort'
     error?: string
   }> {
-    const gameInfo = this.getGameInfo()
-    if (gameInfo.thirdPartyManagedApp) {
-      if (gameInfo.isEAManaged) {
-        return this.installEA(gameInfo, platformToInstall)
-      } else if (gameInfo.isUbisoftManaged) {
-        return this.installUbisoft(gameInfo, platformToInstall)
-      }
-
-      logError(
-        ['Third party app', gameInfo.thirdPartyManagedApp, 'not supported'],
-        LogPrefix.Legendary
-      )
-      return { status: 'error' }
-    }
     const { maxWorkers } = GlobalConfig.get().getSettings()
     const info = await libraryManagerMap['legendary'].getInstallInfo(
       this.appName,
@@ -609,61 +572,7 @@ export default class LegendaryGame implements Game {
     return { status: 'done' }
   }
 
-  private async installEA(
-    gameInfo: GameInfo,
-    platformToInstall: string
-  ): Promise<{
-    status: 'done' | 'error' | 'abort'
-    error?: string
-  }> {
-    logInfo('Getting EA App installer', LogPrefix.Legendary)
-    const installerPath = join(epicRedistPath, 'EAappInstaller.exe')
-
-    if (!existsSync(epicRedistPath)) {
-      mkdirSync(epicRedistPath, { recursive: true })
-    }
-
-    if (!existsSync(installerPath)) {
-      try {
-        await downloadFile({
-          url: 'https://origin-a.akamaihd.net/EA-Desktop-Client-Download/installer-releases/EAappInstaller.exe',
-          dest: installerPath
-        })
-      } catch (e) {
-        return { status: 'error', error: `${String(e)}` }
-      }
-    }
-
-    await thirdParty.addInstalledGame(gameInfo.app_name, platformToInstall)
-
-    return { status: 'done' }
-  }
-
-  async installUbisoft(
-    gameInfo: GameInfo,
-    platformToInstall: string
-  ): Promise<{
-    status: 'done' | 'error' | 'abort'
-    error?: string
-  }> {
-    logInfo('Getting Ubisoft installer', LogPrefix.Legendary)
-
-    if (!existsSync(epicRedistPath)) {
-      mkdirSync(epicRedistPath, { recursive: true })
-    }
-
-    await thirdParty.addInstalledGame(gameInfo.app_name, platformToInstall)
-
-    return { status: 'done' }
-  }
-
   async uninstall(): Promise<ExecResult> {
-    const gameInfo = this.getGameInfo()
-    if (gameInfo.thirdPartyManagedApp) {
-      await thirdParty.removeInstalledGame(this.appName)
-      return { stdout: '', stderr: '' }
-    }
-
     const command: LegendaryCommand = {
       subcommand: 'uninstall',
       appName: this.appName,
@@ -752,10 +661,6 @@ export default class LegendaryGame implements Game {
       )
     }
     return res
-  }
-
-  isNative(): boolean {
-    return false
   }
 
   async forceUninstall() {

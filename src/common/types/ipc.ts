@@ -1,11 +1,7 @@
-import type { SystemInformation } from 'backend/utils/systeminfo'
-
 import type {
   AppSettings,
   ButtonOptions,
-  ConnectivityStatus,
   DialogType,
-  DiskSpaceData,
   DMQueueElement,
   DownloadManagerState,
   ExtraInfo,
@@ -15,13 +11,12 @@ import type {
   InstallInfo,
   InstallParams,
   InstallPlatform,
-  KnowFixesInfo,
   MoveGameArgs,
   Runner,
   StatusPromise,
   UpdateParams
 } from '../types'
-import type { AccountsStatus, SessionsImport } from 'common/rakun/accounts'
+import type { AccountsStatus } from 'common/rakun/accounts'
 import type { FolderListing } from 'common/rakun/folders'
 import type { LoginInfo, LoginResult } from 'common/rakun/login'
 import type { StoreInfo } from 'common/rakun/stores'
@@ -36,7 +31,6 @@ interface SyncIPCFunctions {
   clearCache: (library?: Runner) => void
   resetRakun: () => void
   stopRakun: () => void
-  'set-connectivity-online': () => void
   setSetting: (args: { key: keyof AppSettings; value: unknown }) => void
   resumeCurrentDownload: () => void
   pauseCurrentDownload: () => void
@@ -51,16 +45,11 @@ interface SyncIPCFunctions {
 // ts-prune-ignore-next
 interface AsyncIPCFunctions {
   kill: (appName: string, runner: Runner) => Promise<void>
-  checkDiskSpace: (folder: string) => Promise<DiskSpaceData>
   checkGameUpdates: () => Promise<string[]>
   getUpdateableGames: () => Promise<UpdateableGame[]>
   getHelpers: () => Promise<HelperInfo[]>
   updateHelpers: (args: { latest?: boolean }) => Promise<HelpersUpdate>
-  getEpicGamesStatus: () => Promise<boolean>
   getRakunVersion: () => string
-  getLegendaryVersion: () => Promise<string>
-  getGogdlVersion: () => Promise<string>
-  getNileVersion: () => Promise<string>
   getGameInfo: (appName: string, runner: Runner) => Promise<GameInfo | null>
   getExtraInfo: (appName: string, runner: Runner) => Promise<ExtraInfo | null>
   getGOGLinuxInstallersLangs: (appName: string) => Promise<string[]>
@@ -76,7 +65,6 @@ interface AsyncIPCFunctions {
   listFolders: (path?: string) => FolderListing
   getAccounts: () => AccountsStatus
   logout: (runner: Runner) => Promise<void>
-  importSessionsFromRelic: () => Promise<SessionsImport>
   getLoginInfo: (runner: Runner) => Promise<LoginInfo>
   submitLogin: (runner: Runner, pasted: string) => Promise<LoginResult>
   requestAppSettings: () => AppSettings
@@ -94,27 +82,16 @@ interface AsyncIPCFunctions {
   moveInstall: (args: MoveGameArgs) => Promise<void>
   importGame: (args: ImportGameArgs) => StatusPromise
   updateGame: (args: UpdateParams) => Promise<void>
-  changeInstallPath: (args: MoveGameArgs) => Promise<void>
-  isNative: (args: { appName: string; runner: Runner }) => boolean
   getLogContent: (args: GetLogFileArgs) => string
-  getKnownFixes: (appName: string, runner: Runner) => KnowFixesInfo | null
   getDMQueueInformation: () => {
     elements: DMQueueElement[]
     finished: DMQueueElement[]
     state: DownloadManagerState
   }
-  'get-connectivity-status': () => {
-    status: ConnectivityStatus
-    retryIn: number
-  }
-  getSystemInfo: (cache?: boolean) => Promise<SystemInformation>
   isGameAvailable: (args: {
     appName: string
     runner: Runner
   }) => Promise<boolean>
-
-  setPrivateBranchPassword: (appName: string, password: string) => void
-  getPrivateBranchPassword: (appName: string) => string
 
   'steamgriddb.hasApiKey': () => Promise<boolean>
   'steamgriddb.setApiKey': (key: string) => Promise<void>
@@ -133,10 +110,6 @@ interface FrontendMessages {
     state: DownloadManagerState
   ) => void
   refreshLibrary: (runner?: Runner) => void
-  'connectivity-changed': (status: {
-    status: ConnectivityStatus
-    retryIn: number
-  }) => void
   pushGameToLibrary: (info: GameInfo) => void
   progressUpdate: (progress: GameStatus) => void
   helpersProgress: (line: string) => void

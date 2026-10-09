@@ -106,9 +106,6 @@ export interface GameInfo {
   save_path?: string
   title: string
   canRunOffline: boolean
-  thirdPartyManagedApp?: string
-  isEAManaged?: boolean
-  isUbisoftManaged?: boolean
   is_mac_native?: boolean
   is_linux_native?: boolean
   /** The store has a Windows build (GOG, Zoom): with a Linux one too, the client lets the user choose */
@@ -186,8 +183,6 @@ export interface InstalledInfo {
   install_path: string
   install_size: string
   is_dlc: boolean
-  isDosbox?: boolean
-  dosboxConf?: string[]
   version: string
   platform: InstallPlatform
   appName?: string
@@ -313,13 +308,6 @@ export interface MoveGameArgs {
   runner: Runner
 }
 
-export interface DiskSpaceData {
-  free: number
-  diskSize: number
-  message: string
-  validPath: boolean
-}
-
 export type StatusPromise = Promise<{ status: 'done' | 'error' | 'abort' }>
 
 export type DownloadManagerState = 'idle' | 'running' | 'paused' | 'stopped'
@@ -330,24 +318,6 @@ export type InstallInfo =
   | NileInstallInfo
   | ZoomInstalledInfo
   | ZoomInstallInfo
-
-export interface KnowFixesInfo {
-  title: string
-  notes?: Record<string, string>
-  winetricks?: string[]
-  runInPrefix?: string[]
-  envVariables?: Record<string, string>
-  wikiLink?: string
-}
-
-export interface UploadedLogData {
-  // Descriptive name of the log file (e.g. "Game log of ...")
-  name: string
-  // Token to modify the file (used to delete the log file on the server)
-  token: string
-  // Time the log file was uploaded (used to know whether it expired)
-  uploadedAt: number
-}
 
 export interface SGDBGrid {
   id: number

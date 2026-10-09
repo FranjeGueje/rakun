@@ -41,8 +41,6 @@ import {
   vendorNameCache
 } from './utils/systeminfo/gpu/pci_ids'
 import type { AppSettings } from 'common/types'
-import { configStore } from './constants/key_value_stores'
-import { rakunIconFolder, toolsPath } from './constants/paths'
 import { helperExists, helperFile } from './rakun/helpers/locations'
 
 import { gogdlAuthConfig } from './storeManagers/gog/constants'
@@ -331,13 +329,9 @@ export function createNecessaryFolders() {
   // does a bare writeFileSync, neither of which creates the directory. Their
   // stores would create it, but only on a write that happens after login.
   // legendary and nile don't need this, their binaries makedirs on their own.
-  const defaultFolders = [
-    rakunIconFolder,
-    dirname(gogdlAuthConfig),
-    dirname(zoomTokenPath)
-  ]
+  const defaultFolders = [dirname(gogdlAuthConfig), dirname(zoomTokenPath)]
 
-  ;[...defaultFolders, toolsPath].forEach((folder: string) => {
+  defaultFolders.forEach((folder: string) => {
     if (!existsSync(folder)) {
       mkdirSync(folder, { recursive: true })
     }
@@ -701,10 +695,6 @@ export const writeConfig = (config: Partial<AppSettings>) => {
 
   GlobalConfig.get().set(config as AppSettings)
   GlobalConfig.get().flush()
-  const currentConfigStore = configStore.get_nodefault('settings')
-  if (currentConfigStore) {
-    configStore.set('settings', { ...currentConfigStore, ...config })
-  }
 }
 
 export {

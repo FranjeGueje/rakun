@@ -8,6 +8,10 @@
 
 rakun **no es un lanzador**. Nunca ejecuta tus juegos: lo hace Steam. Lo suyo es todo lo anterior: iniciar sesión, descargar, actualizar, reparar, desinstalar y conectar el juego con Steam.
 
+![La web de rakun: tu biblioteca de todas las tiendas en una sola cuadrícula](docs/images/main.png)
+
+**rakun es un backend.** Es un pequeño servicio sin ventana propia, y su interfaz es una página web que sirve él mismo. Cualquier navegador es un cliente: ábrela en la misma máquina o (cuando lo permites, ver [Configuration](docs/Configuration.md#web-access), en inglés) desde tu móvil u otro ordenador de tu red doméstica, elige un juego y rakun lo instala en la máquina que tiene Steam. También hay `rakunctl` para la terminal y la [API HTTP](API.md) para tus propios clientes.
+
 ## Qué hace
 
 - Inicia sesión en **Epic, GOG, Amazon y Zoom** (pegas el código en el que acaba tu navegador; no hay navegador embebido)
@@ -37,7 +41,13 @@ rakun es un fork de [Relic](https://github.com/FranjeGueje/Relic), que a su vez 
 
 ## Instalar
 
-Todavía no hay versión para descargar, así que la compilas tú (ver [Compilar](#compilar)) y la instalas:
+Instalación rápida de la última versión (x64, bash):
+
+```bash
+V=$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/FranjeGueje/rakun/releases/latest); V=${V##*/}; curl -fsSL https://raw.githubusercontent.com/FranjeGueje/rakun/$V/scripts/install.sh | bash -s -- https://github.com/FranjeGueje/rakun/releases/download/$V/rakun-${V#v}-linux-x64.tar.gz
+```
+
+O compílala tú (ver [Compilar](#compilar)) e instálala:
 
 ```bash
 pnpm package          # crea dist/rakun-<versión>-linux-<arq>.tar.gz
@@ -57,6 +67,8 @@ rakunctl install gog <nombre> # instala uno: aparece en Steam
 ```
 
 ¿Prefieres el ratón? Abre **http://127.0.0.1:17370** en un navegador de la misma máquina.
+
+![Instalar un juego desde la web: versión de Windows o de Linux, o importar una carpeta](docs/images/install.png)
 
 Para juegos de Windows, instala [GE-Proton](https://github.com/GloriousEggroll/proton-ge-custom) y, una vez por juego, elígelo en las propiedades del juego en Steam → Compatibilidad. Los instaladores de Windows de Zoom necesitan una sesión de escritorio.
 

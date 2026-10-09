@@ -19,16 +19,11 @@ import {
   InstallProgress
 } from 'common/types'
 import { existsSync, rmSync } from 'fs'
-import {
-  installedGamesStore,
-  playtimeSyncQueue,
-  privateBranchesStore
-} from './electronStores'
+import { installedGamesStore } from './electronStores'
 import {
   logError,
   logInfo,
   LogPrefix,
-  logWarning,
   createGameLogWriter
 } from 'backend/logger'
 import { GOGUser } from './user'
@@ -42,8 +37,6 @@ import {
 import { GogInstallPlatform } from 'common/types/gog'
 import { sendFrontendMessage } from '../../ipc'
 import { Game, RemoveArgs } from 'common/types/game_manager'
-import axios, { AxiosError } from 'axios'
-import { isOnline, runOnceWhenOnline } from 'backend/online_monitor'
 import { downloadArgs } from './download_args'
 import { wantsDlcs } from '../dlcs'
 import {
@@ -283,8 +276,7 @@ export default class GOGGame implements Game {
       language: installLanguage,
       build,
       branch,
-      maxWorkers,
-      branchPassword: privateBranchesStore.get(this.id, '')
+      maxWorkers
     })
 
     const onOutput = (data: string) => {
@@ -386,15 +378,6 @@ export default class GOGGame implements Game {
     return { status: 'done' }
   }
 
-  isNative(): boolean {
-    const gameInfo = this.getGameInfo()
-    if (isLinux && gameInfo.install.platform === 'linux') {
-      return true
-    }
-
-    return false
-  }
-
   async moveInstall(
     newInstallPath: string
   ): Promise<{ status: 'done' } | { status: 'error'; error: string }> {
@@ -436,8 +419,6 @@ export default class GOGGame implements Game {
     if (!credentials) {
       return { stderr: 'Unable to repair game, no credentials', stdout: '' }
     }
-    const privateBranchPassword = privateBranchesStore.get(this.id, '')
-
     // Most of the data provided here is discarded and read from manifest instead
     const commandParts = [
       'repair',
@@ -454,10 +435,6 @@ export default class GOGGame implements Game {
       '-b=' + gameData.install.buildId,
       ...workers
     ]
-
-    if (privateBranchPassword.length) {
-      commandParts.push('--password', privateBranchPassword)
-    }
 
     const repairLogWriter = createGameLogWriter(this.id, 'gog', 'repair')
     const res = await libraryManagerMap['gog'].runRunnerCommand(commandParts, {
@@ -533,8 +510,6 @@ export default class GOGGame implements Game {
       installedDlcs.filter((dlc) => !updateOverwrites.dlcs?.includes(dlc))
     }
 
-    const privateBranchPassword = privateBranchesStore.get(this.id, '')
-
     const overwrittenBuild: string[] = updateOverwrites?.build
       ? ['--build', updateOverwrites.build]
       : []
@@ -575,10 +550,6 @@ export default class GOGGame implements Game {
       ...overwrittenBuild,
       ...overwrittenBranch
     ]
-    if (privateBranchPassword.length) {
-      commandParts.push('--password', privateBranchPassword)
-    }
-
     const onOutput = (data: string) => {
       this.onInstallOrUpdateOutput('updating', data)
     }
@@ -734,95 +705,5 @@ export default class GOGGame implements Game {
       }
       resolve(false)
     })
-  }
-
-  async updateGOGPlaytime(startPlayingDate: Date, finishedPlayingDate: Date) {
-    // Let server know about new session
-    const sessionDate = Math.floor(startPlayingDate.getTime() / 1000) // In seconds
-    const time = Math.floor(
-      (finishedPlayingDate.getTime() - startPlayingDate.getTime()) / 1000 / 60
-    ) // In minutes
-
-    // It makes no sense to post 0 minutes of playtime
-    if (time < 1) {
-      return
-    }
-
-    const data = {
-      session_date: sessionDate,
-      time
-    }
-    const credentials = await GOGUser.getCredentials()
-
-    if (!credentials) {
-      logWarning(['Unable to post session, credentials not present'], {
-        prefix: LogPrefix.Gog
-      })
-      return
-    }
-
-    if (!isOnline()) {
-      logWarning(['App offline, unable to post new session at this time'], {
-        prefix: LogPrefix.Gog
-      })
-      const alreadySetData = playtimeSyncQueue.get(credentials.user_id, [])
-      alreadySetData.push({ ...data, appName: this.id })
-      playtimeSyncQueue.set(credentials.user_id, alreadySetData)
-      runOnceWhenOnline(() => libraryManagerMap['gog'].syncQueuedPlaytime())
-      return
-    }
-
-    const response = await libraryManagerMap['gog']
-      .postPlaytimeSession({
-        ...data,
-        appName: this.id
-      })
-      .catch(() => null)
-
-    if (!response || response.status !== 201) {
-      logError('Failed to post session', { prefix: LogPrefix.Gog })
-      const alreadySetData = playtimeSyncQueue.get(credentials.user_id, [])
-      alreadySetData.push({ ...data, appName: this.id })
-      playtimeSyncQueue.set(credentials.user_id, alreadySetData)
-      return
-    }
-
-    logInfo('Posted session to gameplay.gog.com', { prefix: LogPrefix.Gog })
-  }
-
-  async getGOGPlaytime(): Promise<number | undefined> {
-    if (!isOnline()) {
-      return
-    }
-    const credentials = await GOGUser.getCredentials()
-
-    if (!credentials) {
-      return
-    }
-    const response = await axios
-      .get(
-        `https://gameplay.gog.com/games/${this.id}/users/${credentials.user_id}/sessions`,
-        {
-          headers: {
-            Authorization: `Bearer ${credentials.access_token}`
-          }
-        }
-      )
-      .catch((e: AxiosError) => {
-        logWarning(['Failed attempt to get playtime of', this.id, e.toJSON()], {
-          prefix: LogPrefix.Gog
-        })
-        return null
-      })
-
-    return response?.data?.time_sum
-  }
-
-  getBranchPassword(): string {
-    return privateBranchesStore.get(this.id, '')
-  }
-
-  setBranchPassword(password: string): void {
-    privateBranchesStore.set(this.id, password)
   }
 }

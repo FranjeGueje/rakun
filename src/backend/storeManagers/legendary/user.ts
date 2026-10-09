@@ -7,7 +7,6 @@ import { userInfo as user } from 'os'
 import { libraryManagerMap } from '..'
 import { LegendaryCommand } from './commands'
 import { NonEmptyString } from './commands/base'
-import { configStore } from 'backend/constants/key_value_stores'
 import { legendaryUserInfo } from './constants'
 
 export class LegendaryUser {
@@ -67,7 +66,6 @@ export class LegendaryUser {
       return
     }
 
-    configStore.delete('userInfo')
     clearCache('legendary')
   }
 
@@ -77,7 +75,6 @@ export class LegendaryUser {
 
   public static getUserInfo(): UserInfo | undefined {
     if (!LegendaryUser.isLoggedIn()) {
-      configStore.delete('userInfo')
       return
     }
     try {
@@ -88,7 +85,6 @@ export class LegendaryUser {
         displayName: userInfoObject.displayName,
         user: user().username
       }
-      configStore.set('userInfo', info)
       return info
     } catch (error) {
       logError(

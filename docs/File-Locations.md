@@ -5,8 +5,7 @@
 ├── api.json                 — API port and token (mode 0600)
 ├── config.json              — Settings
 ├── steam_shortcuts.json     — Games added to Steam
-├── store/                   — Timestamps, download queue
-├── icons/, tools/           — Game icons, helper tools
+├── download-manager.json    — Download queue
 ├── legendaryConfig/         — Epic login + installed.json
 ├── gogdlConfig/, gog_store/ — GOG login + installed.json
 ├── nile_config/, nile_store/— Amazon login + installed.json

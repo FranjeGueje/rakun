@@ -1,11 +1,9 @@
-import { readdirSync, rmSync } from 'fs'
 import type { NileLoginData } from 'common/types/nile'
 import type { Store } from '../store'
 import { withLiveInfo } from '../library_view'
 import NileLibraryManager from './library'
 import { NileUser } from './user'
 import { libraryStore } from './electronStores'
-import { nileConfigPath } from './constants'
 
 const library = new NileLibraryManager()
 
@@ -37,21 +35,11 @@ export const nile: Store<NileLibraryManager> = {
   library,
   readLibrary: () => withLiveInfo(library, libraryStore.get('library', [])),
   session: {
-    dir: nileConfigPath,
-    main: 'current_user.json',
-    // The device key (.enc) sits next to the user file
-    files: (rakunDir) => [
-      'current_user.json',
-      ...readdirSync(rakunDir).filter((name) => name.endsWith('.enc'))
-    ],
     // getUserData fills in the stored user that isLoggedIn reads
     account: () => {
       const user = NileUser.getUserData()
       return { loggedIn: !!NileUser.isLoggedIn(), name: user?.name }
     },
-    isAccepted: () => Promise.resolve(!!NileUser.getUserData()),
-    discard: (copied) =>
-      copied.forEach((file) => rmSync(file, { force: true })),
     logout: () => NileUser.logout()
   },
   login: {

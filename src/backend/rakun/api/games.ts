@@ -5,7 +5,6 @@ import { GlobalConfig } from 'backend/config'
 import { isEpicServiceOffline, sendGameStatusUpdate } from 'backend/utils'
 import { uninstallGameCallback } from 'backend/utils/uninstaller'
 import { logError, logInfo, LogPrefix, logWarning } from 'backend/logger'
-import { readKnownFixes } from 'backend/rakun/known_fixes'
 import { isOnline } from 'backend/online_monitor'
 import { showDialogBoxModalAuto } from 'backend/dialog/dialog'
 import { callAbortController } from 'backend/utils/aborthandler/aborthandler'
@@ -251,29 +250,6 @@ addHandler('kill', async (event, appName, runner) => {
   return libraryManagerMap[runner].getGame(appName).stop()
 })
 
-addHandler('changeInstallPath', async (event, { appName, path, runner }) => {
-  await libraryManagerMap[runner].changeGameInstallPath(appName, path)
-  logInfo(
-    `Finished changing install path of ${appName} to ${path}.`,
-    LogPrefix.Backend
-  )
-})
-
-addHandler('isNative', (e, { appName, runner }) => {
-  return libraryManagerMap[runner].getGame(appName).isNative()
-})
-
-addHandler('getPrivateBranchPassword', (e, appName) =>
-  libraryManagerMap['gog'].getGame(appName).getBranchPassword()
-)
-addHandler('setPrivateBranchPassword', (e, appName, password) =>
-  libraryManagerMap['gog'].getGame(appName).setBranchPassword(password)
-)
-
 addListener('changeGameVersionPinnedStatus', (e, appName, runner, status) => {
   libraryManagerMap[runner].changeVersionPinnedStatus(appName, status)
 })
-
-addHandler('getKnownFixes', (e, appName, runner) =>
-  readKnownFixes(appName, runner)
-)

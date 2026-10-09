@@ -1,4 +1,4 @@
-import type { DMQueueElement, GameInfo, GameStatus, Runner } from 'common/types'
+import type { DMQueueElement, GameInfo, GameStatus } from 'common/types'
 import type { AccountsStatus } from 'common/rakun/accounts'
 import type { StoreInfo } from 'common/rakun/stores'
 import { storeLabel } from './stores'
@@ -65,11 +65,4 @@ export function progressLine({ progress }: GameStatus): string {
   if (!progress) return ''
   const percent = progress.percent === undefined ? '' : `${progress.percent}% `
   return `${percent}${progress.bytes} ${progress.eta ? `(${progress.eta} left)` : ''}`.trim()
-}
-
-export function sessionsImportText(
-  result: Record<Runner, string>,
-  stores: StoreInfo[]
-): string {
-  return stores.map(({ id, label }) => `${label}: ${result[id]}`).join('\n')
 }

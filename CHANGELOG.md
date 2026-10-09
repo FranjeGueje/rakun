@@ -2,6 +2,27 @@
 
 The history of Relic (and of the Heroic cleanup) lives in the `upstream` repository. The detailed notes of the versions before this first release are in the git history of this file.
 
+## 0.2.0 — Less inherited code
+
+A cleanup release: rakun only authenticates, downloads and installs, and adds to Steam, so what it did not need from Heroic and Relic is gone.
+
+### Removed
+
+- `importSessionsFromRelic` and `rakunctl import-relic`: rakun shares nothing with Relic.
+- API channels no client used: `getKnownFixes`, `getPrivateBranchPassword`, `setPrivateBranchPassword`, `isNative`, `getEpicGamesStatus`, `get-connectivity-status`, `set-connectivity-online`, `checkDiskSpace`, `changeInstallPath`, `getSystemInfo`, `getLegendaryVersion`, `getGogdlVersion` and `getNileVersion`, and the `connectivity-changed` event.
+- Epic games managed by EA App or Ubisoft Connect are no longer listed: rakun only fetched the launcher's installer and never installed the game.
+- The `json5` dependency.
+
+### Changed
+
+- The download queue is now `~/.config/rakun/download-manager.json`. A queue in the old `store/` folder is not migrated.
+- rakun no longer creates `icons/`, `tools/` or `store/` in `~/.config/rakun`.
+- The extra information of an Epic game (description, requirements) is asked for in `en-US`.
+
+### Added
+
+- The web shows the version of rakun at the end of the menu.
+
 ## 0.1.0 — First release
 
 rakun is a headless Linux service that logs in to your game stores, installs your games and adds them to Steam. It never launches a game: Steam does.

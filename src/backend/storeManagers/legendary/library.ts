@@ -4,8 +4,7 @@ import {
   GameInfo,
   CallRunnerOptions,
   ExecResult,
-  InstallPlatform,
-  LaunchOption
+  InstallPlatform
 } from 'common/types'
 import {
   InstalledJsonMetadata,
@@ -34,7 +33,6 @@ import { isOnline } from 'backend/online_monitor'
 import { LegendaryCommand } from './commands'
 import { LegendaryAppName, LegendaryPlatform } from './commands/base'
 import { Path } from 'backend/schemas'
-import thirdParty from './thirdParty'
 import { Entries } from 'type-fest'
 import { legendaryConfigPath, legendaryMetadata } from './constants'
 import { LibraryManager } from 'common/types/game_manager'
@@ -100,10 +98,7 @@ export default class LegendaryLibraryManager implements LibraryManager {
     }
 
     const res = await this.runRunnerCommand(
-      {
-        subcommand: 'list',
-        '--third-party': true
-      },
+      { subcommand: 'list' },
       {
         abortId: 'legendary-refresh'
       }
@@ -139,9 +134,6 @@ export default class LegendaryLibraryManager implements LibraryManager {
     } else {
       installedCache = []
     }
-
-    const thirdPartyGames = thirdParty.getInstalledGames()
-    installedCache.push(...thirdPartyGames)
 
     installedGames = new Map(installedCache)
   }
@@ -315,7 +307,7 @@ export default class LegendaryLibraryManager implements LibraryManager {
     }
 
     const res = await this.runRunnerCommand(
-      { subcommand: 'list', '--third-party': true },
+      { subcommand: 'list' },
       {
         abortId: 'legendary-check-updates',
         logMessagePrefix: 'Checking for game updates'
@@ -568,11 +560,6 @@ export default class LegendaryLibraryManager implements LibraryManager {
     const dlcs: string[] = []
     const FolderName = customAttributes?.FolderName
     const canRunOffline = customAttributes?.CanRunOffline?.value === 'true'
-    const thirdPartyManagedApp =
-      customAttributes?.ThirdPartyManagedApp?.value ||
-      customAttributes?.ThirdPartyManagedProvider?.value ||
-      undefined
-
     if (dlcItemList) {
       dlcItemList.forEach((v: { releaseInfo: { appId: string }[] }) => {
         if (v.releaseInfo && v.releaseInfo[0]) {
@@ -667,13 +654,6 @@ export default class LegendaryLibraryManager implements LibraryManager {
       save_path,
       title,
       canRunOffline,
-      thirdPartyManagedApp,
-      isEAManaged:
-        !!thirdPartyManagedApp &&
-        ['origin', 'the ea app'].includes(thirdPartyManagedApp.toLowerCase()),
-      isUbisoftManaged:
-        !!thirdPartyManagedApp &&
-        'ubisoftconnect' == thirdPartyManagedApp.toLowerCase(),
       is_linux_native: false,
       runner: 'legendary',
       store_url: formatEpicStoreUrl(title)
@@ -787,61 +767,6 @@ export default class LegendaryLibraryManager implements LibraryManager {
     }
 
     return commandParts
-  }
-
-  async getLaunchOptions(appName: string): Promise<LaunchOption[]> {
-    const gameInfo = this.getGameInfo(appName)
-    const installPlatform = gameInfo?.install.platform
-    if (!installPlatform || gameInfo.thirdPartyManagedApp) return []
-
-    const installInfo = await this.getInstallInfo(appName, installPlatform)
-    const launchOptions: LaunchOption[] = installInfo.game.launch_options
-
-    // Some DLCs are also launch-able
-    for (const dlc of installInfo.game.owned_dlc) {
-      const installedInfo = installedGames.get(dlc.app_name)
-      if (!installedInfo) continue
-
-      // If the DLC itself is executable, push it onto the list
-      if (installedInfo.executable) {
-        launchOptions.push({
-          type: 'dlc',
-          dlcAppName: dlc.app_name,
-          dlcTitle: dlc.title
-        })
-        // The one example we've found using this (Unreal Editor for Fortnite)
-        // suggests that we should not look at the AdditionalCommandLine custom
-        // attribute (below) if this is set
-        continue
-      }
-
-      // Otherwise, if it specifies additional commandline parameters to pass to
-      // the main game, add it as a basic launch option
-      let metadata
-      try {
-        metadata = this.loadGameMetadata(dlc.app_name)
-      } catch (e) {
-        logWarning(
-          [
-            'Failed to load DLC metadata for',
-            dlc.app_name,
-            '(base game is',
-            `${appName}):`,
-            e
-          ],
-          LogPrefix.Legendary
-        )
-      }
-      if (!metadata?.metadata.customAttributes?.AdditionalCommandLine) continue
-      launchOptions.push({
-        type: 'basic',
-        name: dlc.title,
-        parameters:
-          metadata.metadata.customAttributes.AdditionalCommandLine.value
-      })
-    }
-
-    return launchOptions
   }
 
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */

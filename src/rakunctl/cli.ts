@@ -3,7 +3,7 @@ import type { StoreInfo } from 'common/rakun/stores'
 import { Api, CliError, createApi, readCredentials } from './client'
 import { Command, Ctx, Options } from './context'
 import { call, events } from './commands/call'
-import { importRelic, login, logout, status } from './commands/accounts'
+import { login, logout, status } from './commands/accounts'
 import {
   importFolder,
   install,
@@ -43,7 +43,6 @@ Service
 Accounts
   login <store>                     Log in
   logout <store>                    Log out
-  import-relic                      Copy the sessions of Relic
 
 Library
   library [store] [--installed]     List the games
@@ -103,7 +102,6 @@ export const commands: Record<string, Command> = {
   status,
   login,
   logout,
-  'import-relic': importRelic,
   library,
   refresh,
   install,

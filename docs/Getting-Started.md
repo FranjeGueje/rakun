@@ -4,7 +4,13 @@ From nothing to a game in Steam. You need Linux, Steam and a terminal. Windows g
 
 ## 1. Install
 
-rakun has no public release yet, so you build the tarball yourself (see [Development](Development.md)):
+Install the latest release (x64, bash):
+
+```bash
+V=$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/FranjeGueje/rakun/releases/latest); V=${V##*/}; curl -fsSL https://raw.githubusercontent.com/FranjeGueje/rakun/$V/scripts/install.sh | bash -s -- https://github.com/FranjeGueje/rakun/releases/download/$V/rakun-${V#v}-linux-x64.tar.gz
+```
+
+Or build the tarball yourself (see [Development](Development.md)):
 
 ```bash
 git clone https://github.com/FranjeGueje/rakun.git && cd rakun
@@ -62,6 +68,8 @@ rakunctl install gog <appName>
 The command waits until it finishes. When it does, the game is in Steam. For a Windows game, open its properties in Steam → Compatibility and force GE-Proton once.
 
 You can do all of this in the web too: open `http://127.0.0.1:17370` in a browser on the same machine.
+
+![The install dialog of the web](images/install.png)
 
 ## Requirements
 

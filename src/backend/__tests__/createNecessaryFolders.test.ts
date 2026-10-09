@@ -7,12 +7,6 @@ jest.mock('fs', () => ({
 jest.mock('../logger')
 jest.mock('../dialog/dialog')
 
-jest.mock('backend/constants/paths', () => ({
-  ...jest.requireActual('backend/constants/paths'),
-  rakunIconFolder: '/config/rakun/icons',
-  toolsPath: '/config/rakun/tools'
-}))
-
 jest.mock('../storeManagers/gog/constants', () => ({
   gogdlAuthConfig: '/config/rakun/gog_store/auth.json'
 }))
@@ -33,14 +27,6 @@ beforeEach(() => {
 })
 
 describe('createNecessaryFolders', () => {
-  test('creates the icon and tools folders', () => {
-    createNecessaryFolders()
-
-    for (const folder of ['/config/rakun/icons', '/config/rakun/tools']) {
-      expect(mockedMkdirSync).toHaveBeenCalledWith(folder, { recursive: true })
-    }
-  })
-
   // Regression guard: gogdl writes auth.json with a plain open(path, 'w') and
   // never creates the directory. Without this folder, logging into GOG on a
   // fresh config crashes gogdl, which leaves Rakun with empty stdout and the

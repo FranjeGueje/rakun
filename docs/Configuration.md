@@ -6,7 +6,9 @@ rakunctl config protonPath            # read one
 rakunctl config protonPath <folder>   # change one
 ```
 
-Values are validated by rakun before they are saved; a wrong one is refused with the reason.
+Values are validated by rakun before they are saved; a wrong one is refused with the reason. The web has a menu with the main ones (download and Proton folders, SteamGridDB key, language), and the version of rakun at the end:
+
+![The menu of the web](images/settings.png)
 
 ## Settings
 
@@ -18,6 +20,7 @@ Values are validated by rakun before they are saved; a wrong one is refused with
 | `maxWorkers`                                   | `0`                     | Download workers; `0` lets the store tools decide. Integer up to your CPU count         |
 | `autoUpdateGames`                              | `true`                  | Update games automatically                                                              |
 | `steamGridDbApiKey`                            | empty                   | Key for the covers, see [User guide](User-Guide.md#steam-covers)                        |
+| `defaultSteamPath`                             | `~/.steam/steam`        | Steam folder rakun reads (`userdata`) when it adds a game to Steam                      |
 | `webAccess`                                    | `local`                 | Who can open the web, see below. Applies **when rakun restarts**                        |
 | `altLegendaryBin`, `altGogdlBin`, `altNileBin` | empty                   | Use another helper program instead of the downloaded one (empty or an existing file)    |
 

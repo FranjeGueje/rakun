@@ -1,4 +1,3 @@
-import { dirname } from 'path'
 import { existsSync } from 'fs'
 import type { Store } from '../store'
 import { withInstallInfo } from '../library_view'
@@ -28,15 +27,10 @@ export const zoom: Store<ZoomLibraryManager> = {
       installedGamesStore.get('installed', [])
     ),
   session: {
-    dir: dirname(tokenPath),
-    main: '.zoom.token',
-    files: () => ['.zoom.token'],
     account: () => ({
       loggedIn: existsSync(tokenPath) && !!configStore.get('isLoggedIn', false),
       name: configStore.get_nodefault('username')
     }),
-    isAccepted: async () => !!(await ZoomUser.getUserDetails()),
-    discard: () => ZoomUser.logout(),
     logout: () => Promise.resolve(ZoomUser.logout())
   },
   login: {

@@ -1,7 +1,7 @@
 import { hasDuplicates, uniqueInstalled } from '../installed_list'
 import { sendFrontendMessage } from '../../ipc'
 import { ZoomUser } from './user'
-import { GameInfo, InstalledInfo, ExecResult, LaunchOption } from 'common/types'
+import { GameInfo, InstalledInfo, ExecResult } from 'common/types'
 import {
   ZoomGameInfo,
   ZoomLibraryResponse,
@@ -19,7 +19,7 @@ import {
   LogPrefix,
   logWarning
 } from 'backend/logger'
-import { getFileSize, parseSize } from '../../utils'
+import { parseSize } from '../../utils'
 import CacheStore from '../../cache'
 import {
   libraryStore,
@@ -150,8 +150,7 @@ export default class ZoomLibraryManager implements LibraryManager {
       canRunOffline: true, // Assuming DRM-free as per zoom.py
       is_mac_native: zoomGame.operating_systems.includes('osx'),
       is_linux_native: zoomGame.operating_systems.includes('linux'),
-      is_windows_native: zoomGame.operating_systems.includes('windows'),
-      thirdPartyManagedApp: undefined
+      is_windows_native: zoomGame.operating_systems.includes('windows')
     }
     return object
   }
@@ -250,40 +249,6 @@ export default class ZoomLibraryManager implements LibraryManager {
     })
   }
 
-  async getExtras(appName: string) {
-    logDebug(`Fetching extras for Zoom ID ${appName}`, LogPrefix.Zoom)
-    try {
-      const filesRequest = await ZoomUser.makeRequest<ZoomFilesResponse>(
-        `${apiUrl}/li/game/${appName}/files`
-      )
-      const allExtras: {
-        name: string
-        url: string
-        filename: string
-        total_size: string
-      }[] = []
-
-      for (const extraType of ['manual', 'misc', 'soundtrack'] as const) {
-        const files = filesRequest[extraType] || []
-        for (const file of files) {
-          const downloadRequest = await ZoomUser.makeRequest<{ url: string }>(
-            `${apiUrl}/li/download/${file.id}`
-          )
-          allExtras.push({
-            name: file.name,
-            url: downloadRequest.url,
-            filename: file.name,
-            total_size: getFileSize(file.size)
-          })
-        }
-      }
-      return { extras: allExtras }
-    } catch (error) {
-      logError(['Error fetching Zoom extras:', error], LogPrefix.Zoom)
-      return { extras: [] }
-    }
-  }
-
   async getInstallers(
     platform: string,
     appName: string
@@ -326,12 +291,6 @@ export default class ZoomLibraryManager implements LibraryManager {
       logError(['Error fetching Zoom installers:', error], LogPrefix.Zoom)
       return []
     }
-  }
-
-  getLaunchOptions(): LaunchOption[] {
-    // The original zoom.py doesn't define specific launch options beyond the main executable.
-    // If Zoom games have multiple executables or launch parameters, this needs to be expanded.
-    return []
   }
 
   async changeGameInstallPath(

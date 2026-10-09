@@ -1,11 +1,7 @@
 import { TypeCheckedStoreBackend } from '../../electron_store'
 import CacheStore from '../../cache'
 import { GameInfo } from 'common/types'
-import {
-  GOGSessionSyncQueueItem,
-  GamesDBData,
-  GogInstallInfo
-} from 'common/types/gog'
+import { GamesDBData, GogInstallInfo } from 'common/types/gog'
 
 const installedGamesStore = new TypeCheckedStoreBackend(
   'gogInstalledGamesStore',
@@ -23,22 +19,10 @@ const apiInfoCache = new CacheStore<GamesDBData>('gog_api_info', 60 * 24)
 const libraryStore = new CacheStore<GameInfo[], 'games'>('gog_library', null)
 const installInfoStore = new CacheStore<GogInstallInfo>('gog_install_info')
 
-const privateBranchesStore = new TypeCheckedStoreBackend('gogPrivateBranches', {
-  cwd: 'gog_store',
-  name: 'privateBranches',
-  clearInvalidConfig: true
-})
-
-const playtimeSyncQueue = new CacheStore<Array<GOGSessionSyncQueueItem>>(
-  'gog_playtime_sync_queue'
-)
-
 export {
   configStore,
   installedGamesStore,
   apiInfoCache,
   libraryStore,
-  installInfoStore,
-  playtimeSyncQueue,
-  privateBranchesStore
+  installInfoStore
 }

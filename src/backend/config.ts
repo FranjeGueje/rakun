@@ -6,7 +6,6 @@ import { currentGlobalConfigVersion } from 'backend/constants/others'
 import { logError, logInfo, LogPrefix } from './logger'
 import { backendEvents } from './backend_events'
 import { detectGeProton, resolveProtonPath } from './rakun/proton'
-import { configStore } from './constants/key_value_stores'
 
 import {
   configPath,
@@ -234,8 +233,6 @@ class GlobalConfigV0 extends GlobalConfig {
 
   public setSetting(key: keyof AppSettings, value: unknown) {
     const config = this.getSettings()
-    const configStoreSettings = configStore.get_nodefault('settings') || config
-    configStore.set('settings', { ...configStoreSettings, [key]: value })
 
     const oldValue = config[key]
     config[key] = value as never

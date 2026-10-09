@@ -2,7 +2,7 @@ import { resolve } from 'path'
 import { CliError } from '../client'
 import { parseStore } from '../stores'
 import { libraryText, table } from '../format'
-import { importRelic, login, logout, status } from '../commands/accounts'
+import { login, logout, status } from '../commands/accounts'
 import { library, refresh } from '../commands/library'
 import {
   followGame,
@@ -146,23 +146,6 @@ describe('accounts commands', () => {
     const { ctx, calls } = fakeCtx()
     await logout(ctx, ['epic'], opts)
     expect(calls).toEqual([['logout', ['legendary']]])
-  })
-
-  test('import-relic prints each store', async () => {
-    const { ctx, lines } = fakeCtx({
-      importSessionsFromRelic: {
-        legendary: 'imported',
-        gog: 'missing',
-        nile: 'already',
-        zoom: 'invalid'
-      }
-    })
-
-    await importRelic(ctx, [], opts)
-
-    expect(lines[0]).toBe(
-      'Epic: imported\nGOG: missing\nAmazon: already\nZoom: invalid'
-    )
   })
 
   test('a missing argument is a usage error', async () => {

@@ -18,9 +18,7 @@ jest.mock('backend/storeManagers/legendary/constants', () => ({
   legendaryConfigPath: '/mock/legendary',
   legendaryInstalled: '/mock/legendary/installed.json',
   legendaryMetadata: '/mock/legendary/metadata',
-  legendaryUserInfo: '/mock/legendary/user.json',
-  thirdPartyInstalled: '/mock/legendary/third-party-installed.json',
-  epicRedistPath: '/mock/redist/legendary'
+  legendaryUserInfo: '/mock/legendary/user.json'
 }))
 
 jest.mock('backend/storeManagers/nile/constants', () => ({
@@ -52,14 +50,11 @@ jest.mock('backend/constants/environment', () => ({
 jest.mock('backend/constants/paths', () => ({
   appFolder: '/mock/rakun',
   userDataPath: '/mock/userdata',
-  toolsPath: '/mock/tools',
   rakunMountPath: '/mock/mount',
   rakunInstallPath: '/mock/games',
   rakunGamesPath: '/mock/games',
   rakunRunnerPath: '/mock/runner',
   configPath: '/mock/config.json',
-  rakunIconFolder: '/mock/icons',
-  fixesPath: '/mock/fixes',
   publicDir: '/mock/public',
   webviewPreloadPath: '/mock/webview.js',
   windowIcon: '/mock/icon.png',

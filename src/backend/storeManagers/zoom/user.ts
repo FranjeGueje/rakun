@@ -5,7 +5,7 @@ import { configStore } from './electronStores'
 import { isOnline } from '../../online_monitor'
 import { ZoomCredentials } from 'common/types/zoom'
 import { clearCache } from 'backend/utils'
-import { tokenPath, embedUrl, apiUrl } from './constants'
+import { tokenPath, apiUrl } from './constants'
 
 // isLoggedIn() is not a local check: it asks Zoom's API every time. Startup used
 // to hit `/li/loggedin` three times in about a second — twice from a single
@@ -194,9 +194,5 @@ export class ZoomUser {
         throw error
       })
     return response.data
-  }
-
-  public static getLoginUrl(): string {
-    return `${embedUrl}/login?li=relic&return_li_token=true`
   }
 }

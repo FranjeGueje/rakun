@@ -1,9 +1,9 @@
-import type { AccountsStatus, SessionsImport } from 'common/rakun/accounts'
+import type { AccountsStatus } from 'common/rakun/accounts'
 import type { LoginInfo, LoginResult } from 'common/rakun/login'
 import type { DMQueueElement } from 'common/types'
 import { CliError } from '../client'
 import { webLines } from '../web'
-import { accountsText, sessionsImportText } from '../format'
+import { accountsText } from '../format'
 import { parseStore } from '../stores'
 import type { HelperInfo } from 'common/rakun/helpers'
 import { helpersLine } from './helpers'
@@ -52,10 +52,4 @@ export const logout: Command = async (ctx, args) => {
   const store = parseStore(await ctx.stores(), requireArg(args, 0, 'store'))
   await ctx.api.call('logout', store.id)
   ctx.log(`Logged out of ${store.label}.`)
-}
-
-export const importRelic: Command = async (ctx) => {
-  const result = await ctx.api.call<SessionsImport>('importSessionsFromRelic')
-  const stores = await ctx.stores()
-  show(ctx, result, (value) => sessionsImportText(value, stores))
 }

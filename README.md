@@ -8,6 +8,10 @@
 
 rakun is **not a launcher**. It never runs your games: Steam does. rakun's job is everything before that: signing in, downloading, updating, repairing, uninstalling and wiring the game into Steam.
 
+![rakun's web: your library of every store in one grid](docs/images/main.png)
+
+**rakun is a backend.** It is a small service with no window of its own, and its interface is a web page it serves itself. Any browser is a client: open it on the same machine, or (when you allow it, see [Configuration](docs/Configuration.md#web-access)) from your phone or another computer on your home network, pick a game, and rakun installs it on the machine that runs Steam. There is also `rakunctl` for the terminal, and the [HTTP API](API.md) for your own clients.
+
 ## What it does
 
 - Signs in to **Epic, GOG, Amazon and Zoom** (you paste the code your browser ends on; no embedded browser)
@@ -37,7 +41,13 @@ rakun is a fork of [Relic](https://github.com/FranjeGueje/Relic), which is a Lin
 
 ## Install
 
-There is no release to download yet, so you build one (see [Build](#build)) and install it:
+Quick install of the latest release (x64, bash):
+
+```bash
+V=$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/FranjeGueje/rakun/releases/latest); V=${V##*/}; curl -fsSL https://raw.githubusercontent.com/FranjeGueje/rakun/$V/scripts/install.sh | bash -s -- https://github.com/FranjeGueje/rakun/releases/download/$V/rakun-${V#v}-linux-x64.tar.gz
+```
+
+Or build it yourself (see [Build](#build)) and install it:
 
 ```bash
 pnpm package          # makes dist/rakun-<version>-linux-<arch>.tar.gz
@@ -57,6 +67,8 @@ rakunctl install gog <name>   # install one: it appears in Steam
 ```
 
 Prefer the mouse? Open **http://127.0.0.1:17370** in a browser on the same machine.
+
+![Installing a game from the web: Windows or Linux build, or import a folder](docs/images/install.png)
 
 For Windows games, install [GE-Proton](https://github.com/GloriousEggroll/proton-ge-custom) and, once per game, choose it in the game's Steam properties → Compatibility. Zoom's Windows installers need a desktop session.
 

@@ -1,12 +1,8 @@
-import { configStore } from 'backend/constants/key_value_stores'
-import { userHome } from 'backend/constants/paths'
-import { LegendaryUser } from 'backend/storeManagers/legendary/user'
 import { GOGUser } from 'backend/storeManagers/gog/user'
 import { initStoreManagers } from 'backend/storeManagers'
 import { initQueue } from 'backend/downloadmanager/downloadqueue'
 import { initOnlineMonitor, runOnceWhenOnline } from 'backend/online_monitor'
 import { createNecessaryFolders, handleExit } from 'backend/utils'
-import MigrationSystem from 'backend/migration'
 import {
   init as initLogger,
   logError,
@@ -21,14 +17,6 @@ import './api'
 
 function refreshUserDetailsWhenOnline() {
   runOnceWhenOnline(() => {
-    if (!LegendaryUser.isLoggedIn()) {
-      logInfo('User Not Found, removing it from Store', {
-        prefix: LogPrefix.Backend,
-        forceLog: true
-      })
-      configStore.delete('userInfo')
-    }
-
     if (GOGUser.isLoggedIn()) {
       void GOGUser.getUserDetails()
     }
@@ -56,14 +44,11 @@ export async function startDaemon() {
   writeRunnerScript()
   createEosOverlayBat()
 
-  await MigrationSystem.get().applyMigrations()
-
   initOnlineMonitor()
   void initStoreManagers()
   refreshUserDetailsWhenOnline()
 
   createNecessaryFolders()
-  configStore.set('userHome', userHome)
 
   await startApiServer()
 

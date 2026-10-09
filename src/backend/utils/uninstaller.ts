@@ -1,12 +1,9 @@
 import { GlobalConfig } from 'backend/config'
-import { fixesPath } from 'backend/constants/paths'
 import { logError, logInfo, LogPrefix } from 'backend/logger'
 import { libraryManagerMap } from 'backend/storeManagers'
 import { sendGameStatusUpdate } from 'backend/utils'
 import { Runner } from 'common/types'
-import { storeMap } from 'common/utils'
 import { existsSync, rmSync } from 'fs'
-import { join } from 'path'
 
 const removePrefix = (appName: string, runner: Runner) => {
   const game = libraryManagerMap[runner].getGame(appName)
@@ -37,13 +34,6 @@ const removePrefix = (appName: string, runner: Runner) => {
   rmSync(installPath, { recursive: true })
 }
 
-const removeFixFile = (appName: string, runner: Runner) => {
-  const fixFilePath = join(fixesPath, `${appName}-${storeMap[runner]}.json`)
-  if (existsSync(fixFilePath)) {
-    rmSync(fixFilePath)
-  }
-}
-
 export const uninstallGameCallback = async (
   _e: unknown,
   appName: string,
@@ -71,7 +61,6 @@ export const uninstallGameCallback = async (
     if (shouldRemovePrefix) {
       removePrefix(appName, runner)
     }
-    removeFixFile(appName, runner)
 
     logInfo('Finished uninstalling', LogPrefix.Backend)
   }

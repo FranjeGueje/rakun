@@ -16,18 +16,14 @@ const LOCAL_ONLY_CHANNELS: ReadonlySet<string> = new Set([
   'resetRakun',
   'stopRakun',
   'steamgriddb.setApiKey',
-  'importSessionsFromRelic',
   // Secrets and what is on the disk
-  'getPrivateBranchPassword',
-  'setPrivateBranchPassword',
   'getLogContent',
   'listFolders',
   // Downloads programs that rakun then runs
   'updateHelpers',
   // Move or register game folders anywhere
   'importGame',
-  'moveInstall',
-  'changeInstallPath'
+  'moveInstall'
 ])
 
 export function isLoopback(address: string | undefined): boolean {
