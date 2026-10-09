@@ -1,6 +1,6 @@
 {
   "name": "rakun",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "license": "GPL-3.0-only",
   "description": "rakun - headless Linux games installer service for GOG, Epic Games, Amazon Games and Zoom",

@@ -73,6 +73,8 @@ Covers (header, portrait, hero, logo, icon) come from SteamGridDB and need your 
 
 ## The web
 
+![The library in the web](images/main.png)
+
 `http://127.0.0.1:17370` (library, game sheet, downloads, accounts, menu, helper binaries). It works with mouse, keyboard and gamepad. Who may open it is the `webAccess` setting, see [Configuration](Configuration.md#web-access).
 
 ## Logs and state
