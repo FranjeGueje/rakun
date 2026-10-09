@@ -1062,36 +1062,6 @@ export default class GOGLibraryManager implements LibraryManager {
     return infoFileData
   }
 
-  getExecutable(appName: string): string {
-    const jsonData = this.readInfoFile(appName)
-    if (!jsonData) {
-      throw new Error('No game metadata, cannot get executable')
-    }
-    const playTasks = jsonData.playTasks
-
-    let primary = playTasks.find((task) => task.isPrimary)
-
-    if (!primary) {
-      primary = playTasks[0]
-      if (!primary) {
-        throw new Error('No play tasks in game metadata')
-      }
-    }
-
-    if (primary.type === 'URLTask') {
-      throw new Error(
-        'Primary play task is an URL task, not sure what to do here'
-      )
-    }
-
-    const workingDir = primary.workingDir
-
-    if (workingDir) {
-      return join(workingDir, primary.path)
-    }
-    return primary.path
-  }
-
   /**
    * This function can be also used with outher stores
    * This endpoint doesn't require user to be authenticated.

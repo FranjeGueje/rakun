@@ -45,7 +45,7 @@ A store is a folder plus one line in the registry.
 1. In `src/backend/storeManagers/<store>/` create `library.ts` (a `LibraryManager`), `games.ts` (a `Game`), `user.ts` (the session) and `store.ts` (the `Store` descriptor of `storeManagers/store.ts`: id, name, how to read the library, session and login). `legendary/` and `gog/` are good models.
 2. Add the id to `Runner` in `src/common/types.ts`.
 3. Add it to `stores` in `storeManagers/index.ts` (the order is the one clients see).
-4. Run `pnpm codecheck`: the types point out what is missing (`RunnerToLogPrefixMap`, `LogPrefix`, `storeMap`, `STORE_CONFIGS`).
+4. Run `pnpm codecheck`: the types point out what is missing (`RunnerToLogPrefixMap`, `LogPrefix`, `STORE_CONFIGS`).
 5. Run `pnpm test`: the "store contract" test (`storeManagers/__tests__/store_adapters.test.ts`) checks every store in the registry.
 6. Review by hand what compares `runner` with `===` or `switch`: the Steam integration, the download queue, `runner_call.ts`, `utils.ts` and `rakun/api/games.ts`. `grep -rn "runner ===" src/backend` finds them.
 

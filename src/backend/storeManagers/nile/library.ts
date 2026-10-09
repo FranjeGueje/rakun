@@ -1,4 +1,3 @@
-import JSON5 from 'json5'
 import {
   LogPrefix,
   logDebug,
@@ -8,7 +7,6 @@ import {
 } from 'backend/logger'
 import { CallRunnerOptions, ExecResult, GameInfo } from 'common/types'
 import {
-  FuelSchema,
   NileGameDownloadInfo,
   NileGameInfo,
   NileInstallInfo,
@@ -141,33 +139,6 @@ export default class NileLibraryManager implements LibraryManager {
         )
       }
     }
-  }
-
-  /**
-   * Fetches and parses the game's `fuel.json` file
-   */
-  fetchFuelJSON(appName: string, installedPath?: string): FuelSchema | null {
-    const game = this.getGameInfo(appName)
-    const basePath = installedPath ?? game?.install.install_path
-    if (!basePath) {
-      logError(['Could not find install path for', appName], LogPrefix.Nile)
-      return null
-    }
-
-    const fuelJSONPath = join(basePath, 'fuel.json')
-    logDebug(['fuel.json path:', fuelJSONPath], LogPrefix.Nile)
-
-    if (!existsSync(fuelJSONPath)) {
-      return null
-    }
-
-    try {
-      return JSON5.parse(readFileSync(fuelJSONPath, 'utf-8'))
-    } catch (error) {
-      logError(['Could not read', `${fuelJSONPath}:`, error], LogPrefix.Nile)
-    }
-
-    return null
   }
 
   /**

@@ -328,14 +328,6 @@ export default class LegendaryGame implements Game {
   // used when downloading games, store the download size read from Legendary's output
   private currentDownloadSize: number | undefined
 
-  getCurrentDownloadSize() {
-    return this.currentDownloadSize
-  }
-
-  setCurrentDownloadSize(size: number) {
-    this.currentDownloadSize = size
-  }
-
   private defaultTmpProgres = () => ({
     bytes: '',
     eta: '',

@@ -19,7 +19,7 @@ import {
   LogPrefix,
   logWarning
 } from 'backend/logger'
-import { getFileSize, parseSize } from '../../utils'
+import { parseSize } from '../../utils'
 import CacheStore from '../../cache'
 import {
   libraryStore,
@@ -247,40 +247,6 @@ export default class ZoomLibraryManager implements LibraryManager {
       }
       installedGames.set(value.appName, value)
     })
-  }
-
-  async getExtras(appName: string) {
-    logDebug(`Fetching extras for Zoom ID ${appName}`, LogPrefix.Zoom)
-    try {
-      const filesRequest = await ZoomUser.makeRequest<ZoomFilesResponse>(
-        `${apiUrl}/li/game/${appName}/files`
-      )
-      const allExtras: {
-        name: string
-        url: string
-        filename: string
-        total_size: string
-      }[] = []
-
-      for (const extraType of ['manual', 'misc', 'soundtrack'] as const) {
-        const files = filesRequest[extraType] || []
-        for (const file of files) {
-          const downloadRequest = await ZoomUser.makeRequest<{ url: string }>(
-            `${apiUrl}/li/download/${file.id}`
-          )
-          allExtras.push({
-            name: file.name,
-            url: downloadRequest.url,
-            filename: file.name,
-            total_size: getFileSize(file.size)
-          })
-        }
-      }
-      return { extras: allExtras }
-    } catch (error) {
-      logError(['Error fetching Zoom extras:', error], LogPrefix.Zoom)
-      return { extras: [] }
-    }
   }
 
   async getInstallers(

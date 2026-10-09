@@ -5,7 +5,7 @@ import {
   sendProgressUpdate,
   moveOnUnix
 } from '../../utils'
-import { join, relative, dirname, basename } from 'node:path'
+import { join, relative, dirname } from 'node:path'
 import * as fs from 'fs'
 import axios, { AxiosProgressEvent } from 'axios'
 import { saveStreamToFile } from './download'
@@ -397,7 +397,6 @@ export default class ZoomGame implements Game {
 
     // After successful installation, we need to determine the actual executable path
     let isDosbox = false
-    let dosboxConf: string[] | undefined
     let finalExecutable = ''
 
     if (installPlatform === 'windows') {
@@ -409,7 +408,6 @@ export default class ZoomGame implements Game {
       )
 
       if (newConfFiles.length > 0) {
-        dosboxConf = newConfFiles
         const gameDirectory = dirname(newConfFiles[0])
         const dosboxExePath = await this.findDosboxExecutable(gameDirectory)
         if (dosboxExePath) {
@@ -428,7 +426,6 @@ export default class ZoomGame implements Game {
               recursive: true
             })
           }
-          dosboxConf = newConfFiles.map((file) => join(destDir, basename(file)))
         }
       }
 
@@ -502,8 +499,6 @@ export default class ZoomGame implements Game {
       platform: finalInstallPlatform,
       executable: finalExecutable.replace('{app}', installPath),
       install_path: installPath,
-      isDosbox,
-      dosboxConf,
       install_size: getFileSize(totalSize), // This might need to be the actual installed size, not just installer size
       is_dlc: false,
       version: '1.0', // Placeholder, ideally extracted from installer or API
