@@ -25,7 +25,6 @@ jest.mock('backend/logger', () => ({
   logWarning: jest.fn(),
   LogPrefix: { Backend: 'Backend', Legendary: 'Legendary' }
 }))
-jest.mock('backend/rakun/known_fixes', () => ({ readKnownFixes: jest.fn() }))
 jest.mock('backend/online_monitor', () => ({ isOnline: jest.fn() }))
 jest.mock('backend/dialog/dialog', () => ({
   showDialogBoxModalAuto: jest.fn()

@@ -13,13 +13,10 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   'getInstallInfo',
   'getGOGLinuxInstallersLangs',
   'isGameAvailable',
-  'isNative',
   'checkGameUpdates',
   'getUpdateableGames',
   'getHelpers',
   'updateHelpers',
-  'checkDiskSpace',
-  'getKnownFixes',
   // Install, update, repair, uninstall
   'install',
   'updateGame',
@@ -28,10 +25,7 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   'kill',
   'moveInstall',
   'importGame',
-  'changeInstallPath',
   'changeGameVersionPinnedStatus',
-  'getPrivateBranchPassword',
-  'setPrivateBranchPassword',
   // Download queue
   'getDMQueueInformation',
   'pauseCurrentDownload',
@@ -57,14 +51,7 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   'steamgriddb.hasApiKey',
   'steamgriddb.setApiKey',
   'getRakunVersion',
-  'getEpicGamesStatus',
-  'get-connectivity-status',
-  'set-connectivity-online',
-  'getSystemInfo',
-  'getLogContent',
-  'getLegendaryVersion',
-  'getGogdlVersion',
-  'getNileVersion'
+  'getLogContent'
 ])
 
 // Events published on GET /events

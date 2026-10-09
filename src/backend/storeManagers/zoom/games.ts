@@ -40,7 +40,6 @@ import { sendFrontendMessage } from '../../ipc'
 import { Game } from 'common/types/game_manager'
 import { displayForInstaller } from './display'
 import { removeInstalled, upsertInstalled } from '../installed_list'
-import { isLinux } from 'backend/constants/environment'
 import { libraryManagerMap } from '..'
 
 import { rm } from 'node:fs/promises'
@@ -536,15 +535,6 @@ export default class ZoomGame implements Game {
     logInfo(`Installation of ${this.id} completed.`, LogPrefix.Zoom)
     await onGameInstalled(this, installPath)
     return { status: 'done' }
-  }
-
-  isNative(): boolean {
-    const gameInfo = this.getGameInfo()
-    if (isLinux && gameInfo.install.platform === 'linux') {
-      return true
-    }
-
-    return false
   }
 
   async moveInstall(

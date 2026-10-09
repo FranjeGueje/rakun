@@ -742,10 +742,6 @@ export default class LegendaryGame implements Game {
     return res
   }
 
-  isNative(): boolean {
-    return false
-  }
-
   async forceUninstall() {
     // Modify Legendary installed.json file:
     try {

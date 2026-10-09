@@ -3,7 +3,6 @@ import type { AddressInfo } from 'net'
 import { networkInterfaces } from 'os'
 import { addHandler, addListener, sendFrontendMessage } from 'backend/ipc'
 import { createApiServer } from '../server'
-import { exposedChannels } from '../allowlist'
 
 jest.mock('backend/logger', () => ({
   logError: jest.fn(),
@@ -95,29 +94,18 @@ describe('API server', () => {
     expect(reply.status).toBe(403)
   })
 
-  test('exposes the private branch and helper version channels', () => {
-    const exposed = [
-      'getPrivateBranchPassword',
-      'setPrivateBranchPassword',
-      'getLegendaryVersion',
-      'getGogdlVersion',
-      'getNileVersion'
-    ]
-    exposed.forEach((channel) =>
-      expect(exposedChannels.has(channel)).toBe(true)
-    )
-  })
-
   test('calls a handler with the given args and returns its result', async () => {
     addHandler('getRakunVersion', () => '9.9.9')
     const reply = await call('POST', '/api/getRakunVersion')
     expect(reply).toEqual({ status: 200, body: { result: '9.9.9' } })
 
-    addHandler('isNative', (_e, { appName, runner }) => runner === appName)
-    const withArgs = await call('POST', '/api/isNative', {
-      body: JSON.stringify({ args: [{ appName: 'gog', runner: 'gog' }] })
+    addHandler('getGameInfo', (_e, appName, runner) =>
+      Promise.resolve({ appName, runner } as never)
+    )
+    const withArgs = await call('POST', '/api/getGameInfo', {
+      body: JSON.stringify({ args: ['x', 'gog'] })
     })
-    expect(withArgs.body.result).toBe(true)
+    expect(withArgs.body.result).toEqual({ appName: 'x', runner: 'gog' })
   })
 
   test('a handler that returns nothing answers null', async () => {
@@ -139,13 +127,13 @@ describe('API server', () => {
   test('404 for an exposed channel nobody handles, 400 for bad JSON, 500 on error', async () => {
     expect((await call('POST', '/api/cancelDownload')).status).toBe(404)
     expect(
-      (await call('POST', '/api/getEpicGamesStatus', { body: '{oops' })).status
+      (await call('POST', '/api/getRakunVersion', { body: '{oops' })).status
     ).toBe(400)
 
-    addHandler('getEpicGamesStatus', () => {
+    addHandler('getRakunVersion', () => {
       throw new Error('boom')
     })
-    const failed = await call('POST', '/api/getEpicGamesStatus')
+    const failed = await call('POST', '/api/getRakunVersion')
     expect(failed.status).toBe(500)
     expect(failed.body.error).toBe('boom')
   })

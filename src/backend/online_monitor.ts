@@ -1,5 +1,5 @@
 import { ConnectivityStatus } from 'common/types'
-import { addListener, addHandler, sendFrontendMessage } from 'backend/ipc'
+import { sendFrontendMessage } from 'backend/ipc'
 import { logInfo, LogPrefix } from './logger'
 import axios from 'axios'
 import EventEmitter from 'node:events'
@@ -93,18 +93,6 @@ const pingSites = () => {
 export const initOnlineMonitor = () => {
   // set initial status and ping external sites
   setStatus('check-online')
-
-  // listen to the frontend asking for current status
-  addHandler(
-    'get-connectivity-status',
-    (): { status: ConnectivityStatus; retryIn: number } => {
-      return { status, retryIn }
-    }
-  )
-
-  addListener('set-connectivity-online', () => {
-    setStatus('online')
-  })
 }
 
 export const onConnectivityChange = (

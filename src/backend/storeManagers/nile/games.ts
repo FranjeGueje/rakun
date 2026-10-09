@@ -236,10 +236,6 @@ export default class NileGameManager implements Game {
     return { status: 'done' }
   }
 
-  isNative(): boolean {
-    return false
-  }
-
   /**
    * Adds a desktop shortcut to $HOME/Desktop and to /usr/share/applications
    * so that the game can be opened from the start menu and the desktop folder.

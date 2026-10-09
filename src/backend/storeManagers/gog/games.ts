@@ -386,15 +386,6 @@ export default class GOGGame implements Game {
     return { status: 'done' }
   }
 
-  isNative(): boolean {
-    const gameInfo = this.getGameInfo()
-    if (isLinux && gameInfo.install.platform === 'linux') {
-      return true
-    }
-
-    return false
-  }
-
   async moveInstall(
     newInstallPath: string
   ): Promise<{ status: 'done' } | { status: 'error'; error: string }> {
@@ -816,13 +807,5 @@ export default class GOGGame implements Game {
       })
 
     return response?.data?.time_sum
-  }
-
-  getBranchPassword(): string {
-    return privateBranchesStore.get(this.id, '')
-  }
-
-  setBranchPassword(password: string): void {
-    privateBranchesStore.set(this.id, password)
   }
 }

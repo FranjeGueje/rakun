@@ -22,7 +22,6 @@ export interface Game {
   getExtraInfo: () => Promise<ExtraInfo>
   importGame: (path: string, platform: InstallPlatform) => Promise<ExecResult>
   install: (args: InstallArgs) => Promise<InstallResult>
-  isNative: () => boolean
   moveInstall: (newInstallPath: string) => Promise<InstallResult>
   repair: () => Promise<ExecResult>
   uninstall: (args: RemoveArgs) => Promise<ExecResult>

@@ -72,13 +72,10 @@ describe('isBlockedFromNetwork', () => {
       'resetRakun',
       'stopRakun',
       'steamgriddb.setApiKey',
-      'getPrivateBranchPassword',
-      'setPrivateBranchPassword',
       'getLogContent',
       'listFolders',
       'importGame',
-      'moveInstall',
-      'changeInstallPath'
+      'moveInstall'
     ])
       expect(isBlockedFromNetwork(channel, remote, 'network')).toBe(true)
   })

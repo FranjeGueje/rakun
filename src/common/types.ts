@@ -313,13 +313,6 @@ export interface MoveGameArgs {
   runner: Runner
 }
 
-export interface DiskSpaceData {
-  free: number
-  diskSize: number
-  message: string
-  validPath: boolean
-}
-
 export type StatusPromise = Promise<{ status: 'done' | 'error' | 'abort' }>
 
 export type DownloadManagerState = 'idle' | 'running' | 'paused' | 'stopped'
@@ -330,15 +323,6 @@ export type InstallInfo =
   | NileInstallInfo
   | ZoomInstalledInfo
   | ZoomInstallInfo
-
-export interface KnowFixesInfo {
-  title: string
-  notes?: Record<string, string>
-  winetricks?: string[]
-  runInPrefix?: string[]
-  envVariables?: Record<string, string>
-  wikiLink?: string
-}
 
 export interface UploadedLogData {
   // Descriptive name of the log file (e.g. "Game log of ...")

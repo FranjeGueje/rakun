@@ -57,7 +57,6 @@ jest.mock('backend/constants/paths', () => ({
   rakunGamesPath: '/mock/games',
   rakunRunnerPath: '/mock/runner',
   configPath: '/mock/config.json',
-  fixesPath: '/mock/fixes',
   publicDir: '/mock/public',
   webviewPreloadPath: '/mock/webview.js',
   windowIcon: '/mock/icon.png',

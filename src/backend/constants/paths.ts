@@ -36,7 +36,6 @@ export const appFolder = join(configFolder, appName)
 export const userDataPath = join(appDataPath, appName)
 export const configPath = join(appFolder, 'config.json')
 export const rakunInstallPath = join(userHome, 'Games', 'Rakun')
-export const fixesPath = join(appFolder, 'fixes')
 export const rakunRunnerPath = join(
   userHome,
   '.local',
