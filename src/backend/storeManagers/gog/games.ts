@@ -19,11 +19,7 @@ import {
   InstallProgress
 } from 'common/types'
 import { existsSync, rmSync } from 'fs'
-import {
-  installedGamesStore,
-  playtimeSyncQueue,
-  privateBranchesStore
-} from './electronStores'
+import { installedGamesStore, playtimeSyncQueue } from './electronStores'
 import {
   logError,
   logInfo,
@@ -283,8 +279,7 @@ export default class GOGGame implements Game {
       language: installLanguage,
       build,
       branch,
-      maxWorkers,
-      branchPassword: privateBranchesStore.get(this.id, '')
+      maxWorkers
     })
 
     const onOutput = (data: string) => {
@@ -427,8 +422,6 @@ export default class GOGGame implements Game {
     if (!credentials) {
       return { stderr: 'Unable to repair game, no credentials', stdout: '' }
     }
-    const privateBranchPassword = privateBranchesStore.get(this.id, '')
-
     // Most of the data provided here is discarded and read from manifest instead
     const commandParts = [
       'repair',
@@ -445,10 +438,6 @@ export default class GOGGame implements Game {
       '-b=' + gameData.install.buildId,
       ...workers
     ]
-
-    if (privateBranchPassword.length) {
-      commandParts.push('--password', privateBranchPassword)
-    }
 
     const repairLogWriter = createGameLogWriter(this.id, 'gog', 'repair')
     const res = await libraryManagerMap['gog'].runRunnerCommand(commandParts, {
@@ -524,8 +513,6 @@ export default class GOGGame implements Game {
       installedDlcs.filter((dlc) => !updateOverwrites.dlcs?.includes(dlc))
     }
 
-    const privateBranchPassword = privateBranchesStore.get(this.id, '')
-
     const overwrittenBuild: string[] = updateOverwrites?.build
       ? ['--build', updateOverwrites.build]
       : []
@@ -566,10 +553,6 @@ export default class GOGGame implements Game {
       ...overwrittenBuild,
       ...overwrittenBranch
     ]
-    if (privateBranchPassword.length) {
-      commandParts.push('--password', privateBranchPassword)
-    }
-
     const onOutput = (data: string) => {
       this.onInstallOrUpdateOutput('updating', data)
     }

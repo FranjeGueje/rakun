@@ -6,8 +6,7 @@ const base = {
   path: '/games',
   supportPath: '/support/123',
   language: 'en-US',
-  maxWorkers: 0,
-  branchPassword: ''
+  maxWorkers: 0
 }
 
 describe('downloadArgs', () => {
@@ -52,20 +51,14 @@ describe('downloadArgs', () => {
 
   test('build, branch, workers and branch password only when there are any', () => {
     expect(downloadArgs(base)).not.toEqual(
-      expect.arrayContaining([
-        '--build',
-        '--branch',
-        '--max-workers',
-        '--password'
-      ])
+      expect.arrayContaining(['--build', '--branch', '--max-workers'])
     )
 
     const args = downloadArgs({
       ...base,
       build: '55',
       branch: 'beta',
-      maxWorkers: 4,
-      branchPassword: 'pw'
+      maxWorkers: 4
     })
 
     expect(args).toEqual(
@@ -75,9 +68,7 @@ describe('downloadArgs', () => {
         '--branch',
         'beta',
         '--max-workers',
-        '4',
-        '--password',
-        'pw'
+        '4'
       ])
     )
   })

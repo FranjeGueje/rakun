@@ -23,12 +23,6 @@ const apiInfoCache = new CacheStore<GamesDBData>('gog_api_info', 60 * 24)
 const libraryStore = new CacheStore<GameInfo[], 'games'>('gog_library', null)
 const installInfoStore = new CacheStore<GogInstallInfo>('gog_install_info')
 
-const privateBranchesStore = new TypeCheckedStoreBackend('gogPrivateBranches', {
-  cwd: 'gog_store',
-  name: 'privateBranches',
-  clearInvalidConfig: true
-})
-
 const playtimeSyncQueue = new CacheStore<Array<GOGSessionSyncQueueItem>>(
   'gog_playtime_sync_queue'
 )
@@ -39,6 +33,5 @@ export {
   apiInfoCache,
   libraryStore,
   installInfoStore,
-  playtimeSyncQueue,
-  privateBranchesStore
+  playtimeSyncQueue
 }

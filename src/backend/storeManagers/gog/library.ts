@@ -39,7 +39,6 @@ import {
   installedGamesStore,
   installInfoStore,
   apiInfoCache,
-  privateBranchesStore,
   playtimeSyncQueue
 } from './electronStores'
 import { callRunner } from '../../runner_call'
@@ -499,9 +498,7 @@ export default class GOGLibraryManager implements LibraryManager {
       installPlatform = 'osx'
     }
 
-    const privateBranchPassword = privateBranchesStore.get(appName, '')
-
-    const installInfoStoreKey = `${appName}_${installPlatform}_${branch}_${build}_${privateBranchPassword}`
+    const installInfoStoreKey = `${appName}_${installPlatform}_${branch}_${build}`
 
     if (installInfoStore.has(installInfoStoreKey)) {
       const cache = installInfoStore.get(installInfoStoreKey)
@@ -521,7 +518,6 @@ export default class GOGLibraryManager implements LibraryManager {
         installPlatform,
         branch,
         build,
-        privateBranchPassword,
         installInfoStoreKey
       )
     )
@@ -532,7 +528,6 @@ export default class GOGLibraryManager implements LibraryManager {
     installPlatform: string,
     branch: string,
     build: string | undefined,
-    privateBranchPassword: string,
     installInfoStoreKey: string
   ): Promise<GogInstallInfo | undefined> {
     if (!isOnline) {
@@ -561,10 +556,6 @@ export default class GOGLibraryManager implements LibraryManager {
       ...(branch !== 'null' ? ['--branch', branch] : []),
       ...(build ? ['--build', build] : [])
     ]
-
-    if (privateBranchPassword.length) {
-      commandParts.push('--password', privateBranchPassword)
-    }
 
     const res = await this.runRunnerCommand(commandParts, {
       abortId: appName,
@@ -858,12 +849,6 @@ export default class GOGLibraryManager implements LibraryManager {
     const url = new URL(
       `https://content-system.gog.com/products/${appName}/os/${platform}/builds?generation=2&_version=2`
     )
-    const password = privateBranchesStore.get(appName, '')
-
-    if (password.length) {
-      url.searchParams.set('password', password)
-    }
-
     const headers: Record<string, string> = {}
     if (access_token) {
       headers.Authorization = `Bearer ${access_token}`

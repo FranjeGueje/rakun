@@ -54,9 +54,6 @@ export interface StoreStructure {
       [saveName: string]: string
     }
   }
-  gogPrivateBranches: {
-    [appName: string]: string
-  }
   uploadedLogs: Record<string, UploadedLogData>
   gameOverridesStore: {
     overrides: Record<

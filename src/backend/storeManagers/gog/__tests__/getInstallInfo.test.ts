@@ -18,7 +18,6 @@ jest.mock('../electronStores', () => ({
   installedGamesStore: { get: jest.fn(), set: jest.fn() },
   installInfoStore: { get: jest.fn(), set: jest.fn(), has: jest.fn() },
   apiInfoCache: { get: jest.fn(), set: jest.fn() },
-  privateBranchesStore: { get: () => '' },
   playtimeSyncQueue: { get: jest.fn(), set: jest.fn() }
 }))
 
