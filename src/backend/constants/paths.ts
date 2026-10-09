@@ -28,7 +28,6 @@ const cachePath = join(
   appName
 )
 export const storeCachePath = join(cachePath, 'store_cache')
-export const imagesCachePath = join(cachePath, 'images-cache')
 
 export const userHome = homedir()
 
