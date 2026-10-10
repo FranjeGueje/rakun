@@ -10,7 +10,7 @@ rakun never launches games. Every game is added to Steam as a non-Steam shortcut
 Game install completed
        │
        ▼
-  ┌─ is the game already tracked in Steam? ──Yes──► Skip (already done)
+  ┌─ is the game in `steam_shortcuts.json` and its `steamAppId` still in Steam? ──Yes──► Skip (already done)
   │
   No
   │
@@ -123,11 +123,13 @@ If a GE-Proton is available, rakun runs `umu-run exit` to initialize the prefix.
 rakun uses the `steam://addnonsteamgame/` protocol to add games to Steam. It never writes directly to `shortcuts.vdf`. The process:
 
 1. Writes a temporary `.desktop` in `/tmp` (`Name` = game title, `Exec` = runner path) so the shortcut gets the game's name instead of the runner's filename, then opens `steam://addnonsteamgame/<desktop-path>` via xdg-open
-2. Steam opens an "Add Non-Steam Game" dialog
-3. rakun polls `shortcuts.vdf` every 1.5s for up to 15s
-4. Once the game appears, it reads the assigned `steamAppId`
+2. Steam adds the shortcut by itself, with no dialog
+3. rakun polls `shortcuts.vdf` every 1.5s for up to 15s, looking for a shortcut whose `Exe` is the runner
+4. Once it appears, it reads the assigned `steamAppId`
 5. The temporary `.desktop` is deleted afterwards (Steam only keeps `Name` and `Exec`)
-6. If Steam is not running or the dialog is not confirmed, the operation times out
+6. If Steam is not running, or there is no `userdata` folder, the operation fails; if Steam adds it after the timeout, repairing the game links it (the shortcut is recognised by its `Exe`)
+
+**A shortcut is never recognised by its title** (the user may rename it, and another launcher may have a game with the same title). It is the one whose `appid` is the `steamAppId` saved in `~/.config/rakun/steam_shortcuts.json`, or whose `Exe` is the game's runner. A game that is not in that file is added even if Steam already has a shortcut with its title, unless one runs the same runner (for example after an uninstall, which leaves the shortcut in Steam).
 
 ## Grid artwork
 

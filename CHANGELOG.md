@@ -1,6 +1,13 @@
 # Changelog
 
-The history of Relic (and of the Heroic cleanup) lives in the `upstream` repository. The detailed notes of the versions before this first release are in the git history of this file.
+The history of rakun before its first release (the Heroic cleanup and Relic) lives in the `upstream` repository. The detailed notes of the versions before this first release are in the git history of this file.
+
+## Unreleased
+
+### Changed
+
+- A game is no longer recognised in Steam by its title (the user may rename the shortcut, and another launcher may have a game with the same name). It is the shortcut with the `steamAppId` saved in `~/.config/rakun/steam_shortcuts.json`, or the one that runs the game's runner (so a reinstall reuses the shortcut an uninstall left in Steam). A game not in that file is added even if Steam has one with its title.
+- Adding a game to Steam fails at once when Steam has no `userdata` folder, instead of waiting for the timeout. Steam adds the shortcut with no dialog; the messages and docs no longer mention one.
 
 ## 0.2.0 — Less inherited code
 
