@@ -17,7 +17,7 @@ systemctl --user stop rakun                            # stops the background on
 rakunctl install-service | uninstall-service           # user service: starts at login (not Zoom: no screen)
 ```
 
-To reinstall a new version: `pnpm package`, run `scripts/install.sh …` again and restart rakun. The logins are kept (they live in `~/.config/rakun`) and so are the helper binaries (`~/.local/share/rakun/bin`).
+To reinstall a new version: `pnpm package`, run `scripts/install.sh …` again and restart rakun (or, from a release, `rakunctl self-update`). The logins are kept (they live in `~/.config/rakun`) and so are the helper binaries (`~/.local/share/rakun/bin`).
 
 The normal tarball has no helper binaries (legendary, gogdl, nile…): after the first install run `rakunctl helpers update` (and `rakunctl helpers` to see what is there). rakun starts without them and says what is missing: in the log, in `rakunctl status` and in the web, which has a notice with a Download button and a _Helper binaries_ screen in the menu. `pnpm package --full` makes one that carries them, and `scripts/install.sh --full` installs it.
 
@@ -44,6 +44,7 @@ With rakun installed, `rakunctl` (or `pnpm start:ctl` from the repository) saves
 | see / download the helper binaries | `rakunctl helpers` / `rakunctl helpers update [--latest]` (the pinned versions, checked by sha256; `--latest` is not checked) |
 | list the versions of a game        | `rakunctl versions gog <appName>` (GOG only: builds, branches, the current one marked)                                        |
 | import a game from a folder        | `rakunctl import <store> <appName> <folder> [--platform windows\|linux]` (not Zoom)                                           |
+| update rakun itself                | `rakunctl self-update [--check] [--force]` (only an install made by `install.sh`; x64)                                        |
 | update                             | `rakunctl update [store [appName]]`: one game, a store's games or every game with a new version (Zoom is not updated)         |
 | repair                             | `rakunctl repair <store> <appName>`                                                                                           |
 | uninstall                          | `rakunctl uninstall <store> <appName>`                                                                                        |

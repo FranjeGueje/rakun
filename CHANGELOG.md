@@ -1,6 +1,22 @@
 # Changelog
 
-The history of Relic (and of the Heroic cleanup) lives in the `upstream` repository. The detailed notes of the versions before this first release are in the git history of this file.
+The history of rakun before its first release (the Heroic cleanup and Relic) lives in the `upstream` repository. The detailed notes of the versions before this first release are in the git history of this file.
+
+## 0.3.0 — Runner options and self-update
+
+rakun can update itself, and the runner of the games has options of its own.
+
+### Added
+
+- `rakunctl self-update [--check] [--force]`: installs the newest GitHub release over `~/.local/opt/rakun` (checksum required), stopping rakun first and starting it again if it was running; a busy rakun is not stopped without `--force`. `--check` only says if there is a new version. It only touches an install made by `install.sh` and only x64 is published. rakun itself never asks GitHub. The tarball now carries `install.sh`, which `self-update` runs: an older install must be updated by hand once.
+- The variable `RAKUN_RELEASES_URL` points `self-update` at another release, to test it.
+- `~/.local/share/rakun/mount/scripts/Launcher_games.ini`: options of the runner that rakun creates once and never overwrites (the `.bat` of each game does not change, so this is where a new runner reads its options). `SHOW_HEADER` (default `1`), `SHOW_VERSIONS` (default `0`: the versions of comet, gogdl and nile and the status of legendary are no longer printed, which makes a launch faster) and `LOG_TO_FILE` (default `0`: the output goes to `mount/logs/<game name>.log`).
+- The `.bat` of a game sets `GAMENAME`, the title of the game; a game added earlier gets it when it is repaired, and until then its log is named `<store>-<id>`.
+
+### Changed
+
+- A game is no longer recognised in Steam by its title (the user may rename the shortcut, and another launcher may have a game with the same name). It is the shortcut with the `steamAppId` saved in `~/.config/rakun/steam_shortcuts.json`, or the one that runs the game's runner (so a reinstall reuses the shortcut an uninstall left in Steam). A game not in that file is added even if Steam has one with its title.
+- Adding a game to Steam fails at once when Steam has no `userdata` folder, instead of waiting for the timeout. Steam adds the shortcut with no dialog; the messages and docs no longer mention one.
 
 ## 0.2.0 — Less inherited code
 

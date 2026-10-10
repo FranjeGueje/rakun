@@ -55,6 +55,8 @@ rakunctl repair gog <appName>    # verify and fix files, then redo the Steam int
 rakunctl uninstall gog <appName> # deletes the game's files
 ```
 
+`update` is for games. To update rakun itself, use `rakunctl self-update` ([Commands](Commands.md#self-update)).
+
 An uninstall does not remove the Steam shortcut: delete it by hand from the Steam library.
 
 ## Downloads queue

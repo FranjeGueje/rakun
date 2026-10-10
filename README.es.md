@@ -66,6 +66,8 @@ rakunctl library gog          # mira tus juegos
 rakunctl install gog <nombre> # instala uno: aparece en Steam
 ```
 
+Para actualizar rakun más adelante: `rakunctl self-update` (`--check` solo dice si hay una versión nueva). Mira la [wiki](docs/Getting-Started.md#updating-rakun).
+
 ¿Prefieres el ratón? Abre **http://127.0.0.1:17370** en un navegador de la misma máquina.
 
 ![Instalar un juego desde la web: versión de Windows o de Linux, o importar una carpeta](docs/images/install.png)

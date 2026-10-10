@@ -21,7 +21,7 @@ scripts/install.sh               # picks the tarball of this machine from dist/
 
 `install.sh` requires the `.sha256` file that `pnpm package` leaves next to the tarball, and refuses to install if it is missing or does not match.
 
-The tarball carries its own Node, so nothing else is needed on SteamOS. The installer puts rakun in `~/.local/opt/rakun` and links `rakun` and `rakunctl` in `~/.local/bin`. It creates **no service**.
+The tarball carries its own Node, so nothing else is needed on SteamOS. The installer puts rakun in `~/.local/opt/rakun` (with a copy of `install.sh`, which `rakunctl self-update` uses) and links `rakun` and `rakunctl` in `~/.local/bin`. It creates **no service**.
 
 For a machine with no network, `pnpm package --full` also builds a `-full` tarball that carries the [helper binaries](Helper-Binaries.md); install it with `scripts/install.sh --full`.
 
@@ -81,3 +81,14 @@ You can do all of this in the web too: open `http://127.0.0.1:17370` in a browse
 ---
 
 Next: [User guide](User-Guide.md) · [Commands](Commands.md)
+
+## Updating rakun
+
+```bash
+rakunctl self-update --check     # is there a new version?
+rakunctl self-update             # install it (restarts rakun if it was running)
+```
+
+It downloads the newest release, checks its `.sha256` and replaces `~/.local/opt/rakun`; your logins, settings and helper binaries stay. See [`self-update`](Commands.md#self-update) for the details.
+
+`self-update` exists from the first release that includes it. With an older one (0.2.0), run the quick install of [step 1](#1-install) once; from then on `self-update` is enough. To update your games, not rakun, use `rakunctl update` ([User guide](User-Guide.md#update-repair-uninstall)).

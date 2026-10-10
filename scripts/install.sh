@@ -12,6 +12,8 @@
 #
 # It installs to ~/.local/opt/rakun and links ~/.local/bin/rakun. It does not
 # create any service: start rakun yourself (see the end of this script's output).
+# `rakunctl self-update` runs the copy of this script that comes in the tarball
+# (with RAKUN_SELF_UPDATE set: it only says where it installed).
 set -euo pipefail
 
 machine_arch() {
@@ -122,6 +124,11 @@ rm -rf "$PREFIX"
 mv "$PREFIX.new" "$PREFIX"
 ln -sf "$PREFIX/rakun" "$BIN_DIR/rakun"
 ln -sf "$PREFIX/rakunctl" "$BIN_DIR/rakunctl"
+
+if [ -n "${RAKUN_SELF_UPDATE:-}" ]; then
+    echo "Installed in $PREFIX."
+    exit 0
+fi
 
 # A tarball with no helper binaries: rakun starts, but it cannot work until they are downloaded
 if [ ! -e "$PREFIX/public/bin/$ARCH/linux" ]; then

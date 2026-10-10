@@ -28,6 +28,10 @@ In `network` mode, settings, folders, logs and a few more channels only answer t
 
 Force GE-Proton in the game's Steam properties (rakun does not set the compatibility tool) and check the prefix in `compatdata/<id>`.
 
+### The runner's window closes too fast to read it
+
+Set `LOG_TO_FILE=1` in `~/.local/share/rakun/mount/scripts/Launcher_games.ini` and launch the game again: the output of the runner is in `~/.local/share/rakun/mount/logs/<game name>.log`. See [Steam integration](Steam-Integration.md#runner-options-launcher_gamesini).
+
 ### `No GE-Proton configured` in the log (older versions)
 
 A GE-Proton installed later was never looked for. Update rakun, or set it: `rakunctl config protonPath <folder>`.
@@ -36,11 +40,29 @@ A GE-Proton installed later was never looked for. Update rakun, or set it: `raku
 
 It needs a screen (`DISPLAY`): use desktop mode, not game mode, and restart rakun after switching.
 
+## Updating rakun
+
+### `This rakun is not in ~/.local/opt/rakun, so it was not installed by install.sh`
+
+`rakunctl self-update` only replaces an install made by `install.sh`. A rakun run from a checkout, or inside an AppImage or another client, is updated the way it was installed.
+
+### `… has no self-update. Install the new one by hand once`
+
+The version you have came without `install.sh` in its folder (it is older than `self-update`). Run the quick install of [Getting started](Getting-Started.md#1-install) once; after that `self-update` works.
+
+### `GitHub refused the request` or `Could not reach GitHub`
+
+The GitHub API limits requests without an account, or there is no network. Try again later.
+
+### `There is no published build for arm64`
+
+Releases only carry the x64 tarball. On arm64 build your own (`pnpm package arm64`, see [Development](Development.md)) and install it with `scripts/install.sh`.
+
 ## The web
 
 ### It shows the old design after an update
 
-The installed copy is `~/.local/opt/rakun/web`. Reinstall (`scripts/install.sh`) or copy `build/web/.` there, then press Ctrl+F5.
+The installed copy is `~/.local/opt/rakun/web`. Update rakun (`rakunctl self-update`), reinstall (`scripts/install.sh`) or copy `build/web/.` there, then press Ctrl+F5.
 
 ## Where to look
 

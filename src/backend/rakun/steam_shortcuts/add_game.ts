@@ -19,7 +19,7 @@ import {
   userDataPath
 } from 'backend/constants/paths'
 import {
-  findGameInAllUsers,
+  findShortcutInAllUsers,
   getShortcutId,
   checkSteamProtocolHandler
 } from './steam_helpers'
@@ -90,6 +90,7 @@ export function createRakunBat(
   const content = gameRunnerText({
     store: runner,
     appName,
+    title: gameName,
     folder: basename(installPath),
     username: runner === 'gog' ? getGogUsername() : undefined
   })
@@ -170,12 +171,16 @@ function writeSteamLauncher(gameName: string, runnerPath: string): string {
 export async function addGameToSteam(
   options: AddGameToSteamOptions
 ): Promise<AddGameToSteamResult> {
-  const { gameName, runnerPath } = options
+  const { gameName, runnerPath, steamAppId: knownId } = options
 
   checkSteamProtocolHandler()
 
-  const existing = findGameInAllUsers(gameName)
-  if (existing.found && existing.entry) {
+  const existing = findShortcutInAllUsers({
+    steamAppId: knownId,
+    exe: runnerPath
+  })
+  if (existing.error) return { success: false, error: existing.error }
+  if (existing.entry) {
     const steamAppId = getShortcutId(existing.entry)
     logInfo(
       `"${gameName}" already exists in Steam (ID ${steamAppId}). Skipping.`,
@@ -184,17 +189,12 @@ export async function addGameToSteam(
     return { success: true, steamAppId, existed: true }
   }
 
-  try {
-    unlinkSync(ADD_GAME_MARKER)
-  } catch {
-    // File doesn't exist, that's fine
-  }
   writeFileSync(ADD_GAME_MARKER, '', 'utf-8')
 
   makeExecutable(runnerPath)
   const desktopPath = writeSteamLauncher(gameName, runnerPath)
   try {
-    return await sendToSteam(gameName, desktopPath)
+    return await sendToSteam(gameName, runnerPath, desktopPath)
   } finally {
     rmSync(dirname(desktopPath), { recursive: true, force: true })
   }
@@ -202,6 +202,7 @@ export async function addGameToSteam(
 
 async function sendToSteam(
   gameName: string,
+  runnerPath: string,
   desktopPath: string
 ): Promise<AddGameToSteamResult> {
   const steamUrl = `steam://addnonsteamgame/${encodeURIComponent(desktopPath)}`
@@ -219,14 +220,14 @@ async function sendToSteam(
 
   logInfo(`Waiting for "${gameName}" to be added to Steam...`, LOG_PREFIX)
 
-  const { found, steamAppId } = await waitForGameInSteam(gameName, Date.now())
+  const steamAppId = await waitForShortcut(gameName, runnerPath)
 
-  if (!found) {
+  if (!steamAppId) {
     return {
       success: false,
       error:
         `"${gameName}" was not added to Steam in time. ` +
-        `Make sure Steam is running and you confirmed the dialog.`
+        `Make sure Steam is running; if it adds it later, repair the game to link it.`
     }
   }
 
@@ -235,26 +236,26 @@ async function sendToSteam(
   return { success: true, steamAppId }
 }
 
-async function waitForGameInSteam(
+/**
+ * The id of the shortcut that runs `runnerPath`, or 0 on timeout. No shortcut
+ * ran it before (`addGameToSteam` checked), so the one that appears is the new one.
+ */
+async function waitForShortcut(
   gameName: string,
-  startTime: number
-): Promise<{ found: boolean; steamAppId?: number }> {
-  const elapsed = Date.now() - startTime
+  runnerPath: string
+): Promise<number> {
+  const deadline = Date.now() + POLL_TIMEOUT_MS
 
-  if (elapsed >= POLL_TIMEOUT_MS) {
-    logError(
-      `Timeout waiting for "${gameName}" to appear in Steam shortcuts (${POLL_TIMEOUT_MS}ms).`,
-      LOG_PREFIX
-    )
-    return { found: false }
+  while (Date.now() < deadline) {
+    const { entry } = findShortcutInAllUsers({ exe: runnerPath })
+    const steamAppId = entry ? getShortcutId(entry) : 0
+    if (steamAppId) return steamAppId
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS))
   }
 
-  const result = findGameInAllUsers(gameName)
-
-  if (result.found && result.entry) {
-    return { found: true, steamAppId: getShortcutId(result.entry) }
-  }
-
-  await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS))
-  return waitForGameInSteam(gameName, startTime)
+  logError(
+    `Timeout waiting for "${gameName}" to appear in Steam shortcuts (${POLL_TIMEOUT_MS}ms).`,
+    LOG_PREFIX
+  )
+  return 0
 }

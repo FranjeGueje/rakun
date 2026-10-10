@@ -23,7 +23,7 @@ jest.mock('backend/utils', () => ({
   spawnAsync: jest.fn()
 }))
 jest.mock('../steam_helpers', () => ({
-  findGameInAllUsers: jest.fn(),
+  findShortcutInAllUsers: jest.fn(),
   getShortcutId: jest.fn(),
   checkSteamProtocolHandler: jest.fn()
 }))
@@ -41,7 +41,9 @@ jest.mock('backend/constants/paths', () => ({
   rakunInstallPath: '/tmp/games'
 }))
 
-const mockedFindGameInAllUsers = jest.mocked(steamHelpers.findGameInAllUsers)
+const mockedFindShortcutInAllUsers = jest.mocked(
+  steamHelpers.findShortcutInAllUsers
+)
 const mockedGetShortcutId = jest.mocked(steamHelpers.getShortcutId)
 
 describe('addGameToSteam', () => {
@@ -50,7 +52,7 @@ describe('addGameToSteam', () => {
   beforeEach(() => {
     tmpDir = dirSync()
     jest.clearAllMocks()
-    mockedFindGameInAllUsers.mockReturnValue({ entry: null, found: false })
+    mockedFindShortcutInAllUsers.mockReturnValue({ entry: null, found: false })
   })
 
   afterEach(() => {
@@ -69,8 +71,49 @@ describe('addGameToSteam', () => {
     expect(result.error).toContain('Failed to open steam:// URL')
   })
 
+  test('fails at once, without opening steam://, when Steam has no userdata', async () => {
+    mockedFindShortcutInAllUsers.mockReturnValue({
+      entry: null,
+      found: false,
+      error: 'No Steam userdata directories found in /x'
+    })
+
+    const result = await addGameToSteam({
+      gameName: 'MyGame',
+      runnerPath: '/tmp/MyGame.bat'
+    })
+
+    expect(result).toEqual({
+      success: false,
+      error: 'No Steam userdata directories found in /x'
+    })
+    expect(spawnAsync).not.toHaveBeenCalled()
+  })
+
+  test('a shortcut without a usable id does not count as added', async () => {
+    jest.useFakeTimers()
+    mockedFindShortcutInAllUsers
+      .mockReturnValueOnce({ entry: null, found: false })
+      .mockReturnValue({ entry: { Exe: '/tmp/MyGame.bat' }, found: true })
+    mockedGetShortcutId.mockReturnValue(0)
+    jest
+      .mocked(spawnAsync)
+      .mockResolvedValue({ code: 0, stdout: '', stderr: '' })
+
+    const pending = addGameToSteam({
+      gameName: 'MyGame',
+      runnerPath: '/tmp/MyGame.bat'
+    })
+    await jest.advanceTimersByTimeAsync(20000)
+    const result = await pending
+    jest.useRealTimers()
+
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('was not added to Steam in time')
+  })
+
   test('returns success when game is added correctly', async () => {
-    mockedFindGameInAllUsers.mockReturnValueOnce({
+    mockedFindShortcutInAllUsers.mockReturnValueOnce({
       found: true,
       entry: { appid: 456, AppName: 'MyGame' },
       error: undefined
@@ -98,7 +141,7 @@ describe('addGameToSteam', () => {
         captured.push({ path, content: readFileSync(path, 'utf-8') })
         return { code: 0, stdout: '', stderr: '' }
       })
-      mockedFindGameInAllUsers
+      mockedFindShortcutInAllUsers
         .mockReturnValueOnce({ entry: null, found: false })
         .mockReturnValue({ entry: { appid: 1 }, found: true })
       mockedGetShortcutId.mockReturnValue(1)
@@ -175,8 +218,8 @@ describe('addGameToSteam', () => {
       expect(existsSync(dirname(desktopPath))).toBe(false)
     })
 
-    test('skips Steam when the game title already exists', async () => {
-      mockedFindGameInAllUsers.mockReturnValue({
+    test('skips Steam when the shortcut is already there (by id or by what it runs)', async () => {
+      mockedFindShortcutInAllUsers.mockReturnValue({
         entry: { appid: 7 },
         found: true
       })
@@ -189,6 +232,34 @@ describe('addGameToSteam', () => {
 
       expect(result).toEqual({ success: true, steamAppId: 7, existed: true })
       expect(spawnAsync).not.toHaveBeenCalled()
+    })
+
+    test('looks for the shortcut by id and by what it runs, not by title', async () => {
+      mockedFindShortcutInAllUsers.mockReturnValue({
+        entry: { appid: 7 },
+        found: true
+      })
+
+      await addGameToSteam({
+        gameName: 'MyGame',
+        runnerPath: '/tmp/a.bat',
+        steamAppId: 7
+      })
+
+      expect(mockedFindShortcutInAllUsers).toHaveBeenCalledWith({
+        steamAppId: 7,
+        exe: '/tmp/a.bat'
+      })
+    })
+
+    test('waits for the new shortcut by what it runs, so a same-title one does not count', async () => {
+      captureDesktop()
+
+      await addGameToSteam({ gameName: 'MyGame', runnerPath: '/tmp/a.bat' })
+
+      expect(mockedFindShortcutInAllUsers).toHaveBeenLastCalledWith({
+        exe: '/tmp/a.bat'
+      })
     })
   })
 })
@@ -222,12 +293,13 @@ describe('createRakunBat', () => {
       'rem FranjeGueje runner: the logic is in C:\\Launchers\\scripts\\Launcher_games.bat',
       'set "STORE=legendary"',
       'set "IDGAME=abc123"',
+      'set "GAMENAME=TestGame"',
       'call "C:\\Launchers\\scripts\\Launcher_games.bat" %*',
       'exit /b %errorlevel%'
     ])
   })
 
-  test('an Amazon game needs the same two variables', () => {
+  test('an Amazon game needs the same variables', () => {
     const runnerPath = createRakunBat(
       tmpDir.name,
       'AmazonGame',
@@ -237,7 +309,8 @@ describe('createRakunBat', () => {
     const content = lines(runnerPath)
     expect(content).toContain('set "STORE=nile"')
     expect(content).toContain('set "IDGAME=nile789"')
-    expect(content.filter((line) => line.startsWith('set '))).toHaveLength(2)
+    expect(content).toContain('set "GAMENAME=AmazonGame"')
+    expect(content.filter((line) => line.startsWith('set '))).toHaveLength(3)
   })
 
   test('a GOG game also carries its folder and the user of Comet', () => {

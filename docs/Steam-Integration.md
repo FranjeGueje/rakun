@@ -10,7 +10,7 @@ rakun never launches games. Every game is added to Steam as a non-Steam shortcut
 Game install completed
        │
        ▼
-  ┌─ is the game already tracked in Steam? ──Yes──► Skip (already done)
+  ┌─ is the game in `steam_shortcuts.json` and its `steamAppId` still in Steam? ──Yes──► Skip (already done)
   │
   No
   │
@@ -85,7 +85,19 @@ call "C:\Launchers\scripts\Launcher_games.bat" %*
 exit /b %errorlevel%
 ```
 
-A GOG game also sets `GAMEFOLDER` (its folder in `c:\games`) and `GOGUSER` (the user Comet logs in with). The runner, `Launcher_games.bat` (**FranjeGueje runner**, with its version on the first line it prints), sets the environment, jumps to the block of the store (`legendary`, `gog` or `nile`), checks its tools and launches the game through the store's CLI. rakun writes it into `mount/scripts/` at every start, so a new version reaches every game without regenerating their `.bat` files. The EOS Overlay script lives next to it.
+The file also sets `GAMENAME`, the title of the game as a file name (it names the log, see below). A GOG game also sets `GAMEFOLDER` (its folder in `c:\games`) and `GOGUSER` (the user Comet logs in with). The runner, `Launcher_games.bat` (**FranjeGueje runner**, with its version on the first line it prints), sets the environment, jumps to the block of the store (`legendary`, `gog` or `nile`), checks its tools and launches the game through the store's CLI. rakun writes it into `mount/scripts/` at every start, so a new version reaches every game without regenerating their `.bat` files. The EOS Overlay script lives next to it.
+
+### Runner options: `Launcher_games.ini`
+
+The `.bat` of each game does not change when rakun updates, so the options of the runner live in `~/.local/share/rakun/mount/scripts/Launcher_games.ini` (`C:\Launchers\scripts\Launcher_games.ini` inside a prefix). rakun creates it the first time it starts and **never overwrites it**, unlike the runner, which it rewrites at every start. A plain `key=value` file: `#` starts a comment, there are no sections and no spaces around the value. Edit it and the next launch of a game uses it; there is no need to restart rakun. A key that is missing keeps its default, so a new version of rakun can add keys without breaking your file.
+
+| Key             | Default | What it does                                                                                                                                    |
+| --------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SHOW_HEADER`   | `1`     | Prints the name and version of the runner (`FranjeGueje runner v1`) at the start. `0` hides it.                                                 |
+| `SHOW_VERSIONS` | `0`     | Prints the versions of `comet`, `gogdl` and `nile` and the status of `legendary` before the game. Each one starts a Wine process: it is slower. |
+| `LOG_TO_FILE`   | `0`     | `1` sends the whole output of the runner to `mount/logs/<game name>.log` (overwritten at each launch) and the window shows nothing.             |
+
+The log is named after the game's title, with `\ / : * ? " < > | %` replaced by `_`. A game added before this option existed has no `GAMENAME` and its log is `<store>-<id>.log`; repairing the game regenerates its `.bat` with the name.
 
 For Linux native GOG games, there is no `.bat`. rakun uses the `start.sh` script that GOG ships with the game. Steam runs the shell script natively.
 
@@ -123,11 +135,13 @@ If a GE-Proton is available, rakun runs `umu-run exit` to initialize the prefix.
 rakun uses the `steam://addnonsteamgame/` protocol to add games to Steam. It never writes directly to `shortcuts.vdf`. The process:
 
 1. Writes a temporary `.desktop` in `/tmp` (`Name` = game title, `Exec` = runner path) so the shortcut gets the game's name instead of the runner's filename, then opens `steam://addnonsteamgame/<desktop-path>` via xdg-open
-2. Steam opens an "Add Non-Steam Game" dialog
-3. rakun polls `shortcuts.vdf` every 1.5s for up to 15s
-4. Once the game appears, it reads the assigned `steamAppId`
+2. Steam adds the shortcut by itself, with no dialog
+3. rakun polls `shortcuts.vdf` every 1.5s for up to 15s, looking for a shortcut whose `Exe` is the runner
+4. Once it appears, it reads the assigned `steamAppId`
 5. The temporary `.desktop` is deleted afterwards (Steam only keeps `Name` and `Exec`)
-6. If Steam is not running or the dialog is not confirmed, the operation times out
+6. If Steam is not running, or there is no `userdata` folder, the operation fails; if Steam adds it after the timeout, repairing the game links it (the shortcut is recognised by its `Exe`)
+
+**A shortcut is never recognised by its title** (the user may rename it, and another launcher may have a game with the same title). It is the one whose `appid` is the `steamAppId` saved in `~/.config/rakun/steam_shortcuts.json`, or whose `Exe` is the game's runner. A game that is not in that file is added even if Steam already has a shortcut with its title, unless one runs the same runner (for example after an uninstall, which leaves the shortcut in Steam).
 
 ## Grid artwork
 

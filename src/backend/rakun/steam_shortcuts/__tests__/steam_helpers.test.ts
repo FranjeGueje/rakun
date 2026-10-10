@@ -3,10 +3,10 @@ import { join } from 'path'
 import { DirResult, dirSync } from '../../../__tests__/tmp_dir'
 import { GlobalConfig } from 'backend/config'
 import {
-  getAppName,
   getShortcutId,
   readShortcutsVdf,
-  findGameInAllUsers
+  getExe,
+  findShortcutInAllUsers
 } from '../steam_helpers'
 
 jest.mock('backend/logger', () => ({
@@ -39,32 +39,6 @@ describe('steam_helpers', () => {
 
   afterEach(() => {
     tmpDir.removeCallback()
-  })
-
-  describe('getAppName', () => {
-    test('finds AppName key (PascalCase)', () => {
-      const entry = { AppName: 'MyGame', appid: 123 }
-      expect(getAppName(entry)).toBe('MyGame')
-    })
-
-    test('finds appname key (lowercase)', () => {
-      const entry = { appname: 'MyGame', appid: 123 }
-      expect(getAppName(entry)).toBe('MyGame')
-    })
-
-    test('finds APPNAME key (uppercase)', () => {
-      const entry = { APPNAME: 'MyGame', appid: 123 }
-      expect(getAppName(entry)).toBe('MyGame')
-    })
-
-    test('returns empty string when no AppName key exists', () => {
-      const entry = { appid: 123 }
-      expect(getAppName(entry)).toBe('')
-    })
-
-    test('returns empty string for empty object', () => {
-      expect(getAppName({})).toBe('')
-    })
   })
 
   describe('getShortcutId', () => {
@@ -109,27 +83,53 @@ describe('steam_helpers', () => {
     })
   })
 
-  describe('findGameInAllUsers', () => {
-    test('finds a game that exists in shortcuts.vdf', () => {
+  describe('getExe', () => {
+    test('strips the quotes Steam puts around it', () => {
+      expect(getExe({ Exe: '"/a/b c.bat"' })).toBe('/a/b c.bat')
+      expect(getExe({ exe: '/a/b.bat' })).toBe('/a/b.bat')
+      expect(getExe({})).toBe('')
+    })
+  })
+
+  describe('findShortcutInAllUsers', () => {
+    // shortcuts_valid.vdf: "Discord", appid -1632866652 (signed), Exe "/usr/share/discord/Discord"
+    const DISCORD_ID = -1632866652 >>> 0
+
+    test('finds a shortcut by its Steam id (unsigned, as rakun stores it)', () => {
       copyValidTestVdf()
-      const result = findGameInAllUsers('Discord')
+      const result = findShortcutInAllUsers({ steamAppId: DISCORD_ID })
       expect(result.found).toBe(true)
       expect(result.entry).not.toBeNull()
-      expect(result.error).toBeUndefined()
     })
 
-    test('does not find a game that is not in shortcuts.vdf', () => {
+    test('finds a shortcut by what it runs', () => {
       copyValidTestVdf()
-      const result = findGameInAllUsers('NotInVdf')
+      const result = findShortcutInAllUsers({
+        exe: '/usr/share/discord/Discord'
+      })
+      expect(result.found).toBe(true)
+    })
+
+    test('the title is not a way to find it', () => {
+      copyValidTestVdf()
+      const result = findShortcutInAllUsers({
+        steamAppId: 1,
+        exe: '/other.bat'
+      })
       expect(result.found).toBe(false)
       expect(result.entry).toBeNull()
+    })
+
+    test('a missing query matches nothing', () => {
+      copyValidTestVdf()
+      expect(findShortcutInAllUsers({}).found).toBe(false)
     })
 
     test('returns error when no Steam userdata directories exist', () => {
       const emptyDir = dirSync()
       GlobalConfig.setConfigValue('defaultSteamPath', emptyDir.name)
 
-      const result = findGameInAllUsers('MyGame')
+      const result = findShortcutInAllUsers({ exe: '/a.bat' })
       expect(result.found).toBe(false)
       expect(result.entry).toBeNull()
       expect(result.error).toContain(emptyDir.name)

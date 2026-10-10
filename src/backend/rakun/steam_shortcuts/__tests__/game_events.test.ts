@@ -17,6 +17,7 @@ import { preparePrefix, removePrefixSymlink } from '../../prefix'
 import { libraryManagerMap } from 'backend/storeManagers'
 import { openExternal } from 'backend/utils/open_external'
 import * as store from '../store'
+import { findShortcutInAllUsers } from '../steam_helpers'
 
 const mockGetGameInfo = jest.fn()
 const mockGame = { getGameInfo: mockGetGameInfo }
@@ -65,6 +66,10 @@ jest.mock('../store', () => ({
   removeShortcut: jest.fn()
 }))
 
+jest.mock('../steam_helpers', () => ({
+  findShortcutInAllUsers: jest.fn()
+}))
+
 jest.mock('../../steamgrid', () => ({
   downloadGrids: jest.fn(),
   deleteGrids: jest.fn()
@@ -88,16 +93,18 @@ const mockedPreparePrefix = jest.mocked(preparePrefix)
 const mockedRemovePrefixSymlink = jest.mocked(removePrefixSymlink)
 const mockedOpenExternal = jest.mocked(openExternal)
 const mockedFindShortcut = jest.mocked(store.findShortcut)
+const mockedFindInSteam = jest.mocked(findShortcutInAllUsers)
 const mockedAddShortcut = jest.mocked(store.addShortcut)
 const mockedRemoveShortcut = jest.mocked(store.removeShortcut)
 
 beforeEach(() => {
   jest.clearAllMocks()
   mockedCreateRunnerFile.mockReturnValue({ path: '/path/to/TestGame.bat' })
+  mockedFindInSteam.mockReturnValue({ entry: { appid: 1 }, found: true })
 })
 
 describe('onGameInstalled', () => {
-  test('skips if game is already tracked in store', async () => {
+  test('skips if the game is tracked and its shortcut is still in Steam', async () => {
     mockGetGameInfo.mockReturnValue({
       title: 'TestGame',
       app_name: 'test_app',
@@ -120,6 +127,53 @@ describe('onGameInstalled', () => {
     expect(mockedCreateRunnerFile).not.toHaveBeenCalled()
     expect(result.success).toBe(true)
     expect(result.steamAppId).toBe(123)
+    expect(mockedFindInSteam).toHaveBeenCalledWith({ steamAppId: 123 })
+  })
+
+  test('adds the game again if it is tracked but its shortcut is gone from Steam', async () => {
+    mockGetGameInfo.mockReturnValue({
+      title: 'TestGame',
+      app_name: 'test_app',
+      runner: 'gog',
+      install: { install_path: '/games/test' }
+    })
+    mockedFindShortcut.mockReturnValue({
+      gameName: 'TestGame',
+      appId: 'test_app',
+      store: 'gog',
+      steamAppId: 123,
+      execPath: '/games/test/TestGame.bat',
+      installPath: '/games/test'
+    })
+    mockedFindInSteam.mockReturnValue({ entry: null, found: false })
+    mockedAddGameToSteam.mockResolvedValueOnce({
+      success: true,
+      steamAppId: 456
+    })
+
+    await onGameInstalled(mockGame as never, '/games/test')
+
+    expect(mockedAddGameToSteam).toHaveBeenCalledWith(
+      expect.objectContaining({ steamAppId: 123 })
+    )
+  })
+
+  test('a game rakun does not know is added without looking at Steam titles', async () => {
+    mockGetGameInfo.mockReturnValue({
+      title: 'TestGame',
+      app_name: 'test_app',
+      runner: 'gog',
+      install: { install_path: '/games/test' }
+    })
+    mockedFindShortcut.mockReturnValue(undefined)
+    mockedAddGameToSteam.mockResolvedValueOnce({ success: true, steamAppId: 9 })
+
+    await onGameInstalled(mockGame as never, '/games/test')
+
+    expect(mockedFindInSteam).not.toHaveBeenCalled()
+    expect(mockedAddGameToSteam).toHaveBeenCalledWith(
+      expect.objectContaining({ steamAppId: undefined })
+    )
   })
 
   test('calls addGameToSteam and saves to store', async () => {
@@ -840,7 +894,7 @@ describe('onGameRepaired', () => {
     await expect(onGameRepaired(mockGame as never)).resolves.toBeUndefined()
   })
 
-  test('installing a game that is already tracked still skips everything', async () => {
+  test('installing a game that is already tracked and in Steam still skips everything', async () => {
     mockedFindShortcut.mockReturnValue(tracked)
 
     await onGameInstalled(mockGame as never)
