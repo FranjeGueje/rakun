@@ -2,6 +2,12 @@
 
 The history of rakun before its first release (the Heroic cleanup and Relic) lives in the `upstream` repository. The detailed notes of the versions before this first release are in the git history of this file.
 
+## 0.3.1 — Steam integration without a desktop session
+
+### Fixed
+
+- A game was not added to Steam when rakun ran as a service of a systemd user unit (for example the one of Invasor): the daemon lacks variables such as `KDE_SESSION_VERSION`, so `xdg-open` picked a missing handler (`kfmclient` on KDE) and failed silently with exit code 0. Steam never received the `steam://addnonsteamgame` URL and the add ended in a timeout. The URL is now opened with `gio open`, which does not depend on the desktop environment, and `xdg-open` is only the fallback.
+
 ## 0.3.0 — Runner options and self-update
 
 rakun can update itself, and the runner of the games has options of its own.
