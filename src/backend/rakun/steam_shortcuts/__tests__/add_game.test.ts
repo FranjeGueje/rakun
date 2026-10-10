@@ -293,12 +293,13 @@ describe('createRakunBat', () => {
       'rem FranjeGueje runner: the logic is in C:\\Launchers\\scripts\\Launcher_games.bat',
       'set "STORE=legendary"',
       'set "IDGAME=abc123"',
+      'set "GAMENAME=TestGame"',
       'call "C:\\Launchers\\scripts\\Launcher_games.bat" %*',
       'exit /b %errorlevel%'
     ])
   })
 
-  test('an Amazon game needs the same two variables', () => {
+  test('an Amazon game needs the same variables', () => {
     const runnerPath = createRakunBat(
       tmpDir.name,
       'AmazonGame',
@@ -308,7 +309,8 @@ describe('createRakunBat', () => {
     const content = lines(runnerPath)
     expect(content).toContain('set "STORE=nile"')
     expect(content).toContain('set "IDGAME=nile789"')
-    expect(content.filter((line) => line.startsWith('set '))).toHaveLength(2)
+    expect(content).toContain('set "GAMENAME=AmazonGame"')
+    expect(content.filter((line) => line.startsWith('set '))).toHaveLength(3)
   })
 
   test('a GOG game also carries its folder and the user of Comet', () => {

@@ -11,7 +11,7 @@ import {
 } from 'backend/logger'
 import { createEosOverlayBat } from './windowify'
 import { checkHelpersAtStart } from './helpers/locations'
-import { writeRunnerScript } from './runner_script'
+import { writeRunnerIni, writeRunnerScript } from './runner_script'
 import { startApiServer } from './server'
 import './api'
 
@@ -42,6 +42,7 @@ export async function startDaemon() {
 
   checkHelpersAtStart()
   writeRunnerScript()
+  writeRunnerIni()
   createEosOverlayBat()
 
   initOnlineMonitor()

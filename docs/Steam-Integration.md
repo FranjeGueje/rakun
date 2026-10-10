@@ -85,7 +85,19 @@ call "C:\Launchers\scripts\Launcher_games.bat" %*
 exit /b %errorlevel%
 ```
 
-A GOG game also sets `GAMEFOLDER` (its folder in `c:\games`) and `GOGUSER` (the user Comet logs in with). The runner, `Launcher_games.bat` (**FranjeGueje runner**, with its version on the first line it prints), sets the environment, jumps to the block of the store (`legendary`, `gog` or `nile`), checks its tools and launches the game through the store's CLI. rakun writes it into `mount/scripts/` at every start, so a new version reaches every game without regenerating their `.bat` files. The EOS Overlay script lives next to it.
+The file also sets `GAMENAME`, the title of the game as a file name (it names the log, see below). A GOG game also sets `GAMEFOLDER` (its folder in `c:\games`) and `GOGUSER` (the user Comet logs in with). The runner, `Launcher_games.bat` (**FranjeGueje runner**, with its version on the first line it prints), sets the environment, jumps to the block of the store (`legendary`, `gog` or `nile`), checks its tools and launches the game through the store's CLI. rakun writes it into `mount/scripts/` at every start, so a new version reaches every game without regenerating their `.bat` files. The EOS Overlay script lives next to it.
+
+### Runner options: `Launcher_games.ini`
+
+The `.bat` of each game does not change when rakun updates, so the options of the runner live in `~/.local/share/rakun/mount/scripts/Launcher_games.ini` (`C:\Launchers\scripts\Launcher_games.ini` inside a prefix). rakun creates it the first time it starts and **never overwrites it**, unlike the runner, which it rewrites at every start. A plain `key=value` file: `#` starts a comment, there are no sections and no spaces around the value. Edit it and the next launch of a game uses it; there is no need to restart rakun. A key that is missing keeps its default, so a new version of rakun can add keys without breaking your file.
+
+| Key             | Default | What it does                                                                                                                                    |
+| --------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SHOW_HEADER`   | `1`     | Prints the name and version of the runner (`FranjeGueje runner v1`) at the start. `0` hides it.                                                 |
+| `SHOW_VERSIONS` | `0`     | Prints the versions of `comet`, `gogdl` and `nile` and the status of `legendary` before the game. Each one starts a Wine process: it is slower. |
+| `LOG_TO_FILE`   | `0`     | `1` sends the whole output of the runner to `mount/logs/<game name>.log` (overwritten at each launch) and the window shows nothing.             |
+
+The log is named after the game's title, with `\ / : * ? " < > | %` replaced by `_`. A game added before this option existed has no `GAMENAME` and its log is `<store>-<id>.log`; repairing the game regenerates its `.bat` with the name.
 
 For Linux native GOG games, there is no `.bat`. rakun uses the `start.sh` script that GOG ships with the game. Steam runs the shell script natively.
 
