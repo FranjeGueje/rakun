@@ -1,6 +1,6 @@
 # Changelog
 
-The history of Relic (and of the Heroic cleanup) lives in the `upstream` repository. The detailed notes of the versions before this first release are in the git history of this file.
+The history of rakun before its first release (the Heroic cleanup and Relic) lives in the `upstream` repository. The detailed notes of the versions before this first release are in the git history of this file.
 
 ## Unreleased
 
