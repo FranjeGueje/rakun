@@ -28,6 +28,10 @@ In `network` mode, settings, folders, logs and a few more channels only answer t
 
 Force GE-Proton in the game's Steam properties (rakun does not set the compatibility tool) and check the prefix in `compatdata/<id>`.
 
+### The runner's window closes too fast to read it
+
+Set `LOG_TO_FILE=1` in `~/.local/share/rakun/mount/scripts/Launcher_games.ini` and launch the game again: the output of the runner is in `~/.local/share/rakun/mount/logs/<game name>.log`. See [Steam integration](Steam-Integration.md#runner-options-launcher_gamesini).
+
 ### `No GE-Proton configured` in the log (older versions)
 
 A GE-Proton installed later was never looked for. Update rakun, or set it: `rakunctl config protonPath <folder>`.

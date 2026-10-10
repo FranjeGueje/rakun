@@ -90,6 +90,7 @@ export function createRakunBat(
   const content = gameRunnerText({
     store: runner,
     appName,
+    title: gameName,
     folder: basename(installPath),
     username: runner === 'gog' ? getGogUsername() : undefined
   })
