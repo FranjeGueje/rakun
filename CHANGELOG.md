@@ -2,7 +2,9 @@
 
 The history of rakun before its first release (the Heroic cleanup and Relic) lives in the `upstream` repository. The detailed notes of the versions before this first release are in the git history of this file.
 
-## Unreleased
+## 0.3.0 — Runner options and self-update
+
+rakun can update itself, and the runner of the games has options of its own.
 
 ### Added
 
