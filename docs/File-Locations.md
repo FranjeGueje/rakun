@@ -12,7 +12,7 @@
 └── zoom_store/              — Zoom Platform login
 
 ~/.cache/rakun/             — Regenerable caches ($XDG_CACHE_HOME)
-~/.local/opt/rakun/         — The installed app (rakun, rakunctl, node, public/, web/)
+~/.local/opt/rakun/         — The installed app (rakun, rakunctl, install.sh, node, public/, web/)
 ~/.local/state/Rakun/       — ($XDG_STATE_HOME)
 ├── logs/                    — rakun.log, runners/<store>.log, games/<app>_<store>/
 └── serve/                   — files `rakunctl -s` uses to know who is running

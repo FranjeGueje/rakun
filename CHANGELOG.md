@@ -6,6 +6,8 @@ The history of rakun before its first release (the Heroic cleanup and Relic) liv
 
 ### Added
 
+- `rakunctl self-update [--check] [--force]`: installs the newest GitHub release over `~/.local/opt/rakun` (checksum required), stopping rakun first and starting it again if it was running; a busy rakun is not stopped without `--force`. `--check` only says if there is a new version. It only touches an install made by `install.sh` and only x64 is published. rakun itself never asks GitHub. The tarball now carries `install.sh`, which `self-update` runs: an older install must be updated by hand once.
+- The variable `RAKUN_RELEASES_URL` points `self-update` at another release, to test it.
 - `~/.local/share/rakun/mount/scripts/Launcher_games.ini`: options of the runner that rakun creates once and never overwrites (the `.bat` of each game does not change, so this is where a new runner reads its options). `SHOW_HEADER` (default `1`), `SHOW_VERSIONS` (default `0`: the versions of comet, gogdl and nile and the status of legendary are no longer printed, which makes a launch faster) and `LOG_TO_FILE` (default `0`: the output goes to `mount/logs/<game name>.log`).
 - The `.bat` of a game sets `GAMENAME`, the title of the game; a game added earlier gets it when it is repaired, and until then its log is named `<store>-<id>`.
 

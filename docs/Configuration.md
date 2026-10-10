@@ -43,13 +43,14 @@ Even so, settings, folder listing, logs and a few more channels still only answe
 
 ## Environment variables
 
-| Variable            | Used by         | Meaning                                     |
-| ------------------- | --------------- | ------------------------------------------- |
-| `RAKUN_PORT`        | rakun           | API port (default `17370`)                  |
-| `RAKUN_WEB`         | rakun           | `local`, `network` or `off`                 |
-| `RAKUN_WEB_DIR`     | rakun           | Serve the web from another folder           |
-| `RAKUN_API_FILE`    | rakunctl, smoke | Read port and token from another `api.json` |
-| `RAKUN_NODE_BINARY` | `package.sh`    | Use this Node instead of downloading one    |
+| Variable             | Used by         | Meaning                                                        |
+| -------------------- | --------------- | -------------------------------------------------------------- |
+| `RAKUN_PORT`         | rakun           | API port (default `17370`)                                     |
+| `RAKUN_WEB`          | rakun           | `local`, `network` or `off`                                    |
+| `RAKUN_WEB_DIR`      | rakun           | Serve the web from another folder                              |
+| `RAKUN_API_FILE`     | rakunctl, smoke | Read port and token from another `api.json`                    |
+| `RAKUN_NODE_BINARY`  | `package.sh`    | Use this Node instead of downloading one                       |
+| `RAKUN_RELEASES_URL` | rakunctl        | Where `self-update` reads the latest release (only to test it) |
 
 The port and the token live in `~/.config/rakun/api.json` (mode 0600).
 
