@@ -5,6 +5,8 @@ export type GameRunner = Runner
 export interface AddGameToSteamOptions {
   gameName: string
   runnerPath: string
+  /** The id Steam gave it earlier, if rakun already knew the game */
+  steamAppId?: number
 }
 
 export interface AddGameToSteamResult {

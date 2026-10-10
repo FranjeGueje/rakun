@@ -11,11 +11,15 @@ import {
   createRunnerFile,
   createGameSymlink,
   findShortcut,
+  findShortcutInAllUsers,
   addShortcut,
   removeShortcut
 } from './steam_shortcuts'
 import { preparePrefix, removePrefixSymlink } from './prefix'
-import type { AddGameToSteamResult } from './steam_shortcuts/types'
+import type {
+  AddGameToSteamResult,
+  SteamShortcut
+} from './steam_shortcuts/types'
 import { downloadGrids, deleteGrids } from './steamgrid'
 
 const LOG_PREFIX = 'Rakun'
@@ -65,7 +69,8 @@ async function installLinuxNative(
 
   const result = await addGameToSteam({
     gameName: gameInfo.title,
-    runnerPath
+    runnerPath,
+    steamAppId: findShortcut(appName)?.steamAppId
   })
 
   if (!result.success) {
@@ -130,7 +135,8 @@ async function integrateInSteam(
 
   const result = await addGameToSteam({
     gameName: gameInfo.title,
-    runnerPath: runnerFile.path
+    runnerPath: runnerFile.path,
+    steamAppId: findShortcut(appName)?.steamAppId
   })
 
   if (!result.success) {
@@ -163,6 +169,11 @@ async function integrateInSteam(
   return result
 }
 
+/** Rakun knows the game; is the shortcut with its id still in Steam? */
+function isInSteam(known: SteamShortcut): boolean {
+  return findShortcutInAllUsers({ steamAppId: known.steamAppId }).found
+}
+
 export async function onGameInstalled(
   game: Game,
   installPath?: string
@@ -171,7 +182,7 @@ export async function onGameInstalled(
   const appName = gameInfo.app_name
 
   const known = findShortcut(appName)
-  if (known) {
+  if (known && isInSteam(known)) {
     logInfo(
       `"${gameInfo.title}" (${appName}) is already tracked in Steam (ID ${known.steamAppId}). Skipping.`,
       LOG_PREFIX

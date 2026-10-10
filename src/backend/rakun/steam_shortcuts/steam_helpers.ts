@@ -59,14 +59,6 @@ export function readShortcutsVdf(
   return null
 }
 
-export function getAppName(entry: Record<string, unknown>): string {
-  return (
-    (Object.entries(entry).find(
-      ([k]) => k.toLowerCase() === 'appname'
-    )?.[1] as string) ?? ''
-  )
-}
-
 export function getShortcutId(entry: Record<string, unknown>): number {
   const id = entry.appid
   if (typeof id === 'number') return id >>> 0
@@ -74,10 +66,38 @@ export function getShortcutId(entry: Record<string, unknown>): number {
   return 0
 }
 
-// ── Game search ──
+// ── Shortcut search ──
 
-export function findGameInAllUsers(names: string | string[]): FindResult {
-  const nameList = Array.isArray(names) ? names : [names]
+type Entry = Record<string, unknown>
+
+/** The game is told apart by its Steam id or by what it runs, never by its title */
+export interface ShortcutQuery {
+  steamAppId?: number
+  exe?: string
+}
+
+/** The `Exe` of a shortcut, without the quotes Steam wraps around it */
+export function getExe(entry: Entry): string {
+  const exe = Object.entries(entry).find(
+    ([k]) => k.toLowerCase() === 'exe'
+  )?.[1]
+  return typeof exe === 'string' ? exe.replace(/^"|"$/g, '') : ''
+}
+
+function isMatch(entry: Entry, { steamAppId, exe }: ShortcutQuery): boolean {
+  if (steamAppId && getShortcutId(entry) === steamAppId) return true
+  return !!exe && getExe(entry) === exe
+}
+
+function readAllShortcuts(folders: string[], userdataDir: string): Entry[] {
+  return folders.flatMap((folder) => {
+    const shortcutsFile = join(userdataDir, folder, 'config', 'shortcuts.vdf')
+    return (readShortcutsVdf(shortcutsFile)?.shortcuts ??
+      []) as unknown as Entry[]
+  })
+}
+
+export function findShortcutInAllUsers(query: ShortcutQuery): FindResult {
   const { userdataDir, folders } = getUserdataInfo()
 
   if (folders.length === 0) {
@@ -88,24 +108,12 @@ export function findGameInAllUsers(names: string | string[]): FindResult {
     }
   }
 
-  for (const folder of folders) {
-    const shortcutsFile = join(userdataDir, folder, 'config', 'shortcuts.vdf')
-    const content = readShortcutsVdf(shortcutsFile)
-    if (!content?.shortcuts?.length) continue
+  const shortcuts = readAllShortcuts(folders, userdataDir)
+  const entry =
+    shortcuts.find((e) => isMatch(e, { steamAppId: query.steamAppId })) ??
+    shortcuts.find((e) => isMatch(e, { exe: query.exe }))
 
-    for (const name of nameList) {
-      const entry = content.shortcuts.find(
-        (e) => getAppName(e as unknown as Record<string, unknown>) === name
-      )
-      if (entry)
-        return {
-          entry: entry as unknown as Record<string, unknown>,
-          found: true
-        }
-    }
-  }
-
-  return { entry: null, found: false }
+  return { entry: entry ?? null, found: !!entry }
 }
 
 // ── Protocol ──
