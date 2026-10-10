@@ -132,6 +132,7 @@ stage_package() { # arch, stage, full (0 or 1)
     cp build/rakun.cjs build/rakunctl.cjs "$2/rakun/"
     if [ "$3" -eq 1 ]; then stage_helpers "$1" "$2"; fi
     cp COPYING AUTHORS API.md THIRD_PARTY "$2/rakun/"
+    cp scripts/install.sh "$2/rakun/"
     cp -r build/web "$2/rakun/web"
     fetch_node "$1" "$2/rakun"
     make_launcher "$2/rakun" rakun

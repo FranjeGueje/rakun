@@ -6,14 +6,15 @@ Commands that change something (`install`, `update`, `repair`, `uninstall`) wait
 
 ## Starting and stopping
 
-| Command                                        | What it does                                              |
-| ---------------------------------------------- | --------------------------------------------------------- |
-| `start [--web local\|network\|off] [--port N]` | start rakun in the background                             |
-| `stop [--force]`                               | stop it (`--force` even if a download is running)         |
-| `install-service [--web ...] [--port N]`       | systemd user service, started at every login              |
-| `uninstall-service`                            | stop it and remove the service                            |
-| `status`                                       | version, sessions, queue, helpers (or "rakun is stopped") |
-| `-s <command>`                                 | run one command with rakun up, then stop it again         |
+| Command                                        | What it does                                                   |
+| ---------------------------------------------- | -------------------------------------------------------------- |
+| `start [--web local\|network\|off] [--port N]` | start rakun in the background                                  |
+| `stop [--force]`                               | stop it (`--force` even if a download is running)              |
+| `install-service [--web ...] [--port N]`       | systemd user service, started at every login                   |
+| `uninstall-service`                            | stop it and remove the service                                 |
+| `self-update [--check] [--force]`              | install the newest rakun (`--check`: only say if there is one) |
+| `status`                                       | version, sessions, queue, helpers (or "rakun is stopped")      |
+| `-s <command>`                                 | run one command with rakun up, then stop it again              |
 
 ### `-s`: start only while a command runs
 
@@ -21,6 +22,21 @@ Commands that change something (`install`, `update`, `repair`, `uninstall`) wait
 - Several `-s` at once are safe: rakun stops when the **last** one finishes, and only if a `-s` started it.
 - A rakun you started yourself, or systemd did, is never stopped by `-s`.
 - The files `-s` uses to coordinate live in `~/.local/state/Rakun/serve/`.
+
+### `self-update`
+
+Updates **rakun itself** (`update` updates games). It looks at the newest [GitHub release](https://github.com/FranjeGueje/rakun/releases), and if it is newer than the one you have it installs it:
+
+```bash
+rakunctl self-update --check     # only say if there is a new version (--json: current, latest, updateAvailable)
+rakunctl self-update             # install it
+```
+
+- It stops rakun if it runs (not while it is downloading or refreshing the library: pause or cancel first, or use `--force`), installs the tarball with the `install.sh` that comes in it, and starts rakun again. If a service is installed, the service is started. A rakun that was stopped stays stopped. A `--web` or `--port` you gave to `start` by hand is not kept: rakun starts with the saved `webAccess` setting and `RAKUN_PORT`.
+- The tarball is checked against its `.sha256`; if the checksum does not match, nothing is replaced and the old rakun runs again.
+- Your logins, settings and helper binaries are not touched. A new rakun can pin other helper versions: the command ends with the helpers line of `status`, and `rakunctl helpers update` downloads what is missing.
+- It only updates an install made by `install.sh` (`~/.local/opt/rakun`), and only x64 builds are published. A rakun inside another package (an AppImage, another client) is updated the way it was installed.
+- It cannot be used with `-s`: it does not need rakun running. rakun itself never asks GitHub: only this command does, when you run it.
 
 ### `install-service`
 

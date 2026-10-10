@@ -28,6 +28,7 @@ import { ServeDeps, serveDir, processAlive, withServe } from './serve'
 import { config } from './commands/config'
 import { helpers } from './commands/helpers'
 import { installService, uninstallService } from './commands/systemd'
+import { selfUpdate } from './commands/selfupdate'
 
 export const HELP = `Usage: rakunctl [options] <command> [arguments]
 
@@ -39,6 +40,9 @@ Service
                                     Install it as a systemd user service
                                     (starts at login)
   uninstall-service                 Remove the service and stop rakun
+  self-update [--check] [--force]   Install the newest rakun (--check: only say
+                                    if there is one). Only for an install made
+                                    by install.sh; it restarts rakun if it runs
 
 Accounts
   login <store>                     Log in
@@ -140,6 +144,7 @@ export function parseCli(argv: string[]) {
       'remove-files': { type: 'boolean' },
       yes: { type: 'boolean' },
       force: { type: 'boolean' },
+      check: { type: 'boolean' },
       serve: { type: 'boolean', short: 's' },
       web: { type: 'string' },
       port: { type: 'string' },
@@ -160,6 +165,7 @@ export function parseCli(argv: string[]) {
     removeFiles: values['remove-files'],
     yes: values.yes,
     force: values.force,
+    check: values.check,
     serve: values.serve,
     web: values.web,
     port: values.port,
@@ -193,7 +199,8 @@ const SERVICE_COMMANDS = [
   'start',
   'stop',
   'install-service',
-  'uninstall-service'
+  'uninstall-service',
+  'self-update'
 ]
 
 /** -s cannot work with what outlives the command or has no end */
@@ -231,6 +238,7 @@ export async function runCli(
   if (command === 'stop') return stop(io, opts)
   if (command === 'install-service') return installService(io, opts)
   if (command === 'uninstall-service') return uninstallService(io)
+  if (command === 'self-update') return selfUpdate(io, opts, json)
   const handler = commands[command]
   if (!handler) throw new CliError(`Unknown command "${command}"\n\n${HELP}`)
   // The helpers are fetched by rakun: it is started for the command if it is stopped
