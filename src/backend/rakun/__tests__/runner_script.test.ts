@@ -82,18 +82,13 @@ describe('the runner script', () => {
     expect(block).toContain(
       'if not exist "%LAUNCHERS%\\gog_store\\auth.json" ('
     )
-    expect(block).toContain('mkdir "%APPDATA%\\heroic\\gog_store" >nul 2>&1')
-    expect(block).toContain(
-      'copy "%LAUNCHERS%\\gog_store\\*" "%APPDATA%\\heroic\\gog_store\\" >nul 2>&1'
-    )
-    expect(block).toContain('cd /d "%LAUNCHERS%\\bin\\"')
     expect(block).toContain('if "%RK_SHOW_VERSIONS%"=="1" comet.exe --version')
-    expect(block).toContain('start "" /b "install-dummy-service.bat" >nul 2>&1')
+    expect(block).not.toContain('dummy')
     expect(block).toContain(
-      'start "" /b "comet.exe" --from-heroic --username "%GOGUSER%" >nul 2>&1'
+      'start "" /b "%LAUNCHERS%\\scripts\\comet.bat" "%GOGUSER%"'
     )
     expect(block).toContain(
-      '@gogdl --auth-config-path c:\\Launchers\\gog_store\\auth.json launch --platform windows "c:\\games\\%GAMEFOLDER%" %IDGAME% -- %*'
+      '@gogdl --auth-config-path "%LAUNCHERS%\\gog_store\\auth.json" launch --platform windows "c:\\games\\%GAMEFOLDER%" %IDGAME% -- %*'
     )
   })
 
@@ -117,15 +112,6 @@ describe('the runner script', () => {
     )
     expect(text).toContain(
       'if not defined GAMENAME set "GAMENAME=%STORE%-%IDGAME%"'
-    )
-  })
-
-  test('only a GOG game ends saying that Comet is running', () => {
-    expect(blockOf('gog')).toContain('set "COMETNOTE=1"')
-    expect(blockOf('legendary').join('\n')).not.toContain('COMETNOTE')
-    expect(text).toContain('if defined COMETNOTE echo COMET IS RUNNING.')
-    expect(text).toContain(
-      "echo If you've closed the game, you can close this window now."
     )
   })
 
