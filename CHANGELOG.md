@@ -2,6 +2,18 @@
 
 The history of rakun before its first release (the Heroic cleanup and Relic) lives in the `upstream` repository. The detailed notes of the versions before this first release are in the git history of this file.
 
+## 0.3.2 — Comet starts from its own script
+
+### Changed
+
+- The runner of a GOG game no longer starts Comet itself: it calls `mount/scripts/comet.bat` with the GOG user, a new script that rakun rewrites at every start (like the runner). It updates the files of `gog_store`, makes sure the `GalaxyCommunication` service exists, and leaves Comet running. The runner is still v1.
+- The log of Comet is `mount/logs/comet.log` (it was discarded).
+- `gogdl` reads its auth file from `%LAUNCHERS%\gog_store\auth.json`.
+
+### Removed
+
+- `install-dummy-service.bat` is no longer run and is no longer one of the files rakun expects from the Comet helper.
+
 ## 0.3.1 — Steam integration without a desktop session
 
 ### Fixed
