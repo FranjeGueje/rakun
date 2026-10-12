@@ -82,9 +82,11 @@ describe('the manifest', () => {
       { root: 'bin', file: 'arm64/linux/legendary' },
       { root: 'win', file: 'legendary.exe' }
     ])
-    expect(expectedFiles('comet', 'x64').map((e) => e.file)).toContain(
-      'install-dummy-service.bat'
-    )
+    expect(expectedFiles('comet', 'x64').map((e) => e.file)).toEqual([
+      'comet.exe',
+      'GalaxyCommunication.exe',
+      'update-permissions.exe'
+    ])
   })
 })
 

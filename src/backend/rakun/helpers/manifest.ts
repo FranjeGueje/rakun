@@ -165,7 +165,7 @@ export const ASSETS: Asset[] = [
     sha256: '181f9a3644eabbdf396037de135583e92cf4a08029be30c9ee4e2479ff11ae8c'
   },
   {
-    // GalaxyCommunication.exe, install-dummy-service.bat and update-permissions.exe
+    // GalaxyCommunication.exe and update-permissions.exe (the zip has more files, unused)
     helper: 'comet',
     asset: fixed('dummy-service.zip'),
     kind: 'zip',
@@ -206,7 +206,6 @@ export function expectedFiles(helper: HelperName, arch: Arch): Expected[] {
       return [
         win('comet.exe'),
         win('GalaxyCommunication.exe'),
-        win('install-dummy-service.bat'),
         win('update-permissions.exe')
       ]
     case 'epic-integration':

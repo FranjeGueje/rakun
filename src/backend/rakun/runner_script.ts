@@ -11,6 +11,8 @@ export const RUNNER_VERSION = 1
 /** Folder of the mount for the scripts that run inside the prefixes */
 export const SCRIPTS_DIR = 'scripts'
 export const RUNNER_BAT = 'Launcher_games.bat'
+/** The script that starts Comet for a GOG game, next to the runner */
+export const COMET_BAT = 'comet.bat'
 /** The options of the runner: next to it, created once and never overwritten */
 export const RUNNER_INI = 'Launcher_games.ini'
 /** Where the runner leaves the log of a game (inside the mount) when `LOG_TO_FILE` is on */
@@ -71,20 +73,16 @@ const gogLines = [
   '    exit /b 1',
   ')',
   ...section('Start Comet'),
-  'mkdir "%APPDATA%\\heroic\\gog_store" >nul 2>&1',
-  'copy "%LAUNCHERS%\\gog_store\\*" "%APPDATA%\\heroic\\gog_store\\" >nul 2>&1',
-  'cd /d "%LAUNCHERS%\\bin\\"',
   'if "%RK_SHOW_VERSIONS%"=="1" comet.exe --version',
   '',
-  'start "" /b "install-dummy-service.bat" >nul 2>&1',
-  'start "" /b "comet.exe" --from-heroic --username "%GOGUSER%" >nul 2>&1',
-  '',
-  'timeout /t 2 /nobreak >nul',
+  'echo Launching Comet ...',
+  'echo.',
+  `start "" /b "%LAUNCHERS%\\${SCRIPTS_DIR}\\${COMET_BAT}" "%GOGUSER%"`,
+  'timeout /t 1 /nobreak >nul',
   ...section('START THE GAME'),
   `if "%RK_SHOW_VERSIONS%"=="1" for /f "delims=" %%v in ('gogdl --version') do echo gogdl version: %%v`,
   '',
-  '@gogdl --auth-config-path c:\\Launchers\\gog_store\\auth.json launch --platform windows "c:\\games\\%GAMEFOLDER%" %IDGAME% -- %*',
-  'set "COMETNOTE=1"',
+  '@gogdl --auth-config-path "%LAUNCHERS%\\gog_store\\auth.json" launch --platform windows "c:\\games\\%GAMEFOLDER%" %IDGAME% -- %*',
   'goto :end'
 ]
 
@@ -146,7 +144,6 @@ export function runnerScriptText(): string {
     ':end',
     'echo.',
     'echo ---------------------------------------------------------',
-    'if defined COMETNOTE echo COMET IS RUNNING.',
     "echo If you've closed the game, you can close this window now.",
     'echo ---------------------------------------------------------',
     'goto :eof',
