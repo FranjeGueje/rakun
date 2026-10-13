@@ -59,6 +59,17 @@ describe('the runner script', () => {
     expect(text).toContain('echo [ERROR]: unknown store "%STORE%".')
   })
 
+  test('each store has its label between two bands, apart from the others', () => {
+    const lines = text.split('\n')
+    for (const store of ['legendary', 'gog', 'nile']) {
+      const at = lines.indexOf(`:${store}`)
+      expect(lines[at - 2]).toBe(`rem ${'/'.repeat(60)}`)
+      expect(lines[at - 1]).toBe(`rem ${'*'.repeat(60)}`)
+      expect(lines[at + 1]).toBe(`rem ${'*'.repeat(60)}`)
+      expect(lines[at + 2]).toBe(`rem ${'\\'.repeat(60)}`)
+    }
+  })
+
   test('legendary: checks the tool, shows the status and launches the game', () => {
     const block = blockOf('legendary')
     expect(block).toContain('if not exist "%LAUNCHERS%\\bin\\legendary.exe" (')
@@ -85,10 +96,24 @@ describe('the runner script', () => {
     expect(block).toContain('if "%RK_SHOW_VERSIONS%"=="1" comet.exe --version')
     expect(block).not.toContain('dummy')
     expect(block).toContain(
-      'start "" /b "%LAUNCHERS%\\scripts\\comet.bat" "%GOGUSER%"'
+      'call "%LAUNCHERS%\\scripts\\comet.bat" "%GOGUSER%"'
     )
     expect(block).toContain(
-      '@gogdl --auth-config-path "%LAUNCHERS%\\gog_store\\auth.json" launch --platform windows "c:\\games\\%GAMEFOLDER%" %IDGAME% -- %*'
+      '@gogdl --auth-config-path "%LAUNCHERS%\\gog_store\\auth.json" launch --platform windows %RK_TASK%"c:\\games\\%GAMEFOLDER%" %IDGAME% -- %*'
+    )
+  })
+
+  test('GOG passes --prefer-task only for a PLAYTASK that is a number other than 0', () => {
+    const block = blockOf('gog')
+    for (const line of [
+      'set "RK_TASK="',
+      'if defined PLAYTASK set "RK_TASK=--prefer-task %PLAYTASK% "',
+      'if defined PLAYTASK for /f "delims=0123456789" %%a in ("%PLAYTASK%") do set "RK_TASK="',
+      'if "%PLAYTASK%"=="0" set "RK_TASK="'
+    ])
+      expect(block).toContain(line)
+    expect(block.indexOf('set "RK_TASK="')).toBeLessThan(
+      block.findIndex((line) => line.startsWith('@gogdl'))
     )
   })
 
@@ -181,6 +206,7 @@ describe('the file of each game', () => {
     })
     expect(text).toContain('set "GAMEFOLDER=50%% Off & More"')
     expect(text).toContain('set "GOGUSER=ab"')
+    expect(text).toContain('set "PLAYTASK=0"')
   })
 
   test('the stores that have no runner are refused', () => {

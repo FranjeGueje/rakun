@@ -51,8 +51,17 @@ export const missingTool = (
   ''
 ]
 
+/** The label of a store between two bands, so each store stands out in the runner */
+const storeBanner = (store: string) => [
+  `rem ${'/'.repeat(60)}`,
+  `rem ${'*'.repeat(60)}`,
+  `:${store}`,
+  `rem ${'*'.repeat(60)}`,
+  `rem ${'\\'.repeat(60)}`
+]
+
 const legendaryLines = [
-  ':legendary',
+  ...storeBanner('legendary'),
   ...section('PRECHECKS'),
   ...missingTool('legendary.exe'),
   ...section('START THE GAME'),
@@ -62,8 +71,16 @@ const legendaryLines = [
   'goto :end'
 ]
 
+/** `--prefer-task N` for gogdl when `PLAYTASK` is a number other than 0 (0 = the task GOG marks as primary); anything else is ignored */
+const playTaskLines = [
+  'set "RK_TASK="',
+  'if defined PLAYTASK set "RK_TASK=--prefer-task %PLAYTASK% "',
+  'if defined PLAYTASK for /f "delims=0123456789" %%a in ("%PLAYTASK%") do set "RK_TASK="',
+  'if "%PLAYTASK%"=="0" set "RK_TASK="'
+]
+
 const gogLines = [
-  ':gog',
+  ...storeBanner('gog'),
   ...section('PRECHECKS'),
   ...missingTool('gogdl.exe'),
   ...missingTool('comet.exe'),
@@ -77,17 +94,18 @@ const gogLines = [
   '',
   'echo Launching Comet ...',
   'echo.',
-  `start "" /b "%LAUNCHERS%\\${SCRIPTS_DIR}\\${COMET_BAT}" "%GOGUSER%"`,
+  `call "%LAUNCHERS%\\${SCRIPTS_DIR}\\${COMET_BAT}" "%GOGUSER%"`,
   'timeout /t 1 /nobreak >nul',
   ...section('START THE GAME'),
   `if "%RK_SHOW_VERSIONS%"=="1" for /f "delims=" %%v in ('gogdl --version') do echo gogdl version: %%v`,
   '',
-  '@gogdl --auth-config-path "%LAUNCHERS%\\gog_store\\auth.json" launch --platform windows "c:\\games\\%GAMEFOLDER%" %IDGAME% -- %*',
+  ...playTaskLines,
+  '@gogdl --auth-config-path "%LAUNCHERS%\\gog_store\\auth.json" launch --platform windows %RK_TASK%"c:\\games\\%GAMEFOLDER%" %IDGAME% -- %*',
   'goto :end'
 ]
 
 const nileLines = [
-  ':nile',
+  ...storeBanner('nile'),
   ...section('PRECHECKS'),
   ...missingTool('nile.exe'),
   ...section('START THE GAME'),
@@ -99,7 +117,7 @@ const nileLines = [
 
 /**
  * The runner of every game: it reads `STORE` and `IDGAME` (and, on GOG,
- * `GAMEFOLDER` and `GOGUSER`) from the small `.bat` of each game and does what
+ * `GAMEFOLDER`, `GOGUSER` and `PLAYTASK`) from the small `.bat` of each game and does what
  * its store needs. Raising `RUNNER_VERSION` and changing this text is all it
  * takes to move every game to a new runner.
  */
@@ -211,7 +229,8 @@ export function gameRunnerText({
     ...(store === 'gog'
       ? ([
           ['GAMEFOLDER', folder ?? ''],
-          ['GOGUSER', username ?? '']
+          ['GOGUSER', username ?? ''],
+          ['PLAYTASK', '0']
         ] as [string, string][])
       : [])
   ]

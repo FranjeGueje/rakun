@@ -4,9 +4,12 @@ The history of rakun before its first release (the Heroic cleanup and Relic) liv
 
 ## 0.3.2 — Comet starts from its own script
 
-### Changed
+### Added
 
-- The runner of a GOG game no longer starts Comet itself: it calls `mount/scripts/comet.bat` with the GOG user, a new script that rakun rewrites at every start (like the runner). It updates the files of `gog_store`, makes sure the `GalaxyCommunication` service exists, and leaves Comet running. The runner is still v1.
+- `PLAYTASK` in the `.bat` of a GOG game (written as `0`): the index of the play task `gogdl` starts, passed as `--prefer-task`. `0`, a missing value or anything that is not a number leaves `gogdl` with the task GOG marks as primary. It is for a game whose primary task is a launcher that starts the game twice or ends before it (Cyberpunk 2077 with `--launcher-skip`: set `PLAYTASK=1` to start `bin\x64\Cyberpunk2077.exe` directly). The `.bat` is rewritten when the game is added to Steam again, so a value edited by hand is lost then.
+- ### Changed
+
+- The runner of a GOG game no longer starts Comet itself: it calls `mount/scripts/comet.bat` with the GOG user, a new script that rakun rewrites at every start (like the runner). It updates the files of `gog_store`, makes sure the `GalaxyCommunication` service exists, and leaves Comet running. The call is made from the runner (not started apart), so Comet stays in the console of the runner and its window lasts as long as Comet, even if the launcher of the game ends first. The runner is still v1.
 - The log of Comet is `mount/logs/comet.log` (it was discarded).
 - `gogdl` reads its auth file from `%LAUNCHERS%\gog_store\auth.json`.
 
