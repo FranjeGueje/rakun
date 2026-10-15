@@ -399,7 +399,7 @@ describe('createRunnerFile', () => {
 
     const result = createRunnerFile(gameInfo, installDir.name)
 
-    expect(result).toEqual({ error: 'No executable found for Zoom game' })
+    expect(result).toEqual({ error: 'No executable found for the zoom game' })
   })
 
   test('non-zoom: creates a .bat runner file', () => {

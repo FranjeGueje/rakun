@@ -9,7 +9,12 @@ import type {
 } from 'common/types'
 import type { ItchGame, ItchUpload } from 'common/types/itch'
 import type { Game, InstallResult } from 'common/types/game_manager'
-import { logError, logInfo, LogPrefix } from 'backend/logger'
+import { logError, logInfo, logWarning, LogPrefix } from 'backend/logger'
+import {
+  onGameInstalled,
+  onGameRepaired,
+  onGameUninstalled
+} from 'backend/rakun/game_events'
 import { sendFrontendMessage } from '../../ipc'
 import { sendProgressUpdate } from '../../utils'
 import { libraryManagerMap } from '..'
@@ -19,6 +24,7 @@ import { getButlerd } from './client'
 import { installedGamesStore } from './electronStores'
 import { installLocationFor } from './install_location'
 import { toInstallProgress, type ButlerProgress } from './progress'
+import { findExecutable, writeStartScript, type Platform } from './executable'
 
 type Queued = {
   id: string
@@ -69,7 +75,11 @@ export default class ItchGameManager implements Game {
       )
       if (!upload) return { status: 'error', error: `No ${platform} build` }
       const queued = await this.runInstall(path, upload)
-      this.saveInstalled(queued, platform)
+      await this.saveInstalled(
+        queued,
+        platform === 'linux' ? 'linux' : 'windows'
+      )
+      await onGameInstalled(this, queued.installFolder)
       return { status: 'done' }
     } catch (error) {
       logError([`Install of ${this.id} failed:`, error], LogPrefix.Itch)
@@ -123,13 +133,28 @@ export default class ItchGameManager implements Game {
     })
   }
 
-  private saveInstalled(queued: Queued, platform: string) {
+  /** What Steam will run: the executable butler finds and, on Linux, a `start.sh` that runs it */
+  private async prepareExecutable(
+    folder: string,
+    platform: Platform
+  ): Promise<string> {
+    try {
+      const executable = await findExecutable(folder, platform)
+      if (!executable) throw Error(`butler found nothing to run in ${folder}`)
+      if (platform === 'linux') writeStartScript(folder, executable)
+      return executable
+    } catch (error) {
+      logWarning([`No executable for ${this.id}:`, error], LogPrefix.Itch)
+      return ''
+    }
+  }
+
+  private async saveInstalled(queued: Queued, platform: Platform) {
     const installed: InstalledInfo = {
       appName: this.id,
-      platform: platform === 'linux' ? 'linux' : 'windows',
+      platform,
       install_path: queued.installFolder,
-      // Finding the executable is for the Steam step, not for this one
-      executable: '',
+      executable: await this.prepareExecutable(queued.installFolder, platform),
       install_size: '',
       is_dlc: false,
       version: 'N/A',
@@ -159,6 +184,7 @@ export default class ItchGameManager implements Game {
 
     if (installed.caveId) await this.removeCave(installed.caveId)
     this.forgetInstalled()
+    await onGameUninstalled(this)
     return { stdout: 'Uninstalled', stderr: '' }
   }
 
@@ -197,10 +223,15 @@ export default class ItchGameManager implements Game {
     reason: 'heal' | 'update',
     status: 'updating' | 'repairing'
   ): Promise<InstallResult> {
-    const { caveId } = this.getGameInfo().install
+    const { caveId, platform } = this.getGameInfo().install
     if (!caveId) return { status: 'error', error: "Game isn't installed" }
     try {
-      await this.perform({ caveId, reason }, status)
+      const queued = await this.perform({ caveId, reason }, status)
+      // The operation can change what there is to run
+      await this.saveInstalled(
+        queued,
+        platform === 'linux' ? 'linux' : 'windows'
+      )
       return { status: 'done' }
     } catch (error) {
       logError([`${reason} of ${this.id} failed:`, error], LogPrefix.Itch)
@@ -210,6 +241,7 @@ export default class ItchGameManager implements Game {
 
   async repair(): Promise<ExecResult> {
     const { status, error } = await this.redo('heal', 'repairing')
+    if (status === 'done') await onGameRepaired(this)
     return { stdout: status, stderr: error ?? '' }
   }
 

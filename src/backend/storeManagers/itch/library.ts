@@ -13,7 +13,12 @@ import {
   installedGamesStore,
   libraryStore
 } from './electronStores'
-import { itchToGameInfo, pickUpload, uniqueGames } from './library_info'
+import {
+  itchToGameInfo,
+  pickUpload,
+  uniqueGames,
+  withoutInstall
+} from './library_info'
 import { fetchCollectionGames, fetchOwnedGames } from './library_fetch'
 
 const library: Map<string, GameInfo> = new Map()
@@ -45,7 +50,7 @@ export default class ItchLibraryManager implements LibraryManager {
       logError(['Failed to refresh the itch library:', error], LogPrefix.Itch)
       return { stdout: '', stderr: 'Error loading library' }
     }
-    libraryStore.set('games', Array.from(library.values()))
+    libraryStore.set('games', Array.from(library.values()).map(withoutInstall))
     logInfo(`Library refreshed: ${library.size} games`, LogPrefix.Itch)
     return { stdout: 'Library refreshed', stderr: '' }
   }
@@ -125,10 +130,12 @@ export default class ItchLibraryManager implements LibraryManager {
     const game =
       library.get(appName) ??
       libraryStore.get('games', []).find((info) => info.app_name === appName)
+    if (!game) return undefined
+    // What is installed is what is in the installed list, whatever the copy of the game says
     const installed = installedGames.get(appName)
-    return game && installed
+    return installed
       ? { ...game, is_installed: true, install: installed }
-      : game
+      : { ...game, is_installed: false, install: { is_dlc: false } }
   }
 
   updateGameInLibrary(game: GameInfo) {

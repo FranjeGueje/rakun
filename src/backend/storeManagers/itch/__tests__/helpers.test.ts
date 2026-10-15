@@ -8,7 +8,8 @@ import {
   folderNameOf,
   itchToGameInfo,
   pickUpload,
-  uniqueGames
+  uniqueGames,
+  withoutInstall
 } from '../library_info'
 import { formatEta, toInstallProgress } from '../progress'
 
@@ -41,6 +42,21 @@ describe('itchToGameInfo', () => {
   test('folder name drops what a file system dislikes, or falls back to the id', () => {
     expect(folderNameOf(game)).toBe('Cool The Game')
     expect(folderNameOf({ ...game, title: '???' })).toBe('7')
+  })
+})
+
+describe('withoutInstall', () => {
+  test('forgets that the game is installed, keeping the rest', () => {
+    const installed = {
+      ...itchToGameInfo(game),
+      is_installed: true,
+      install: { install_path: '/x', platform: 'linux' as const }
+    }
+    expect(withoutInstall(installed)).toEqual({
+      ...itchToGameInfo(game),
+      is_installed: false,
+      install: { is_dlc: false }
+    })
   })
 })
 

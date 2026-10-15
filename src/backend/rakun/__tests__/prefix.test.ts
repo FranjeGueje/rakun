@@ -247,7 +247,7 @@ describe('preparePrefix', () => {
 
     expect(mockedSymlinkSync).not.toHaveBeenCalled()
     expect(logError).toHaveBeenCalledWith(
-      expect.stringContaining('Failed to prepare Zoom prefix'),
+      expect.stringContaining('Failed to prepare zoom prefix'),
       'Rakun'
     )
   })

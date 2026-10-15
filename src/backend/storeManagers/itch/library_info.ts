@@ -30,6 +30,11 @@ export function itchToGameInfo(game: ItchGame): GameInfo {
   }
 }
 
+/** A game as it is saved: whether it is installed lives in the installed list, not here */
+export function withoutInstall(info: GameInfo): GameInfo {
+  return { ...info, is_installed: false, install: { is_dlc: false } }
+}
+
 /** The games of every list, each once (the first one found is kept) */
 export function uniqueGames(lists: ItchGame[][]): ItchGame[] {
   const byId = new Map<number, ItchGame>()

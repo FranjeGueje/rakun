@@ -8,6 +8,7 @@ import { GlobalConfig } from 'backend/config'
 import { getUmuStoreLabel, searchUmuGameId, launchUmu } from './umu'
 import { windowify, EOS_OVERLAY_BAT } from './windowify'
 import { GameInfo } from 'common/types'
+import { runsExecutableDirectly } from './direct_launch'
 
 const LOG_PREFIX = 'Rakun'
 
@@ -16,10 +17,13 @@ export async function preparePrefix(
   steamAppId: number,
   installPath: string
 ): Promise<void> {
-  if (gameInfo.runner === 'zoom') {
+  if (runsExecutableDirectly(gameInfo.runner)) {
     const symlink = createGameSymlink(installPath)
     if ('error' in symlink) {
-      logError(`Failed to prepare Zoom prefix: ${symlink.error}`, LOG_PREFIX)
+      logError(
+        `Failed to prepare ${gameInfo.runner} prefix: ${symlink.error}`,
+        LOG_PREFIX
+      )
       return
     }
     symlinkPrefix(steamAppId, symlink.linkPath)

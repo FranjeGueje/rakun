@@ -30,6 +30,7 @@ import type {
 } from './types'
 import { GameInfo } from 'common/types'
 import { gameRunnerText } from '../runner_script'
+import { runsExecutableDirectly } from '../direct_launch'
 
 const LOG_PREFIX = 'Rakun'
 
@@ -37,10 +38,10 @@ export function createRunnerFile(
   gameInfo: GameInfo,
   installPath: string
 ): { path: string } | { error: string } {
-  if (gameInfo.runner === 'zoom') {
+  if (runsExecutableDirectly(gameInfo.runner)) {
     const executable = gameInfo.install.executable
     if (!executable) {
-      return { error: 'No executable found for Zoom game' }
+      return { error: `No executable found for the ${gameInfo.runner} game` }
     }
 
     const symlink = createGameSymlink(installPath)
