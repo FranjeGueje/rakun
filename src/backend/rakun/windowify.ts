@@ -90,7 +90,8 @@ const STORE_CONFIGS: Record<GameRunner, StoreConfig> = {
       }))
     }
   },
-  zoom: { configDir: '', installedFile: '', mountDir: '', transform: (d) => d }
+  zoom: { configDir: '', installedFile: '', mountDir: '', transform: (d) => d },
+  itch: { configDir: '', installedFile: '', mountDir: '', transform: (d) => d }
 }
 
 // ── Public API ──

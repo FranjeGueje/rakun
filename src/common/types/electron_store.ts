@@ -4,6 +4,7 @@ import { InstalledInfo, DMQueueElement, GOGLoginData } from 'common/types'
 import { UserData } from 'common/types/gog'
 import { NileUserData } from './nile'
 import { ZoomCredentials } from './zoom'
+import { ItchUser } from './itch'
 
 export interface StoreStructure {
   gogInstalledGamesStore: {
@@ -21,6 +22,13 @@ export interface StoreStructure {
     credentials?: ZoomCredentials
     isLoggedIn: boolean
     username?: string
+  }
+  itchInstalledGamesStore: {
+    installed: InstalledInfo[]
+  }
+  itchConfigStore: {
+    profileId?: number
+    user?: ItchUser
   }
   nileConfigStore: {
     userData?: NileUserData

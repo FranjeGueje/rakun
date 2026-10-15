@@ -1,7 +1,7 @@
 /** `ok`: the pinned version is there. `other`: another version is (for instance after `--latest`) */
 export type HelperState = 'ok' | 'missing' | 'other'
 
-/** One helper binary: legendary, gogdl, nile, comet, epic-integration, zoom-platform or umu */
+/** One helper binary: legendary, gogdl, nile, comet, epic-integration, zoom-platform, umu or butler */
 export type HelperInfo = {
   helper: string
   /** The version rakun was tested with */

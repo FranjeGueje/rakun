@@ -1,6 +1,12 @@
 import { GAME_LOG_TYPES, type GetLogFileArgs } from './paths'
 
-const LOG_RUNNERS: readonly unknown[] = ['legendary', 'gog', 'nile', 'zoom']
+const LOG_RUNNERS: readonly unknown[] = [
+  'legendary',
+  'gog',
+  'nile',
+  'zoom',
+  'itch'
+]
 
 function isSafeName(value: unknown): value is string {
   return (

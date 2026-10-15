@@ -33,7 +33,9 @@ export function platformFor(
   build?: Build
 ) {
   if (build === 'linux' || (!build && is_linux_native)) return 'linux'
-  return runner === 'gog' || runner === 'zoom' ? 'windows' : 'Windows'
+  return runner === 'gog' || runner === 'zoom' || runner === 'itch'
+    ? 'windows'
+    : 'Windows'
 }
 
 /** Refuses a build the game does not have (a stale library may not say: only a «no» refuses) */
@@ -247,6 +249,8 @@ export const importFolder: Command = async (ctx, args, opts) => {
   const build = parsePlatform(opts.platform)
   if (runner === 'zoom')
     throw new CliError('Importing is not supported for Zoom')
+  if (runner === 'itch')
+    throw new CliError('Importing is not supported for itch.io')
   const game = await loadGame(ctx, appName, runner)
   checkBuild(game, build)
   if (game.is_installed)

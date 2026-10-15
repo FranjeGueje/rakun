@@ -23,6 +23,9 @@ heroic-epic-integration (EpicGamesLauncher.exe)
 zoom-platform.sh     Zoom Platform      https://zoom-platform.sh/zoom-platform.sh
                      Written by Zoom Platform; downloaded from its own site.
                      It has no licence text that rakun knows of.
+butler               itch.io store      https://github.com/itchio/butler
+                     MIT. Downloaded from itch's own server (broth.itch.zone);
+                     it is not in the -full tarballs.
 
 The source code of each program is in its repository, at the version rakun uses
 (`rakunctl helpers` says which).
