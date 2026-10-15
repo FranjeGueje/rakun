@@ -2,6 +2,29 @@
 
 The history of rakun before its first release (the Heroic cleanup and Relic) lives in the `upstream` repository. The detailed notes of the versions before this first release are in the git history of this file.
 
+## 0.4.0 — itch.io
+
+A new store, itch.io, and the first one that is not run by a client of its own: it goes through butler, itch's own tool.
+
+### Added
+
+- itch.io (`itch`): log in, library, install, repair, update and uninstall, through `butler daemon` (butlerd), which rakun starts when it needs it and which stops with rakun.
+  - Login is by pasting an **API key with every permission** (itch.io → Settings → API keys → Generate new API key). The key `butler login` makes cannot read a library, and a key with too few permissions is refused with a message that says so. butler keeps the key in its own database (`~/.config/rakun/itch_store/butler.db`); rakun does not store it.
+  - The library is what the user owns or has claimed, plus the games in their collections. A free game that is in none of them installs by its number as well: `rakunctl install itch <id>` (a game added that way stays while it is installed).
+  - Like GOG, a game with a Windows and a Linux build lets the user choose; the other operations keep that choice. A move of the install and the import of a folder are not supported, and itch.io games have no pinned versions: butler decides what an update is.
+  - The executable of a game is what `butler configure` finds in the install, for the chosen platform. A Linux game gets a `start.sh` that runs it (as GOG's does) and a Windows game goes through the runner. A game that is an installer (`Setup.exe`) is installed, but it is the installer that Steam would run.
+- The helper `butler` 15.32.0 (x64 and arm64, checked by sha256, with `7z.so` and `libc7zip.so`, which it loads from next to itself). `rakunctl helpers update` downloads it from itch's server, and the `-full` tarballs carry it with its licence.
+- The runner has an `itch` block: the `.bat` of an itch.io game sets `IDGAME` to its executable (`<folder>\<path>` under `c:\games`) and the runner goes to its folder and runs it, waiting for it to close. An update that moves the executable makes rakun write the `.bat` again. The runner is still v1.
+- `umu` prepares the prefix of an itch.io game as store `itchio`.
+
+### Changed
+
+- The covers of the web: a picture whose shape is more than 15% away from the card's (3:4) is shown whole over a blurred copy of itself, instead of being cut to fill the card (itch.io only has a wide cover, which looked zoomed in). The ones that fit are filled as before.
+- The stores with a runner are one list in the code (`STORE_BLOCKS`): the dispatch and the blocks of the runner come from it, so they cannot drift apart.
+- `windowify` says it has nothing to translate for a store that keeps no installed file, instead of warning that it is not implemented.
+- The error of `getInstallInfo` is logged under the prefix of its own store (it fell back to GOG's).
+- `rakunctl cache clear` also clears the itch.io library.
+
 ## 0.3.2 — Comet starts from its own script
 
 ### Added
