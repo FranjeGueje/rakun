@@ -69,6 +69,8 @@ rakunctl cancel [--remove-files] # --remove-files deletes what was fetched
 rakunctl queue clear             # empty the finished list
 ```
 
+On itch.io, pausing or cancelling stops butler and removes what it had written; resuming starts that download again from the beginning, because butler keeps nothing of a cancelled install.
+
 ## Steam covers
 
 Covers (header, portrait, hero, logo, icon) come from SteamGridDB and need your own key: paste it in the web settings, or call `rakunctl call steamgriddb.setApiKey '["YOUR_KEY"]'`. Without a key rakun adds the game to Steam without images. A game installed before setting the key needs a `repair` to get them.

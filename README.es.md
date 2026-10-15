@@ -14,7 +14,7 @@ rakun **no es un lanzador**. Nunca ejecuta tus juegos: lo hace Steam. Lo suyo es
 
 ## Qué hace
 
-- Inicia sesión en **Epic, GOG, Amazon, Zoom e itch.io** (pegas el código en el que acaba tu navegador, o en itch.io una API key; no hay navegador embebido)
+- Inicia sesión en **Epic, GOG, Amazon, Zoom e itch.io** (pegas el código en el que acaba tu navegador; en itch.io el navegador vuelve solo a rakun, o pegas una API key; no hay navegador embebido)
 - Muestra tu **biblioteca** y una **cola de descargas** que puedes pausar, reanudar y cancelar
 - **Instala, actualiza, repara y desinstala** juegos, elige la versión de Windows o Linux y puede adoptar un juego que ya está en tu disco
 - Añade cada juego a **Steam** (acceso directo, prefijo de Proton, carátulas) al terminar la instalación

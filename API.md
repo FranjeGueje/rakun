@@ -6,11 +6,12 @@ rakun is a local service. Clients (rakun's own web, the Invasor module, `rakunct
 
 `~/.config/rakun/api.json` (mode 0600) holds `{"port": 17370, "token": "…"}`. The token is generated once and survives restarts. The port is the one in `api.json`; `RAKUN_PORT` or `rakun --port=<n>` change it (and it is saved there). The server listens on `127.0.0.1` unless the web is opened to the network (see below).
 
-| Request               | Needs token | Purpose                                       |
-| --------------------- | ----------- | --------------------------------------------- |
-| `GET /health`         | no          | `{"status":"ok","version":"…","web":"local"}` |
-| `POST /api/<channel>` | yes         | call a channel                                |
-| `GET /events`         | yes         | Server-Sent Events stream                     |
+| Request               | Needs token | Purpose                                                          |
+| --------------------- | ----------- | ---------------------------------------------------------------- |
+| `GET /health`         | no          | `{"status":"ok","version":"…","web":"local"}`                    |
+| `POST /api/<channel>` | yes         | call a channel                                                   |
+| `GET /events`         | yes         | Server-Sent Events stream                                        |
+| `GET /itch/callback`  | no          | where itch.io sends the browser back after the login (see below) |
 
 The token goes in the `x-rakun-token` header. If nothing answers on the port, rakun is stopped: start it (`rakunctl start`, or run `rakun`) and read `api.json` after it answers `/health`. A `Host` that is not one of this machine's (`127.0.0.1:<port>`, `localhost:<port>`, and in `network` mode its addresses and name) gets `403`, and so does an `Origin` header (a browser) that is not the page rakun itself served (`http://<Host>`).
 

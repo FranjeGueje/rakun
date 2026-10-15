@@ -10,7 +10,7 @@
 ├── gogdlConfig/, gog_store/ — GOG login + installed.json
 ├── nile_config/, nile_store/— Amazon login + installed.json
 ├── zoom_store/              — Zoom Platform login
-└── itch_store/              — itch.io: butler.db (its library and installs; holds the API key) and installed.json
+└── itch_store/              — itch.io: butler.db (its library and installs; holds the key or token), config.json (the OAuth token, to revoke it on logout) and installed.json. The folder is mode 0700
 
 ~/.cache/rakun/             — Regenerable caches ($XDG_CACHE_HOME)
 ~/.local/opt/rakun/         — The installed app (rakun, rakunctl, install.sh, node, public/, web/)

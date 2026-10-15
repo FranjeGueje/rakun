@@ -14,7 +14,7 @@ rakun is **not a launcher**. It never runs your games: Steam does. rakun's job i
 
 ## What it does
 
-- Signs in to **Epic, GOG, Amazon, Zoom and itch.io** (you paste the code your browser ends on, or for itch.io an API key; no embedded browser)
+- Signs in to **Epic, GOG, Amazon, Zoom and itch.io** (you paste the code your browser ends on; for itch.io the browser comes back to rakun by itself, or you paste an API key; no embedded browser)
 - Shows your **library** and a **download queue** you can pause, resume and cancel
 - **Installs, updates, repairs and uninstalls** games, picks Windows or Linux builds, and can adopt a game that is already on your disk
 - Adds each game to **Steam** (shortcut, Proton prefix, cover art) when the install finishes

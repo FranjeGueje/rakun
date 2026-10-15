@@ -47,11 +47,11 @@ It writes `~/.config/systemd/user/rakun.service` (`Restart=on-failure`) and runs
 
 ## Accounts and helpers
 
-| Command                            | What it does                                                    |
-| ---------------------------------- | --------------------------------------------------------------- |
-| `login <store>` / `logout <store>` | log in (paste what the browser ends on) / out                   |
-| `helpers`                          | which helper binaries are installed                             |
-| `helpers update [--latest]`        | download the missing ones (`--latest`: newest, **not checked**) |
+| Command                            | What it does                                                                             |
+| ---------------------------------- | ---------------------------------------------------------------------------------------- |
+| `login <store>` / `logout <store>` | log in (paste what the browser ends on; itch.io: the browser comes back by itself) / out |
+| `helpers`                          | which helper binaries are installed                                                      |
+| `helpers update [--latest]`        | download the missing ones (`--latest`: newest, **not checked**)                          |
 
 ## Library and games
 

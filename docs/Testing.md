@@ -84,7 +84,7 @@ It must show the version, the queue as `idle`, the library (`[]` if there is no 
 Ask for the login URL and open it in the browser:
 
 ```bash
-scripts/smoke.sh getLoginInfo '["gog"]'     # also: legendary, nile, zoom (see getStores)
+scripts/smoke.sh getLoginInfo '["gog"]'     # also: legendary, nile, zoom, itch (see getStores)
 ```
 
 Log in and paste what the browser leaves at the end:
@@ -95,12 +95,13 @@ scripts/smoke.sh submitLogin '["gog","https://embed.gog.com/on_login_success?...
 
 It must answer `{"result":{"ok":true}}`.
 
-| Store              | What to paste                                             |
-| ------------------ | --------------------------------------------------------- |
-| `legendary` (Epic) | the JSON the page shows (or just the `authorizationCode`) |
-| `gog`              | the final address, even if the page looks blank           |
-| `nile` (Amazon)    | the final address; call `getLoginInfo '["nile"]'` first   |
-| `zoom`             | the final address with `li_token`, or the bare token      |
+| Store              | What to paste                                                                                             |
+| ------------------ | --------------------------------------------------------------------------------------------------------- |
+| `legendary` (Epic) | the JSON the page shows (or just the `authorizationCode`)                                                 |
+| `gog`              | the final address, even if the page looks blank                                                           |
+| `nile` (Amazon)    | the final address; call `getLoginInfo '["nile"]'` first                                                   |
+| `zoom`             | the final address with `li_token`, or the bare token                                                      |
+| `itch`             | nothing: authorize in the browser and it comes back by itself (or paste the final address, or an API key) |
 
 Check the session:
 
