@@ -210,7 +210,7 @@ export default class ItchLibraryManager implements LibraryManager {
       const { updates } = await butlerd.call<{
         updates: { game: { id: number } }[]
       }>('CheckUpdate', { caveIds })
-      return updates.map(({ game }) => String(game.id))
+      return (updates ?? []).map(({ game }) => String(game.id))
     } catch (error) {
       logError(['Could not check itch updates:', error], LogPrefix.Itch)
       return []

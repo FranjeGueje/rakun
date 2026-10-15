@@ -15,7 +15,9 @@ export async function installLocationFor(
   const { installLocations } = await butlerd.call<{
     installLocations: Location[]
   }>('Install.Locations.List')
-  const known = installLocations.find((location) => location.path === path)
+  const known = (installLocations ?? []).find(
+    (location) => location.path === path
+  )
   if (known) return known.id
 
   const { installLocation } = await butlerd.call<{ installLocation: Location }>(

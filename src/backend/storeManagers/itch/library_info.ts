@@ -1,11 +1,6 @@
 import type { GameInfo } from 'common/types'
 import type { ItchGame, ItchUpload } from 'common/types/itch'
 
-/** A folder name for the game: its title, with what a file system dislikes taken out */
-export function folderNameOf(game: ItchGame): string {
-  return game.title.replace(/[^\p{L}\p{N} ._-]/gu, '').trim() || String(game.id)
-}
-
 /** What rakun shows of a game butlerd listed */
 export function itchToGameInfo(game: ItchGame): GameInfo {
   const cover = game.coverUrl ?? game.stillCoverUrl ?? ''
@@ -18,7 +13,6 @@ export function itchToGameInfo(game: ItchGame): GameInfo {
     art_background: cover,
     developer: game.user?.displayName ?? game.user?.username,
     description: game.shortText,
-    folder_name: folderNameOf(game),
     store_url: game.url,
     install: { is_dlc: false },
     is_installed: false,
@@ -52,6 +46,7 @@ export function pickUpload(
   uploads: ItchUpload[],
   platform: 'windows' | 'linux'
 ): ItchUpload | undefined {
-  const fits = uploads.filter((upload) => upload.platforms?.[platform])
+  // butler's lists are Go slices: with nothing in them they can come as `null`
+  const fits = (uploads ?? []).filter((upload) => upload.platforms?.[platform])
   return fits.find((upload) => upload.type === 'default') ?? fits[0]
 }

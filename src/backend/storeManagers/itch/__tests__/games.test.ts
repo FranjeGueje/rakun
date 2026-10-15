@@ -37,6 +37,10 @@ jest.mock('../electronStores', () => ({
   }
 }))
 jest.mock('../install_location', () => ({ installLocationFor: jest.fn() }))
+jest.mock('../operation', () => ({
+  ...jest.requireActual('../operation'),
+  discardPartialInstall: jest.fn()
+}))
 jest.mock('../executable', () => ({
   findExecutable: jest.fn(),
   writeStartScript: jest.fn()
@@ -51,6 +55,9 @@ import {
 import { libraryManagerMap } from '../../index'
 import { findExecutable, writeStartScript } from '../executable'
 import { installLocationFor } from '../install_location'
+import { callAbortController } from '../../../utils/aborthandler/aborthandler'
+import { ButlerdError } from '../butlerd'
+import { discardPartialInstall } from '../operation'
 import ItchGameManager from '../games'
 
 const QUEUED = {
@@ -187,15 +194,64 @@ describe('install', () => {
     expect(writeStartScript).not.toHaveBeenCalled()
   })
 
-  test('when butler finds nothing to run the game is still installed, with no executable', async () => {
+  test('when butler finds nothing to run, the game is installed but it is an error, and Steam is left alone', async () => {
     mockedFindExecutable.mockResolvedValue(undefined)
 
-    expect(await game().install(args)).toEqual({ status: 'done' })
+    const result = await game().install(args)
 
+    expect(result.status).toBe('error')
+    expect(result.error).toContain('no executable to run in /games/pacapong')
+    // It stays installed, so that it can be repaired or uninstalled
     expect(mockStored.installed).toEqual([
       expect.objectContaining({ executable: '' })
     ])
     expect(writeStartScript).not.toHaveBeenCalled()
+    expect(mockedOnGameInstalled).not.toHaveBeenCalled()
+  })
+
+  describe('paused or cancelled', () => {
+    /** Butler is performing until the cancel reaches it, as the real one does */
+    const performingUntilCancelled = () =>
+      mockButlerd.call.mockImplementation((method: string) => {
+        if (method === 'Install.Queue') return Promise.resolve(QUEUED)
+        if (method === 'Install.Cancel')
+          return Promise.resolve({ didCancel: true })
+        if (method === 'Install.Perform')
+          return new Promise((_resolve, reject) => {
+            mockButlerd.call.mockImplementationOnce((m: string) => {
+              if (m === 'Install.Cancel')
+                reject(new Error('The operation was cancelled.'))
+              return Promise.resolve({ didCancel: true })
+            })
+          })
+        return Promise.resolve({ game: { id: 21301 } })
+      })
+
+    test('the abort of the download manager cancels it in butler and ends as abort, saving nothing', async () => {
+      performingUntilCancelled()
+
+      const installing = game().install(args)
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      callAbortController('21301')
+
+      expect(await installing).toEqual({ status: 'abort' })
+      expect(mockButlerd.call).toHaveBeenCalledWith('Install.Cancel', {
+        id: 'q1'
+      })
+      expect(mockStored.installed).toEqual([])
+      expect(mockedOnGameInstalled).not.toHaveBeenCalled()
+    })
+
+    test('what butler left of the new install is discarded, inside the place it was installing in', async () => {
+      performingUntilCancelled()
+
+      const installing = game().install(args)
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      callAbortController('21301')
+      await installing
+
+      expect(discardPartialInstall).toHaveBeenCalledWith(QUEUED, '/games')
+    })
   })
 })
 
@@ -275,6 +331,32 @@ describe('uninstall', () => {
       hard: true
     })
     expect(result.stdout).toBe('Uninstalled')
+  })
+
+  test('an install that butler no longer has is forgotten all the same', async () => {
+    mockStored.installed = [
+      { appName: '21301', caveId: 'cave-1', install_path: '/games/pacapong' }
+    ]
+    mockButlerd.call.mockRejectedValue(
+      new ButlerdError(-32603, 'cave not found: (cave-1)')
+    )
+
+    const result = await game().uninstall()
+
+    expect(result.stdout).toBe('Uninstalled')
+    expect(mockStored.installed).toEqual([])
+    expect(mockedOnGameUninstalled).toHaveBeenCalled()
+  })
+
+  test('any other failure of butler leaves the game installed', async () => {
+    mockStored.installed = [
+      { appName: '21301', caveId: 'cave-1', install_path: '/games/pacapong' }
+    ]
+    mockButlerd.call.mockRejectedValue(new ButlerdError(1, 'disk on fire'))
+
+    await expect(game().uninstall()).rejects.toThrow('disk on fire')
+    expect(mockStored.installed).toHaveLength(1)
+    expect(mockedOnGameUninstalled).not.toHaveBeenCalled()
   })
 
   test('fails when the game is not installed', async () => {

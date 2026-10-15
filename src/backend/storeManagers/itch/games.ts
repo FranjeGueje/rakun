@@ -19,21 +19,30 @@ import { sendFrontendMessage } from '../../ipc'
 import { sendProgressUpdate } from '../../utils'
 import { libraryManagerMap } from '..'
 import { removeInstalled, upsertInstalled } from '../installed_list'
-import type { Butlerd } from './butlerd'
+import { ButlerdError, type Butlerd } from './butlerd'
 import { getButlerd } from './client'
 import { installedGamesStore } from './electronStores'
 import { installLocationFor } from './install_location'
 import { toInstallProgress, type ButlerProgress } from './progress'
 import { findExecutable, writeStartScript, type Platform } from './executable'
-
-type Queued = {
-  id: string
-  caveId: string
-  installFolder: string
-  stagingFolder: string
-}
+import {
+  abortControllerOf,
+  discardPartialInstall,
+  inTurn,
+  OperationAborted,
+  runOperation,
+  type Queued
+} from './operation'
 
 const NOT_SUPPORTED = 'Not supported for itch.io games'
+
+const noExecutable = ({ installFolder }: Queued) =>
+  `Installed, but there is no executable to run in ${installFolder}`
+
+/** butler has no such install: it is already gone, which is what an uninstall wants */
+const isMissingCave = (error: unknown) =>
+  error instanceof ButlerdError &&
+  /not found|no such|does not exist/i.test(error.message)
 
 export default class ItchGameManager implements Game {
   constructor(private readonly id: string) {}
@@ -75,16 +84,32 @@ export default class ItchGameManager implements Game {
       )
       if (!upload) return { status: 'error', error: `No ${platform} build` }
       const queued = await this.runInstall(path, upload)
-      await this.saveInstalled(
-        queued,
-        platform === 'linux' ? 'linux' : 'windows'
-      )
-      this.inBackground(onGameInstalled(this, queued.installFolder))
-      return { status: 'done' }
+      return await this.finishInstall(queued, platform)
     } catch (error) {
+      if (error instanceof OperationAborted) {
+        discardPartialInstall(error.queued, path)
+        return { status: 'abort' }
+      }
       logError([`Install of ${this.id} failed:`, error], LogPrefix.Itch)
       return { status: 'error', error: String(error) }
     }
+  }
+
+  /**
+   * The game is on the disk: it is saved (so that it can be repaired or uninstalled) and, if there
+   * is something to run, it goes to Steam. A game with nothing to run is installed, but it is an error.
+   */
+  private async finishInstall(
+    queued: Queued,
+    platform: string
+  ): Promise<InstallResult> {
+    const executable = await this.saveInstalled(
+      queued,
+      platform === 'linux' ? 'linux' : 'windows'
+    )
+    if (!executable) return { status: 'error', error: noExecutable(queued) }
+    this.inBackground(onGameInstalled(this, queued.installFolder))
+    return { status: 'done' }
   }
 
   /** Steam is not the install: a failure there is logged, it does not undo a game that is on the disk */
@@ -110,24 +135,20 @@ export default class ItchGameManager implements Game {
     )
   }
 
-  /** Asks butler to queue an operation and carry it out, reporting what it says as it goes */
+  /** Asks butler to queue an operation and carry it out, one at a time, reporting what it says as it goes */
   private async perform(
     request: object,
     status: 'installing' | 'updating' | 'repairing'
   ): Promise<Queued> {
-    const butlerd = await getButlerd()
-    const stopListening = butlerd.on('Progress', (params) =>
-      this.reportProgress(params as ButlerProgress, status)
-    )
+    const abort = abortControllerOf(this.id)
     try {
-      const queued = await butlerd.call<Queued>('Install.Queue', request)
-      await butlerd.call('Install.Perform', {
-        id: queued.id,
-        stagingFolder: queued.stagingFolder
-      })
-      return queued
+      return await inTurn(async () =>
+        runOperation(await getButlerd(), abort.signal, request, (params) =>
+          this.reportProgress(params as ButlerProgress, status)
+        )
+      )
     } finally {
-      stopListening()
+      abort.drop()
     }
   }
 
@@ -209,7 +230,15 @@ export default class ItchGameManager implements Game {
 
   private async removeCave(caveId: string) {
     const butlerd: Butlerd = await getButlerd()
-    await butlerd.call('Uninstall.Perform', { caveId, hard: true })
+    try {
+      await butlerd.call('Uninstall.Perform', { caveId, hard: true })
+    } catch (error) {
+      if (!isMissingCave(error)) throw error
+      logWarning(
+        `butler has no install ${caveId}: forgetting it`,
+        LogPrefix.Itch
+      )
+    }
   }
 
   async forceUninstall(): Promise<void> {
@@ -251,11 +280,13 @@ export default class ItchGameManager implements Game {
         queued,
         platform === 'linux' ? 'linux' : 'windows'
       )
+      if (!now) return { status: 'error', error: noExecutable(queued) }
       // The `.bat` of the game names its executable: an update that moves it needs a new one
       if (reason === 'update' && now !== executable)
         this.inBackground(onGameRepaired(this))
       return { status: 'done' }
     } catch (error) {
+      if (error instanceof OperationAborted) return { status: 'abort' }
       logError([`${reason} of ${this.id} failed:`, error], LogPrefix.Itch)
       return { status: 'error', error: String(error) }
     }
@@ -263,6 +294,9 @@ export default class ItchGameManager implements Game {
 
   async repair(): Promise<ExecResult> {
     const { status, error } = await this.redo('heal', 'repairing')
+    // An error, also when it was cancelled: the Steam part of a repair is not for a repair that did not end
+    if (status === 'abort')
+      return { stdout: '', stderr: '', error: 'Cancelled', abort: true }
     return { stdout: status, stderr: error ?? '', error }
   }
 

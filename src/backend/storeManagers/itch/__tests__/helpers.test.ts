@@ -5,7 +5,6 @@ import type { ItchGame, ItchUpload } from 'common/types/itch'
 import { parseHandshake } from '../butlerd'
 import { installLocationFor } from '../install_location'
 import {
-  folderNameOf,
   itchToGameInfo,
   pickUpload,
   uniqueGames,
@@ -37,11 +36,6 @@ describe('itchToGameInfo', () => {
       is_linux_native: true,
       is_mac_native: false
     })
-  })
-
-  test('folder name drops what a file system dislikes, or falls back to the id', () => {
-    expect(folderNameOf(game)).toBe('Cool The Game')
-    expect(folderNameOf({ ...game, title: '???' })).toBe('7')
   })
 })
 
@@ -88,6 +82,10 @@ describe('pickUpload', () => {
     ]
     expect(pickUpload(uploads, 'windows')?.id).toBe(2)
     expect(pickUpload(uploads, 'linux')?.id).toBe(3)
+  })
+
+  test('a list that butler sends as null is no uploads', () => {
+    expect(pickUpload(null as unknown as ItchUpload[], 'linux')).toBeUndefined()
   })
 
   test('falls back to any upload of the platform, and to none', () => {
@@ -153,6 +151,19 @@ describe('installLocationFor', () => {
       'Install.Locations.Add',
       expect.anything()
     )
+  })
+
+  test('a first install: butler has no locations and says null', async () => {
+    const butlerd = {
+      call: jest.fn((method: string) =>
+        Promise.resolve(
+          method === 'Install.Locations.List'
+            ? { installLocations: null }
+            : { installLocation: { id: 'first', path: games } }
+        )
+      )
+    } as unknown as Parameters<typeof installLocationFor>[0]
+    expect(await installLocationFor(butlerd, games)).toBe('first')
   })
 
   test('adds the folder when butler does not know it', async () => {

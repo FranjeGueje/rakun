@@ -9,16 +9,13 @@ let running: Promise<Butlerd> | undefined
 export const butlerBinary = () =>
   helperFile(`${machineArch()}/linux/butler/butler`)
 
-/** The daemon, started the first time it is needed (a failed start is tried again) */
+/** The daemon, started the first time it is needed (a failed start or a daemon that went away is tried again) */
 export function getButlerd(): Promise<Butlerd> {
-  running ??= Butlerd.start(butlerBinary(), butlerDbPath)
-    .then((client) => {
-      client.onClose(() => (running = undefined))
-      return client
-    })
-    .catch((error) => {
-      running = undefined
-      throw error
-    })
+  running ??= Butlerd.start(butlerBinary(), butlerDbPath, {
+    onClose: () => (running = undefined)
+  }).catch((error) => {
+    running = undefined
+    throw error
+  })
   return running
 }

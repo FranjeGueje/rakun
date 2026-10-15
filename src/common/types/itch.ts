@@ -1,5 +1,3 @@
-import type { GameInstallInfo, GameManifest } from './zoom'
-
 /** The platforms butlerd reports for a game or an upload (`windows`, `linux`, `osx`) */
 export type ItchPlatforms = Partial<Record<'windows' | 'linux' | 'osx', string>>
 
@@ -31,7 +29,24 @@ export interface ItchUser {
   displayName?: string
 }
 
+/** What the install modal of a client reads of an itch.io game: its size, which butler gives for its upload */
 export interface ItchInstallInfo {
-  game: GameInstallInfo
-  manifest: GameManifest
+  game: {
+    app_name: string
+    title: string
+    version: string
+    buildId: string
+    owned_dlc: []
+    launch_options: []
+    branches: []
+  }
+  manifest: {
+    app_name: string
+    disk_size: number
+    download_size: number
+    languages: string[]
+    versionEtag: string
+    dependencies: string[]
+    perLangSize: Record<string, { download_size: number; disk_size: number }>
+  }
 }

@@ -33,6 +33,36 @@ describe('pickCandidate', () => {
     )
   })
 
+  test('skips installers, uninstallers and crash reporters by their whole name', () => {
+    for (const name of [
+      'Setup.exe',
+      'setup.exe',
+      'Installer.exe',
+      'unins000.exe',
+      'ControllerCompanion.Setup.exe',
+      'My Game Setup.exe',
+      'dxsetup.exe',
+      'vc_redist.x64.exe',
+      'UnityCrashHandler64.exe'
+    ])
+      expect(
+        pickCandidate([candidate(name), candidate('game/Game.exe')])?.path
+      ).toBe('game/Game.exe')
+  })
+
+  test('a game whose name only starts like an installer is still a game', () => {
+    for (const name of [
+      'Installer Simulator.exe',
+      'Crash Bandicoot/game.exe',
+      'Setup Wizard Adventures.exe',
+      'Redeemer.exe',
+      'Setup/Game.exe'
+    ])
+      expect(
+        pickCandidate([candidate(name), candidate('other.exe')])?.path
+      ).toBe(name)
+  })
+
   test('has nothing to take when there is nothing', () => {
     expect(pickCandidate([])).toBeUndefined()
   })

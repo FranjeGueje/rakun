@@ -75,7 +75,7 @@ interface DLCInfo {
   title: string
 }
 
-export interface GameInstallInfo {
+interface GameInstallInfo {
   app_name: string
   launch_options: Array<LaunchOption>
   owned_dlc: Array<DLCInfo>
@@ -85,7 +85,7 @@ export interface GameInstallInfo {
   buildId: string
 }
 
-export interface GameManifest {
+interface GameManifest {
   app_name: string
   disk_size: number
   download_size: number
