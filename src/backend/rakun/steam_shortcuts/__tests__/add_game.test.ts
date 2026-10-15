@@ -8,7 +8,12 @@ import {
 import { tmpdir } from 'os'
 import { basename, dirname, join } from 'path'
 import { DirResult, dirSync } from '../../../__tests__/tmp_dir'
-import { addGameToSteam, createRakunBat, createRunnerFile } from '../add_game'
+import {
+  addGameToSteam,
+  batFileName,
+  createRakunBat,
+  createRunnerFile
+} from '../add_game'
 import { GameInfo } from 'common/types'
 import * as steamHelpers from '../steam_helpers'
 import { spawnAsync } from 'backend/utils'
@@ -264,6 +269,21 @@ describe('addGameToSteam', () => {
   })
 })
 
+describe('batFileName', () => {
+  test('keeps a title as it is, so that a game already in Steam keeps its file', () => {
+    expect(batFileName('Half-Life: Alyx (VR) & More')).toBe(
+      'Half-Life: Alyx (VR) & More'
+    )
+  })
+
+  test('never lets a title be a path', () => {
+    expect(batFileName('../../etc/evil')).toBe('.._.._etc_evil')
+    expect(batFileName('a/b')).toBe('a_b')
+    expect(batFileName('..')).toBe('_')
+    expect(batFileName('')).toBe('_')
+  })
+})
+
 describe('createRakunBat', () => {
   let tmpDir: DirResult
 
@@ -329,6 +349,12 @@ describe('createRakunBat', () => {
       'utf-8'
     )
     expect(content).not.toMatch(/legendary launch|gogdl|goto|if not exist/)
+  })
+
+  test('the file of a game with a slash in its title stays in the runner folder', () => {
+    const path = createRakunBat(tmpDir.name, 'AC/DC: Live', 'legendary', 'a')
+    expect(path).toBe(join(mockRakunRunnerPath, 'AC_DC: Live.bat'))
+    expect(existsSync(path)).toBe(true)
   })
 
   test('Zoom has no runner', () => {

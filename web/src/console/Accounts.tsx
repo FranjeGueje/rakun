@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { AccountsStatus, LoginInfo, StoreInfo } from '../api/types'
 import type { RakunBridge } from '../api/bridge'
 import type { Translate } from '../i18n'
@@ -88,6 +88,10 @@ export function Accounts({
     load().catch((e: unknown) => setError(String(e)))
   }, [load])
 
+  // The effect below must not restart each time `actions` is a new object
+  const reloadStore = useRef(actions.reloadStore)
+  reloadStore.current = actions.reloadStore
+
   /** The browser comes back to rakun by itself: look for the session instead of waiting for a paste */
   useEffect(() => {
     if (!pasting?.info.callback) return
@@ -99,6 +103,7 @@ export function Accounts({
           if (!status[store.id].loggedIn) return
           setPasting(null)
           setAccounts(status)
+          reloadStore.current(store.id)
         })
         .catch(() => undefined)
     }, LOGIN_POLL_MS)

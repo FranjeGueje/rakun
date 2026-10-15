@@ -1058,6 +1058,10 @@ describe('login', () => {
     const rakun = await openLogin({ accounts, loginCallback: true })
     await screen.findByRole('textbox')
 
+    const libraryReads = () =>
+      rakun.called('getLibrary').filter(([, args]) => args[0] === 'gog').length
+    const before = libraryReads()
+
     // The browser comes back to rakun and rakun logs in; nobody pastes anything
     accounts.gog = { loggedIn: true, name: 'Beto' }
 
@@ -1065,6 +1069,8 @@ describe('login', () => {
       timeout: 4000
     })
     expect(rakun.login.submit).not.toHaveBeenCalled()
+    // The library of the store is read again, as after a paste
+    await waitFor(() => expect(libraryReads()).toBeGreaterThan(before))
   })
 
   test('a login with no callback keeps waiting for the paste, whatever the accounts say', async () => {

@@ -103,5 +103,12 @@ describe('callbackPage', () => {
     expect(callbackHeaders['Content-Security-Policy']).toContain(
       "default-src 'none'"
     )
+    expect(callbackHeaders['Content-Security-Policy']).toContain(
+      "frame-ancestors 'none'"
+    )
+    expect(callbackHeaders).toMatchObject({
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY'
+    })
   })
 })

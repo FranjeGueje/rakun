@@ -238,7 +238,10 @@ export function expectedFiles(helper: HelperName, arch: Arch): Expected[] {
     case 'umu':
       return [bin('umu/umu-run')]
     case 'butler':
-      return [bin(`${arch}/linux/butler/butler`)]
+      // The program loads the two libraries from next to itself: without them it starts and then fails
+      return ['butler', '7z.so', 'libc7zip.so'].map((file) =>
+        bin(`${arch}/linux/butler/${file}`)
+      )
   }
 }
 

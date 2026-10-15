@@ -78,6 +78,15 @@ function getGogUsername(): string {
   }
 }
 
+/**
+ * The name of the `.bat` of a game: its title, but never a path (a `/` in it would write
+ * somewhere else or fail). Nothing else changes, so a game that is already in Steam keeps its file.
+ */
+export function batFileName(title: string): string {
+  const name = title.replace(/[/\0]/g, '_')
+  return name === '' || name === '.' || name === '..' ? '_' : name
+}
+
 /** The `.bat` the Steam shortcut of a game runs: its variables and a call to the runner of the mount */
 export function createRakunBat(
   installPath: string,
@@ -86,7 +95,7 @@ export function createRakunBat(
   appName: string,
   executable?: string
 ): string {
-  const runnerPath = join(rakunRunnerPath, `${gameName}.bat`)
+  const runnerPath = join(rakunRunnerPath, `${batFileName(gameName)}.bat`)
 
   mkdirSync(rakunRunnerPath, { recursive: true })
 
