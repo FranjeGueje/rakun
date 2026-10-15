@@ -20,6 +20,8 @@ export const ITCH_SCOPES = [
 /** The `scope` parameter: the scopes separated by spaces */
 export const ITCH_SCOPE = ITCH_SCOPES.join(' ')
 export const ITCH_AUTHORIZE_URL = 'https://itch.io/user/oauth'
+/** Where a user creates an API key (it has every permission: the other way to log in) */
+export const ITCH_API_KEYS_URL = 'https://itch.io/user/settings/api-keys'
 export const ITCH_TOKEN_URL = 'https://api.itch.io/oauth/token'
 export const ITCH_REVOKE_URL = 'https://api.itch.io/oauth/revoke'
 /** Where itch.io sends the browser back to: rakun's own API, on this machine (the port does not have to match the registered one, the rest does) */

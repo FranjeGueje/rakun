@@ -8,6 +8,7 @@ import {
   parseCallback,
   type PendingLogin
 } from './oauth'
+import { ITCH_API_KEYS_URL } from './constants'
 import { ItchUser, loginErrorMessage } from './user'
 
 // The state and the verifier of the login that was started, until its browser comes back
@@ -21,8 +22,14 @@ export function startItchLogin(port: number): LoginInfo {
     runner: 'itch',
     url: authorizeUrl(pending),
     instructions:
-      'Log in to itch.io and authorize rakun. When the browser comes back to rakun the login finishes by itself. If it cannot (another machine), paste the full address it ends on. To also have the games of your collections, paste an API key with every permission instead (itch.io → Settings → API keys).',
-    callback: true
+      'Your library: follow the link and allow rakun the minimum permissions. When the browser comes back to rakun the login finishes by itself (from another machine, paste the full address it ends on).',
+    callback: true,
+    alternative: {
+      url: ITCH_API_KEYS_URL,
+      label: 'Open the API keys page',
+      instructions:
+        'Your library and your collections: create an API key (Generate new API key) and paste it here. It has full access to your itch.io account.'
+    }
   }
 }
 

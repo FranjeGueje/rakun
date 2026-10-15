@@ -10,6 +10,44 @@ import { TextField } from './TextField'
 
 const LOGIN_POLL_MS = 1500
 
+/** The ways to log in: each with its page and what it gives, numbered when there are two so they are told apart */
+function LoginWays({ info, t }: { info: LoginInfo; t: Translate }) {
+  const ways = [
+    { url: info.url, label: t('login.open'), text: info.instructions },
+    ...(info.alternative
+      ? [
+          {
+            url: info.alternative.url,
+            label: info.alternative.label,
+            text: info.alternative.instructions
+          }
+        ]
+      : [])
+  ]
+  return (
+    <>
+      {ways.map((way, index) => (
+        <div className="loginWay" key={way.url}>
+          <p>
+            {ways.length > 1 && (
+              <strong>{t('login.option', { n: index + 1 })} </strong>
+            )}
+            {way.text}
+          </p>
+          <a
+            className="loginLink"
+            href={way.url}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {way.label}
+          </a>
+        </div>
+      ))}
+    </>
+  )
+}
+
 function stateText(t: Translate, account: AccountsStatus[StoreInfo['id']]) {
   if (!account.loggedIn) return t('accounts.signedOut')
   return account.name
@@ -156,19 +194,7 @@ export function Accounts({
           title={t('login.title', { store: pasting.store.label })}
           initial=""
           t={t}
-          intro={
-            <>
-              <p>{pasting.info.instructions}</p>
-              <a
-                className="loginLink"
-                href={pasting.info.url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {t('login.open')}
-              </a>
-            </>
-          }
+          intro={<LoginWays info={pasting.info} t={t} />}
           hint={t('login.hint')}
           paste={{ label: t('login.paste'), unreadable: t('login.unreadable') }}
           failed={(error) => t('accounts.failed', { error })}

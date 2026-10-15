@@ -10,6 +10,7 @@ export type LoginInfo = {
   url: string
   instructions: string
   callback?: boolean
+  alternative?: { url: string; label: string; instructions: string }
 }
 
 export type LoginResult = { ok: boolean; error?: string }

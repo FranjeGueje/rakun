@@ -534,6 +534,10 @@ kbd {
   cursor: pointer;
 }
 
+.loginWay {
+  margin-bottom: 14px;
+}
+
 .loginLink {
   display: inline-block;
   margin: 8px 0 16px;

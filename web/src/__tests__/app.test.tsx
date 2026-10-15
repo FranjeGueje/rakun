@@ -51,6 +51,7 @@ function setup(
     login?: LoginReply
     /** The browser finishes the login by coming back to rakun, so the page waits for it */
     loginCallback?: boolean
+    loginAlternative?: boolean
     library?: GameInfo[]
     /** Called when a game is imported from a folder */
     onImport?: () => void
@@ -80,6 +81,7 @@ function setup(
     {
       login: options.login,
       loginCallback: options.loginCallback,
+      loginAlternative: options.loginAlternative,
       setting: options.setting
     }
   )
@@ -1021,6 +1023,29 @@ describe('login', () => {
         'https://end?code=3'
       )
     )
+  })
+
+  test('a store with two ways shows both, numbered, each with its own link', async () => {
+    await openLogin({ loginAlternative: true })
+
+    const first = await screen.findByRole('link', {
+      name: 'Open the login page'
+    })
+    const second = screen.getByRole('link', { name: 'Open the API keys page' })
+    expect(first.getAttribute('href')).toBe('https://login.example/gog')
+    expect(second.getAttribute('href')).toBe('https://login.example/keys')
+    expect(screen.getByText('Option 1:')).toBeTruthy()
+    expect(screen.getByText('Option 2:')).toBeTruthy()
+    expect(screen.getByText('Log in to GOG.')).toBeTruthy()
+    expect(screen.getByText('Paste an API key with full access.')).toBeTruthy()
+  })
+
+  test('a store with one way shows no numbers', async () => {
+    await openLogin()
+
+    await screen.findByRole('link', { name: 'Open the login page' })
+    expect(screen.queryByText('Option 1:')).toBeNull()
+    expect(screen.queryByText('Option 2:')).toBeNull()
   })
 
   test('a login the browser finishes by itself closes when the session appears', async () => {

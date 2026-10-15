@@ -90,6 +90,7 @@ export const en = {
   'common.ok': 'OK',
   'login.title': 'Sign in to {store}',
   'login.open': 'Open the login page',
+  'login.option': 'Option {n}:',
   'login.hint':
     'Log in there, copy the address of the page it ends on (Ctrl+L, Ctrl+C), come back and paste it (Ctrl+V, Enter), or press the button.',
   'login.paste': 'Paste from clipboard and sign in',

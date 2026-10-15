@@ -43,6 +43,24 @@ describe('startItchLogin', () => {
   })
 })
 
+describe('the two ways to log in', () => {
+  test('the first is the link that allows the minimum permissions, with nothing to paste', () => {
+    const info = startItchLogin(17370)
+    expect(info.url).toContain('https://itch.io/user/oauth?')
+    expect(info.instructions).toMatch(/library/i)
+    expect(info.instructions).toMatch(/minimum permissions/)
+    expect(info.callback).toBe(true)
+  })
+
+  test('the second is the page of the API keys, for the library and the collections', () => {
+    const { alternative } = startItchLogin(17370)
+    expect(alternative?.url).toBe('https://itch.io/user/settings/api-keys')
+    expect(alternative?.instructions).toMatch(/collections/)
+    expect(alternative?.instructions).toMatch(/paste/)
+    expect(alternative?.instructions).toMatch(/full access/)
+  })
+})
+
 describe('completeItchLogin', () => {
   test('trades the code and logs in with the token, remembering it is an OAuth one', async () => {
     const fetchSpy = tokenReply()

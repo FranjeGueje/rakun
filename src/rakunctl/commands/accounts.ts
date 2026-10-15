@@ -3,7 +3,7 @@ import type { LoginInfo, LoginResult } from 'common/rakun/login'
 import type { DMQueueElement, Runner } from 'common/types'
 import { CliError } from '../client'
 import { webLines } from '../web'
-import { accountsText } from '../format'
+import { accountsText, loginText } from '../format'
 import { parseStore } from '../stores'
 import type { HelperInfo } from 'common/rakun/helpers'
 import { helpersLine } from './helpers'
@@ -81,7 +81,10 @@ async function pasteOrWait(
       ? undefined
       : Promise.reject(new CliError('Timed out waiting for the login'))
   )
-  const asked = ctx.ask('Or paste the address here: ', stop.signal)
+  const asked = ctx.ask(
+    'Waiting for the browser (way 1)... or paste the address, or the API key (way 2), here: ',
+    stop.signal
+  )
   try {
     return await Promise.race([waited, asked])
   } finally {
@@ -97,7 +100,7 @@ export const login: Command = async (ctx, args) => {
     requireArg(args, 0, 'store')
   )
   const info = await ctx.api.call<LoginInfo>('getLoginInfo', runner)
-  ctx.log(`${info.instructions}\n\n${info.url}\n`)
+  ctx.log(loginText(info))
   const pasted = info.callback
     ? await pasteOrWait(ctx, runner)
     : await ctx.ask('Paste the result here: ')

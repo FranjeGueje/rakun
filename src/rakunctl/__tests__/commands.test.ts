@@ -1,7 +1,7 @@
 import { resolve } from 'path'
 import { CliError } from '../client'
 import { parseStore } from '../stores'
-import { libraryText, table } from '../format'
+import { libraryText, loginText, table } from '../format'
 import { login, logout, status } from '../commands/accounts'
 import { library, refresh } from '../commands/library'
 import {
@@ -223,6 +223,34 @@ describe('accounts commands', () => {
       ).rejects.toThrow('Timed out waiting for the login')
       await jest.advanceTimersByTimeAsync(5 * 60 * 1000 + 2000)
       await done
+    })
+  })
+
+  describe('loginText', () => {
+    const base = {
+      runner: 'itch' as const,
+      url: 'https://one',
+      instructions: 'Do the first.'
+    }
+
+    test('one way is the instructions and the address, as always', () => {
+      expect(loginText({ ...base, instructions: 'Log in.' })).toBe(
+        'Log in.\n\nhttps://one\n'
+      )
+    })
+
+    test('two ways are numbered, each with its own address', () => {
+      const text = loginText({
+        ...base,
+        alternative: {
+          url: 'https://two',
+          label: 'x',
+          instructions: 'Do the second.'
+        }
+      })
+      expect(text).toContain('There are two ways to log in')
+      expect(text).toMatch(/1\) Do the first\.\n\s+https:\/\/one/)
+      expect(text).toMatch(/2\) Do the second\.\n\s+https:\/\/two/)
     })
   })
 
