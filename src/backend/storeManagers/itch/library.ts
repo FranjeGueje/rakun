@@ -40,6 +40,7 @@ export default class ItchLibraryManager implements LibraryManager {
       const games = await this.fetchGames()
       library.clear()
       games.forEach((game) => this.addToLibrary(itchToGameInfo(game)))
+      this.keepInstalledOutsideLibrary()
     } catch (error) {
       logError(['Failed to refresh the itch library:', error], LogPrefix.Itch)
       return { stdout: '', stderr: 'Error loading library' }
@@ -63,6 +64,41 @@ export default class ItchLibraryManager implements LibraryManager {
       }
     )
     return uniqueGames([owned, collected])
+  }
+
+  /** A game installed by its id is in no list: it stays while it is installed */
+  private keepInstalledOutsideLibrary() {
+    const previous = libraryStore.get('games', [])
+    installedGames.forEach((_, appName) => {
+      const info = previous.find((game) => game.app_name === appName)
+      if (info && !library.has(appName)) this.addToLibrary(info)
+    })
+  }
+
+  /**
+   * Makes a game that is in no list of the user's part of the library, by its id
+   * on itch.io, so that it can be installed (a free one installs without owning it).
+   * Does nothing for a game already there or for anything that is not an id.
+   */
+  async ensureGame(appName: string): Promise<void> {
+    if (this.getGameInfo(appName) || !/^\d+$/.test(appName)) return
+    if (!ItchUser.isLoggedIn()) return
+    try {
+      const butlerd = await getButlerd()
+      const { game } = await butlerd.call<{ game: ItchGame }>('Fetch.Game', {
+        gameId: Number(appName)
+      })
+      const info = itchToGameInfo(game)
+      this.addToLibrary(info)
+      // The saved list, not the one in memory (empty until the first refresh)
+      const saved = libraryStore.get('games', [])
+      libraryStore.set('games', [
+        ...saved.filter((game) => game.app_name !== info.app_name),
+        info
+      ])
+    } catch (error) {
+      logWarning([`itch.io has no game ${appName}:`, error], LogPrefix.Itch)
+    }
   }
 
   private addToLibrary(info: GameInfo) {

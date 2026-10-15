@@ -34,7 +34,7 @@ addHandler('isGameAvailable', async (e, args) => {
   return libraryManagerMap[runner].getGame(appName).isGameAvailable()
 })
 
-addHandler('getGameInfo', (event, appName, runner) => {
+addHandler('getGameInfo', async (event, appName, runner) => {
   // Fastpath since we sometimes have to request info for a GOG game as Legendary because we don't know it's a GOG game yet
   if (
     runner === 'legendary' &&
@@ -42,6 +42,8 @@ addHandler('getGameInfo', (event, appName, runner) => {
   ) {
     return null
   }
+  // An itch.io game that is in none of the user's lists is added by its id
+  if (runner === 'itch') await libraryManagerMap['itch'].ensureGame(appName)
   const tempGameInfo = libraryManagerMap[runner].getGame(appName).getGameInfo()
   // The game managers return an empty object if they couldn't fetch the game
   // info, since most of the backend assumes getting it can never fail (and
