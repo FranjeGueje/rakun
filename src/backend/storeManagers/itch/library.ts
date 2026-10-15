@@ -13,9 +13,8 @@ import {
   installedGamesStore,
   libraryStore
 } from './electronStores'
-import { itchToGameInfo, pickUpload } from './library_info'
-
-type OwnedKeys = { items: { game: ItchGame }[]; nextCursor?: string }
+import { itchToGameInfo, pickUpload, uniqueGames } from './library_info'
+import { fetchCollectionGames, fetchOwnedGames } from './library_fetch'
 
 const library: Map<string, GameInfo> = new Map()
 const installedGames: Map<string, InstalledInfo> = new Map()
@@ -38,7 +37,7 @@ export default class ItchLibraryManager implements LibraryManager {
     }
 
     try {
-      const games = await this.fetchOwnedGames()
+      const games = await this.fetchGames()
       library.clear()
       games.forEach((game) => this.addToLibrary(itchToGameInfo(game)))
     } catch (error) {
@@ -50,24 +49,20 @@ export default class ItchLibraryManager implements LibraryManager {
     return { stdout: 'Library refreshed', stderr: '' }
   }
 
-  /** Every game the user owns or has claimed, a page of keys at a time */
-  private async fetchOwnedGames(): Promise<ItchGame[]> {
+  /** What the user owns, then what is in their collections (the owned game wins when it is in both) */
+  private async fetchGames(): Promise<ItchGame[]> {
     const butlerd = await getButlerd()
     const profileId = configStore.get('profileId', 0)
     await butlerd.call('Profile.UseSavedLogin', { profileId })
 
-    const games: ItchGame[] = []
-    let cursor: string | undefined
-    do {
-      const page: OwnedKeys = await butlerd.call('Fetch.ProfileOwnedKeys', {
-        profileId,
-        cursor,
-        fresh: games.length === 0
-      })
-      games.push(...page.items.map((key) => key.game))
-      cursor = page.nextCursor
-    } while (cursor)
-    return games
+    const owned = await fetchOwnedGames(butlerd, profileId)
+    const collected = await fetchCollectionGames(butlerd, profileId).catch(
+      (error: unknown) => {
+        logWarning(['Could not read the collections:', error], LogPrefix.Itch)
+        return []
+      }
+    )
+    return uniqueGames([owned, collected])
   }
 
   private addToLibrary(info: GameInfo) {

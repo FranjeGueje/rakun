@@ -4,7 +4,12 @@ import { join } from 'path'
 import type { ItchGame, ItchUpload } from 'common/types/itch'
 import { parseHandshake } from '../butlerd'
 import { installLocationFor } from '../install_location'
-import { folderNameOf, itchToGameInfo, pickUpload } from '../library_info'
+import {
+  folderNameOf,
+  itchToGameInfo,
+  pickUpload,
+  uniqueGames
+} from '../library_info'
 import { formatEta, toInstallProgress } from '../progress'
 
 const game: ItchGame = {
@@ -36,6 +41,20 @@ describe('itchToGameInfo', () => {
   test('folder name drops what a file system dislikes, or falls back to the id', () => {
     expect(folderNameOf(game)).toBe('Cool The Game')
     expect(folderNameOf({ ...game, title: '???' })).toBe('7')
+  })
+})
+
+describe('uniqueGames', () => {
+  test('keeps each game once, the first one found', () => {
+    const owned = { ...game, id: 1, title: 'Owned' }
+    const collected = [
+      { ...game, id: 1, title: 'Again' },
+      { ...game, id: 2 }
+    ]
+    expect(uniqueGames([[owned], collected]).map((g) => g.title)).toEqual([
+      'Owned',
+      game.title
+    ])
   })
 })
 

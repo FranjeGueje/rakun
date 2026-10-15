@@ -30,6 +30,15 @@ export function itchToGameInfo(game: ItchGame): GameInfo {
   }
 }
 
+/** The games of every list, each once (the first one found is kept) */
+export function uniqueGames(lists: ItchGame[][]): ItchGame[] {
+  const byId = new Map<number, ItchGame>()
+  lists.flat().forEach((game) => {
+    if (!byId.has(game.id)) byId.set(game.id, game)
+  })
+  return Array.from(byId.values())
+}
+
 /**
  * The upload to install on a platform: one that has a build for it, the main
  * file of the game (`default`) before extras such as demos or soundtracks.
