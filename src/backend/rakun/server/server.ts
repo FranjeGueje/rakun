@@ -1,4 +1,5 @@
 import { timingSafeEqual } from 'crypto'
+import type { AddressInfo } from 'net'
 import {
   createServer,
   type IncomingMessage,
@@ -17,6 +18,13 @@ import type { WebAccess } from 'common/rakun/web'
 import { exposedChannels, exposedEvents } from './allowlist'
 import { allowedHosts, isBlockedFromNetwork, isOwnOrigin } from './access'
 import { defaultWebDir, webFile, webHeaders } from './web'
+import { setApiPort } from './listening'
+import {
+  callbackHeaders,
+  callbackPage,
+  itchCallback
+} from '../api/login_callback'
+import { ITCH_CALLBACK_PATH } from '../../storeManagers/itch/constants'
 
 const MAX_BODY_BYTES = 1024 * 1024
 const HEARTBEAT_MS = 25_000
@@ -117,6 +125,13 @@ async function handleCall(
   }
 }
 
+/** The browser comes back from itch.io: no token (it is the user's browser, not a client), the `state` is the proof */
+async function handleItchCallback(res: ServerResponse, url: URL) {
+  const reply = await itchCallback(url.searchParams)
+  res.writeHead(reply.status, callbackHeaders)
+  res.end(callbackPage(reply))
+}
+
 function handleEvents(req: IncomingMessage, res: ServerResponse) {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
@@ -141,6 +156,7 @@ function handleEvents(req: IncomingMessage, res: ServerResponse) {
  * Local HTTP API of the daemon:
  *   GET  /health            no token
  *   POST /api/<channel>     body {"args": [...]} -> {"result": ...}
+ *   GET  /itch/callback     where itch.io sends the browser back (no token: the `state` is the proof)
  *   GET  /events            Server-Sent Events (see allowlist.ts)
  *   GET  /<file>            rakun's own web, if there is one (no token: it carries it)
  * Everything but /health needs the `x-rakun-token` header.
@@ -167,6 +183,13 @@ export function createApiServer(
         version: rakunVersion,
         web
       })
+    }
+
+    if (req.method === 'GET' && pathname === ITCH_CALLBACK_PATH) {
+      return void handleItchCallback(
+        res,
+        new URL(req.url ?? '/', 'http://localhost')
+      )
     }
 
     if (req.method === 'GET' && web !== 'off') {
@@ -205,6 +228,7 @@ export function listenApiServer(
   return new Promise((resolve, reject) => {
     server.once('error', reject)
     server.listen(port, address, () => {
+      setApiPort((server.address() as AddressInfo).port)
       logInfo(
         `API listening on ${address}:${port} (web: ${mode})`,
         LogPrefix.Backend

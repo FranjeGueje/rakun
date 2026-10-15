@@ -17,7 +17,7 @@ async function submitLogin(
   }
 
   try {
-    const result = await login.submit(code)
+    const result = await login.submit(code, pasted)
     if (!result.ok) return result
   } catch (error) {
     logError([`Login to ${runner} failed:`, error], LogPrefix.Backend)

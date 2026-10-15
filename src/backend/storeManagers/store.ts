@@ -15,7 +15,8 @@ interface StoreLogin {
   /** Parameter of the final address that carries the code */
   urlParam: string
   start: () => Promise<LoginInfo>
-  submit: (code: string) => Promise<LoginResult>
+  /** `pasted` is what the user pasted (`code` is taken from it): a store may need more than the code of it */
+  submit: (code: string, pasted?: string) => Promise<LoginResult>
 }
 
 /**

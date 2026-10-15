@@ -94,9 +94,11 @@ rakun has no translations: the text of its messages and of `showDialog` is in En
 | `gog`              | `https://embed.gog.com/on_login_success?…&code=…` (page may look blank)                                            |
 | `nile` (Amazon)    | address with `openid.oa2.authorization_code=…`; call `getLoginInfo('nile')` first, it stores the one-time verifier |
 | `zoom`             | address with `li_token=…`                                                                                          |
-| `itch`             | the API key, pasted alone (a full-access one from itch.io → Settings → API keys, not the one `butler login` makes) |
+| `itch`             | OAuth: nothing to paste, see below (or, as a fallback, the callback address, or an API key pasted alone)           |
 
 On success the library of that store is refreshed.
+
+**itch.io (OAuth).** `getLoginInfo('itch')` returns `callback: true` and an address with a PKCE challenge and a `state` that rakun keeps in memory (one login at a time; a second `getLoginInfo` replaces it, and it runs out after 10 minutes). itch.io sends the browser back to `GET http://127.0.0.1:<port>/itch/callback?code=…&state=…` (or `?error=access_denied&state=…`), on the port of this API, which rakun answers with a page and **no token** (the user's browser is not a client; the `state` is the proof, it works once and a wrong one does not spend it). The login then ends by itself: a client with `callback: true` does not ask for a paste, it waits until `getAccounts` says `loggedIn` for `itch` (`rakunctl login` and the web do, and also take a paste). The fallback is `submitLogin('itch', <the callback address>)` (for a browser on another machine, which cannot reach `127.0.0.1` here) or `submitLogin('itch', <an API key>)`. The token has no expiry; rakun keeps it only to revoke it on `logout`. The redirect URI `http://127.0.0.1/itch/callback` must be registered in the OAuth application of itch.io.
 
 ## Events (`GET /events`)
 

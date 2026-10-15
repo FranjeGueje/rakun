@@ -29,6 +29,8 @@ export interface StoreStructure {
   itchConfigStore: {
     profileId?: number
     user?: ItchUser
+    /** Only of an OAuth login, to revoke it on logout */
+    oauthToken?: string
   }
   nileConfigStore: {
     userData?: NileUserData

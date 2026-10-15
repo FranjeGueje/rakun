@@ -51,13 +51,13 @@ rakunctl login gog               # epic, gog, amazon, zoom or itch
 
 rakun prints a login address. Open it in any browser, log in, and paste back what the browser ends on (the final address, or the code). There is no embedded browser. What to paste for each store:
 
-| Store    | What to paste                                                                  |
-| -------- | ------------------------------------------------------------------------------ |
-| `epic`   | the JSON the page shows (or just the `authorizationCode`)                      |
-| `gog`    | the final address, even if the page looks blank                                |
-| `amazon` | the final address                                                              |
-| `zoom`   | the final address with `li_token`, or the bare token                           |
-| `itch`   | an API key with every permission (itch.io → Settings → API keys), pasted alone |
+| Store    | What to paste                                                                                                                       |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `epic`   | the JSON the page shows (or just the `authorizationCode`)                                                                           |
+| `gog`    | the final address, even if the page looks blank                                                                                     |
+| `amazon` | the final address                                                                                                                   |
+| `zoom`   | the final address with `li_token`, or the bare token                                                                                |
+| `itch`   | nothing: authorize rakun in the browser and it comes back by itself (if the browser is on another machine, paste the final address) |
 
 ## 5. Install a game
 

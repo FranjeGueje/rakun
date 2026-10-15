@@ -42,6 +42,8 @@ export function fakeRakun(
   options: {
     /** How a pasted login ends (by default, well) */
     login?: LoginReply
+    /** The login is finished by the browser coming back to rakun, so the page waits for it */
+    loginCallback?: boolean
     /**
      * Run as a desktop app: it names itself, can quit and start rakun, and logs in in a
      * window of its own (no pasting). Without it, the page of the web.
@@ -75,7 +77,8 @@ export function fakeRakun(
   const loginInfo: LoginInfo = {
     runner: 'gog',
     url: 'https://login.example/gog',
-    instructions: 'Log in to GOG.'
+    instructions: 'Log in to GOG.',
+    ...(options.loginCallback ? { callback: true } : {})
   }
   const login = {
     info: jest.fn(() => Promise.resolve(loginInfo)),

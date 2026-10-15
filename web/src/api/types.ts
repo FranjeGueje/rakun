@@ -5,7 +5,12 @@
 
 export type Runner = 'legendary' | 'gog' | 'nile' | 'zoom' | 'itch'
 
-export type LoginInfo = { runner: Runner; url: string; instructions: string }
+export type LoginInfo = {
+  runner: Runner
+  url: string
+  instructions: string
+  callback?: boolean
+}
 
 export type LoginResult = { ok: boolean; error?: string }
 

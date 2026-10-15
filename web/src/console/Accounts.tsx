@@ -8,6 +8,8 @@ import type { Actions } from '../state/useRakun'
 import { ConfirmDialog } from './ConfirmDialog'
 import { TextField } from './TextField'
 
+const LOGIN_POLL_MS = 1500
+
 function stateText(t: Translate, account: AccountsStatus[StoreInfo['id']]) {
   if (!account.loggedIn) return t('accounts.signedOut')
   return account.name
@@ -47,6 +49,23 @@ export function Accounts({
   useEffect(() => {
     load().catch((e: unknown) => setError(String(e)))
   }, [load])
+
+  /** The browser comes back to rakun by itself: look for the session instead of waiting for a paste */
+  useEffect(() => {
+    if (!pasting?.info.callback) return
+    const { store } = pasting
+    const timer = setInterval(() => {
+      window.rakun
+        .call('getAccounts')
+        .then((status) => {
+          if (!status[store.id].loggedIn) return
+          setPasting(null)
+          setAccounts(status)
+        })
+        .catch(() => undefined)
+    }, LOGIN_POLL_MS)
+    return () => clearInterval(timer)
+  }, [pasting])
 
   /** The host logs in in a window of its own and finishes it (a desktop app) */
   const signInInWindow = async (

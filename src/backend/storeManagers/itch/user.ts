@@ -3,19 +3,23 @@ import type { ItchUser as ItchUserData } from 'common/types/itch'
 import { ButlerdError } from './butlerd'
 import { getButlerd } from './client'
 import { configStore } from './electronStores'
+import { revokeToken } from './oauth'
 
 type LoginResult = { profile: { id: number; user: ItchUserData } }
 
-/** Only a key with every permission can read the library (the one `butler login` makes cannot) */
+/** A token that lacks a permission cannot read the library (the key `butler login` makes is one) */
 export function loginErrorMessage(error: unknown): string {
   if (error instanceof ButlerdError && /does not permit/.test(error.message))
-    return 'That key does not have the permissions rakun needs: create a new one in itch.io → Settings → API keys'
+    return 'That key or token does not have the permissions rakun needs: log in again with `rakunctl login itch`'
   return error instanceof Error ? error.message : String(error)
 }
 
 export class ItchUser {
-  /** Gives butler the key; it keeps it (in its own database), rakun does not */
-  static async login(apiKey: string): Promise<void> {
+  /**
+   * Gives butler the key or token; it keeps it in its own database. An OAuth
+   * `token` is also kept here, only to revoke it when the user logs out.
+   */
+  static async login(apiKey: string, oauth = false): Promise<void> {
     const butlerd = await getButlerd()
     const { profile } = await butlerd.call<LoginResult>(
       'Profile.LoginWithAPIKey',
@@ -23,6 +27,8 @@ export class ItchUser {
     )
     configStore.set('profileId', profile.id)
     configStore.set('user', profile.user)
+    if (oauth) configStore.set('oauthToken', apiKey)
+    else configStore.delete('oauthToken')
     logInfo(`Logged in as ${profile.user.username}`, LogPrefix.Itch)
   }
 
@@ -35,8 +41,21 @@ export class ItchUser {
         logError(['Profile.Forget failed:', error], LogPrefix.Itch)
       }
     }
+    await ItchUser.revoke()
     configStore.delete('profileId')
     configStore.delete('user')
+  }
+
+  /** Makes itch.io drop the token of an OAuth login; failing to is logged, not an error */
+  private static async revoke(): Promise<void> {
+    const token = configStore.get_nodefault('oauthToken')
+    configStore.delete('oauthToken')
+    if (!token) return
+    try {
+      await revokeToken(token)
+    } catch (error) {
+      logError(['Could not revoke the itch.io token:', error], LogPrefix.Itch)
+    }
   }
 
   static isLoggedIn(): boolean {
