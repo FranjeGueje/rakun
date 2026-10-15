@@ -3,6 +3,7 @@ import type { ItchUser as ItchUserData } from 'common/types/itch'
 import { ButlerdError } from './butlerd'
 import { getButlerd } from './client'
 import { configStore } from './electronStores'
+import { clearCache } from '../../utils'
 import { revokeToken } from './oauth'
 
 type LoginResult = { profile: { id: number; user: ItchUserData } }
@@ -44,6 +45,7 @@ export class ItchUser {
     await ItchUser.revoke()
     configStore.delete('profileId')
     configStore.delete('user')
+    clearCache('itch')
   }
 
   /** Makes itch.io drop the token of an OAuth login; failing to is logged, not an error */

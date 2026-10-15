@@ -21,8 +21,10 @@ jest.mock('../electronStores', () => ({
   }
 }))
 jest.mock('../oauth', () => ({ revokeToken: jest.fn() }))
+jest.mock('../../../utils', () => ({ clearCache: jest.fn() }))
 
 import { logError } from 'backend/logger'
+import { clearCache } from '../../../utils'
 import { revokeToken } from '../oauth'
 import { ItchUser } from '../user'
 
@@ -66,6 +68,12 @@ describe('logout', () => {
     expect(revoke).toHaveBeenCalledWith('TOKEN')
     expect(ItchUser.isLoggedIn()).toBe(false)
     expect(mockStore.oauthToken).toBeUndefined()
+  })
+
+  test('clears the cache of the library, like the other stores do', async () => {
+    await ItchUser.login('KEY')
+    await ItchUser.logout()
+    expect(clearCache).toHaveBeenCalledWith('itch')
   })
 
   test('a key that was pasted has nothing to revoke', async () => {
