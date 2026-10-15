@@ -37,13 +37,13 @@ With rakun installed, `rakunctl` (or `pnpm start:ctl` from the repository) saves
 | start / stop rakun                 | `rakunctl start` / `rakunctl stop [--force]`                                                                                  |
 | choose web and port                | `rakunctl start --web local\|network\|off --port N` (or `config webAccess`)                                                   |
 | see if it is alive                 | `rakunctl status` (says "rakun is stopped" if it is not)                                                                      |
-| log in                             | `rakunctl login gog` (epic, gog, amazon, zoom)                                                                                |
+| log in                             | `rakunctl login gog` (epic, gog, amazon, zoom, itch)                                                                          |
 | list the library                   | `rakunctl library [store] [--installed]`                                                                                      |
 | refresh it and wait                | `rakunctl refresh [store]`                                                                                                    |
 | install                            | `rakunctl install gog <appName> [--path DIR] [--lang CODE] [--skip-dlcs] [--platform windows\|linux]`                         |
 | see / download the helper binaries | `rakunctl helpers` / `rakunctl helpers update [--latest]` (the pinned versions, checked by sha256; `--latest` is not checked) |
 | list the versions of a game        | `rakunctl versions gog <appName>` (GOG only: builds, branches, the current one marked)                                        |
-| import a game from a folder        | `rakunctl import <store> <appName> <folder> [--platform windows\|linux]` (not Zoom)                                           |
+| import a game from a folder        | `rakunctl import <store> <appName> <folder> [--platform windows\|linux]` (not Zoom or itch)                                   |
 | update rakun itself                | `rakunctl self-update [--check] [--force]` (only an install made by `install.sh`; x64)                                        |
 | update                             | `rakunctl update [store [appName]]`: one game, a store's games or every game with a new version (Zoom is not updated)         |
 | repair                             | `rakunctl repair <store> <appName>`                                                                                           |

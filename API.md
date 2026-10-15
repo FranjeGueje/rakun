@@ -86,7 +86,7 @@ rakun has no translations: the text of its messages and of `showDialog` is in En
 ## Logging in (no embedded browser)
 
 1. `getLoginInfo(runner)` → `{runner, url, instructions}`. The client shows `url` (the user opens it in any browser) and the instructions.
-2. After logging in, the user pastes what the browser ended on into `submitLogin(runner, pasted)` → `{ok, error?}`. `pasted` can be the full address of the final page, the JSON Epic shows (`authorizationCode`), or the bare code (for Zoom, the `li_token`).
+2. After logging in, the user pastes what the browser ended on into `submitLogin(runner, pasted)` → `{ok, error?}`. `pasted` can be the full address of the final page, the JSON Epic shows (`authorizationCode`), or the bare code (for Zoom, the `li_token`; for itch.io, the API key).
 
 | `runner`           | What ends up in the browser                                                                                        |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------ |
@@ -94,6 +94,7 @@ rakun has no translations: the text of its messages and of `showDialog` is in En
 | `gog`              | `https://embed.gog.com/on_login_success?…&code=…` (page may look blank)                                            |
 | `nile` (Amazon)    | address with `openid.oa2.authorization_code=…`; call `getLoginInfo('nile')` first, it stores the one-time verifier |
 | `zoom`             | address with `li_token=…`                                                                                          |
+| `itch`             | the API key, pasted alone (a full-access one from itch.io → Settings → API keys, not the one `butler login` makes) |
 
 On success the library of that store is refreshed.
 

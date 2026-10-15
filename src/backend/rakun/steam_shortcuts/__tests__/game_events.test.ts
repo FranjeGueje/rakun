@@ -41,7 +41,8 @@ jest.mock('backend/storeManagers', () => ({
     legendary: { getGameInfo: jest.fn() },
     gog: { getGameInfo: jest.fn() },
     nile: { getGameInfo: jest.fn() },
-    zoom: {}
+    zoom: {},
+    itch: { getGameInfo: jest.fn() }
   }
 }))
 
@@ -560,6 +561,34 @@ describe('onGameUninstalled', () => {
       '/home/user/.local/share/rakun/games/legendary'
     )
   })
+
+  test('itch goes the .bat way: the runner and the game link go, no prefix link is touched', async () => {
+    mockGetGameInfo.mockReturnValue({
+      title: 'ItchGame',
+      app_name: '21301',
+      runner: 'itch'
+    })
+
+    mockedFindShortcut.mockReturnValue({
+      gameName: 'ItchGame',
+      appId: '21301',
+      store: 'itch',
+      steamAppId: 555,
+      execPath: '/runner/ItchGame.bat',
+      installPath: '/games/itchgame'
+    })
+    mockedExistsSync.mockReturnValue(true)
+
+    await onGameUninstalled(mockGame as never)
+
+    expect(mockedUnlinkSync).toHaveBeenCalledWith('/runner/ItchGame.bat')
+    expect(mockedUnlinkSync).toHaveBeenCalledWith(
+      '/home/user/.local/share/rakun/games/itchgame'
+    )
+    expect(mockedRemovePrefixSymlink).not.toHaveBeenCalled()
+    expect(mockedDeleteGrids).toHaveBeenCalledWith(555)
+    expect(mockedRemoveShortcut).toHaveBeenCalledWith('21301')
+  })
 })
 
 describe('onGameImported', () => {
@@ -795,6 +824,36 @@ describe('onGameRepaired', () => {
     )
     expect(mockedOpenExternal).toHaveBeenCalledWith(
       'steam://gameproperties/321'
+    )
+  })
+
+  test('an itch game writes its runner again, so a moved executable is followed', async () => {
+    const itchInfo = {
+      title: 'ItchGame',
+      app_name: '21301',
+      runner: 'itch',
+      install: { install_path: '/games/itchgame', executable: 'new/Game.exe' }
+    }
+    mockGetGameInfo.mockReturnValue(itchInfo)
+    ;(
+      libraryManagerMap['itch'] as unknown as { getGameInfo: jest.Mock }
+    ).getGameInfo.mockReturnValue(itchInfo)
+    mockedFindShortcut.mockReturnValue({
+      ...tracked,
+      appId: '21301',
+      store: 'itch' as never
+    })
+    mockedAddGameToSteam.mockResolvedValueOnce({
+      success: true,
+      steamAppId: 123,
+      existed: true
+    })
+
+    await onGameRepaired(mockGame as never)
+
+    expect(mockedCreateRunnerFile).toHaveBeenCalledWith(
+      expect.objectContaining({ install: itchInfo.install }),
+      '/games/itchgame'
     )
   })
 

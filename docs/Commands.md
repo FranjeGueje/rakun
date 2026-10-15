@@ -1,6 +1,6 @@
 # Commands
 
-`rakunctl` talks to a running rakun over HTTP. It reads the port and token from `~/.config/rakun/api.json` (`RAKUN_API_FILE` points it at another file). Stores are `epic`, `gog`, `amazon` and `zoom`. `--json` prints for scripts.
+`rakunctl` talks to a running rakun over HTTP. It reads the port and token from `~/.config/rakun/api.json` (`RAKUN_API_FILE` points it at another file). Stores are `epic`, `gog`, `amazon`, `zoom` and `itch`. `--json` prints for scripts.
 
 Commands that change something (`install`, `update`, `repair`, `uninstall`) wait until they finish and exit non-zero if they fail; `--no-wait` skips the wait.
 
@@ -55,16 +55,16 @@ It writes `~/.config/systemd/user/rakun.service` (`Restart=on-failure`) and runs
 
 ## Library and games
 
-| Command                                                     | What it does                               |
-| ----------------------------------------------------------- | ------------------------------------------ |
-| `library [store] [--installed]`                             | list the library                           |
-| `refresh [store]`                                           | refresh it and wait                        |
-| `install <store> <app> [options]`                           | install (see below)                        |
-| `versions <store> <app>`                                    | builds and branches of a GOG game          |
-| `import <store> <app> <folder> [--platform windows\|linux]` | register a game already on disk (not Zoom) |
-| `update [store [app]] [--build ID]`                         | update one game, a store's, or everything  |
-| `repair <store> <app>`                                      | repair one game                            |
-| `uninstall <store> <app>`                                   | uninstall one game                         |
+| Command                                                     | What it does                                       |
+| ----------------------------------------------------------- | -------------------------------------------------- |
+| `library [store] [--installed]`                             | list the library                                   |
+| `refresh [store]`                                           | refresh it and wait                                |
+| `install <store> <app> [options]`                           | install (see below)                                |
+| `versions <store> <app>`                                    | builds and branches of a GOG game                  |
+| `import <store> <app> <folder> [--platform windows\|linux]` | register a game already on disk (not Zoom or itch) |
+| `update [store [app]] [--build ID]`                         | update one game, a store's, or everything          |
+| `repair <store> <app>`                                      | repair one game                                    |
+| `uninstall <store> <app>`                                   | uninstall one game                                 |
 
 ### Install options
 

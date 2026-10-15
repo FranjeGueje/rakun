@@ -79,12 +79,22 @@ export default class ItchGameManager implements Game {
         queued,
         platform === 'linux' ? 'linux' : 'windows'
       )
-      await onGameInstalled(this, queued.installFolder)
+      this.inBackground(onGameInstalled(this, queued.installFolder))
       return { status: 'done' }
     } catch (error) {
       logError([`Install of ${this.id} failed:`, error], LogPrefix.Itch)
       return { status: 'error', error: String(error) }
     }
+  }
+
+  /** Steam is not the install: a failure there is logged, it does not undo a game that is on the disk */
+  private inBackground(done: Promise<unknown>) {
+    done.catch((error: unknown) =>
+      logError(
+        [`Steam integration of ${this.id} failed:`, error],
+        LogPrefix.Itch
+      )
+    )
   }
 
   /** A new install: butler needs the game, the upload and a folder it knows */
@@ -149,12 +159,20 @@ export default class ItchGameManager implements Game {
     }
   }
 
-  private async saveInstalled(queued: Queued, platform: Platform) {
+  /** Saves the install and returns its executable (empty when butler finds none) */
+  private async saveInstalled(
+    queued: Queued,
+    platform: Platform
+  ): Promise<string> {
+    const executable = await this.prepareExecutable(
+      queued.installFolder,
+      platform
+    )
     const installed: InstalledInfo = {
       appName: this.id,
       platform,
       install_path: queued.installFolder,
-      executable: await this.prepareExecutable(queued.installFolder, platform),
+      executable,
       install_size: '',
       is_dlc: false,
       version: 'N/A',
@@ -165,6 +183,7 @@ export default class ItchGameManager implements Game {
       upsertInstalled(installedGamesStore.get('installed', []), installed)
     )
     this.publish({ is_installed: true, install: installed })
+    return executable
   }
 
   /** Tells the library and the clients how the game stands now */
@@ -223,15 +242,18 @@ export default class ItchGameManager implements Game {
     reason: 'heal' | 'update',
     status: 'updating' | 'repairing'
   ): Promise<InstallResult> {
-    const { caveId, platform } = this.getGameInfo().install
+    const { caveId, platform, executable } = this.getGameInfo().install
     if (!caveId) return { status: 'error', error: "Game isn't installed" }
     try {
       const queued = await this.perform({ caveId, reason }, status)
       // The operation can change what there is to run
-      await this.saveInstalled(
+      const now = await this.saveInstalled(
         queued,
         platform === 'linux' ? 'linux' : 'windows'
       )
+      // The `.bat` of the game names its executable: an update that moves it needs a new one
+      if (reason === 'update' && now !== executable)
+        this.inBackground(onGameRepaired(this))
       return { status: 'done' }
     } catch (error) {
       logError([`${reason} of ${this.id} failed:`, error], LogPrefix.Itch)
@@ -241,8 +263,7 @@ export default class ItchGameManager implements Game {
 
   async repair(): Promise<ExecResult> {
     const { status, error } = await this.redo('heal', 'repairing')
-    if (status === 'done') await onGameRepaired(this)
-    return { stdout: status, stderr: error ?? '' }
+    return { stdout: status, stderr: error ?? '', error }
   }
 
   async update(): Promise<InstallResult> {

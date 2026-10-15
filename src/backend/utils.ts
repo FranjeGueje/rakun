@@ -26,6 +26,7 @@ import {
   installInfoStore as zoomInstallInfoStore,
   libraryStore as zoomLibraryStore
 } from './storeManagers/zoom/electronStores'
+import { libraryStore as itchLibraryStore } from './storeManagers/itch/electronStores'
 import { formatBytes } from 'common/formatBytes'
 import { showDialogBoxModalAuto, askQuestion } from './dialog/dialog'
 import { sendFrontendMessage } from './ipc'
@@ -264,6 +265,8 @@ function clearCache(library?: Runner) {
     zoomInstallInfoStore.clear()
     zoomLibraryStore.clear()
   }
+  // Only the library: the installed list is the record of what is on the disk
+  if (library === 'itch' || !library) itchLibraryStore.clear()
 
   if (library === 'gog' || !library) GOGapiInfoCache.clear()
   deviceNameCache.clear()

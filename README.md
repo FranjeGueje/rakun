@@ -4,7 +4,7 @@
 
 [Español](README.es.md)
 
-**rakun installs your PC games on Linux and puts them in Steam.** Log in to Epic Games, GOG, Amazon Games or Zoom Platform, pick a game, and when the download ends it shows up in your Steam library, ready to play. It was made with the Steam Deck in mind, but it runs on any Linux with Steam.
+**rakun installs your PC games on Linux and puts them in Steam.** Log in to Epic Games, GOG, Amazon Games, Zoom Platform or itch.io, pick a game, and when the download ends it shows up in your Steam library, ready to play. It was made with the Steam Deck in mind, but it runs on any Linux with Steam.
 
 rakun is **not a launcher**. It never runs your games: Steam does. rakun's job is everything before that: signing in, downloading, updating, repairing, uninstalling and wiring the game into Steam.
 
@@ -14,7 +14,7 @@ rakun is **not a launcher**. It never runs your games: Steam does. rakun's job i
 
 ## What it does
 
-- Signs in to **Epic, GOG, Amazon and Zoom** (you paste the code your browser ends on; no embedded browser)
+- Signs in to **Epic, GOG, Amazon, Zoom and itch.io** (you paste the code your browser ends on, or for itch.io an API key; no embedded browser)
 - Shows your **library** and a **download queue** you can pause, resume and cancel
 - **Installs, updates, repairs and uninstalls** games, picks Windows or Linux builds, and can adopt a game that is already on your disk
 - Adds each game to **Steam** (shortcut, Proton prefix, cover art) when the install finishes
@@ -61,7 +61,7 @@ The package carries its own Node, so nothing else is needed on SteamOS.
 ```bash
 rakunctl start                # start rakun in the background
 rakunctl helpers update       # download the store tools (once)
-rakunctl login gog            # or epic, amazon, zoom
+rakunctl login gog            # or epic, amazon, zoom, itch
 rakunctl library gog          # see your games
 rakunctl install gog <name>   # install one: it appears in Steam
 ```

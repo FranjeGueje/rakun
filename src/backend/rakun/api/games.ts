@@ -4,7 +4,13 @@ import { addHandler, addListener } from 'backend/ipc'
 import { GlobalConfig } from 'backend/config'
 import { isEpicServiceOffline, sendGameStatusUpdate } from 'backend/utils'
 import { uninstallGameCallback } from 'backend/utils/uninstaller'
-import { logError, logInfo, LogPrefix, logWarning } from 'backend/logger'
+import {
+  logError,
+  logInfo,
+  LogPrefix,
+  logWarning,
+  RunnerToLogPrefixMap
+} from 'backend/logger'
 import { isOnline } from 'backend/online_monitor'
 import { showDialogBoxModalAuto } from 'backend/dialog/dialog'
 import { callAbortController } from 'backend/utils/aborthandler/aborthandler'
@@ -84,14 +90,7 @@ addHandler(
       if (info === undefined) return null
       return info
     } catch (error) {
-      logError(
-        error,
-        runner === 'legendary'
-          ? LogPrefix.Legendary
-          : runner === 'nile'
-            ? LogPrefix.Nile
-            : LogPrefix.Gog
-      )
+      logError(error, RunnerToLogPrefixMap[runner])
       return null
     }
   }

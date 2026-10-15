@@ -416,4 +416,42 @@ describe('createRunnerFile', () => {
       join(mockRakunRunnerPath, 'LegGame.bat')
     )
   })
+
+  test('itch: creates a .bat runner that names its executable, not a shortcut to it', () => {
+    const gameInfo = {
+      runner: 'itch',
+      title: 'ItchGame',
+      app_name: '21301',
+      install: { executable: 'bin/Game.exe' }
+    } as unknown as GameInfo
+
+    const result = createRunnerFile(gameInfo, installDir.name)
+
+    const path = (result as { path: string }).path
+    expect(path).toBe(join(mockRakunRunnerPath, 'ItchGame.bat'))
+    const content = readFileSync(path, 'utf-8')
+    expect(content).toContain('set "STORE=itch"')
+    expect(content).toContain(
+      `set "IDGAME=${basename(installDir.name)}\\bin\\Game.exe"`
+    )
+    expect(existsSync(join(gamesDir.name, basename(installDir.name)))).toBe(
+      false
+    )
+  })
+
+  test('itch: with no executable there is no .bat and an error says why', () => {
+    const gameInfo = {
+      runner: 'itch',
+      title: 'NoExeGame',
+      app_name: '1',
+      install: { executable: '' }
+    } as unknown as GameInfo
+
+    const result = createRunnerFile(gameInfo, installDir.name)
+
+    expect(result).toEqual({
+      error: expect.stringContaining('has no executable to run')
+    })
+    expect(existsSync(join(mockRakunRunnerPath, 'NoExeGame.bat'))).toBe(false)
+  })
 })

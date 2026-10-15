@@ -57,7 +57,8 @@ export function createRunnerFile(
       installPath,
       gameInfo.title,
       gameInfo.runner,
-      gameInfo.app_name
+      gameInfo.app_name,
+      gameInfo.install.executable
     )
     return { path: runnerPath }
   } catch (e) {
@@ -82,7 +83,8 @@ export function createRakunBat(
   installPath: string,
   gameName: string,
   runner: GameRunner,
-  appName: string
+  appName: string,
+  executable?: string
 ): string {
   const runnerPath = join(rakunRunnerPath, `${gameName}.bat`)
 
@@ -93,7 +95,8 @@ export function createRakunBat(
     appName,
     title: gameName,
     folder: basename(installPath),
-    username: runner === 'gog' ? getGogUsername() : undefined
+    username: runner === 'gog' ? getGogUsername() : undefined,
+    executable
   })
   writeFileSync(runnerPath, content, 'utf-8')
 

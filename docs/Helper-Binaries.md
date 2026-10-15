@@ -2,13 +2,14 @@
 
 rakun does not talk to the stores itself: it runs other programs for each one.
 
-| Program                 | Used for                                |
-| ----------------------- | --------------------------------------- |
-| legendary               | Epic Games                              |
-| gogdl, Comet            | GOG (Comet: achievements, experimental) |
-| nile                    | Amazon Games                            |
-| umu                     | Proton prefixes                         |
-| Zoom's installer script | Zoom Platform                           |
+| Program                 | Used for                                                                         |
+| ----------------------- | -------------------------------------------------------------------------------- |
+| legendary               | Epic Games                                                                       |
+| gogdl, Comet            | GOG (Comet: achievements, experimental)                                          |
+| nile                    | Amazon Games                                                                     |
+| umu                     | Proton prefixes                                                                  |
+| Zoom's installer script | Zoom Platform                                                                    |
+| butler                  | itch.io (its daemon, with 7z.so and libc7zip.so; from itch's server, not GitHub) |
 
 The normal tarball does not carry them. Right after installing, run:
 

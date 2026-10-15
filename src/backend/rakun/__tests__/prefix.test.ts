@@ -263,6 +263,31 @@ describe('preparePrefix', () => {
 
     expect(windowify).toHaveBeenCalled()
   })
+
+  test('itch has a prefix of its own, never the folder of the game', async () => {
+    const { preparePrefix } = freshPrefix()
+
+    await preparePrefix(
+      { title: 'ItchGame', app_name: '21301', runner: 'itch' } as never,
+      880,
+      '/games/itchgame'
+    )
+
+    expect(windowify).toHaveBeenCalled()
+    const compat = '/steam/steamapps/compatdata/880'
+    expect(mockedSymlinkSync).toHaveBeenCalledWith(
+      '/mount',
+      `${compat}/drive_c/Launchers`
+    )
+    expect(mockedSymlinkSync).toHaveBeenCalledWith(
+      '/games',
+      `${compat}/drive_c/games`
+    )
+    expect(mockedSymlinkSync).not.toHaveBeenCalledWith(
+      expect.anything(),
+      compat
+    )
+  })
 })
 
 const PREFIX_EXIT_RESULT = {
@@ -289,6 +314,17 @@ describe('EOS Overlay setup', () => {
 
     // the overlay script is in place
     mockedExistsSync.mockReturnValue(true)
+  })
+
+  test('itch: umu prepares its prefix as store itchio, with no overlay', async () => {
+    jest.mocked(require('../umu').getUmuStoreLabel).mockReturnValue('itchio')
+
+    await prepare('itch')
+
+    expect(launchUmu).toHaveBeenCalledTimes(1)
+    expect(launchUmu).toHaveBeenCalledWith(
+      expect.objectContaining({ store: 'itchio', executable: 'exit' })
+    )
   })
 
   async function prepare(runner: string) {
