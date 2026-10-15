@@ -28,17 +28,18 @@ describe('the permissions asked for', () => {
   // The real list, not the mocked one of this file
   const { ITCH_SCOPE, ITCH_SCOPES } = jest.requireActual('../constants')
 
-  test('are the ones the library and the installs need', () => {
-    expect(ITCH_SCOPES).toEqual(
-      expect.arrayContaining([
-        'profile:me',
-        'profile:owned',
-        'profile:collections',
-        'collection:view',
-        'game:view',
-        'game:view:uploads'
-      ])
-    )
+  test('are the ones itch.io grants over OAuth that the library and the downloads need', () => {
+    expect(ITCH_SCOPES).toEqual([
+      'profile:me',
+      'profile:owned',
+      'profile:collections',
+      'game:view:uploads'
+    ])
+  })
+
+  test('none of the two itch.io refused as "Invalid scope"', () => {
+    expect(ITCH_SCOPES).not.toContain('collection:view')
+    expect(ITCH_SCOPES).not.toContain('game:view')
   })
 
   test('never the whole `profile`, nor anything that edits', () => {

@@ -8,15 +8,14 @@ export const butlerDbPath = join(itchSupportPath, 'butler.db')
 export const ITCH_CLIENT_ID = '383082c7e212e8f812c8b584887a7bdb'
 /**
  * What rakun asks the user to allow, and no more (not `profile`, which also gives the
- * games they develop): each one is what itch.io answered a call lacked.
+ * games they develop). itch.io grants no others over OAuth: `collection:view` and
+ * `game:view`, which the API names when a call lacks them, are refused as "Invalid scope".
  */
 export const ITCH_SCOPES = [
   'profile:me', // who is logged in
   'profile:owned', // the games they own or have claimed
-  'profile:collections', // their collections...
-  'collection:view', // ...and the games in each
-  'game:view', // a game, to install it
-  'game:view:uploads' // its files, to download them
+  'profile:collections', // the list of their collections (not the games in them)
+  'game:view:uploads' // the files of a game, to download them
 ]
 /** The `scope` parameter: the scopes separated by spaces */
 export const ITCH_SCOPE = ITCH_SCOPES.join(' ')

@@ -21,7 +21,7 @@ export function startItchLogin(port: number): LoginInfo {
     runner: 'itch',
     url: authorizeUrl(pending),
     instructions:
-      'Log in to itch.io and authorize rakun. When the browser comes back to rakun the login finishes by itself. If it cannot (another machine), paste the full address it ends on, or an API key.',
+      'Log in to itch.io and authorize rakun. When the browser comes back to rakun the login finishes by itself. If it cannot (another machine), paste the full address it ends on. To also have the games of your collections, paste an API key with every permission instead (itch.io → Settings → API keys).',
     callback: true
   }
 }

@@ -1,6 +1,10 @@
-import { logWarning, LogPrefix } from 'backend/logger'
+import { logInfo, logWarning, LogPrefix } from 'backend/logger'
 import type { ItchGame } from 'common/types/itch'
-import type { Butlerd } from './butlerd'
+import { ButlerdError, type Butlerd } from './butlerd'
+
+/** itch.io refuses a call because the token has no permission for it (an OAuth login cannot read a collection) */
+const lacksPermission = (error: unknown) =>
+  error instanceof ButlerdError && /does not permit/.test(error.message)
 
 type Page<T> = { items?: T[]; nextCursor?: string }
 
@@ -56,6 +60,14 @@ export async function fetchCollectionGames(
       )
       games.push(...entries.map(({ game }) => game))
     } catch (error) {
+      if (lacksPermission(error)) {
+        // Every collection would say the same: only a full API key reads them
+        logInfo(
+          'The games of the collections are not read: this login cannot (log in with an API key to have them)',
+          LogPrefix.Itch
+        )
+        break
+      }
       logWarning(
         [`Could not read the collection "${title ?? id}":`, error],
         LogPrefix.Itch
