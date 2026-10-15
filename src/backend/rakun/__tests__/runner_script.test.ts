@@ -1,12 +1,14 @@
 import {
   batValue,
   gameRunnerText,
+  itchGameId,
   logName,
   runnerScriptText,
   RUNNER_BAT,
   RUNNER_NAME,
   RUNNER_VERSION,
   SCRIPTS_DIR,
+  STORES_WITH_RUNNER,
   writeRunnerIni,
   writeRunnerScript
 } from '../runner_script'
@@ -52,7 +54,7 @@ describe('the runner script', () => {
   })
 
   test('goes to the block of its store, whatever the case, and refuses the rest', () => {
-    for (const store of ['legendary', 'gog', 'nile'])
+    for (const store of STORES_WITH_RUNNER)
       expect(text).toContain(`if /i "%STORE%"=="${store}" goto :${store}`)
     expect(text).toContain('if "%STORE%"=="" (')
     expect(text).toContain('echo [ERROR]: STORE is not set.')
@@ -61,7 +63,7 @@ describe('the runner script', () => {
 
   test('each store has its label between two bands, apart from the others', () => {
     const lines = text.split('\n')
-    for (const store of ['legendary', 'gog', 'nile']) {
+    for (const store of STORES_WITH_RUNNER) {
       const at = lines.indexOf(`:${store}`)
       expect(lines[at - 2]).toBe(`rem ${'/'.repeat(60)}`)
       expect(lines[at - 1]).toBe(`rem ${'*'.repeat(60)}`)
@@ -207,6 +209,71 @@ describe('the file of each game', () => {
     expect(text).toContain('set "GAMEFOLDER=50%% Off & More"')
     expect(text).toContain('set "GOGUSER=ab"')
     expect(text).toContain('set "PLAYTASK=0"')
+  })
+
+  test('every store with a runner has its dispatch line and its block', () => {
+    expect(STORES_WITH_RUNNER).toEqual(['legendary', 'gog', 'nile', 'itch'])
+    const runner = runnerScriptText()
+    for (const store of STORES_WITH_RUNNER) {
+      expect(runner).toContain(`goto :${store}`)
+      expect(blockOf(store).length).toBeGreaterThan(2)
+    }
+  })
+
+  test('itch: checks the executable, runs it from its folder and waits for it', () => {
+    const block = blockOf('itch')
+    expect(block).toContain('set "RK_EXE=c:\\games\\%IDGAME%"')
+    expect(block).toContain('if not exist "%RK_EXE%" (')
+    expect(block).toContain('    exit /b 1')
+    expect(block).toContain('for %%i in ("%RK_EXE%") do set "RK_DIR=%%~dpi"')
+    expect(block).toContain('cd /d "%RK_DIR%"')
+    expect(block).toContain('start "" /wait "%RK_EXE%" %*')
+    expect(block.at(-1)).toBe('goto :end')
+  })
+
+  test('itchGameId: the folder and the path of the executable, with the slashes cmd needs', () => {
+    expect(itchGameId('pacapong', 'pacapong.exe')).toBe(
+      'pacapong\\pacapong.exe'
+    )
+    expect(itchGameId('game', 'bin/win/Game.exe')).toBe(
+      'game\\bin\\win\\Game.exe'
+    )
+  })
+
+  test('an itch game carries its executable as IDGAME, and none of the GOG variables', () => {
+    const text = gameRunnerText({
+      store: 'itch',
+      appName: '21301',
+      title: 'Pacapong',
+      folder: 'pacapong',
+      executable: 'bin/Pacapong.exe'
+    })
+    expect(text).toContain('set "STORE=itch"')
+    expect(text).toContain('set "IDGAME=pacapong\\bin\\Pacapong.exe"')
+    expect(text).toContain('set "GAMENAME=Pacapong"')
+    expect(text).not.toContain('GAMEFOLDER')
+    expect(text).not.toContain('GOGUSER')
+  })
+
+  test('an itch executable with a % keeps it: the value is escaped like any other', () => {
+    const text = gameRunnerText({
+      store: 'itch',
+      appName: '1',
+      folder: '100% Fun',
+      executable: 'a.exe'
+    })
+    expect(text).toContain('set "IDGAME=100%% Fun\\a.exe"')
+  })
+
+  test('an itch game with no executable or no folder cannot have a runner', () => {
+    for (const args of [
+      { folder: 'game' },
+      { executable: 'game.exe' },
+      { folder: '', executable: '' }
+    ])
+      expect(() =>
+        gameRunnerText({ store: 'itch', appName: '1', ...args })
+      ).toThrow('The itch game has no executable to run')
   })
 
   test('the stores that have no runner are refused', () => {

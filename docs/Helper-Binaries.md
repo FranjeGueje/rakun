@@ -2,13 +2,14 @@
 
 rakun does not talk to the stores itself: it runs other programs for each one.
 
-| Program                 | Used for                                |
-| ----------------------- | --------------------------------------- |
-| legendary               | Epic Games                              |
-| gogdl, Comet            | GOG (Comet: achievements, experimental) |
-| nile                    | Amazon Games                            |
-| umu                     | Proton prefixes                         |
-| Zoom's installer script | Zoom Platform                           |
+| Program                 | Used for                                                                         |
+| ----------------------- | -------------------------------------------------------------------------------- |
+| legendary               | Epic Games                                                                       |
+| gogdl, Comet            | GOG (Comet: achievements, experimental)                                          |
+| nile                    | Amazon Games                                                                     |
+| umu                     | Proton prefixes                                                                  |
+| Zoom's installer script | Zoom Platform                                                                    |
+| butler                  | itch.io (its daemon, with 7z.so and libc7zip.so; from itch's server, not GitHub) |
 
 The normal tarball does not carry them. Right after installing, run:
 
@@ -23,6 +24,9 @@ rakunctl helpers update     # download the missing ones (starts rakun for the ti
 
 - `helpers update` downloads the versions rakun was **tested with** and checks each file against its `sha256`. A file that does not match is not installed.
 - `helpers update --latest` downloads the newest release of each one instead.
+
+> [!NOTE]
+> `--latest` does not move butler: it comes from itch's server, not from GitHub, and `helpers update` always installs the pinned version. butler needs `7z.so` and `libc7zip.so` next to it; without any of the three it counts as missing.
 
 > [!WARNING]
 > `--latest` checks nothing. rakun reads the output of these programs, so a new version can break it. Use it at your own risk.

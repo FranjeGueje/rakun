@@ -20,7 +20,8 @@ const accounts = {
   legendary: { loggedIn: true, name: 'Ana' },
   gog: { loggedIn: false },
   nile: { loggedIn: false },
-  zoom: { loggedIn: false }
+  zoom: { loggedIn: false },
+  itch: { loggedIn: false }
 }
 const library = [
   game('alpha', { title: 'Alpha', runner: 'gog' }),

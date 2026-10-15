@@ -129,8 +129,10 @@ export function actionsFor(
     const install: GameAction[] = hasBothBuilds(game)
       ? ['installWindows', 'installLinux']
       : ['install']
-    // Zoom has no way to register a game that is already on the disk
-    return game.runner === 'zoom' ? install : [...install, 'importFolder']
+    // Zoom and itch.io have no way to register a game that is already on the disk
+    return game.runner === 'zoom' || game.runner === 'itch'
+      ? install
+      : [...install, 'importFolder']
   }
   return needsUpdate
     ? ['update', 'repair', 'uninstall']
@@ -138,7 +140,9 @@ export function actionsFor(
 }
 
 const windowsFor = (game: GameInfo): InstallPlatform =>
-  game.runner === 'gog' || game.runner === 'zoom' ? 'windows' : 'Windows'
+  game.runner === 'gog' || game.runner === 'zoom' || game.runner === 'itch'
+    ? 'windows'
+    : 'Windows'
 
 /** The one asked for; otherwise, as `rakunctl` does, a native Linux game gets its Linux build */
 export function platformFor(game: GameInfo, build?: Build): InstallPlatform {

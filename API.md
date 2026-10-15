@@ -6,11 +6,12 @@ rakun is a local service. Clients (rakun's own web, the Invasor module, `rakunct
 
 `~/.config/rakun/api.json` (mode 0600) holds `{"port": 17370, "token": "…"}`. The token is generated once and survives restarts. The port is the one in `api.json`; `RAKUN_PORT` or `rakun --port=<n>` change it (and it is saved there). The server listens on `127.0.0.1` unless the web is opened to the network (see below).
 
-| Request               | Needs token | Purpose                                       |
-| --------------------- | ----------- | --------------------------------------------- |
-| `GET /health`         | no          | `{"status":"ok","version":"…","web":"local"}` |
-| `POST /api/<channel>` | yes         | call a channel                                |
-| `GET /events`         | yes         | Server-Sent Events stream                     |
+| Request               | Needs token | Purpose                                                          |
+| --------------------- | ----------- | ---------------------------------------------------------------- |
+| `GET /health`         | no          | `{"status":"ok","version":"…","web":"local"}`                    |
+| `POST /api/<channel>` | yes         | call a channel                                                   |
+| `GET /events`         | yes         | Server-Sent Events stream                                        |
+| `GET /itch/callback`  | no          | where itch.io sends the browser back after the login (see below) |
 
 The token goes in the `x-rakun-token` header. If nothing answers on the port, rakun is stopped: start it (`rakunctl start`, or run `rakun`) and read `api.json` after it answers `/health`. A `Host` that is not one of this machine's (`127.0.0.1:<port>`, `localhost:<port>`, and in `network` mode its addresses and name) gets `403`, and so does an `Origin` header (a browser) that is not the page rakun itself served (`http://<Host>`).
 
@@ -45,7 +46,7 @@ rakun's own web (`web/` in the repository, built by `pnpm build` into `build/web
 
 ## Channels
 
-**Library:** `getLibrary(runner | 'all')` returns `GameInfo[]` (with install state and overrides) as last refreshed. `refreshLibrary(runner | 'all')` **returns at once** and refreshes in the background (a store can take minutes; a refresh already running for a store is joined, not repeated). When each store ends, `refreshLibrary` fires on `/events` with the store name: call `getLibrary` again then. `getRefreshingLibraries` lists the stores refreshing now. Logging in refreshes that store by itself. `getGameInfo(appName, runner)`, `getExtraInfo`, `getInstallInfo(appName, runner, platform, build?, branch?)`, `isGameAvailable`, `checkGameUpdates` (nothing runs by itself: a client calls it; with `autoUpdateGames` it queues the updates), `getHelpers` (the helper binaries: `{ helper, pinned, installed, state }[]`, `state` being `ok`, `missing` or `other`), `updateHelpers({ latest? })` (downloads the missing ones, checked by sha256, or the newest of all with `latest`, unchecked; progress arrives as `helpersProgress` events, whose last line is `done`; answers `{ helpers, failures }`), `getUpdateableGames` (`{ runner, appName }[]` of the installed games with a newer version; it queues nothing and Zoom never lists any).
+**Library:** `getLibrary(runner | 'all')` returns `GameInfo[]` (with install state and overrides) as last refreshed. `refreshLibrary(runner | 'all')` **returns at once** and refreshes in the background (a store can take minutes; a refresh already running for a store is joined, not repeated). When each store ends, `refreshLibrary` fires on `/events` with the store name: call `getLibrary` again then. `getRefreshingLibraries` lists the stores refreshing now. Logging in refreshes that store by itself. `getGameInfo(appName, runner)` (for itch.io, a numeric id that is in none of the user's lists is looked up on itch.io and added to the library, so that a free game can be installed by its id), `getExtraInfo`, `getInstallInfo(appName, runner, platform, build?, branch?)`, `isGameAvailable`, `checkGameUpdates` (nothing runs by itself: a client calls it; with `autoUpdateGames` it queues the updates), `getHelpers` (the helper binaries: `{ helper, pinned, installed, state }[]`, `state` being `ok`, `missing` or `other`), `updateHelpers({ latest? })` (downloads the missing ones, checked by sha256, or the newest of all with `latest`, unchecked; progress arrives as `helpersProgress` events, whose last line is `done`; answers `{ helpers, failures }`), `getUpdateableGames` (`{ runner, appName }[]` of the installed games with a newer version; it queues nothing and Zoom never lists any).
 
 **Install, update, repair, uninstall:** `install(InstallParams)` (answers `500` `already installed: use repair or update` if the game is installed; `installDlcs` omitted installs every DLC, `[]` none, and a list only those on GOG; Epic cannot pick, so any non-empty list means all) and `updateGame(InstallParams)` put the game in the download queue; when the install finishes rakun runs the Steam integration (see README) and the game shows up in Steam. `uninstall(appName, runner, removePrefix)`, `repair(appName, runner)`, `kill(appName, runner)`, `moveInstall`, `importGame({ appName, path, runner, platform })` (registers a game that is already in `path`; it answers `{ status: 'error' }` when the store reported an error and `done` otherwise, an abort included, so a client that must be sure checks that the game is installed), `changeGameVersionPinnedStatus`.
 
@@ -86,7 +87,7 @@ rakun has no translations: the text of its messages and of `showDialog` is in En
 ## Logging in (no embedded browser)
 
 1. `getLoginInfo(runner)` → `{runner, url, instructions}`. The client shows `url` (the user opens it in any browser) and the instructions.
-2. After logging in, the user pastes what the browser ended on into `submitLogin(runner, pasted)` → `{ok, error?}`. `pasted` can be the full address of the final page, the JSON Epic shows (`authorizationCode`), or the bare code (for Zoom, the `li_token`).
+2. After logging in, the user pastes what the browser ended on into `submitLogin(runner, pasted)` → `{ok, error?}`. `pasted` can be the full address of the final page, the JSON Epic shows (`authorizationCode`), or the bare code (for Zoom, the `li_token`; for itch.io, the API key).
 
 | `runner`           | What ends up in the browser                                                                                        |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------ |
@@ -94,8 +95,11 @@ rakun has no translations: the text of its messages and of `showDialog` is in En
 | `gog`              | `https://embed.gog.com/on_login_success?…&code=…` (page may look blank)                                            |
 | `nile` (Amazon)    | address with `openid.oa2.authorization_code=…`; call `getLoginInfo('nile')` first, it stores the one-time verifier |
 | `zoom`             | address with `li_token=…`                                                                                          |
+| `itch`             | OAuth: nothing to paste, see below (or, as a fallback, the callback address, or an API key pasted alone)           |
 
 On success the library of that store is refreshed.
+
+**itch.io (OAuth).** `getLoginInfo('itch')` returns two ways to log in: the main one (`url`, `instructions`) and `alternative` (`url`, `label`, `instructions`), which is the page to create an API key; a client shows both, told apart. The main one returns `callback: true` and an address with a PKCE challenge and a `state` that rakun keeps in memory (one login at a time; a second `getLoginInfo` replaces it, and it runs out after 10 minutes). itch.io sends the browser back to `GET http://127.0.0.1:<port>/itch/callback?code=…&state=…` (or `?error=access_denied&state=…`), on the port of this API, which rakun answers with a page and **no token** (the user's browser is not a client; the `state` is the proof, it works once and a wrong one does not spend it). The login then ends by itself: a client with `callback: true` does not ask for a paste, it waits until `getAccounts` says `loggedIn` for `itch` (`rakunctl login` and the web do, and also take a paste). The fallback is `submitLogin('itch', <the callback address>)` (for a browser on another machine, which cannot reach `127.0.0.1` here) or `submitLogin('itch', <an API key>)`. The permissions OAuth asks for are `profile:me`, `profile:owned`, `profile:collections` and `game:view:uploads`: itch.io grants no others over OAuth, so with it the **games inside the collections are not read** (only an API key with every permission reads them), and installing a game that is in no list of the user may not work. A pasted API key has neither limit. The token has no expiry; rakun keeps it only to revoke it on `logout`. The redirect URI `http://127.0.0.1/itch/callback` must be registered in the OAuth application of itch.io.
 
 ## Events (`GET /events`)
 

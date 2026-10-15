@@ -16,6 +16,7 @@ import {
   removeShortcut
 } from './steam_shortcuts'
 import { preparePrefix, removePrefixSymlink } from './prefix'
+import { runsExecutableDirectly } from './direct_launch'
 import type {
   AddGameToSteamResult,
   SteamShortcut
@@ -273,7 +274,7 @@ export async function onGameUninstalled(game: Game) {
 
   const known = findShortcut(appName)
 
-  if (known?.store === 'zoom') {
+  if (known && runsExecutableDirectly(known.store)) {
     if (known?.steamAppId) {
       removePrefixSymlink(known.steamAppId)
     }

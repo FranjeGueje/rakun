@@ -23,6 +23,16 @@ heroic-epic-integration (EpicGamesLauncher.exe)
 zoom-platform.sh     Zoom Platform      https://zoom-platform.sh/zoom-platform.sh
                      Written by Zoom Platform; downloaded from its own site.
                      It has no licence text that rakun knows of.
+butler               itch.io store      https://github.com/itchio/butler
+                     MIT (licenses/butler.MIT.txt). Downloaded from itch's own server
+                     (broth.itch.zone), together with the two libraries it loads:
+libc7zip.so          archives for butler  https://github.com/itchio/libc7zip
+                     MIT (licenses/libc7zip.MIT.txt)
+7z.so                archives for butler  https://www.7-zip.org (built by itch from its source)
+                     GNU LGPL 2.1 or later (licenses/LGPL-2.1.txt), with the unRAR
+                     restriction for some of its code, and BSD for some other parts
+                     (licenses/7-zip.license.txt). rakun does not change or link it:
+                     butler loads it.
 
 The source code of each program is in its repository, at the version rakun uses
 (`rakunctl helpers` says which).

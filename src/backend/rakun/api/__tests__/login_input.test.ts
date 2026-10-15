@@ -27,6 +27,24 @@ describe('extractLoginCode', () => {
     ).toBe('GOGCODE')
   })
 
+  test('itch.io: the code of the callback address, a refusal has none, a bare token is itself', () => {
+    expect(
+      extractLoginCode(
+        CODE,
+        'http://127.0.0.1:17370/itch/callback?code=ITCHCODE&state=abc-DEF_1'
+      )
+    ).toBe('ITCHCODE')
+    expect(
+      extractLoginCode(
+        CODE,
+        'http://127.0.0.1:17370/itch/callback?error=access_denied&state=abc'
+      )
+    ).toBe(undefined)
+    expect(extractLoginCode(CODE, '  AbCdEf0123456789  ')).toBe(
+      'AbCdEf0123456789'
+    )
+  })
+
   test('Amazon: the authorization code of the final address', () => {
     expect(
       extractLoginCode(

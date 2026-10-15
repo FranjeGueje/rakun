@@ -1,5 +1,6 @@
 import type { DMQueueElement, GameInfo, GameStatus } from 'common/types'
 import type { AccountsStatus } from 'common/rakun/accounts'
+import type { LoginInfo } from 'common/rakun/login'
 import type { StoreInfo } from 'common/rakun/stores'
 import { storeLabel } from './stores'
 
@@ -15,6 +16,22 @@ export function table(rows: string[][]): string {
         .trimEnd()
     )
     .join('\n')
+}
+
+/** What `login` shows: the page and what to do; with a second way, the two numbered so they are told apart */
+export function loginText(info: LoginInfo): string {
+  const { alternative } = info
+  if (!alternative) return `${info.instructions}\n\n${info.url}\n`
+  return [
+    'There are two ways to log in:',
+    '',
+    `1) ${info.instructions}`,
+    `   ${info.url}`,
+    '',
+    `2) ${alternative.instructions}`,
+    `   ${alternative.url}`,
+    ''
+  ].join('\n')
 }
 
 export function libraryText(games: GameInfo[], stores: StoreInfo[]): string {

@@ -1,7 +1,7 @@
 import { resolve } from 'path'
 import { CliError } from '../client'
 import { parseStore } from '../stores'
-import { libraryText, table } from '../format'
+import { libraryText, loginText, table } from '../format'
 import { login, logout, status } from '../commands/accounts'
 import { library, refresh } from '../commands/library'
 import {
@@ -131,6 +131,127 @@ describe('accounts commands', () => {
       ['getLoginInfo', ['nile']],
       ['submitLogin', ['nile', 'pasted']]
     ])
+  })
+
+  describe('login that the browser finishes by itself', () => {
+    const info = { url: 'http://x', instructions: 'do it', callback: true }
+    const loggedIn = {
+      legendary: { loggedIn: false },
+      itch: { loggedIn: true }
+    }
+    const signedOut = {
+      legendary: { loggedIn: false },
+      itch: { loggedIn: false }
+    }
+
+    beforeEach(() => jest.useFakeTimers())
+    afterEach(() => jest.useRealTimers())
+
+    /** The store these tests log in to: the shared fake ones are the four that exist elsewhere */
+    const withItch = (ctx: ReturnType<typeof fakeCtx>['ctx']) => ({
+      ...ctx,
+      stores: () =>
+        Promise.resolve([
+          ...STORES,
+          { id: 'itch' as const, name: 'itch', label: 'itch.io' }
+        ])
+    })
+
+    /** An `ask` that stays open until it is taken back, as the real one does */
+    const pendingAsk = () => {
+      const aborted = jest.fn()
+      const ask = (_question: string, signal?: AbortSignal) =>
+        new Promise<string>((_resolve, reject) =>
+          signal?.addEventListener('abort', () => {
+            aborted()
+            reject(new Error('aborted'))
+          })
+        )
+      return { ask, aborted }
+    }
+
+    test('waits for the session, asks for nothing more and takes the question back', async () => {
+      const answers = [signedOut, signedOut, loggedIn]
+      const { ctx, calls } = fakeCtx({
+        getLoginInfo: info,
+        getAccounts: () => answers.shift() ?? loggedIn
+      })
+      const { ask, aborted } = pendingAsk()
+
+      const done = login({ ...withItch(ctx), ask }, ['itch'], opts)
+      await jest.advanceTimersByTimeAsync(5000)
+      await done
+
+      expect(calls.map(([channel]) => channel)).not.toContain('submitLogin')
+      expect(aborted).toHaveBeenCalled()
+    })
+
+    test('a paste wins if it comes first, and goes to submitLogin', async () => {
+      const { ctx, calls } = fakeCtx({
+        getLoginInfo: info,
+        getAccounts: signedOut,
+        submitLogin: { ok: true }
+      })
+
+      await login(
+        { ...withItch(ctx), ask: () => Promise.resolve('the-address') },
+        ['itch'],
+        opts
+      )
+
+      expect(calls.at(-1)).toEqual(['submitLogin', ['itch', 'the-address']])
+    })
+
+    test('with a session already there only the paste counts', async () => {
+      const { ctx, calls } = fakeCtx({
+        getLoginInfo: info,
+        getAccounts: loggedIn,
+        submitLogin: { ok: true }
+      })
+
+      await login(withItch(ctx), ['itch'], opts)
+
+      expect(calls.at(-1)).toEqual(['submitLogin', ['itch', 'pasted']])
+    })
+
+    test('gives up after five minutes', async () => {
+      const { ctx } = fakeCtx({ getLoginInfo: info, getAccounts: signedOut })
+      const { ask } = pendingAsk()
+
+      const done = expect(
+        login({ ...withItch(ctx), ask }, ['itch'], opts)
+      ).rejects.toThrow('Timed out waiting for the login')
+      await jest.advanceTimersByTimeAsync(5 * 60 * 1000 + 2000)
+      await done
+    })
+  })
+
+  describe('loginText', () => {
+    const base = {
+      runner: 'itch' as const,
+      url: 'https://one',
+      instructions: 'Do the first.'
+    }
+
+    test('one way is the instructions and the address, as always', () => {
+      expect(loginText({ ...base, instructions: 'Log in.' })).toBe(
+        'Log in.\n\nhttps://one\n'
+      )
+    })
+
+    test('two ways are numbered, each with its own address', () => {
+      const text = loginText({
+        ...base,
+        alternative: {
+          url: 'https://two',
+          label: 'x',
+          instructions: 'Do the second.'
+        }
+      })
+      expect(text).toContain('There are two ways to log in')
+      expect(text).toMatch(/1\) Do the first\.\n\s+https:\/\/one/)
+      expect(text).toMatch(/2\) Do the second\.\n\s+https:\/\/two/)
+    })
   })
 
   test('login fails with the store error', async () => {

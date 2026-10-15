@@ -46,17 +46,18 @@ rakun starts without them and says what is missing, but it cannot talk to the st
 ## 4. Log in
 
 ```bash
-rakunctl login gog               # epic, gog, amazon or zoom
+rakunctl login gog               # epic, gog, amazon, zoom or itch
 ```
 
 rakun prints a login address. Open it in any browser, log in, and paste back what the browser ends on (the final address, or the code). There is no embedded browser. What to paste for each store:
 
-| Store    | What to paste                                             |
-| -------- | --------------------------------------------------------- |
-| `epic`   | the JSON the page shows (or just the `authorizationCode`) |
-| `gog`    | the final address, even if the page looks blank           |
-| `amazon` | the final address                                         |
-| `zoom`   | the final address with `li_token`, or the bare token      |
+| Store    | What to paste                                                                                                                                                                                                                                                                                           |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `epic`   | the JSON the page shows (or just the `authorizationCode`)                                                                                                                                                                                                                                               |
+| `gog`    | the final address, even if the page looks blank                                                                                                                                                                                                                                                         |
+| `amazon` | the final address                                                                                                                                                                                                                                                                                       |
+| `zoom`   | the final address with `li_token`, or the bare token                                                                                                                                                                                                                                                    |
+| `itch`   | two ways. **1)** Your library: follow the link and allow rakun the minimum permissions; the browser comes back by itself (from another machine, paste the final address). **2)** Your library and your collections: create an API key with full access at `itch.io/user/settings/api-keys` and paste it |
 
 ## 5. Install a game
 

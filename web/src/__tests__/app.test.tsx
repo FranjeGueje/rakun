@@ -49,6 +49,9 @@ function setup(
     updates?: string[]
     accounts?: AccountsStatus
     login?: LoginReply
+    /** The browser finishes the login by coming back to rakun, so the page waits for it */
+    loginCallback?: boolean
+    loginAlternative?: boolean
     library?: GameInfo[]
     /** Called when a game is imported from a folder */
     onImport?: () => void
@@ -77,6 +80,8 @@ function setup(
     },
     {
       login: options.login,
+      loginCallback: options.loginCallback,
+      loginAlternative: options.loginAlternative,
       setting: options.setting
     }
   )
@@ -1018,6 +1023,70 @@ describe('login', () => {
         'https://end?code=3'
       )
     )
+  })
+
+  test('a store with two ways shows both, numbered, each with its own link', async () => {
+    await openLogin({ loginAlternative: true })
+
+    const first = await screen.findByRole('link', {
+      name: 'Open the login page'
+    })
+    const second = screen.getByRole('link', { name: 'Open the API keys page' })
+    expect(first.getAttribute('href')).toBe('https://login.example/gog')
+    expect(second.getAttribute('href')).toBe('https://login.example/keys')
+    expect(screen.getByText('Option 1:')).toBeTruthy()
+    expect(screen.getByText('Option 2:')).toBeTruthy()
+    expect(screen.getByText('Log in to GOG.')).toBeTruthy()
+    expect(screen.getByText('Paste an API key with full access.')).toBeTruthy()
+  })
+
+  test('a store with one way shows no numbers', async () => {
+    await openLogin()
+
+    await screen.findByRole('link', { name: 'Open the login page' })
+    expect(screen.queryByText('Option 1:')).toBeNull()
+    expect(screen.queryByText('Option 2:')).toBeNull()
+  })
+
+  test('a login the browser finishes by itself closes when the session appears', async () => {
+    const accounts = {
+      legendary: { loggedIn: true, name: 'Ana' },
+      gog: { loggedIn: false },
+      nile: { loggedIn: false },
+      zoom: { loggedIn: false }
+    } as AccountsStatus
+    const rakun = await openLogin({ accounts, loginCallback: true })
+    await screen.findByRole('textbox')
+
+    const libraryReads = () =>
+      rakun.called('getLibrary').filter(([, args]) => args[0] === 'gog').length
+    const before = libraryReads()
+
+    // The browser comes back to rakun and rakun logs in; nobody pastes anything
+    accounts.gog = { loggedIn: true, name: 'Beto' }
+
+    await waitFor(() => expect(screen.queryByRole('textbox')).toBeNull(), {
+      timeout: 4000
+    })
+    expect(rakun.login.submit).not.toHaveBeenCalled()
+    // The library of the store is read again, as after a paste
+    await waitFor(() => expect(libraryReads()).toBeGreaterThan(before))
+  })
+
+  test('a login with no callback keeps waiting for the paste, whatever the accounts say', async () => {
+    const accounts = {
+      legendary: { loggedIn: true, name: 'Ana' },
+      gog: { loggedIn: false },
+      nile: { loggedIn: false },
+      zoom: { loggedIn: false }
+    } as AccountsStatus
+    await openLogin({ accounts })
+    await screen.findByRole('textbox')
+
+    accounts.gog = { loggedIn: true }
+    await new Promise((resolve) => setTimeout(resolve, 2200))
+
+    expect(screen.queryByRole('textbox')).not.toBeNull()
   })
 
   test('a login that rakun refuses says why and stays open', async () => {

@@ -1,6 +1,6 @@
 # rakun wiki
 
-rakun is a headless Linux service that logs in to Epic Games, GOG, Amazon Games and Zoom Platform, installs your games and adds them to Steam. These pages hold the details the [README](../README.md) leaves out.
+rakun is a headless Linux service that logs in to Epic Games, GOG, Amazon Games, Zoom Platform and itch.io, installs your games and adds them to Steam. These pages hold the details the [README](../README.md) leaves out.
 
 ## Using rakun
 

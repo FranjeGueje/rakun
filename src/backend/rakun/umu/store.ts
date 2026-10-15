@@ -6,7 +6,8 @@ const umuStoreMap: Record<string, string | undefined> = {
   legendary: 'egs',
   gog: 'gog',
   nile: 'amazon',
-  zoom: 'zoom'
+  zoom: 'zoom',
+  itch: 'itchio'
 }
 
 export function getUmuStoreLabel(runner: string): string | undefined {

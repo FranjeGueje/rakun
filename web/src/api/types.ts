@@ -3,9 +3,15 @@
  * these are copied, not imported, so the project stands on its own.
  */
 
-export type Runner = 'legendary' | 'gog' | 'nile' | 'zoom'
+export type Runner = 'legendary' | 'gog' | 'nile' | 'zoom' | 'itch'
 
-export type LoginInfo = { runner: Runner; url: string; instructions: string }
+export type LoginInfo = {
+  runner: Runner
+  url: string
+  instructions: string
+  callback?: boolean
+  alternative?: { url: string; label: string; instructions: string }
+}
 
 export type LoginResult = { ok: boolean; error?: string }
 
@@ -21,7 +27,7 @@ export type StoreInfo = {
   label: string
 }
 
-/** One helper binary (legendary, gogdl, nile, comet, epic-integration, zoom-platform, umu) */
+/** One helper binary (legendary, gogdl, nile, comet, epic-integration, zoom-platform, umu, butler) */
 export type HelperInfo = {
   helper: string
   /** The version rakun was tested with */

@@ -36,6 +36,10 @@ describe('getUmuStoreLabel', () => {
     expect(getUmuStoreLabel('zoom')).toBe('zoom')
   })
 
+  it('maps itch to itchio', () => {
+    expect(getUmuStoreLabel('itch')).toBe('itchio')
+  })
+
   it('returns undefined for unknown runner', () => {
     expect(getUmuStoreLabel('unknown')).toBeUndefined()
   })
