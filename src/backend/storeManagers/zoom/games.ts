@@ -19,7 +19,7 @@ import {
   InstallProgress
 } from 'common/types'
 import { existsSync, rmSync } from 'fs'
-import { installedGamesStore, libraryStore } from './electronStores'
+import { installedGamesStore, libraryStore } from './stores'
 import {
   logError,
   logInfo,

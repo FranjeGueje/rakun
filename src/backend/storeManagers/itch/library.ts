@@ -10,11 +10,7 @@ import { ItchUser } from './user'
 import { getButlerd } from './client'
 import { isAuthRefusal } from './butlerd'
 import { clearSessionExpired, markSessionExpired } from '../session_state'
-import {
-  configStore,
-  installedGamesStore,
-  libraryStore
-} from './electronStores'
+import { configStore, installedGamesStore, libraryStore } from './stores'
 import {
   itchToGameInfo,
   pickUpload,

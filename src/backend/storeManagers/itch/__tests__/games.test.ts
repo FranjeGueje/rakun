@@ -27,7 +27,7 @@ jest.mock('../../index', () => ({
 jest.mock('../client', () => ({
   getButlerd: () => Promise.resolve(mockButlerd)
 }))
-jest.mock('../electronStores', () => ({
+jest.mock('../stores', () => ({
   installedGamesStore: {
     get: (_key: string, fallback: unknown[]) =>
       mockStored.installed ?? fallback,

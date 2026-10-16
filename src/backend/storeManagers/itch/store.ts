@@ -4,7 +4,7 @@ import ItchLibraryManager from './library'
 import { ItchUser } from './user'
 import { loginFromPaste, startItchLogin } from './login'
 import { getApiPort } from '../../rakun/server/listening'
-import { installedGamesStore, libraryStore } from './electronStores'
+import { installedGamesStore, libraryStore } from './stores'
 
 export const itch: Store<ItchLibraryManager> = {
   id: 'itch',

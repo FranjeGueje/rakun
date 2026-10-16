@@ -26,7 +26,7 @@ import {
   LogPrefix,
   logWarning
 } from 'backend/logger'
-import { gameInfoStore, installStore, libraryStore } from './electronStores'
+import { gameInfoStore, installStore, libraryStore } from './stores'
 import { callRunner } from '../../runner_call'
 import { dirname, join } from 'path'
 import { isOnline } from 'backend/online_monitor'

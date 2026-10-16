@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'fs'
-import { configStore } from '../electronStores'
+import { configStore } from '../stores'
 import { isOnline } from '../../../online_monitor'
 import { ZoomUser } from '../user'
 import {
@@ -24,7 +24,7 @@ jest.mock('backend/logger', () => ({
   logWarning: jest.fn(),
   LogPrefix: { Zoom: 'Zoom' }
 }))
-jest.mock('../electronStores', () => ({
+jest.mock('../stores', () => ({
   configStore: { get: jest.fn(), set: jest.fn(), clear: jest.fn() }
 }))
 jest.mock('../../../online_monitor', () => ({ isOnline: jest.fn() }))

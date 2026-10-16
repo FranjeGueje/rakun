@@ -4,7 +4,7 @@ jest.mock('backend/logger', () => ({
   logWarning: jest.fn(),
   LogPrefix: { Gog: 'Gog' }
 }))
-jest.mock('../electronStores', () => ({
+jest.mock('../stores', () => ({
   configStore: {
     get: jest.fn(),
     get_nodefault: jest.fn(),
@@ -22,7 +22,7 @@ jest.mock('../constants', () => ({ gogdlAuthConfig: '/tmp/auth.json' }))
 jest.mock('axios')
 
 import { GOGUser } from '../user'
-import { configStore } from '../electronStores'
+import { configStore } from '../stores'
 import { logError } from 'backend/logger'
 import { clearSessionExpired, isSessionExpired } from '../../session_state'
 import { libraryManagerMap } from '../../index'

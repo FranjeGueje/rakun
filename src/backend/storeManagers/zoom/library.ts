@@ -22,11 +22,7 @@ import {
 } from 'backend/logger'
 import { parseSize } from '../../utils'
 import CacheStore from '../../cache'
-import {
-  libraryStore,
-  installedGamesStore,
-  installInfoStore
-} from './electronStores'
+import { libraryStore, installedGamesStore, installInfoStore } from './stores'
 import { isOnline } from '../../online_monitor'
 import { apiUrl } from './constants'
 import { LibraryManager } from 'common/types/game_manager'

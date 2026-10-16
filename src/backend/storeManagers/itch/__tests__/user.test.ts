@@ -9,7 +9,7 @@ jest.mock('backend/logger', () => ({
 jest.mock('../client', () => ({
   getButlerd: () => Promise.resolve({ call: mockCall })
 }))
-jest.mock('../electronStores', () => ({
+jest.mock('../stores', () => ({
   configStore: {
     get_nodefault: (key: string) => mockStore[key],
     set: (key: string, value: unknown) => {

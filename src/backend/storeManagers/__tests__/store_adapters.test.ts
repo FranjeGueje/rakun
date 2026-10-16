@@ -8,10 +8,10 @@ import { GOGUser } from '../gog/user'
 import { NileUser } from '../nile/user'
 import { ZoomUser } from '../zoom/user'
 import { clearSessionExpired, markSessionExpired } from '../session_state'
-import * as legendaryStores from '../legendary/electronStores'
-import * as gogStores from '../gog/electronStores'
-import * as nileStores from '../nile/electronStores'
-import * as zoomStores from '../zoom/electronStores'
+import * as legendaryStores from '../legendary/stores'
+import * as gogStores from '../gog/stores'
+import * as nileStores from '../nile/stores'
+import * as zoomStores from '../zoom/stores'
 
 jest.mock('backend/constants/paths', () => {
   const { mkdtempSync } = jest.requireActual<typeof import('fs')>('fs')
@@ -57,18 +57,18 @@ jest.mock('../zoom/user', () => ({
     logout: jest.fn()
   }
 }))
-jest.mock('../legendary/electronStores', () => ({
+jest.mock('../legendary/stores', () => ({
   libraryStore: { get: jest.fn() }
 }))
-jest.mock('../nile/electronStores', () => ({
+jest.mock('../nile/stores', () => ({
   libraryStore: { get: jest.fn() }
 }))
-jest.mock('../gog/electronStores', () => ({
+jest.mock('../gog/stores', () => ({
   configStore: { get_nodefault: jest.fn(), set: jest.fn() },
   libraryStore: { get: jest.fn() },
   installedGamesStore: { get: jest.fn() }
 }))
-jest.mock('../zoom/electronStores', () => ({
+jest.mock('../zoom/stores', () => ({
   configStore: { get: jest.fn(), get_nodefault: jest.fn() },
   libraryStore: { get: jest.fn() },
   installedGamesStore: { get: jest.fn() }

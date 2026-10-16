@@ -37,7 +37,7 @@ import {
   installedGamesStore,
   installInfoStore,
   apiInfoCache
-} from './electronStores'
+} from './stores'
 import { callRunner } from '../../runner_call'
 import { isOnline, runOnceWhenOnline } from '../../online_monitor'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'

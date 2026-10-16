@@ -2,11 +2,7 @@ import type { Store } from '../store'
 import { withInstallInfo } from '../library_view'
 import GOGLibraryManager from './library'
 import { GOGUser } from './user'
-import {
-  configStore,
-  installedGamesStore,
-  libraryStore
-} from './electronStores'
+import { configStore, installedGamesStore, libraryStore } from './stores'
 
 const gogLoginUrl =
   'https://auth.gog.com/auth?client_id=46899977096215655&redirect_uri=https%3A%2F%2Fembed.gog.com%2Fon_login_success%3Forigin%3Dclient&response_type=code&layout=galaxy'

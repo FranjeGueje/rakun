@@ -25,7 +25,7 @@ import {
   createGameLogWriter
 } from 'backend/logger'
 
-import { gameInfoStore } from './electronStores'
+import { gameInfoStore } from './stores'
 import { isOnline } from '../../online_monitor'
 import { Catalog, Product } from 'common/types/epic-graphql'
 import { sendFrontendMessage } from '../../ipc'

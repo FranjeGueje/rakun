@@ -12,7 +12,7 @@ import {
 } from 'common/types/nile'
 import { libraryManagerMap } from '..'
 import { existsSync, readFileSync } from 'fs'
-import { configStore } from './electronStores'
+import { configStore } from './stores'
 import { clearCache } from 'backend/utils'
 import { nileUserData } from './constants'
 import { exitFailure } from '../helper_result'

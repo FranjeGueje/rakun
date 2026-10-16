@@ -1,7 +1,7 @@
 import { DMQueueElement } from 'common/types'
 
 const store: Record<string, unknown> = {}
-jest.mock('backend/electron_store', () => ({
+jest.mock('backend/typed_store', () => ({
   TypeCheckedStoreBackend: jest.fn().mockImplementation(() => ({
     get: (key: string, def: unknown) => store[key] ?? def,
     set: (key: string, value: unknown) => {

@@ -6,7 +6,7 @@ import {
   TypeCheckedStore,
   UnknownGuard,
   ValidStoreName
-} from 'common/types/electron_store'
+} from 'common/types/typed_store'
 import { Get } from 'type-fest'
 
 export class TypeCheckedStoreBackend<

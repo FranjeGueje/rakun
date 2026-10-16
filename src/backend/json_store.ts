@@ -7,7 +7,7 @@ import {
 } from 'fs'
 import { dirname, isAbsolute, join } from 'path'
 import { userDataPath } from './constants/paths'
-import type { StoreOptions } from 'common/types/electron_store'
+import type { StoreOptions } from 'common/types/typed_store'
 
 type StoreData = Record<string, unknown>
 

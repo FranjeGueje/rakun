@@ -6,7 +6,7 @@ jest.mock('backend/ipc', () => ({ sendFrontendMessage: jest.fn() }))
 jest.mock('../../index', () => ({ libraryManagerMap: {} }))
 jest.mock('../games', () => ({ default: class {} }))
 jest.mock('../user', () => ({ ZoomUser: { makeRequest: jest.fn() } }))
-jest.mock('../electronStores', () => ({
+jest.mock('../stores', () => ({
   installInfoStore: { get: jest.fn(), set: jest.fn() },
   installedGamesStore: { get: jest.fn(), set: jest.fn() },
   libraryStore: { get: jest.fn(), set: jest.fn() }

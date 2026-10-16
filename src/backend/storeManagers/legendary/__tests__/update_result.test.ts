@@ -20,7 +20,7 @@ jest.mock('../../../config', () => ({
 }))
 jest.mock('../../../ipc', () => ({ sendFrontendMessage: jest.fn() }))
 jest.mock('../../../online_monitor', () => ({ isOnline: jest.fn() }))
-jest.mock('../electronStores', () => ({
+jest.mock('../stores', () => ({
   gameInfoStore: { get: jest.fn(), set: jest.fn() },
   installStore: { get: jest.fn(), set: jest.fn() },
   libraryStore: { get: jest.fn(), set: jest.fn() }

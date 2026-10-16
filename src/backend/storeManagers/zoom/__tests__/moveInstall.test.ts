@@ -6,7 +6,7 @@ jest.mock('backend/logger', () => ({
   LogPrefix: { Zoom: 'Zoom' }
 }))
 
-jest.mock('../electronStores', () => ({
+jest.mock('../stores', () => ({
   installedGamesStore: { get: jest.fn(), set: jest.fn() },
   libraryStore: { get: jest.fn(), set: jest.fn() }
 }))
@@ -26,7 +26,7 @@ jest.mock('../../index', () => ({
 }))
 
 import ZoomGame from '../games'
-import { installedGamesStore } from '../electronStores'
+import { installedGamesStore } from '../stores'
 import { moveOnUnix } from '../../../utils'
 import { libraryManagerMap } from '../../index'
 

@@ -1,5 +1,5 @@
 import { NileUser } from '../user'
-import { configStore } from '../electronStores'
+import { configStore } from '../stores'
 import { logError } from 'backend/logger'
 import { existsSync, readFileSync } from 'fs'
 
@@ -19,7 +19,7 @@ jest.mock('fs', () => ({
   readFileSync: jest.fn()
 }))
 
-jest.mock('../electronStores', () => ({
+jest.mock('../stores', () => ({
   configStore: { get_nodefault: jest.fn(), delete: jest.fn(), set: jest.fn() }
 }))
 

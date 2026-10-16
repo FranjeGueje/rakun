@@ -12,7 +12,7 @@ import {
   NileInstallMetadataInfo
 } from 'common/types/nile'
 import { existsSync, readFileSync, writeFileSync, cpSync } from 'fs'
-import { installStore, libraryStore } from './electronStores'
+import { installStore, libraryStore } from './stores'
 import { getFileSize, getNileBin, removeSpecialcharacters } from 'backend/utils'
 import { callRunner } from 'backend/runner_call'
 import { dirname, join } from 'path'

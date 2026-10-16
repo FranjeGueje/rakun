@@ -17,7 +17,7 @@ jest.mock('backend/config', () => ({
   GlobalConfig: { get: () => ({ getSettings: () => ({ maxWorkers: 0 }) }) }
 }))
 jest.mock('backend/ipc', () => ({ sendFrontendMessage: jest.fn() }))
-jest.mock('../electronStores', () => ({
+jest.mock('../stores', () => ({
   installStore: { get: jest.fn(), set: jest.fn() },
   libraryStore: { get: jest.fn(), set: jest.fn() }
 }))

@@ -2,7 +2,7 @@ import { logError, logInfo, LogPrefix } from 'backend/logger'
 import type { ItchUser as ItchUserData } from 'common/types/itch'
 import { ButlerdError, isAuthRefusal } from './butlerd'
 import { getButlerd } from './client'
-import { configStore } from './electronStores'
+import { configStore } from './stores'
 import { clearCache } from '../../utils'
 import { revokeToken } from './oauth'
 

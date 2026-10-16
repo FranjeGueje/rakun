@@ -1,5 +1,5 @@
 import { libraryManagerMap } from 'backend/storeManagers'
-import { TypeCheckedStoreBackend } from './../electron_store'
+import { TypeCheckedStoreBackend } from './../typed_store'
 import { logError, logInfo, LogPrefix, logWarning } from 'backend/logger'
 import { getFileSize, removeFolder, sendGameStatusUpdate } from '../utils'
 import {

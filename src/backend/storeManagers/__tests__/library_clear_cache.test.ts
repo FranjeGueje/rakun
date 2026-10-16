@@ -1,10 +1,10 @@
 // Each library forgets its own stores, and only them: logging out of a store
 // must not leave its library or install info behind
-import * as gog from '../gog/electronStores'
-import * as legendary from '../legendary/electronStores'
-import * as nile from '../nile/electronStores'
-import * as zoom from '../zoom/electronStores'
-import * as itch from '../itch/electronStores'
+import * as gog from '../gog/stores'
+import * as legendary from '../legendary/stores'
+import * as nile from '../nile/stores'
+import * as zoom from '../zoom/stores'
+import * as itch from '../itch/stores'
 
 jest.mock('backend/logger')
 jest.mock('backend/utils', () => ({}))
@@ -26,27 +26,27 @@ jest.mock('../legendary/games', () => ({ default: class {} }))
 jest.mock('../nile/games', () => ({ default: class {} }))
 jest.mock('../zoom/games', () => ({ default: class {} }))
 jest.mock('../itch/games', () => ({ default: class {} }))
-jest.mock('../gog/electronStores', () => ({
+jest.mock('../gog/stores', () => ({
   apiInfoCache: { clear: jest.fn() },
   installInfoStore: { clear: jest.fn() },
   installedGamesStore: { clear: jest.fn() },
   libraryStore: { clear: jest.fn() }
 }))
-jest.mock('../legendary/electronStores', () => ({
+jest.mock('../legendary/stores', () => ({
   installStore: { clear: jest.fn() },
   libraryStore: { clear: jest.fn() },
   gameInfoStore: { clear: jest.fn() }
 }))
-jest.mock('../nile/electronStores', () => ({
+jest.mock('../nile/stores', () => ({
   installStore: { clear: jest.fn() },
   libraryStore: { clear: jest.fn() }
 }))
-jest.mock('../zoom/electronStores', () => ({
+jest.mock('../zoom/stores', () => ({
   installInfoStore: { clear: jest.fn() },
   installedGamesStore: { clear: jest.fn() },
   libraryStore: { clear: jest.fn() }
 }))
-jest.mock('../itch/electronStores', () => ({
+jest.mock('../itch/stores', () => ({
   configStore: {},
   installedGamesStore: { clear: jest.fn() },
   libraryStore: { clear: jest.fn() }

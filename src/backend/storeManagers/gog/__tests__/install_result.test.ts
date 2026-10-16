@@ -20,7 +20,7 @@ jest.mock('../../../config', () => ({
   GlobalConfig: { get: () => ({ getSettings: () => ({ maxWorkers: 0 }) }) }
 }))
 jest.mock('../../../ipc', () => ({ sendFrontendMessage: jest.fn() }))
-jest.mock('../electronStores', () => ({
+jest.mock('../stores', () => ({
   installedGamesStore: { get: jest.fn(), set: jest.fn() }
 }))
 jest.mock('../user', () => ({ GOGUser: { getCredentials: jest.fn() } }))
@@ -31,7 +31,7 @@ jest.mock('../../index', () => ({ libraryManagerMap: {} }))
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { installedGamesStore } from '../electronStores'
+import { installedGamesStore } from '../stores'
 import { GOGUser } from '../user'
 import { libraryManagerMap } from '../../index'
 import GOGGame from '../games'

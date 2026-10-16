@@ -13,7 +13,7 @@ jest.mock('backend/online_monitor', () => ({
   runOnceWhenOnline: jest.fn()
 }))
 
-jest.mock('../electronStores', () => ({
+jest.mock('../stores', () => ({
   libraryStore: { get: jest.fn(), set: jest.fn() },
   installedGamesStore: { get: jest.fn(), set: jest.fn() },
   installInfoStore: { get: jest.fn(), set: jest.fn(), has: jest.fn() },
@@ -52,7 +52,7 @@ jest.mock('../user', () => ({
 jest.mock('../games')
 jest.mock('../../index', () => ({ libraryManagerMap: {} }))
 
-import { libraryStore, installInfoStore } from '../electronStores'
+import { libraryStore, installInfoStore } from '../stores'
 const mockedLibraryStore = jest.mocked(libraryStore)
 const mockedInstallInfoStore = jest.mocked(installInfoStore)
 

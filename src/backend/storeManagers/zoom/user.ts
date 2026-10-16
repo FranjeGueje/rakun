@@ -7,7 +7,7 @@ import {
   readFileSync
 } from 'fs'
 import { logError, logInfo, LogPrefix, logWarning } from 'backend/logger'
-import { configStore } from './electronStores'
+import { configStore } from './stores'
 import { isOnline } from '../../online_monitor'
 import { ZoomCredentials } from 'common/types/zoom'
 import { clearCache } from 'backend/utils'

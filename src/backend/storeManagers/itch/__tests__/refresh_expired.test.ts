@@ -8,7 +8,7 @@ jest.mock('backend/online_monitor', () => ({ isOnline: jest.fn() }))
 jest.mock('../client', () => ({
   getButlerd: () => Promise.resolve({ call: mockCall })
 }))
-jest.mock('../electronStores', () => ({
+jest.mock('../stores', () => ({
   configStore: { get: jest.fn(() => 7), get_nodefault: jest.fn(() => 7) },
   installedGamesStore: { get: jest.fn(() => []), set: jest.fn() },
   libraryStore: { get: jest.fn(() => []), set: jest.fn(), clear: jest.fn() }
@@ -24,11 +24,7 @@ jest.mock('../library_fetch', () => ({
 jest.mock('../../index', () => ({ libraryManagerMap: {} }))
 
 import { isOnline } from 'backend/online_monitor'
-import {
-  configStore,
-  installedGamesStore,
-  libraryStore
-} from '../electronStores'
+import { configStore, installedGamesStore, libraryStore } from '../stores'
 import { ItchUser } from '../user'
 import { ButlerdError } from '../butlerd'
 import { fetchOwnedGames, fetchCollectionGames } from '../library_fetch'

@@ -3,11 +3,7 @@ import type { Store } from '../store'
 import { withInstallInfo } from '../library_view'
 import ZoomLibraryManager from './library'
 import { ZoomUser } from './user'
-import {
-  configStore,
-  installedGamesStore,
-  libraryStore
-} from './electronStores'
+import { configStore, installedGamesStore, libraryStore } from './stores'
 import { tokenPath } from './constants'
 import { isSessionExpired } from '../session_state'
 
