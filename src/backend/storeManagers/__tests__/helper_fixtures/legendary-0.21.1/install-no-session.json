@@ -1,0 +1,8 @@
+{
+  "helper": "legendary",
+  "case": "install-no-session",
+  "args": ["install", "fakeapp", "-y"],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "Traceback (most recent call last):\n  File \"<frozen runpy>\", line 203, in _run_module_as_main\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"<HOME>/.local/share/rakun/bin/x64/linux/legendary/__main__.py\", line 42, in <module>\n    legendary.cli.main()\n    ~~~~~~~~~~~~~~~~~~^^\n  File \"<HOME>/.local/share/rakun/bin/x64/linux/legendary/legendary/cli.py\", line 3177, in main\n    cli.install_game(args)\n    ~~~~~~~~~~~~~~~~^^^^^^\n  File \"<HOME>/.local/share/rakun/bin/x64/linux/legendary/legendary/cli.py\", line 867, in install_game\n    if not self.core.login():\n           ~~~~~~~~~~~~~~~^^\n  File \"<HOME>/.local/share/rakun/bin/x64/linux/legendary/legendary/core.py\", line 282, in login\n    return self._login(lock, force_refresh=force_refresh)\n           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<HOME>/.local/share/rakun/bin/x64/linux/legendary/legendary/core.py\", line 218, in _login\n    raise ValueError('No saved credentials')\nValueError: No saved credentials\n"
+}

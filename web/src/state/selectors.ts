@@ -5,6 +5,7 @@ import type {
   InstallParams,
   InstallPlatform,
   Runner,
+  StoreCaps,
   StoreInfo
 } from '../api/types'
 import type { Ownership } from '../api/bridge'
@@ -113,14 +114,15 @@ export type GameAction =
 export type Build = 'windows' | 'linux'
 
 /** A Linux build next to a Windows one: the user chooses (a stale library has no `is_windows_native`: assume it) */
-export const hasBothBuilds = (game: GameInfo): boolean =>
+const hasBothBuilds = (game: GameInfo): boolean =>
   !!game.is_linux_native && game.is_windows_native !== false
 
 /** What can be done with a game now. Nothing, while another operation holds it. */
 export function actionsFor(
   game: GameInfo,
   status: GameStatus | undefined,
-  needsUpdate: boolean
+  needsUpdate: boolean,
+  caps: StoreCaps
 ): GameAction[] {
   if (status?.status === 'queued') return ['removeFromQueue']
   if (status && DOWNLOADING.has(status.status)) return ['cancel']
@@ -129,27 +131,48 @@ export function actionsFor(
     const install: GameAction[] = hasBothBuilds(game)
       ? ['installWindows', 'installLinux']
       : ['install']
-    // Zoom has no way to register a game that is already on the disk
-    return game.runner === 'zoom' ? install : [...install, 'importFolder']
+    return caps.import ? [...install, 'importFolder'] : install
   }
-  return needsUpdate
-    ? ['update', 'repair', 'uninstall']
-    : ['repair', 'uninstall']
+  const manage: GameAction[] = []
+  if (caps.update && needsUpdate) manage.push('update')
+  if (caps.repair) manage.push('repair')
+  return [...manage, 'uninstall']
 }
 
-const windowsFor = (game: GameInfo): InstallPlatform =>
-  game.runner === 'gog' || game.runner === 'zoom' ? 'windows' : 'Windows'
+const windowsFor = (caps: StoreCaps): InstallPlatform =>
+  caps.lowercasePlatform ? 'windows' : 'Windows'
+
+/** What a store can do; for one rakun did not report, the usual: manage the game but not import it */
+export function capsOf(
+  stores: StoreInfo[],
+  runner: GameInfo['runner']
+): StoreCaps {
+  return (
+    stores.find((store) => store.id === runner)?.caps ?? {
+      import: false,
+      update: true,
+      repair: true,
+      lowercasePlatform: false,
+      directLaunch: false
+    }
+  )
+}
 
 /** The one asked for; otherwise, as `rakunctl` does, a native Linux game gets its Linux build */
-export function platformFor(game: GameInfo, build?: Build): InstallPlatform {
-  if (build === 'windows') return windowsFor(game)
+export function platformFor(
+  game: GameInfo,
+  caps: StoreCaps,
+  build?: Build
+): InstallPlatform {
+  if (build === 'windows') return windowsFor(caps)
   if (build === 'linux' || game.is_linux_native) return 'linux'
-  return windowsFor(game)
+  return windowsFor(caps)
 }
 
 export function installParams(
   game: GameInfo,
   path: string,
+  caps: StoreCaps,
   build?: Build
 ): InstallParams {
   return {
@@ -157,7 +180,7 @@ export function installParams(
     runner: game.runner,
     gameInfo: game,
     path,
-    platformToInstall: platformFor(game, build)
+    platformToInstall: platformFor(game, caps, build)
   }
 }
 

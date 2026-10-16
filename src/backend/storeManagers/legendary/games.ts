@@ -25,17 +25,12 @@ import {
   createGameLogWriter
 } from 'backend/logger'
 
-import { gameInfoStore } from './electronStores'
-import {
-  onGameInstalled,
-  onGameImported,
-  onGameMoved,
-  onGameUninstalled
-} from 'backend/rakun/game_events'
+import { gameInfoStore } from './stores'
 import { isOnline } from '../../online_monitor'
 import { Catalog, Product } from 'common/types/epic-graphql'
 import { sendFrontendMessage } from '../../ipc'
-import { Game } from 'common/types/game_manager'
+import { Game, InstallResult } from 'common/types/game_manager'
+import { exitFailure } from '../helper_result'
 import {
   LegendaryAppName,
   LegendaryPlatform,
@@ -296,9 +291,7 @@ export default class LegendaryGame implements Game {
    * Parent folder to move app to.
    * Amends install path by adding the appropriate folder name.
    */
-  async moveInstall(
-    newInstallPath: string
-  ): Promise<{ status: 'done' } | { status: 'error'; error: string }> {
+  async moveInstall(newInstallPath: string): Promise<InstallResult> {
     const gameInfo = this.getGameInfo()
     logInfo(`Moving ${gameInfo.title} to ${newInstallPath}`, LogPrefix.Gog)
 
@@ -319,10 +312,7 @@ export default class LegendaryGame implements Game {
       this.appName,
       moveResult.installPath
     )
-    void onGameMoved(this, moveResult.installPath).catch((err) =>
-      logError(err, LogPrefix.Legendary)
-    )
-    return { status: 'done' }
+    return { status: 'done', installPath: moveResult.installPath }
   }
 
   // used when downloading games, store the download size read from Legendary's output
@@ -430,7 +420,7 @@ export default class LegendaryGame implements Game {
    * Update game.
    * Does NOT check for online connectivity.
    */
-  async update(): Promise<{ status: 'done' | 'error'; error?: string }> {
+  async update(): Promise<InstallResult> {
     sendGameStatusUpdate({
       appName: this.appName,
       runner: 'legendary',
@@ -471,11 +461,11 @@ export default class LegendaryGame implements Game {
       logMessagePrefix: `Updating ${this.appName}`
     })
 
-    sendGameStatusUpdate({
-      appName: this.appName,
-      runner: 'legendary',
-      status: 'done'
-    })
+    res.error ??= exitFailure(res)
+
+    if (res.abort) {
+      return { status: 'abort' }
+    }
 
     if (res.error) {
       logError(
@@ -552,6 +542,8 @@ export default class LegendaryGame implements Game {
       })
     }
 
+    res.error ??= exitFailure(res)
+
     if (res.abort) {
       return { status: 'abort' }
     }
@@ -565,9 +557,6 @@ export default class LegendaryGame implements Game {
       }
       return { status: 'error', error: res.error }
     }
-    void onGameInstalled(this).catch((err) =>
-      logError(err, LogPrefix.Legendary)
-    )
 
     return { status: 'done' }
   }
@@ -584,6 +573,8 @@ export default class LegendaryGame implements Game {
       logMessagePrefix: `Uninstalling ${this.appName}`
     })
 
+    res.error ??= exitFailure(res)
+
     if (res.error) {
       logError(
         ['Failed to uninstall', `${this.appName}:`, res.error],
@@ -591,7 +582,6 @@ export default class LegendaryGame implements Game {
       )
     } else if (!res.abort) {
       libraryManagerMap['legendary'].installState(this.appName, false)
-      await onGameUninstalled(this)
     }
     sendFrontendMessage('refreshLibrary', 'legendary')
     return res
@@ -623,6 +613,8 @@ export default class LegendaryGame implements Game {
       logMessagePrefix: `Repairing ${this.appName}`
     })
 
+    res.error ??= exitFailure(res)
+
     if (res.error) {
       logError(
         ['Failed to repair', `${this.appName}:`, res.error],
@@ -651,7 +643,6 @@ export default class LegendaryGame implements Game {
       abortId: this.appName,
       logWriters: [logWriter]
     })
-    void onGameImported(this).catch((err) => logError(err, LogPrefix.Legendary))
     const errorMatch = res.stderr.match(/^.*ERROR:.*$/gm)?.join('') ?? ''
     res.error = (res.error ?? '') + errorMatch
     if (res.error) {

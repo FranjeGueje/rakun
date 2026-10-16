@@ -90,7 +90,9 @@ const STORE_CONFIGS: Record<GameRunner, StoreConfig> = {
       }))
     }
   },
-  zoom: { configDir: '', installedFile: '', mountDir: '', transform: (d) => d }
+  zoom: { configDir: '', installedFile: '', mountDir: '', transform: (d) => d },
+  // butler keeps its own records of the installs: there is nothing to translate
+  itch: { configDir: '', installedFile: '', mountDir: '', transform: (d) => d }
 }
 
 // ── Public API ──
@@ -102,8 +104,8 @@ export function windowify(gameInfo: GameInfo, installPath: string): void {
 
   const config = STORE_CONFIGS[gameInfo.runner]
   if (!config || !config.installedFile) {
-    logWarning(
-      `windowify not implemented for runner: ${gameInfo.runner}`,
+    logInfo(
+      `windowify: nothing to translate for ${gameInfo.runner}`,
       LOG_PREFIX
     )
     return

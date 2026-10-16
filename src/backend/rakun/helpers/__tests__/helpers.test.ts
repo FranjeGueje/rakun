@@ -122,6 +122,22 @@ describe('helperStates', () => {
     expect(byName.legendary.state).toBe('ok')
   })
 
+  test('butler is ok only with its program and the two libraries it loads from next to itself', () => {
+    const l = layout()
+    installAll(l)
+    const state = () =>
+      helperStates(l, { arch: 'x64' }).find((s) => s.helper === 'butler')?.state
+
+    expect(state()).toBe('ok')
+    for (const file of ['7z.so', 'libc7zip.so', 'butler']) {
+      const path = join(l.binRoot, 'x64', 'linux', 'butler', file)
+      const kept = readFileSync(path)
+      rmSync(path)
+      expect(state()).toBe('missing')
+      writeFileSync(path, kept)
+    }
+  })
+
   test("Zoom's script is ok with whatever version it says: it cannot be told apart", () => {
     const l = layout()
     installAll(l)

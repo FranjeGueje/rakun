@@ -1,0 +1,21 @@
+{
+  "helper": "gogdl",
+  "case": "download-no-session",
+  "args": [
+    "--auth-config-path",
+    "<TMP>/gogdl/auth.json",
+    "download",
+    "123",
+    "--platform",
+    "windows",
+    "--path",
+    "<TMP>/g",
+    "--support",
+    "<TMP>/s",
+    "--lang",
+    "en-US"
+  ],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "[GENERIC DOWNLOAD_MANAGER] ERROR: Game doesn't support content system api, unable to proceed using platform windows\n"
+}

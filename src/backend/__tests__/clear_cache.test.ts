@@ -1,8 +1,5 @@
 import { clearCache } from '../utils'
-import * as gog from '../storeManagers/gog/electronStores'
-import * as legendary from '../storeManagers/legendary/electronStores'
-import * as nile from '../storeManagers/nile/electronStores'
-import * as zoom from '../storeManagers/zoom/electronStores'
+import { libraryManagerMap } from '../storeManagers'
 
 jest.mock('../logger')
 jest.mock('../dialog/dialog')
@@ -18,63 +15,38 @@ jest.mock('backend/constants/paths', () => {
     userDataPath: `${root}/rakun`
   }
 })
-jest.mock('../storeManagers/gog/electronStores', () => ({
-  apiInfoCache: { clear: jest.fn() },
-  installInfoStore: { clear: jest.fn() },
-  libraryStore: { clear: jest.fn() }
-}))
-jest.mock('../storeManagers/legendary/electronStores', () => ({
-  installStore: { clear: jest.fn() },
-  libraryStore: { clear: jest.fn() },
-  gameInfoStore: { clear: jest.fn() }
-}))
-jest.mock('../storeManagers/nile/electronStores', () => ({
-  installStore: { clear: jest.fn() },
-  libraryStore: { clear: jest.fn() }
-}))
-jest.mock('../storeManagers/zoom/electronStores', () => ({
-  installInfoStore: { clear: jest.fn() },
-  libraryStore: { clear: jest.fn() }
-}))
 jest.mock('../storeManagers', () => ({
-  libraryManagerMap: { legendary: { runRunnerCommand: jest.fn() } }
+  libraryManagerMap: {
+    legendary: { clearCache: jest.fn() },
+    gog: { clearCache: jest.fn() },
+    zoom: { clearCache: jest.fn() },
+    // A store with nothing to forget has no clearCache at all
+    nile: {}
+  },
+  RUNNERS: ['legendary', 'gog', 'zoom', 'nile']
 }))
+
+const cleared = (runner: 'legendary' | 'gog' | 'zoom') =>
+  libraryManagerMap[runner].clearCache as jest.Mock
 
 describe('clearCache', () => {
-  test('Zoom: forgets its library and install info, which logging out must not leave behind', () => {
-    clearCache('zoom')
-
-    expect(zoom.libraryStore.clear).toHaveBeenCalled()
-    expect(zoom.installInfoStore.clear).toHaveBeenCalled()
-  })
-
   test('only the store asked for', () => {
     clearCache('zoom')
 
-    expect(gog.libraryStore.clear).not.toHaveBeenCalled()
-    expect(legendary.libraryStore.clear).not.toHaveBeenCalled()
-    expect(nile.libraryStore.clear).not.toHaveBeenCalled()
+    expect(cleared('zoom')).toHaveBeenCalledTimes(1)
+    expect(cleared('gog')).not.toHaveBeenCalled()
+    expect(cleared('legendary')).not.toHaveBeenCalled()
   })
-
-  test.each([
-    ['gog', gog.libraryStore],
-    ['legendary', legendary.libraryStore],
-    ['nile', nile.libraryStore]
-  ] as const)(
-    '%s: still clears its library, and leaves Zoom alone',
-    (runner, store) => {
-      clearCache(runner)
-
-      expect(store.clear).toHaveBeenCalled()
-      expect(zoom.libraryStore.clear).not.toHaveBeenCalled()
-    }
-  )
 
   test('with no store, all of them', () => {
     clearCache()
 
-    for (const store of [gog, legendary, nile, zoom]) {
-      expect(store.libraryStore.clear).toHaveBeenCalled()
+    for (const runner of ['legendary', 'gog', 'zoom'] as const) {
+      expect(cleared(runner)).toHaveBeenCalledTimes(1)
     }
+  })
+
+  test('a store with nothing to forget is skipped, not an error', () => {
+    expect(() => clearCache('nile')).not.toThrow()
   })
 })

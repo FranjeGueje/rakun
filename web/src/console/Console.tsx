@@ -7,6 +7,7 @@ import { useLayer } from '../input/useInput'
 import type { State } from '../state/reducer'
 import {
   cycle,
+  capsOf,
   moveInGrid,
   quitMessageKey,
   storeTabs,
@@ -248,6 +249,7 @@ export function Console({ state, actions, t, layout }: Props) {
           game={sheetGame}
           status={state.statuses[sheetGame.app_name]}
           needsUpdate={state.updates.includes(sheetGame.app_name)}
+          caps={capsOf(state.stores, sheetGame.runner)}
           defaultInstallPath={state.defaultInstallPath}
           actions={actions}
           t={t}

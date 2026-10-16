@@ -5,14 +5,16 @@ import { appFolder } from 'backend/constants/paths'
 
 export const DEFAULT_PORT = 17370
 
-export type ApiCredentials = { port: number; token: string }
+type ApiCredentials = { port: number; token: string }
 
 export const credentialsPath = join(appFolder, 'api.json')
 
 function isCredentials(value: unknown): value is ApiCredentials {
   const candidate = value as Partial<ApiCredentials> | null
   return (
-    typeof candidate?.port === 'number' && typeof candidate.token === 'string'
+    typeof candidate?.port === 'number' &&
+    typeof candidate.token === 'string' &&
+    candidate.token.length >= 32
   )
 }
 

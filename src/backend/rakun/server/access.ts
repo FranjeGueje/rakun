@@ -19,6 +19,8 @@ const LOCAL_ONLY_CHANNELS: ReadonlySet<string> = new Set([
   // Secrets and what is on the disk
   'getLogContent',
   'listFolders',
+  // Kills processes by name
+  'kill',
   // Downloads programs that rakun then runs
   'updateHelpers',
   // Move or register game folders anywhere
@@ -36,7 +38,7 @@ export function isLoopback(address: string | undefined): boolean {
 }
 
 /** The addresses and names this machine answers to, apart from localhost */
-export function ownNames(): string[] {
+function ownNames(): string[] {
   const name = hostname().toLowerCase()
   const addresses = Object.values(networkInterfaces())
     .flatMap((list) => list ?? [])

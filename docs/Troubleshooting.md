@@ -22,6 +22,10 @@ In `network` mode, open the web by the IP or the name of the machine, not by ano
 
 In `network` mode, settings, folders, logs and a few more channels only answer to the machine itself. Open `http://127.0.0.1:<port>` there. Using the machine's own LAN IP does not count.
 
+## A store says "session expired"
+
+`rakunctl status` (and the Accounts screen of the web) shows `session expired, log in again (the games are kept)` when a store refused the login you had: the token ran out or was revoked. Nothing is deleted and you are not logged out. Your library and the installed games stay as they were, and what is in Steam keeps working. Install, update and repair say that the session has expired until you log in again: `rakunctl login <store>` (or select the store in the web). `rakunctl status --check` asks GOG, Zoom and itch.io if the session still works, and clears the mark if it does.
+
 ## Games in Steam
 
 ### A Windows game does nothing in Steam
@@ -39,6 +43,32 @@ A GE-Proton installed later was never looked for. Update rakun, or set it: `raku
 ### Zoom's Windows install fails at once
 
 It needs a screen (`DISPLAY`): use desktop mode, not game mode, and restart rakun after switching.
+
+## itch.io
+
+### `invalid redirect URI` on the itch.io page
+
+The OAuth application has to have `http://127.0.0.1/itch/callback` as its callback URL (the port does not have to match, the scheme, the host and the path do). It is a setting of the application, in itch.io → Settings → OAuth applications, not of rakun.
+
+### The browser comes back to a page that does not load
+
+itch.io sends it to `127.0.0.1` on the port of rakun's API, which only exists on the machine rakun runs on. From another machine, copy the address the browser ended on and paste it into `rakunctl login itch` (or the web): it works the same.
+
+### `That key or token does not have the permissions rakun needs` or `Invalid scope`
+
+The login by OAuth asks for `profile:me`, `profile:owned`, `profile:collections` and `game:view:uploads`, and itch.io grants no others. Log out and in again (`rakunctl logout itch`, `rakunctl login itch`). A key made by `butler login` is not valid either: create one at itch.io → Settings → API keys.
+
+### The collections are empty or the games of a collection do not appear
+
+The games inside a collection (and installing a game that is not in the library, `rakunctl install itch <id>`) need an API key with full access: the login by OAuth cannot read them. Log in with the second way, pasting the key.
+
+### `This login is not the one rakun started, or it took too long`
+
+The login has to end in 10 minutes, and a second `login itch` replaces the first. Start it again.
+
+### A game installs but the install ends in an error: "there is no executable to run"
+
+butler found nothing it can run in the install (the game may be a `.zip` inside another one, an installer, or for another platform). The game stays installed: repair it, or install the other build (`--platform windows|linux`).
 
 ## Updating rakun
 

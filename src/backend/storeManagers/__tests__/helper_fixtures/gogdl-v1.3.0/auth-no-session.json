@@ -1,0 +1,8 @@
+{
+  "helper": "gogdl",
+  "case": "auth-no-session",
+  "args": ["--auth-config-path", "<TMP>/gogdl/auth.json", "auth"],
+  "exit": 0,
+  "stdout": "null\n",
+  "stderr": ""
+}

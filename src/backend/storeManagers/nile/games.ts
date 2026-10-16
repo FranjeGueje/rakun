@@ -6,6 +6,7 @@ import {
   InstallProgress
 } from 'common/types'
 import { Game, InstallResult } from 'common/types/game_manager'
+import { exitFailure } from '../helper_result'
 import { libraryManagerMap } from '..'
 import {
   LogPrefix,
@@ -16,19 +17,8 @@ import {
 } from 'backend/logger'
 
 import { existsSync } from 'fs'
-import {
-  killPattern,
-  moveOnUnix,
-  sendGameStatusUpdate,
-  sendProgressUpdate
-} from 'backend/utils'
+import { killPattern, moveOnUnix, sendProgressUpdate } from 'backend/utils'
 import { GlobalConfig } from 'backend/config'
-import {
-  onGameInstalled,
-  onGameImported,
-  onGameMoved,
-  onGameUninstalled
-} from 'backend/rakun/game_events'
 import { sendFrontendMessage } from '../../ipc'
 import { isLinux } from 'backend/constants/environment'
 
@@ -111,7 +101,6 @@ export default class NileGameManager implements Game {
     }
 
     try {
-      void onGameImported(this).catch((err) => logError(err, LogPrefix.Nile))
       libraryManagerMap['nile'].installState(this.id, true)
     } catch (error) {
       logError(['Failed to import', `${this.id}:`, error], LogPrefix.Nile)
@@ -222,6 +211,8 @@ export default class NileGameManager implements Game {
       return { status: 'abort' }
     }
 
+    res.error ??= exitFailure(res)
+
     if (res.error) {
       if (!res.error.includes('signal')) {
         logError(
@@ -231,7 +222,13 @@ export default class NileGameManager implements Game {
       }
       return { status: 'error', error: res.error }
     }
-    void onGameInstalled(this).catch((err) => logError(err, LogPrefix.Nile))
+    // nile writes the install to its installed.json when it ends well: a
+    // helper that said nothing wrong and recorded nothing did not install it
+    if (!libraryManagerMap['nile'].getInstallMetadata(this.id)) {
+      const error = 'nile ended but did not record the installation'
+      logError(['Failed to install', `${this.id}:`, error], LogPrefix.Nile)
+      return { status: 'error', error }
+    }
     libraryManagerMap['nile'].installState(this.id, true)
     return { status: 'done' }
   }
@@ -263,10 +260,7 @@ export default class NileGameManager implements Game {
       this.id,
       moveResult.installPath
     )
-    void onGameMoved(this, moveResult.installPath).catch((err) =>
-      logError(err, LogPrefix.Nile)
-    )
-    return { status: 'done' }
+    return { status: 'done', installPath: moveResult.installPath }
   }
 
   async repair(): Promise<ExecResult> {
@@ -294,6 +288,8 @@ export default class NileGameManager implements Game {
       }
     )
 
+    res.error ??= exitFailure(res)
+
     if (res.error) {
       logError(['Failed to repair', `${this.id}:`, res.error], LogPrefix.Nile)
     }
@@ -310,13 +306,14 @@ export default class NileGameManager implements Game {
       logMessagePrefix: `Uninstalling ${this.id}`
     })
 
+    res.error ??= exitFailure(res)
+
     if (res.error) {
       logError(
         ['Failed to uninstall', `${this.id}:`, res.error],
         LogPrefix.Nile
       )
     } else if (!res.abort) {
-      await onGameUninstalled(this)
       libraryManagerMap['nile'].installState(this.id, false)
     }
     sendFrontendMessage('refreshLibrary', 'nile')
@@ -345,18 +342,14 @@ export default class NileGameManager implements Game {
       return { status: 'abort' }
     }
 
+    res.error ??= exitFailure(res)
+
     if (res.error) {
       if (!res.error.includes('signal')) {
         logError(['Failed to update', `${this.id}:`, res.error], LogPrefix.Nile)
       }
       return { status: 'error', error: res.error }
     }
-
-    sendGameStatusUpdate({
-      appName: this.id,
-      runner: 'nile',
-      status: 'done'
-    })
 
     return { status: 'done' }
   }

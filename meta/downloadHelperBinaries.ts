@@ -37,7 +37,17 @@ async function zoomScriptVersion(): Promise<string> {
   return /INSTALLER_VERSION="([^"]+)"/.exec(script)?.[1] ?? 'no file'
 }
 
+/** butler is not on GitHub: itch's server says which is the latest one */
+async function butlerLatest(): Promise<string> {
+  const response = await fetch(
+    'https://broth.itch.zone/butler/linux-amd64/LATEST'
+  )
+  if (!response.ok) throw new Error(`HTTP ${response.status} (broth.itch.zone)`)
+  return (await response.text()).trim()
+}
+
 async function upstreamTag(helper: HelperName): Promise<string> {
+  if (helper === 'butler') return butlerLatest()
   const repo = REPOS[helper]
   return repo ? latestTag(repo) : zoomScriptVersion()
 }

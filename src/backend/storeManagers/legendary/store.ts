@@ -3,7 +3,7 @@ import { withLiveInfo } from '../library_view'
 import { epicLoginUrl } from 'backend/constants/urls'
 import LegendaryLibraryManager from './library'
 import { LegendaryUser } from './user'
-import { libraryStore } from './electronStores'
+import { libraryStore } from './stores'
 
 const library = new LegendaryLibraryManager()
 

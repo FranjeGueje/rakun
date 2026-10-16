@@ -8,7 +8,8 @@ export type Ctx = {
   stores: () => Promise<StoreInfo[]>
   json: boolean
   log: (line: string) => void
-  ask: (question: string) => Promise<string>
+  /** Asks the user; the `signal` takes the question back (the answer then is an `AbortError`) */
+  ask: (question: string, signal?: AbortSignal) => Promise<string>
 }
 
 export type Options = {
@@ -26,7 +27,7 @@ export type Options = {
   removeFiles?: boolean
   yes?: boolean
   force?: boolean
-  /** Only for `self-update`: say if there is a new version, do not install it */
+  /** `self-update`: say if there is a new version, do not install it. `status`: ask the stores if the sessions still work */
   check?: boolean
   serve?: boolean
   /** Only for `start`: how rakun opens the web (`local`, `network`, `off`) */

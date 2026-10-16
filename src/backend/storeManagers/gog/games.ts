@@ -1,5 +1,6 @@
 import { libraryManagerMap } from '..'
 import { removeInstalled, upsertInstalled } from '../installed_list'
+import { exitFailure, hasFiles } from '../helper_result'
 import { join } from 'path'
 import { GlobalConfig } from '../../config'
 import {
@@ -7,7 +8,6 @@ import {
   spawnAsync,
   moveOnUnix,
   sendProgressUpdate,
-  sendGameStatusUpdate,
   getPathDiskSize
 } from '../../utils'
 import {
@@ -19,7 +19,7 @@ import {
   InstallProgress
 } from 'common/types'
 import { existsSync, rmSync } from 'fs'
-import { installedGamesStore } from './electronStores'
+import { installedGamesStore } from './stores'
 import {
   logError,
   logInfo,
@@ -28,15 +28,9 @@ import {
 } from 'backend/logger'
 import { GOGUser } from './user'
 
-import {
-  onGameInstalled,
-  onGameImported,
-  onGameMoved,
-  onGameUninstalled
-} from 'backend/rakun/game_events'
 import { GogInstallPlatform } from 'common/types/gog'
 import { sendFrontendMessage } from '../../ipc'
-import { Game, RemoveArgs } from 'common/types/game_manager'
+import { Game, InstallResult, RemoveArgs } from 'common/types/game_manager'
 import { downloadArgs } from './download_args'
 import { wantsDlcs } from '../dlcs'
 import {
@@ -142,7 +136,6 @@ export default class GOGGame implements Game {
         JSON.parse(res.stdout),
         folderPath
       )
-      void onGameImported(this).catch((err) => logError(err, LogPrefix.Gog))
     } catch (error) {
       logError([`Failed to import ${this.id}:`, error], LogPrefix.Gog)
       // Without this the caller would see the import as a success
@@ -247,10 +240,7 @@ export default class GOGGame implements Game {
     installLanguage = defaultInstallLanguage,
     build,
     branch
-  }: InstallArgs): Promise<{
-    status: 'done' | 'error' | 'abort'
-    error?: string
-  }> {
+  }: InstallArgs): Promise<InstallResult> {
     const credentials = await GOGUser.getCredentials()
 
     if (!credentials) {
@@ -295,9 +285,10 @@ export default class GOGGame implements Game {
       return { status: 'abort' }
     }
 
-    if (res.error) {
-      logError(['Failed to install', `${this.id}:`, res.error], LogPrefix.Gog)
-      return { status: 'error', error: res.error }
+    const failure = res.error ?? exitFailure(res)
+    if (failure) {
+      logError(['Failed to install', `${this.id}:`, failure], LogPrefix.Gog)
+      return { status: 'error', error: failure }
     }
 
     // Installation succeded
@@ -335,6 +326,12 @@ export default class GOGGame implements Game {
       join(path, installInfo.folder_name)
     )
     const install_path = join(path, installInfo.folder_name)
+    // gogdl may end well and leave nothing: the game is not installed then
+    if (!hasFiles(install_path)) {
+      const error = `Nothing was installed in ${install_path}`
+      logError(error, LogPrefix.Gog)
+      return { status: 'error', error }
+    }
 
     const installedData: InstalledInfo = {
       platform: installPlatform,
@@ -372,15 +369,10 @@ export default class GOGGame implements Game {
         )
       }
     }
-    void onGameInstalled(this, install_path).catch((err) =>
-      logError(err, LogPrefix.Gog)
-    )
-    return { status: 'done' }
+    return { status: 'done', installPath: install_path }
   }
 
-  async moveInstall(
-    newInstallPath: string
-  ): Promise<{ status: 'done' } | { status: 'error'; error: string }> {
+  async moveInstall(newInstallPath: string): Promise<InstallResult> {
     const gameInfo = this.getGameInfo()
     logInfo(`Moving ${gameInfo.title} to ${newInstallPath}`, LogPrefix.Gog)
 
@@ -401,11 +393,7 @@ export default class GOGGame implements Game {
       this.id,
       moveResult.installPath
     )
-    void onGameMoved(this, moveResult.installPath).catch((err) =>
-      logError(err, LogPrefix.Gog)
-    )
-
-    return { status: 'done' }
+    return { status: 'done', installPath: moveResult.installPath }
   }
 
   /*
@@ -443,8 +431,10 @@ export default class GOGGame implements Game {
       logMessagePrefix: `Repairing ${this.id}`
     })
 
-    if (res.error) {
-      logError(['Failed to repair', `${this.id}:`, res.error], LogPrefix.Gog)
+    const failure = res.error ?? exitFailure(res)
+    if (failure) {
+      res.error = failure
+      logError(['Failed to repair', `${this.id}:`, failure], LogPrefix.Gog)
     }
 
     return res
@@ -476,7 +466,6 @@ export default class GOGGame implements Game {
     const gameInfo = this.getGameInfo()
     gameInfo.is_installed = false
     gameInfo.install = { is_dlc: false }
-    await onGameUninstalled(this)
     sendFrontendMessage('pushGameToLibrary', gameInfo)
     return res
   }
@@ -486,7 +475,7 @@ export default class GOGGame implements Game {
     branch?: string
     language?: string
     dlcs?: string[]
-  }): Promise<{ status: 'done' | 'error'; error?: string }> {
+  }): Promise<InstallResult> {
     const {
       installPlatform,
       gameData,
@@ -563,17 +552,13 @@ export default class GOGGame implements Game {
     })
 
     if (res.abort) {
-      return { status: 'done' }
+      return { status: 'abort' }
     }
 
-    if (res.error) {
-      logError(['Failed to update', `${this.id}:`, res.error], LogPrefix.Gog)
-      sendGameStatusUpdate({
-        appName: this.id,
-        runner: 'gog',
-        status: 'done'
-      })
-      return { status: 'error', error: res.error }
+    const failure = res.error ?? exitFailure(res)
+    if (failure) {
+      logError(['Failed to update', `${this.id}:`, failure], LogPrefix.Gog)
+      return { status: 'error', error: failure }
     }
 
     const installedArray = installedGamesStore.get('installed', [])
@@ -631,11 +616,6 @@ export default class GOGGame implements Game {
         )
       }
     }
-    sendGameStatusUpdate({
-      appName: this.id,
-      runner: 'gog',
-      status: 'done'
-    })
     gameData.install = gameObject
     sendFrontendMessage('pushGameToLibrary', gameData)
     return { status: 'done' }

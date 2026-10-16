@@ -36,6 +36,7 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   // Accounts
   'getStores',
   'getAccounts',
+  'checkAccounts',
   'listFolders',
   'logout',
   'getLoginInfo',

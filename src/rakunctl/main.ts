@@ -1,10 +1,10 @@
 import { createInterface } from 'node:readline/promises'
 import { runCli } from './cli'
 
-async function ask(question: string): Promise<string> {
+async function ask(question: string, signal?: AbortSignal): Promise<string> {
   const rl = createInterface({ input: process.stdin, output: process.stdout })
   try {
-    return (await rl.question(question)).trim()
+    return (await rl.question(question, { signal })).trim()
   } finally {
     rl.close()
   }

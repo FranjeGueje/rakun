@@ -1,4 +1,11 @@
-import { existsSync, mkdirSync, rmSync, symlinkSync, unlinkSync } from 'fs'
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  rmSync,
+  symlinkSync,
+  unlinkSync
+} from 'fs'
 import { dirname, join } from 'path'
 import { logInfo, logError, logWarning } from 'backend/logger'
 import { rakunMountPath, rakunGamesPath } from 'backend/constants/paths'
@@ -8,6 +15,7 @@ import { GlobalConfig } from 'backend/config'
 import { getUmuStoreLabel, searchUmuGameId, launchUmu } from './umu'
 import { windowify, EOS_OVERLAY_BAT } from './windowify'
 import { GameInfo } from 'common/types'
+import { runsExecutableDirectly } from './direct_launch'
 
 const LOG_PREFIX = 'Rakun'
 
@@ -16,16 +24,19 @@ export async function preparePrefix(
   steamAppId: number,
   installPath: string
 ): Promise<void> {
-  if (gameInfo.runner === 'zoom') {
+  if (runsExecutableDirectly(gameInfo.runner)) {
     const symlink = createGameSymlink(installPath)
     if ('error' in symlink) {
-      logError(`Failed to prepare Zoom prefix: ${symlink.error}`, LOG_PREFIX)
+      logError(
+        `Failed to prepare ${gameInfo.runner} prefix: ${symlink.error}`,
+        LOG_PREFIX
+      )
       return
     }
     symlinkPrefix(steamAppId, symlink.linkPath)
   } else {
     windowify(gameInfo, installPath)
-    await prepareUmuPrefix(gameInfo, installPath, steamAppId)
+    await prepareUmuPrefix(gameInfo, steamAppId)
   }
 }
 
@@ -44,9 +55,8 @@ export function symlinkPrefix(
 
     mkdirSync(dirname(compatPath), { recursive: true })
 
-    if (existsSync(compatPath)) {
-      rmSync(compatPath, { recursive: true, force: true })
-    }
+    // Also a link whose target is gone, which existsSync does not see
+    rmSync(compatPath, { recursive: true, force: true })
 
     symlinkSync(installPath, compatPath)
     logInfo(`Prefix symlinked: ${compatPath} → ${installPath}`, LOG_PREFIX)
@@ -70,7 +80,7 @@ export function removePrefixSymlink(steamAppId: number): void {
       String(steamAppId)
     )
 
-    if (existsSync(compatPath)) {
+    if (lstatSync(compatPath, { throwIfNoEntry: false })?.isSymbolicLink()) {
       unlinkSync(compatPath)
       logInfo(`Removed prefix symlink ${compatPath}`, LOG_PREFIX)
     }
@@ -97,7 +107,6 @@ function replaceSymlink(target: string, linkPath: string): void {
 
 async function prepareUmuPrefix(
   gameInfo: GameInfo,
-  installPath: string,
   steamAppId: number
 ): Promise<void> {
   const steamPath = getSteamPath()

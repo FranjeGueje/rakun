@@ -10,7 +10,7 @@ jest.mock('backend/logger', () => ({
 
 jest.mock('backend/online_monitor')
 
-jest.mock('../electronStores', () => ({
+jest.mock('../stores', () => ({
   installStore: { get: jest.fn(), set: jest.fn() },
   libraryStore: { get: jest.fn(), set: jest.fn() }
 }))

@@ -32,9 +32,13 @@ export function helpersLine(helpers: HelperInfo[]): string {
       ({ helper, installed, pinned }) =>
         `${helper} is ${installed || 'another version'}, not the tested ${pinned}`
     )
+  const surprises = helpers
+    .filter(({ warning }) => warning)
+    .map(({ helper, warning }) => `${helper}: ${warning}`)
   const problems = [
     ...(missing.length ? [`missing ${missing.join(', ')}`] : []),
-    ...other
+    ...other,
+    ...surprises
   ]
   return problems.length
     ? `Helpers: ${problems.join('; ')} (${HINT})`

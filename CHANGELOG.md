@@ -2,12 +2,51 @@
 
 The history of rakun before its first release (the Heroic cleanup and Relic) lives in the `upstream` repository. The detailed notes of the versions before this first release are in the git history of this file.
 
+## 0.4.0 — itch.io
+
+A new store, itch.io, and the first one that is not run by a client of its own: it goes through butler, itch's own tool. This version also carries what 0.3.2 prepared, which was never tagged.
+
+### Added
+
+- itch.io (`itch`): log in, library, install, repair, update and uninstall, through `butler daemon` (butlerd), which rakun starts when it needs it and which stops with rakun.
+  - **Two ways to log in**, told apart in `rakunctl login` and in the web:
+    1. Your library, by authorizing rakun in the browser (OAuth with PKCE, no secret). rakun asks for the minimum: `profile:me`, `profile:owned`, `profile:collections` and `game:view:uploads`. itch.io sends the browser back to `GET /itch/callback` on rakun's own API and the login ends by itself, so `rakunctl login` and the web only wait; from another machine, the final address can be pasted. That route needs no token (it is the user's browser): the one-time `state` that rakun made up is the proof, and a wrong one does not cancel a login that is going on. It also works with the web turned off. rakun keeps the token only to revoke it when the user logs out. The redirect URI `http://127.0.0.1/itch/callback` has to be registered in the OAuth application.
+    2. Your library and your collections, by creating an API key with full access (itch.io → Settings → API keys) and pasting it. It gives rakun full access to the account, which is why it is the second way. The key `butler login` makes cannot read a library, and a key with too few permissions is refused with a message that says so.
+  - The library is what the user owns or has claimed. **With an API key** it also has the games in the user's collections, and a free game that is in none of the lists installs by its number: `rakunctl install itch <id>`. itch.io grants `collection:view` and `game:view` to nobody over OAuth, so with the first way collections are listed but not their games, and installing a game that is not in the library may not work.
+  - Like GOG, a game with a Windows and a Linux build lets the user choose; the other operations keep that choice. A move of the install and the import of a folder are not supported, and itch.io games have no pinned versions: butler decides what an update is.
+  - Pausing or cancelling a download stops butler (`Install.Cancel`, as the other stores abort their tool) and removes what it had written; resuming starts the download again, because butler keeps nothing of a cancelled install.
+  - The executable of a game is what `butler configure` finds in the install, for the chosen platform. A Linux game gets a `start.sh` that runs it (as GOG's does) and a Windows game goes through the runner. A game with nothing to run is installed, so that it can be repaired or uninstalled, but the install ends in an error and it is not added to Steam. A game that is an installer (`Setup.exe`) is installed, but it is the installer that Steam would run.
+  - Logging out revokes the token, forgets the profile in butler and clears the cache of the library, as the other stores do.
+- The helper `butler` 15.32.0 (x64 and arm64, checked by sha256, with `7z.so` and `libc7zip.so`, which it loads from next to itself: it counts as installed only with the three). `rakunctl helpers update` downloads it from itch's server, and the `-full` tarballs carry it with the texts of the licences of the three. `--latest` does not move it (itch's server has no release list rakun reads).
+- The runner has an `itch` block: the `.bat` of an itch.io game sets `IDGAME` to its executable (`<folder>\<path>` under `c:\games`) and the runner goes to its folder and runs it, waiting for it to close. An update that moves the executable makes rakun write the `.bat` again. The runner is still v1.
+- `umu` prepares the prefix of an itch.io game as store `itchio`.
+- `getLoginInfo` can carry `callback` (the browser comes back to rakun, so a client waits for the session) and `alternative` (a second way to log in, with its own page).
+
+### Changed
+
+- The covers of the web: a picture whose shape is more than 15% away from the card's (3:4) is shown whole over a blurred copy of itself, instead of being cut to fill the card (itch.io only has a wide cover, which looked zoomed in). The ones that fit are filled as before.
+- The stores with a runner are one list in the code (`STORE_BLOCKS`): the dispatch and the blocks of the runner come from it, so they cannot drift apart.
+- The `.bat` of a game never gets a path for a name: a `/` in the title is replaced (it failed, or wrote somewhere else). Titles that were already fine keep their file.
+- `windowify` says it has nothing to translate for a store that keeps no installed file, instead of warning that it is not implemented.
+- The error of `getInstallInfo` is logged under the prefix of its own store (it fell back to GOG's).
+- `rakunctl cache clear` also clears the itch.io library.
+- The folder of the itch.io data (`~/.config/rakun/itch_store`, with butler's database and the OAuth token) is for the user only (mode 0700).
+- `pnpm check-helper-binaries` compares butler with the latest one of itch's server.
+- Helper programs that change: if a store's tool prints something rakun does not understand, rakun says so (in the log, `rakunctl status` and `rakunctl helpers`) and keeps what it had instead of deleting it. At start it also warns when a helper is not the version rakun was tested with. Tests built from what the pinned helpers really print fail on purpose when a helper is bumped without checking it again (`scripts/capture-helper-fixtures.sh`, see `docs/Helper-Binaries.md`).
+- Code cleanup: dead code removed, files with a misleading name renamed, and the big `utils.ts` and Zoom's install split into smaller pieces. Nothing changes for the user.
+
+### Fixed
+
+- A failed install, update, repair or uninstall was reported as done when the store's tool ended with an error (for example GOG without disk space): the game was saved as installed and added to Steam with no files. Now the error is shown and nothing is saved. GOG also needs files in the game folder, and Amazon needs `nile` to have recorded the install.
+- Sessions are safer. Without a network no session is lost. Pasting a wrong login in Zoom no longer replaces the good session. A login only counts when there is a real session behind it. A broken account file no longer hides the other accounts. Logging out of Epic or Amazon now says so when it did not really happen. `nile` can no longer empty its list of installed games when a game is moved, and secrets are hidden better in the logs.
+
 ## 0.3.2 — Comet starts from its own script
 
 ### Added
 
 - `PLAYTASK` in the `.bat` of a GOG game (written as `0`): the index of the play task `gogdl` starts, passed as `--prefer-task`. `0`, a missing value or anything that is not a number leaves `gogdl` with the task GOG marks as primary. It is for a game whose primary task is a launcher that starts the game twice or ends before it (Cyberpunk 2077 with `--launcher-skip`: set `PLAYTASK=1` to start `bin\x64\Cyberpunk2077.exe` directly). The `.bat` is rewritten when the game is added to Steam again, so a value edited by hand is lost then.
-- ### Changed
+
+### Changed
 
 - The runner of a GOG game no longer starts Comet itself: it calls `mount/scripts/comet.bat` with the GOG user, a new script that rakun rewrites at every start (like the runner). It updates the files of `gog_store`, makes sure the `GalaxyCommunication` service exists, and leaves Comet running. The call is made from the runner (not started apart), so Comet stays in the console of the runner and its window lasts as long as Comet, even if the launcher of the game ends first. The runner is still v1.
 - The log of Comet is `mount/logs/comet.log` (it was discarded).

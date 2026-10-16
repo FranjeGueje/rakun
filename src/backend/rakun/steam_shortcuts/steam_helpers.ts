@@ -71,7 +71,7 @@ export function getShortcutId(entry: Record<string, unknown>): number {
 type Entry = Record<string, unknown>
 
 /** The game is told apart by its Steam id or by what it runs, never by its title */
-export interface ShortcutQuery {
+interface ShortcutQuery {
   steamAppId?: number
   exe?: string
 }

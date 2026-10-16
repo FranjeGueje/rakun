@@ -1,9 +1,13 @@
 import { invokeHandler } from 'backend/ipc'
-import { sendGameStatusUpdate, isEpicServiceOffline } from 'backend/utils'
+import { sendGameStatusUpdate } from 'backend/utils'
 import { isOnline } from 'backend/online_monitor'
 import { libraryManagerMap } from 'backend/storeManagers'
 import { showDialogBoxModalAuto } from 'backend/dialog/dialog'
-import { onGameRepaired } from 'backend/rakun/game_events'
+import {
+  onGameImported,
+  onGameMoved,
+  onGameRepaired
+} from 'backend/rakun/game_events'
 import './../games'
 
 jest.mock('fs', () => ({
@@ -13,7 +17,6 @@ jest.mock('fs', () => ({
 }))
 jest.mock('backend/config', () => ({ GlobalConfig: { get: jest.fn() } }))
 jest.mock('backend/utils', () => ({
-  isEpicServiceOffline: jest.fn(),
   sendGameStatusUpdate: jest.fn()
 }))
 jest.mock('backend/utils/uninstaller', () => ({
@@ -42,7 +45,11 @@ jest.mock('backend/storeManagers', () => ({
 jest.mock('backend/storeManagers/legendary/constants', () => ({
   legendaryInstalled: '/tmp/installed.json'
 }))
-jest.mock('backend/rakun/game_events', () => ({ onGameRepaired: jest.fn() }))
+jest.mock('backend/rakun/game_events', () => ({
+  onGameImported: jest.fn(),
+  onGameMoved: jest.fn(),
+  onGameRepaired: jest.fn()
+}))
 jest.mock('../refresh', () => ({
   refreshingRunners: jest.fn(),
   startRefresh: jest.fn()
@@ -50,6 +57,7 @@ jest.mock('../refresh', () => ({
 
 const repair = jest.fn()
 const importGame = jest.fn()
+const moveInstall = jest.fn()
 const statuses = () =>
   jest
     .mocked(sendGameStatusUpdate)
@@ -58,8 +66,14 @@ const statuses = () =>
 // The config resets the mocks before each test: what they answer is set here
 beforeEach(() => {
   jest.mocked(isOnline).mockReturnValue(true)
-  jest.mocked(isEpicServiceOffline).mockResolvedValue(false)
-  const game = { getGameInfo: () => ({ title: 'Game' }), repair, importGame }
+  jest.mocked(onGameImported).mockResolvedValue(undefined)
+  delete (libraryManagerMap.legendary as { preflight?: unknown }).preflight
+  const game = {
+    getGameInfo: () => ({ title: 'Game' }),
+    repair,
+    importGame,
+    moveInstall
+  }
   for (const runner of ['gog', 'legendary'] as const)
     jest
       .mocked(libraryManagerMap[runner].getGame)
@@ -119,6 +133,14 @@ describe('importGame', () => {
     expect(await run()).toEqual({ status: 'done' })
     expect(importGame).toHaveBeenCalledWith('/g/one', 'windows')
     expect(statuses()).toEqual(['importing', 'done'])
+    expect(onGameImported).toHaveBeenCalledTimes(1)
+  })
+
+  test('an import that failed does not go to Steam', async () => {
+    importGame.mockResolvedValue({ stdout: '', stderr: '', error: 'no game' })
+
+    expect(await run()).toEqual({ status: 'error' })
+    expect(onGameImported).not.toHaveBeenCalled()
   })
 
   test('an error of the store answers error, and the game is not left busy', async () => {
@@ -145,11 +167,44 @@ describe('importGame', () => {
     expect(statuses()).toEqual(['importing', 'done'])
   })
 
-  test('Epic with its servers down is refused with a warning, before importing', async () => {
-    jest.mocked(isEpicServiceOffline).mockResolvedValue(true)
+  test('a store that refuses the import is warned about, before importing', async () => {
+    ;(libraryManagerMap.legendary as { preflight?: unknown }).preflight = jest
+      .fn()
+      .mockResolvedValue('Epic Servers are down')
 
     expect(await run({ runner: 'legendary' })).toEqual({ status: 'error' })
-    expect(showDialogBoxModalAuto).toHaveBeenCalled()
+    expect(showDialogBoxModalAuto).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Epic Servers are down' })
+    )
     expect(importGame).not.toHaveBeenCalled()
+  })
+})
+
+describe('moveInstall', () => {
+  const run = () =>
+    invokeHandler('moveInstall', {
+      appName: 'g1',
+      runner: 'gog',
+      path: '/new'
+    })
+
+  test('a finished move goes to Steam with the new path', async () => {
+    moveInstall.mockResolvedValue({ status: 'done', installPath: '/new/Game' })
+    jest.mocked(onGameMoved).mockResolvedValue(undefined)
+
+    await run()
+
+    expect(onGameMoved).toHaveBeenCalledWith(
+      expect.objectContaining({ moveInstall }),
+      '/new/Game'
+    )
+  })
+
+  test('a move that failed does not', async () => {
+    moveInstall.mockResolvedValue({ status: 'error', error: 'disk full' })
+
+    await run()
+
+    expect(onGameMoved).not.toHaveBeenCalled()
   })
 })

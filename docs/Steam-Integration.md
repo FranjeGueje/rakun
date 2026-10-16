@@ -15,7 +15,7 @@ Game install completed
   No
   │
   ▼
-  ┌─ is it a Linux native game? (GOG)
+  ┌─ is it a Linux native game? (GOG, itch.io)
   │
   ├── Yes (Linux native) ──────────────────────── No (Windows/Proton)
   │                                                  │
@@ -85,7 +85,7 @@ call "C:\Launchers\scripts\Launcher_games.bat" %*
 exit /b %errorlevel%
 ```
 
-The file also sets `GAMENAME`, the title of the game as a file name (it names the log, see below). A GOG game also sets `GAMEFOLDER` (its folder in `c:\games`) and `GOGUSER` (the user Comet logs in with). The runner, `Launcher_games.bat` (**FranjeGueje runner**, with its version on the first line it prints), sets the environment, jumps to the block of the store (`legendary`, `gog` or `nile`), checks its tools and launches the game through the store's CLI. rakun writes it into `mount/scripts/` at every start, so a new version reaches every game without regenerating their `.bat` files. The EOS Overlay script lives next to it.
+The file also sets `GAMENAME`, the title of the game as a file name (it names the log, see below). A GOG game also sets `GAMEFOLDER` (its folder in `c:\games`) and `GOGUSER` (the user Comet logs in with). An itch.io game has no tool of its own to run it, so its `IDGAME` is its executable, `<folder>\<path>` under `c:\games` (for example `pacapong\pacapong.exe`): the `itch` block of the runner checks that it is there, goes to its folder and runs it, waiting for it to close. An update of the game that moves the executable makes rakun write the `.bat` again. The runner, `Launcher_games.bat` (**FranjeGueje runner**, with its version on the first line it prints), sets the environment, jumps to the block of the store (`legendary`, `gog`, `nile` or `itch`), checks its tools and launches the game through the store's CLI. rakun writes it into `mount/scripts/` at every start, so a new version reaches every game without regenerating their `.bat` files. The EOS Overlay script lives next to it.
 
 ### Runner options: `Launcher_games.ini`
 
@@ -99,7 +99,7 @@ The `.bat` of each game does not change when rakun updates, so the options of th
 
 The log is named after the game's title, with `\ / : * ? " < > | %` replaced by `_`. A game added before this option existed has no `GAMENAME` and its log is `<store>-<id>.log`; repairing the game regenerates its `.bat` with the name.
 
-For Linux native GOG games, there is no `.bat`. rakun uses the `start.sh` script that GOG ships with the game. Steam runs the shell script natively.
+For Linux native GOG games, there is no `.bat`. rakun uses the `start.sh` script that GOG ships with the game. Steam runs the shell script natively. For Linux native itch.io games rakun writes that `start.sh` itself: it goes to the folder of the executable that butler found and runs it.
 
 ## Symlink structure
 
@@ -163,7 +163,7 @@ If the repair completes without error, rakun repeats the whole Steam integration
 
 When a game is uninstalled, rakun:
 
-1. Deletes the `.bat` runner file (Windows games only)
+1. Deletes the `.bat` runner file (Windows games only; itch.io Windows games too)
 2. Removes the symlink from `~/.local/share/rakun/games/`
 3. Removes the Zoom prefix symlink (Zoom games only)
 4. Deletes all 5 grid artwork files

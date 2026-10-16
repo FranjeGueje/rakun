@@ -12,7 +12,7 @@ export function detectControllerLayout(id: string): ControllerLayout {
   return 'xbox'
 }
 
-export type ButtonNames = {
+type ButtonNames = {
   confirm: string
   back: string
   secondary: string
@@ -28,7 +28,7 @@ export function buttonNames(layout: ControllerLayout): ButtonNames {
   return { confirm: 'A', back: 'B', secondary: 'X', tertiary: 'Y' }
 }
 
-export type HintKeys = {
+type HintKeys = {
   select: string
   back: string
   stores: string

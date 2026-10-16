@@ -1,5 +1,6 @@
 import type { DMQueueElement, GameInfo, GameStatus } from 'common/types'
-import type { AccountsStatus } from 'common/rakun/accounts'
+import type { AccountsCheck, AccountsStatus } from 'common/rakun/accounts'
+import type { LoginInfo } from 'common/rakun/login'
 import type { StoreInfo } from 'common/rakun/stores'
 import { storeLabel } from './stores'
 
@@ -17,6 +18,22 @@ export function table(rows: string[][]): string {
     .join('\n')
 }
 
+/** What `login` shows: the page and what to do; with a second way, the two numbered so they are told apart */
+export function loginText(info: LoginInfo): string {
+  const { alternative } = info
+  if (!alternative) return `${info.instructions}\n\n${info.url}\n`
+  return [
+    'There are two ways to log in:',
+    '',
+    `1) ${info.instructions}`,
+    `   ${info.url}`,
+    '',
+    `2) ${alternative.instructions}`,
+    `   ${alternative.url}`,
+    ''
+  ].join('\n')
+}
+
 export function libraryText(games: GameInfo[], stores: StoreInfo[]): string {
   if (!games.length) return 'The library is empty.'
   return table(
@@ -31,12 +48,20 @@ export function libraryText(games: GameInfo[], stores: StoreInfo[]): string {
 
 export function accountsText(
   accounts: AccountsStatus,
-  stores: StoreInfo[]
+  stores: StoreInfo[],
+  checked?: AccountsCheck
 ): string {
   return stores
     .map(({ id, label }) => {
-      const { loggedIn, name } = accounts[id]
-      return `${label}: ${loggedIn ? `logged in${name ? ` (${name})` : ''}` : 'not logged in'}`
+      const { loggedIn, name, expired } = accounts[id]
+      const asked = checked?.[id]
+      // The store refused the session (it says so by itself, or when asked)
+      if (loggedIn && (expired || (asked?.verified && !asked.loggedIn)))
+        return `${label}: session expired, log in again (the games are kept)`
+      const who = loggedIn
+        ? `logged in${name ? ` (${name})` : ''}`
+        : 'not logged in'
+      return `${label}: ${who}${loggedIn && asked?.verified ? ', verified' : ''}`
     })
     .join('\n')
 }

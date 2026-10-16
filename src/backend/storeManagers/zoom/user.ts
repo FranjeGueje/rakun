@@ -1,10 +1,21 @@
 import axios, { AxiosError } from 'axios'
-import { existsSync, unlinkSync, writeFileSync, readFileSync } from 'fs'
+import {
+  chmodSync,
+  existsSync,
+  unlinkSync,
+  writeFileSync,
+  readFileSync
+} from 'fs'
 import { logError, logInfo, LogPrefix, logWarning } from 'backend/logger'
-import { configStore } from './electronStores'
+import { configStore } from './stores'
 import { isOnline } from '../../online_monitor'
 import { ZoomCredentials } from 'common/types/zoom'
 import { clearCache } from 'backend/utils'
+import {
+  clearSessionExpired,
+  isSessionExpired,
+  markSessionExpired
+} from '../session_state'
 import { tokenPath, apiUrl } from './constants'
 
 // isLoggedIn() is not a local check: it asks Zoom's API every time. Startup used
@@ -17,8 +28,7 @@ let loginCheckInFlight: Promise<boolean> | undefined
 
 /**
  * Only a rejection from Zoom means the session is really gone. A dropped
- * connection or a server error must not be treated as "logged out", because
- * that path deletes the user's token.
+ * connection or a server error must not mark it as expired.
  */
 function isAuthRejection(error: unknown): boolean {
   const status = (error as AxiosError)?.response?.status
@@ -39,7 +49,8 @@ export class ZoomUser {
       return { status: 'error' }
     }
     try {
-      writeFileSync(tokenPath, token, { encoding: 'utf-8' })
+      writeFileSync(tokenPath, token, { encoding: 'utf-8', mode: 0o600 })
+      chmodSync(tokenPath, 0o600)
       logInfo('Zoom token saved successfully', LogPrefix.Zoom)
       verifiedUntil = 0
       configStore.set('isLoggedIn', true)
@@ -48,6 +59,54 @@ export class ZoomUser {
       logError(`Failed to save Zoom token: ${String(err)}`, LogPrefix.Zoom)
       return { status: 'error' }
     }
+  }
+
+  /** What a login replaces, to put it back if Zoom does not accept the new one */
+  private static snapshot() {
+    return {
+      token: existsSync(tokenPath)
+        ? readFileSync(tokenPath, { encoding: 'utf-8' })
+        : undefined,
+      loggedIn: configStore.get('isLoggedIn', false)
+    }
+  }
+
+  private static restore({
+    token,
+    loggedIn
+  }: ReturnType<typeof ZoomUser.snapshot>) {
+    if (token === undefined) {
+      if (existsSync(tokenPath)) unlinkSync(tokenPath)
+    } else {
+      writeFileSync(tokenPath, token, { encoding: 'utf-8', mode: 0o600 })
+      chmodSync(tokenPath, 0o600)
+    }
+    verifiedUntil = 0
+    configStore.set('isLoggedIn', loggedIn)
+  }
+
+  /**
+   * Logs in with the pasted address, and asks Zoom if it accepts it. A token
+   * Zoom refuses (a wrong paste, an old link) must not take the place of the one
+   * that was working: it is put back. If Zoom cannot be reached nothing says
+   * the new one is wrong, so it stays.
+   */
+  static async loginVerified(
+    url: string
+  ): Promise<{ status: 'done' | 'error' | 'rejected' }> {
+    const before = ZoomUser.snapshot()
+    const wasExpired = isSessionExpired('zoom')
+    if (ZoomUser.login(url).status !== 'done') return { status: 'error' }
+
+    clearSessionExpired('zoom')
+    if (await ZoomUser.getUserDetails()) return { status: 'done' }
+    if (!isSessionExpired('zoom')) return { status: 'done' }
+
+    logError('Zoom did not accept the token that was pasted', LogPrefix.Zoom)
+    ZoomUser.restore(before)
+    if (wasExpired) markSessionExpired('zoom')
+    else clearSessionExpired('zoom')
+    return { status: 'rejected' }
   }
 
   public static async getUserDetails() {
@@ -83,6 +142,7 @@ export class ZoomUser {
       configStore.set('isLoggedIn', true)
     }
     verifiedUntil = Date.now() + LOGIN_CHECK_TTL_MS
+    clearSessionExpired('zoom')
   }
 
   private static handleVerificationFailure(error: unknown) {
@@ -97,7 +157,9 @@ export class ZoomUser {
       return
     }
     logError(['Zoom API login verification failed:', error], LogPrefix.Zoom)
-    this.logout()
+    // Zoom refused the token: it is kept (nobody is logged out behind their
+    // back) and the session is marked, until they log in again
+    markSessionExpired('zoom')
   }
 
   public static getCredentials(): ZoomCredentials | undefined {

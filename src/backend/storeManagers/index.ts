@@ -1,4 +1,5 @@
 import { gog } from 'backend/storeManagers/gog/store'
+import { itch } from 'backend/storeManagers/itch/store'
 import { legendary } from 'backend/storeManagers/legendary/store'
 import { nile } from 'backend/storeManagers/nile/store'
 import { zoom } from 'backend/storeManagers/zoom/store'
@@ -13,7 +14,7 @@ import type { Store } from './store'
  * Every store rakun supports: a new one is added here and nowhere else. The
  * order is the one clients show them in.
  */
-export const stores = { legendary, gog, nile, zoom } satisfies Record<
+export const stores = { legendary, gog, nile, zoom, itch } satisfies Record<
   Runner,
   Store
 >

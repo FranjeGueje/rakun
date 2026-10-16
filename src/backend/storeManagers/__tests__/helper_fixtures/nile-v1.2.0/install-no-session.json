@@ -1,0 +1,8 @@
+{
+  "helper": "nile",
+  "case": "install-no-session",
+  "args": ["install", "--base-path", "<TMP>/n", "fakeid"],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "Traceback (most recent call last):\n  File \"cli.py\", line 364, in <module>\n  File \"cli.py\", line 345, in main\n  File \"cli.py\", line 154, in handle_install\nAttributeError: 'NoneType' object has no attribute 'sort'\n[PYI-<pid>:ERROR] Failed to execute script 'cli' due to unhandled exception!\n"
+}

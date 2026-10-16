@@ -14,7 +14,7 @@ export const RUNNER_BAT = 'Launcher_games.bat'
 /** The script that starts Comet for a GOG game, next to the runner */
 export const COMET_BAT = 'comet.bat'
 /** The options of the runner: next to it, created once and never overwritten */
-export const RUNNER_INI = 'Launcher_games.ini'
+const RUNNER_INI = 'Launcher_games.ini'
 /** Where the runner leaves the log of a game (inside the mount) when `LOG_TO_FILE` is on */
 const LOGS_DIR = 'logs'
 
@@ -116,6 +116,33 @@ const nileLines = [
 ]
 
 /**
+ * itch.io has no tool of its own to run a game: `IDGAME` is the game's executable
+ * as `<folder>\<path>` under `c:\games` (see `itchGameId`). It is run from its own
+ * folder and waited for, so that Steam sees the game running until it closes.
+ */
+const itchLines = [
+  ...storeBanner('itch'),
+  ...section('PRECHECKS'),
+  'set "RK_EXE=c:\\games\\%IDGAME%"',
+  ...missingTool('game executable', '%RK_EXE%'),
+  ...section('START THE GAME'),
+  'for %%i in ("%RK_EXE%") do set "RK_DIR=%%~dpi"',
+  'cd /d "%RK_DIR%"',
+  'start "" /wait "%RK_EXE%" %*',
+  'goto :end'
+]
+
+/** The block of each store the runner knows: the dispatch and the blocks come from here, so they cannot drift apart */
+const STORE_BLOCKS = {
+  legendary: legendaryLines,
+  gog: gogLines,
+  nile: nileLines,
+  itch: itchLines
+} satisfies Partial<Record<GameRunner, string[]>>
+
+export const STORES_WITH_RUNNER = Object.keys(STORE_BLOCKS) as GameRunner[]
+
+/**
  * The runner of every game: it reads `STORE` and `IDGAME` (and, on GOG,
  * `GAMEFOLDER`, `GOGUSER` and `PLAYTASK`) from the small `.bat` of each game and does what
  * its store needs. Raising `RUNNER_VERSION` and changing this text is all it
@@ -146,19 +173,14 @@ export function runnerScriptText(): string {
     '    timeout /t 2 /nobreak >nul',
     '    exit /b 1',
     ')',
-    'if /i "%STORE%"=="legendary" goto :legendary',
-    'if /i "%STORE%"=="gog" goto :gog',
-    'if /i "%STORE%"=="nile" goto :nile',
+    ...STORES_WITH_RUNNER.map(
+      (store) => `if /i "%STORE%"=="${store}" goto :${store}`
+    ),
     'echo [ERROR]: unknown store "%STORE%".',
     'timeout /t 2 /nobreak >nul',
     'exit /b 1',
     '',
-    ...legendaryLines,
-    '',
-    ...gogLines,
-    '',
-    ...nileLines,
-    '',
+    ...Object.values(STORE_BLOCKS).flatMap((block) => [...block, '']),
     ':end',
     'echo.',
     'echo ---------------------------------------------------------',
@@ -200,7 +222,22 @@ export function logName(title: string): string {
   return title.replace(/[\\/:*?"<>|%\r\n]/g, '_').replace(/[. ]+$/, '')
 }
 
-const STORES_WITH_RUNNER: GameRunner[] = ['legendary', 'gog', 'nile']
+/** `IDGAME` of an itch.io game: its executable under `c:\games`; butler gives the path with `/` and cmd needs `\` */
+export const itchGameId = (folder: string, executable: string): string =>
+  `${folder}\\${executable.replaceAll('/', '\\')}`
+
+/** The value of `IDGAME`: the id of the game the store's tool is asked for, or for itch.io its executable */
+function gameId(
+  store: GameRunner,
+  appName: string,
+  folder?: string,
+  executable?: string
+): string {
+  if (store !== 'itch') return appName
+  if (!folder || !executable)
+    throw new Error('The itch game has no executable to run')
+  return itchGameId(folder, executable)
+}
 
 /** What the Steam shortcut of a game runs: its variables and a call to the runner */
 export function gameRunnerText({
@@ -208,23 +245,26 @@ export function gameRunnerText({
   appName,
   title,
   folder,
-  username
+  username,
+  executable
 }: {
   store: GameRunner
   appName: string
   /** Names the log of the game; without it the runner uses the store and the id */
   title?: string
-  /** GOG: the folder of the game inside `c:\games` */
+  /** GOG and itch.io: the folder of the game inside `c:\games` */
   folder?: string
   /** GOG: the user Comet logs in with */
   username?: string
+  /** itch.io: the executable of the game, relative to its folder */
+  executable?: string
 }): string {
   if (!STORES_WITH_RUNNER.includes(store))
     throw new Error(`There is no runner for the store "${store}"`)
   const gameName = title ? logName(title) : ''
   const variables: [string, string][] = [
     ['STORE', store],
-    ['IDGAME', appName],
+    ['IDGAME', gameId(store, appName, folder, executable)],
     ...(gameName ? ([['GAMENAME', gameName]] as [string, string][]) : []),
     ...(store === 'gog'
       ? ([

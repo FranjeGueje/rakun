@@ -7,13 +7,12 @@ import {
 } from 'backend/logger'
 import { CallRunnerOptions, ExecResult, GameInfo } from 'common/types'
 import {
-  NileGameDownloadInfo,
   NileGameInfo,
   NileInstallInfo,
   NileInstallMetadataInfo
 } from 'common/types/nile'
 import { existsSync, readFileSync, writeFileSync, cpSync } from 'fs'
-import { installStore, libraryStore } from './electronStores'
+import { installStore, libraryStore } from './stores'
 import { getFileSize, getNileBin, removeSpecialcharacters } from 'backend/utils'
 import { callRunner } from 'backend/runner_call'
 import { dirname, join } from 'path'
@@ -23,11 +22,24 @@ import { nileConfigPath, nileInstalled, nileLibrary } from './constants'
 import NileGame from './games'
 import type { LibraryManager } from 'common/types/game_manager'
 import { shareInFlight } from 'backend/utils/inflight'
+import { nileRefusedToken } from './refused_token'
+import { parseHelperJson } from '../helper_output'
+import { isDownloadInfo, isNileGame, isStringList } from './output'
+import { clearSessionExpired, markSessionExpired } from '../session_state'
 
 const installInfoInFlight = new Map<string, Promise<NileInstallInfo>>()
 
+const refusedRenewing = ({ stdout, stderr, error }: ExecResult) =>
+  nileRefusedToken(`${stdout}\n${stderr}\n${error}`)
+
 export default class NileLibraryManager implements LibraryManager {
+  clearCache() {
+    installStore.clear()
+    libraryStore.clear()
+  }
+
   private installedGames: Map<string, NileInstallMetadataInfo> = new Map()
+  private installedReadOk = true
   private library: Map<string, GameInfo> = new Map()
   private readonly gameCache: Map<string, NileGame> = new Map()
 
@@ -62,9 +74,26 @@ export default class NileLibraryManager implements LibraryManager {
     if (!existsSync(nileLibrary)) {
       return
     }
-    const libraryJSON: NileGameInfo[] = JSON.parse(
-      readFileSync(nileLibrary, 'utf-8')
-    )
+    // library.json is nile's: if it is not a list of games we know, the library
+    // we hold stays as it was (and the reason is logged), it is not emptied
+    let libraryJSON: NileGameInfo[]
+    try {
+      const all = parseHelperJson(
+        'nile',
+        'library.json',
+        readFileSync(nileLibrary, 'utf-8'),
+        Array.isArray as (value: unknown) => value is unknown[]
+      )
+      libraryJSON = all.filter(isNileGame)
+      if (libraryJSON.length < all.length)
+        logWarning(
+          `${all.length - libraryJSON.length} games of nile's library.json are not in the shape rakun reads and were left out`,
+          LogPrefix.Nile
+        )
+    } catch (error) {
+      logError(['Could not read the Amazon library:', error], LogPrefix.Nile)
+      return
+    }
     libraryJSON.forEach((game) => {
       const { product } = game
       const { title, productDetail } = product
@@ -165,7 +194,12 @@ export default class NileLibraryManager implements LibraryManager {
       return []
     }
 
-    const updates: string[] = JSON.parse(output)
+    const updates = parseHelperJson(
+      'nile',
+      'list-updates --json',
+      output,
+      isStringList
+    )
     logInfo(
       `Found ${updates.length} game${updates.length !== 1 ? 's' : ''} to update`,
       LogPrefix.Nile
@@ -185,6 +219,9 @@ export default class NileLibraryManager implements LibraryManager {
 
     if (res.error) {
       logError(['Failed to refresh library:', res.error], LogPrefix.Nile)
+    } else if (!refusedRenewing(res)) {
+      // The sync went through Amazon with the token: it works
+      clearSessionExpired('nile')
     }
     return {
       stderr: '',
@@ -216,6 +253,7 @@ export default class NileLibraryManager implements LibraryManager {
    */
   refreshInstalled() {
     this.installedGames.clear()
+    this.installedReadOk = true
     if (existsSync(nileInstalled)) {
       try {
         const installed: NileInstallMetadataInfo[] = JSON.parse(
@@ -225,6 +263,10 @@ export default class NileLibraryManager implements LibraryManager {
           this.installedGames.set(metadata.id, metadata)
         })
       } catch (error) {
+        // What we hold is empty because it could not be read, not because
+        // nothing is installed: it must never be written back
+        this.installedReadOk = false
+        this.installedGames.clear()
         logError(
           ['Corrupted installed.json file, cannot load installed games', error],
           LogPrefix.Nile
@@ -330,7 +372,12 @@ export default class NileLibraryManager implements LibraryManager {
       if (!output?.trim()) {
         throw Error(`Empty response from nile for ${appName}`)
       }
-      const { download_size }: NileGameDownloadInfo = JSON.parse(output)
+      const { download_size } = parseHelperJson(
+        'nile',
+        'install --info --json',
+        output,
+        isDownloadInfo
+      )
       const installInfo = {
         game: {
           id: appName,
@@ -403,6 +450,17 @@ export default class NileLibraryManager implements LibraryManager {
   private updateInstalledPathInJSON(appName: string, newAppPath: string) {
     // Make sure we get the latest installed info
     this.refreshInstalled()
+    if (!this.installedReadOk) {
+      // Writing back what could not be read would leave nile with no installed games
+      logError(
+        [
+          'installed.json could not be read: the new path is not saved',
+          appName
+        ],
+        LogPrefix.Nile
+      )
+      return
+    }
 
     const installedGameInfo = this.installedGames.get(appName)
     if (installedGameInfo) installedGameInfo.path = newAppPath
@@ -411,6 +469,7 @@ export default class NileLibraryManager implements LibraryManager {
         `installed game info not found in changeGameInstallPath for ${appName}`,
         LogPrefix.Nile
       )
+      return
     }
 
     if (!existsSync(nileInstalled)) {
@@ -475,11 +534,14 @@ export default class NileLibraryManager implements LibraryManager {
     }
     options.env.NILE_CONFIG_PATH = dirname(nileConfigPath)
 
-    return callRunner(
+    const result = await callRunner(
       commandParts,
       { name: 'nile', logPrefix: LogPrefix.Nile, bin, dir },
       options
     )
+    // Any command can find out that Amazon refused to renew the token
+    if (refusedRenewing(result)) markSessionExpired('nile')
+    return result
   }
 
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */

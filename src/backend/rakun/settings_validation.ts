@@ -42,7 +42,7 @@ const rules: Partial<Record<keyof AppSettings, Rule>> = {
 }
 
 function checkType(key: string, value: unknown, current: AppSettings) {
-  if (!(key in current)) throw new Error(`Unknown setting "${key}"`)
+  if (!Object.hasOwn(current, key)) throw new Error(`Unknown setting "${key}"`)
   const expected = typeof current[key as keyof AppSettings]
   if (typeof value !== expected)
     throw new Error(`${key} must be of type ${expected}`)

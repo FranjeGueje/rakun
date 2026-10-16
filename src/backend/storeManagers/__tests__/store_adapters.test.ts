@@ -7,10 +7,11 @@ import { LegendaryUser } from '../legendary/user'
 import { GOGUser } from '../gog/user'
 import { NileUser } from '../nile/user'
 import { ZoomUser } from '../zoom/user'
-import * as legendaryStores from '../legendary/electronStores'
-import * as gogStores from '../gog/electronStores'
-import * as nileStores from '../nile/electronStores'
-import * as zoomStores from '../zoom/electronStores'
+import { clearSessionExpired, markSessionExpired } from '../session_state'
+import * as legendaryStores from '../legendary/stores'
+import * as gogStores from '../gog/stores'
+import * as nileStores from '../nile/stores'
+import * as zoomStores from '../zoom/stores'
 
 jest.mock('backend/constants/paths', () => {
   const { mkdtempSync } = jest.requireActual<typeof import('fs')>('fs')
@@ -22,6 +23,7 @@ jest.mock('backend/constants/paths', () => {
     appFolder: `${root}/rakun`
   }
 })
+jest.mock('backend/logger')
 jest.mock('../legendary/user', () => ({
   LegendaryUser: {
     isLoggedIn: jest.fn(),
@@ -48,20 +50,25 @@ jest.mock('../nile/user', () => ({
   }
 }))
 jest.mock('../zoom/user', () => ({
-  ZoomUser: { getUserDetails: jest.fn(), login: jest.fn(), logout: jest.fn() }
+  ZoomUser: {
+    getUserDetails: jest.fn(),
+    login: jest.fn(),
+    loginVerified: jest.fn(),
+    logout: jest.fn()
+  }
 }))
-jest.mock('../legendary/electronStores', () => ({
+jest.mock('../legendary/stores', () => ({
   libraryStore: { get: jest.fn() }
 }))
-jest.mock('../nile/electronStores', () => ({
+jest.mock('../nile/stores', () => ({
   libraryStore: { get: jest.fn() }
 }))
-jest.mock('../gog/electronStores', () => ({
+jest.mock('../gog/stores', () => ({
   configStore: { get_nodefault: jest.fn(), set: jest.fn() },
   libraryStore: { get: jest.fn() },
   installedGamesStore: { get: jest.fn() }
 }))
-jest.mock('../zoom/electronStores', () => ({
+jest.mock('../zoom/stores', () => ({
   configStore: { get: jest.fn(), get_nodefault: jest.fn() },
   libraryStore: { get: jest.fn() },
   installedGamesStore: { get: jest.fn() }
@@ -238,24 +245,100 @@ describe('Zoom', () => {
   })
 
   test('submit hands Zoom the callback address carrying the token', async () => {
-    jest.mocked(ZoomUser.login).mockReturnValue({ status: 'done' })
+    jest.mocked(ZoomUser.loginVerified).mockResolvedValue({ status: 'done' })
 
     expect(await stores.zoom.login.submit('a b')).toEqual({ ok: true })
 
-    const url = new URL(jest.mocked(ZoomUser.login).mock.calls[0][0])
+    const url = new URL(jest.mocked(ZoomUser.loginVerified).mock.calls[0][0])
     expect(url.origin).toBe('https://www.zoom-platform.com')
     expect(url.searchParams.get('li_token')).toBe('a b')
-    expect(ZoomUser.getUserDetails).toHaveBeenCalled()
   })
 
-  test('a rejected token does not ask for the user details', async () => {
-    jest.mocked(ZoomUser.login).mockReturnValue({ status: 'error' })
+  test('a token that could not be saved is a failed login', async () => {
+    jest.mocked(ZoomUser.loginVerified).mockResolvedValue({ status: 'error' })
 
     expect(await stores.zoom.login.submit('x')).toEqual({
       ok: false,
       error: 'The store rejected the login'
     })
-    expect(ZoomUser.getUserDetails).not.toHaveBeenCalled()
+  })
+
+  test('a token Zoom refused says the session was kept', async () => {
+    jest
+      .mocked(ZoomUser.loginVerified)
+      .mockResolvedValue({ status: 'rejected' })
+
+    const reply = await stores.zoom.login.submit('x')
+
+    expect(reply.ok).toBe(false)
+    expect(reply.error).toContain('kept as it was')
+  })
+
+  describe('check', () => {
+    const check = () => stores.zoom.session.check!()
+    beforeEach(() => mkdirSync(join(tokenPath, '..'), { recursive: true }))
+    afterEach(() => {
+      rmSync(tokenPath, { force: true })
+      clearSessionExpired('zoom')
+    })
+
+    test('with no token the session is out, without asking', async () => {
+      rmSync(tokenPath, { force: true })
+
+      expect(await check()).toBe(false)
+      expect(ZoomUser.getUserDetails).not.toHaveBeenCalled()
+    })
+
+    test('Zoom confirms the token: the session works', async () => {
+      writeFileSync(tokenPath, 'tok')
+      jest.mocked(ZoomUser.getUserDetails).mockResolvedValue({ username: 'di' })
+
+      expect(await check()).toBe(true)
+    })
+
+    test('Zoom rejects the token (the session is marked expired, the token stays): out', async () => {
+      writeFileSync(tokenPath, 'tok')
+      jest.mocked(ZoomUser.getUserDetails).mockImplementation(() => {
+        markSessionExpired('zoom')
+        return Promise.resolve(undefined)
+      })
+
+      expect(await check()).toBe(false)
+    })
+
+    test('no answer and the token still there: cannot tell', async () => {
+      writeFileSync(tokenPath, 'tok')
+      jest.mocked(ZoomUser.getUserDetails).mockResolvedValue(undefined)
+
+      expect(await check()).toBeUndefined()
+    })
+  })
+})
+
+describe('GOG check', () => {
+  const check = () => stores.gog.session.check!()
+
+  test('without a session it is out, without asking', async () => {
+    jest.mocked(GOGUser.isLoggedIn).mockReturnValue(false)
+
+    expect(await check()).toBe(false)
+    expect(GOGUser.getUserDetails).not.toHaveBeenCalled()
+  })
+
+  test('the user details came: it works', async () => {
+    jest.mocked(GOGUser.isLoggedIn).mockReturnValue(true)
+    jest
+      .mocked(GOGUser.getUserDetails)
+      .mockResolvedValue({ username: 'x' } as never)
+
+    expect(await check()).toBe(true)
+  })
+
+  test('they did not (rejected or unreachable, GOG does not say which): cannot tell', async () => {
+    jest.mocked(GOGUser.isLoggedIn).mockReturnValue(true)
+    jest.mocked(GOGUser.getUserDetails).mockResolvedValue(undefined)
+
+    expect(await check()).toBeUndefined()
   })
 })
 

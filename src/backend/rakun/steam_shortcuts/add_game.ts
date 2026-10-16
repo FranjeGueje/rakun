@@ -1,6 +1,6 @@
 import {
   chmodSync,
-  existsSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -30,6 +30,7 @@ import type {
 } from './types'
 import { GameInfo } from 'common/types'
 import { gameRunnerText } from '../runner_script'
+import { runsExecutableDirectly } from '../direct_launch'
 
 const LOG_PREFIX = 'Rakun'
 
@@ -37,10 +38,10 @@ export function createRunnerFile(
   gameInfo: GameInfo,
   installPath: string
 ): { path: string } | { error: string } {
-  if (gameInfo.runner === 'zoom') {
+  if (runsExecutableDirectly(gameInfo.runner)) {
     const executable = gameInfo.install.executable
     if (!executable) {
-      return { error: 'No executable found for Zoom game' }
+      return { error: `No executable found for the ${gameInfo.runner} game` }
     }
 
     const symlink = createGameSymlink(installPath)
@@ -56,7 +57,8 @@ export function createRunnerFile(
       installPath,
       gameInfo.title,
       gameInfo.runner,
-      gameInfo.app_name
+      gameInfo.app_name,
+      gameInfo.install.executable
     )
     return { path: runnerPath }
   } catch (e) {
@@ -76,14 +78,24 @@ function getGogUsername(): string {
   }
 }
 
+/**
+ * The name of the `.bat` of a game: its title, but never a path (a `/` in it would write
+ * somewhere else or fail). Nothing else changes, so a game that is already in Steam keeps its file.
+ */
+export function batFileName(title: string): string {
+  const name = title.replace(/[/\0]/g, '_')
+  return name === '' || name === '.' || name === '..' ? '_' : name
+}
+
 /** The `.bat` the Steam shortcut of a game runs: its variables and a call to the runner of the mount */
 export function createRakunBat(
   installPath: string,
   gameName: string,
   runner: GameRunner,
-  appName: string
+  appName: string,
+  executable?: string
 ): string {
-  const runnerPath = join(rakunRunnerPath, `${gameName}.bat`)
+  const runnerPath = join(rakunRunnerPath, `${batFileName(gameName)}.bat`)
 
   mkdirSync(rakunRunnerPath, { recursive: true })
 
@@ -92,7 +104,8 @@ export function createRakunBat(
     appName,
     title: gameName,
     folder: basename(installPath),
-    username: runner === 'gog' ? getGogUsername() : undefined
+    username: runner === 'gog' ? getGogUsername() : undefined,
+    executable
   })
   writeFileSync(runnerPath, content, 'utf-8')
 
@@ -108,7 +121,8 @@ export function createGameSymlink(
   }
   const linkPath = join(rakunGamesPath, basename(installPath))
   try {
-    if (existsSync(linkPath)) {
+    // A link whose target is gone does not «exist» for existsSync: look at the link itself
+    if (lstatSync(linkPath, { throwIfNoEntry: false })?.isSymbolicLink()) {
       unlinkSync(linkPath)
     }
     mkdirSync(rakunGamesPath, { recursive: true })

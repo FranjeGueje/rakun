@@ -17,7 +17,7 @@ jest.mock('../../../utils', () => ({
   getFileSize: jest.fn()
 }))
 
-jest.mock('../electronStores', () => ({
+jest.mock('../stores', () => ({
   installStore: { get: jest.fn(), set: jest.fn() },
   libraryStore: { get: jest.fn(), set: jest.fn() }
 }))
@@ -26,7 +26,7 @@ jest.mock('../user', () => ({ LegendaryUser: {} }))
 jest.mock('../../../runner_call')
 jest.mock('../../index', () => ({}))
 
-import { installStore } from '../electronStores'
+import { installStore } from '../stores'
 const mockedInstallStore = jest.mocked(installStore)
 
 describe('LegendaryLibraryManager.getInstallInfo', () => {

@@ -5,7 +5,7 @@ jest.mock('backend/logger', () => ({
   logInfo: jest.fn(),
   logWarning: jest.fn()
 }))
-jest.mock('../electronStores', () => ({
+jest.mock('../stores', () => ({
   installStore: { get: jest.fn(), set: jest.fn(), delete: jest.fn() },
   libraryStore: { get: jest.fn(), set: jest.fn() }
 }))
@@ -33,7 +33,7 @@ jest.mock('../../index', () => ({ libraryManagerMap: {} }))
 
 import type { GameInfo } from 'common/types'
 import type { NileInstallMetadataInfo } from 'common/types/nile'
-import { installStore } from '../electronStores'
+import { installStore } from '../stores'
 import NileLibraryManager from '../library'
 
 type Internals = {

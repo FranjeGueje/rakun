@@ -1,17 +1,62 @@
-import type { GameInfo, GameStatus } from '../../api/types'
+import type { GameInfo, GameStatus, StoreCaps } from '../../api/types'
 import {
-  actionsFor,
+  actionsFor as actionsWith,
   coverSources,
   cycle,
-  installParams,
+  installParams as installParamsWith,
   isBusy,
   menuValue,
   moveInGrid,
-  platformFor,
+  platformFor as platformWith,
   quitMessageKey,
   storeTabs,
   visibleGames
 } from '../selectors'
+
+// The capabilities each store reports, by the runner of the game under test
+const CAPS: Record<'gog' | 'zoom' | 'legendary' | 'nile', StoreCaps> = {
+  gog: {
+    import: true,
+    update: true,
+    repair: true,
+    lowercasePlatform: true,
+    directLaunch: false
+  },
+  zoom: {
+    import: false,
+    update: false,
+    repair: false,
+    lowercasePlatform: true,
+    directLaunch: true
+  },
+  legendary: {
+    import: true,
+    update: true,
+    repair: true,
+    lowercasePlatform: false,
+    directLaunch: false
+  },
+  nile: {
+    import: true,
+    update: true,
+    repair: true,
+    lowercasePlatform: false,
+    directLaunch: false
+  }
+}
+const capsOf = (g: GameInfo) => (CAPS as Record<string, StoreCaps>)[g.runner]
+const actionsFor = (
+  g: GameInfo,
+  s: GameStatus | undefined,
+  needsUpdate: boolean
+) => actionsWith(g, s, needsUpdate, capsOf(g))
+const platformFor = (g: GameInfo, build?: 'windows' | 'linux') =>
+  platformWith(g, capsOf(g), build)
+const installParams = (
+  g: GameInfo,
+  path: string,
+  build?: 'windows' | 'linux'
+) => installParamsWith(g, path, capsOf(g), build)
 
 const game = (app_name: string, extra: Partial<GameInfo> = {}): GameInfo => ({
   runner: 'gog',
@@ -63,9 +108,9 @@ describe('visibleGames', () => {
 
 describe('stores', () => {
   const stores = [
-    { id: 'legendary', name: 'epic', label: 'Epic' },
-    { id: 'gog', name: 'gog', label: 'GOG' },
-    { id: 'zoom', name: 'zoom', label: 'Zoom' }
+    { id: 'legendary', name: 'epic', label: 'Epic', caps: CAPS.legendary },
+    { id: 'gog', name: 'gog', label: 'GOG', caps: CAPS.gog },
+    { id: 'zoom', name: 'zoom', label: 'Zoom', caps: CAPS.zoom }
   ] as const
 
   test('tabs: the stores with games, and those still being read', () => {
@@ -83,7 +128,15 @@ describe('stores', () => {
     // nile arrived empty: no tab; a store not read yet shows with «loading»
     const reading = storeTabs(
       games,
-      [...stores, { id: 'nile', name: 'amazon', label: 'Amazon' }],
+      [
+        ...stores,
+        {
+          id: 'nile',
+          name: 'amazon',
+          label: 'Amazon',
+          caps: CAPS.nile
+        }
+      ],
       {
         gog: true,
         legendary: true,
@@ -152,6 +205,14 @@ describe('actionsFor', () => {
         false
       )
     ).toEqual([])
+  })
+
+  test('a store that cannot repair or update does not offer it', () => {
+    const zoom = game('a', { runner: 'zoom', is_installed: true })
+    expect(actionsFor(zoom, undefined, true)).toEqual(['uninstall'])
+    expect(
+      actionsFor(game('a', { is_installed: true }), undefined, true)
+    ).toEqual(['update', 'repair', 'uninstall'])
   })
 
   test('isBusy', () => {

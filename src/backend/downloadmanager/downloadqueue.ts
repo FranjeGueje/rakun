@@ -1,8 +1,13 @@
 import { libraryManagerMap } from 'backend/storeManagers'
-import { TypeCheckedStoreBackend } from './../electron_store'
+import { TypeCheckedStoreBackend } from './../typed_store'
 import { logError, logInfo, LogPrefix, logWarning } from 'backend/logger'
 import { getFileSize, removeFolder, sendGameStatusUpdate } from '../utils'
-import { DMQueueElement, DMStatus, DownloadManagerState } from 'common/types'
+import {
+  DMQueueElement,
+  DMStatus,
+  DownloadManagerState,
+  Runner
+} from 'common/types'
 import { installQueueElement, updateQueueElement } from './utils'
 import { sendFrontendMessage } from '../ipc'
 import { callAbortController } from 'backend/utils/aborthandler/aborthandler'
@@ -19,6 +24,12 @@ const downloadManager = new TypeCheckedStoreBackend('downloadManager', {
 let queueState: DownloadManagerState = 'idle'
 let currentElement: DMQueueElement | null = null
 let autoPaused = false
+// The loops run one after the other: a resume right after a pause waits for the
+// loop of the paused download to see its abort
+let loop: Promise<void> = Promise.resolve()
+let generation = 0
+// A pause stopped the current download, so its «abort» means «paused», not «cancelled»
+let pauseRequested = false
 
 onConnectivityChange((status) => {
   if (status === 'offline' && isRunning()) {
@@ -53,7 +64,9 @@ function addToFinished(element: DMQueueElement, status: DMStatus) {
   const elements = downloadManager.get('finished', [])
 
   const elementIndex = elements.findIndex(
-    (el) => el.params.appName === element.params.appName
+    (el) =>
+      el.params.appName === element.params.appName &&
+      el.params.runner === element.params.runner
   )
 
   if (elementIndex >= 0) {
@@ -73,14 +86,22 @@ function addToFinished(element: DMQueueElement, status: DMStatus) {
 #### Public ####
 */
 
-async function initQueue() {
+function initQueue(): Promise<void> {
   // The queue also starts 5 s after the frontend is ready, so a game queued
   // within that window must not get a second loop processing the same element
-  if (isRunning()) return
+  if (isRunning()) return loop
 
+  queueState = 'running'
+  const token = ++generation
+  loop = loop.then(() => runQueue(token))
+  return loop
+}
+
+async function runQueue(token: number) {
   let element = getFirstQueueElement()
 
   while (element) {
+    pauseRequested = false
     const queuedElements = downloadManager.get('queue', [])
     element.startTime = Date.now()
     queuedElements[0] = element
@@ -88,7 +109,6 @@ async function initQueue() {
 
     currentElement = element
 
-    queueState = 'running'
     sendFrontendMessage('changedDMQueueInformation', queuedElements, queueState)
 
     const { status, error } =
@@ -98,18 +118,25 @@ async function initQueue() {
     element.endTime = Date.now()
     element.error = error
 
-    logQueueOutcome(element, status)
+    // Only an aborted download is a paused one; a pause that arrived as the
+    // download finished leaves it done
+    const paused = status === 'abort' && pauseRequested
+    pauseRequested = false
+    logQueueOutcome(element, status, paused)
 
-    if (!isPaused()) {
-      addToFinished(element, status)
-      removeFromQueue(element.params.appName)
-      element = getFirstQueueElement()
-    } else {
+    if (paused) {
       element = null
+    } else {
+      currentElement = null
+      addToFinished(element, status)
+      removeFromQueue(element.params.appName, element.params.runner)
+      element = isPaused() ? null : getFirstQueueElement()
     }
   }
 
-  if (queueState !== 'paused') {
+  // A later loop (a resume) owns the state now
+  if (token === generation && queueState === 'running') {
+    currentElement = null
     queueState = 'idle'
   }
 }
@@ -167,11 +194,14 @@ async function addToQueue(element: DMQueueElement) {
   }
 }
 
-function removeFromQueue(appName: string) {
+/** Ids of two stores can be the same: with the runner it is the one of that store, without it the first with that id */
+function removeFromQueue(appName: string, runner?: Runner) {
   if (appName && downloadManager.has('queue')) {
     const elements = downloadManager.get('queue', [])
     const index = elements.findIndex(
-      (queueElement) => queueElement?.params.appName === appName
+      (queueElement) =>
+        queueElement?.params.appName === appName &&
+        (!runner || queueElement.params.runner === runner)
     )
     if (index !== -1) {
       elements.splice(index, 1)
@@ -205,13 +235,13 @@ function cancelCurrentDownload({ removeDownloaded = false }) {
     if (Array.isArray(currentElement.params.installDlcs)) {
       const dlcsToRemove = currentElement.params.installDlcs
       for (const dlc of dlcsToRemove) {
-        removeFromQueue(dlc)
+        removeFromQueue(dlc, currentElement.params.runner)
       }
     }
     if (isRunning()) {
       stopCurrentDownload()
     }
-    removeFromQueue(currentElement.params.appName)
+    removeFromQueue(currentElement.params.appName, currentElement.params.runner)
 
     if (removeDownloaded) {
       const { appName, runner } = currentElement.params
@@ -236,7 +266,8 @@ function clearFinished() {
 }
 
 function pauseCurrentDownload() {
-  if (currentElement) {
+  if (currentElement && isRunning()) {
+    pauseRequested = true
     stopCurrentDownload()
   }
   queueState = 'paused'
@@ -260,10 +291,14 @@ function stopCurrentDownload() {
 }
 
 // log the outcome of a queue element, based on its status and the queue's
-function logQueueOutcome(element: DMQueueElement, status: DMStatus) {
+function logQueueOutcome(
+  element: DMQueueElement,
+  status: DMStatus,
+  paused: boolean
+) {
   const action = element.type === 'install' ? 'Installation' : 'Update'
   if (status === 'abort') {
-    if (isPaused()) {
+    if (paused) {
       logWarning(
         [action, 'of', element.params.appName, 'paused!'],
         LogPrefix.DownloadManager

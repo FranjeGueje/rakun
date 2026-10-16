@@ -15,7 +15,7 @@ import type { Path } from 'backend/schemas'
 import type LogWriter from 'backend/logger/log_writer'
 import type { WebAccess } from 'common/rakun/web'
 
-export type Runner = 'legendary' | 'gog' | 'nile' | 'zoom'
+export type Runner = 'legendary' | 'gog' | 'nile' | 'zoom' | 'itch'
 
 // NOTE: Do not put enum's in this module or it will break imports
 
@@ -72,6 +72,8 @@ export type ExecResult = {
   fullCommand?: string
   error?: string
   abort?: boolean
+  /** The exit code of the helper (null when a signal ended it). Not set when it never ran */
+  code?: number | null
 }
 
 export interface ExtraInfo {
@@ -194,6 +196,7 @@ export interface InstalledInfo {
   branch?: string // GOG beta channels
   // Whether to skip update check for this title (currently only used for GOG as it is the only platform actively supporting version rollback)
   pinnedVersion?: boolean
+  caveId?: string // itch: butler's id of the install, to update or remove it
 }
 
 export interface Reqs {

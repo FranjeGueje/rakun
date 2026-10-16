@@ -26,7 +26,7 @@ import {
 
 const USER_AGENT = 'RakunBinaryUpdater/1.0'
 
-export type DownloadOptions = {
+type DownloadOptions = {
   /** The latest release of each helper instead of the version rakun was tested with: nothing is checked */
   latest?: boolean
   /** The architectures whose tools are downloaded (the Windows ones are always x64) */
@@ -137,12 +137,18 @@ async function installAsset(
       asset.root === 'bin' ? 0o755 : undefined
     )
   } else if (asset.kind === 'zip' || asset.kind === 'tar') {
-    unpack(asset.kind, data, root)
+    unpack(asset.kind, data, join(root, asset.target ?? ''))
     if (helper === 'umu') chmodSync(join(root, 'umu', 'umu-run'), 0o755)
+    if (helper === 'butler')
+      chmodSync(join(root, asset.target ?? '', 'butler'), 0o755)
   }
 }
 
-/** The Zoom installer is a script on its own site, with no versions: its own line says which one it is */
+/**
+ * The Zoom installer is a script on its own site, with no versions: its own line
+ * says which one it is. It cannot be pinned or checked (Zoom may change the file
+ * and does not version it): docs/Helper-Binaries.md says so.
+ */
 async function installZoomScript(layout: Layout, fetchFn: typeof fetch) {
   const data = await getBuffer(fetchFn, ZOOM_SCRIPT_URL)
   writeAtomic(join(layout.binRoot, 'zoom', 'zoom-platform.sh'), data, 0o755)

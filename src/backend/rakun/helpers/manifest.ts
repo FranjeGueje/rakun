@@ -13,6 +13,7 @@ export type HelperName =
   | 'epic-integration'
   | 'zoom-platform'
   | 'umu'
+  | 'butler'
 
 export type Arch = 'x64' | 'arm64'
 
@@ -29,7 +30,8 @@ export const HELPERS: HelperName[] = [
   'comet',
   'epic-integration',
   'zoom-platform',
-  'umu'
+  'umu',
+  'butler'
 ]
 
 /** The versions rakun was tested with. A new one is a change of rakun */
@@ -41,10 +43,12 @@ export const RELEASE_TAGS: Record<HelperName, string> = {
   'epic-integration': 'v0.4',
   'zoom-platform': 'v1.0.1',
   // NOTE: umu-launcher tags have no `v` prefix
-  umu: '1.4.4'
+  umu: '1.4.4',
+  // itch's butler comes from their own server, not GitHub
+  butler: '15.32.0'
 }
 
-/** GitHub repos the helpers come from. zoom-platform is not on GitHub */
+/** GitHub repos the helpers come from. zoom-platform and butler are not on GitHub */
 export const REPOS: Partial<Record<HelperName, string>> = {
   legendary: 'legendary-gl/legendary',
   gogdl: 'Heroic-Games-Launcher/heroic-gogdl',
@@ -66,7 +70,7 @@ export type Asset = {
   asset: (tag: string) => string
   kind: 'file' | 'zip' | 'tar'
   root: Root
-  /** Relative to the root (the `file` kind) */
+  /** Relative to the root: where the file goes (`file`) or the folder the archive is unpacked into (`zip`) */
   target?: string
   /** Only the binaries of this architecture (Windows ones: always x64) */
   arch?: Arch
@@ -186,10 +190,29 @@ export const ASSETS: Asset[] = [
     kind: 'tar',
     root: 'bin',
     sha256: 'eb590691841f7fad3fc3ad8fd5db4ccb87849fe7948e62b28ece7a4ee48cc851'
+  },
+  {
+    // `asset` is the broth channel; the zip holds butler, 7z.so and libc7zip.so, which must stay together
+    helper: 'butler',
+    asset: fixed('linux-amd64'),
+    kind: 'zip',
+    root: 'bin',
+    arch: 'x64',
+    target: 'x64/linux/butler',
+    sha256: '2335971394ef6596f95ded0833e85ee28755e13761716ef4c91d6b11f69162f5'
+  },
+  {
+    helper: 'butler',
+    asset: fixed('linux-arm64'),
+    kind: 'zip',
+    root: 'bin',
+    arch: 'arm64',
+    target: 'arm64/linux/butler',
+    sha256: '4f2da37785fd9cbc15052427490e4e4f5cd735a019f21554d6273fa9a3490152'
   }
 ]
 
-export type Expected = { root: Root; file: string }
+type Expected = { root: Root; file: string }
 
 /** The files that tell a helper is there, for the tools of `arch` */
 export function expectedFiles(helper: HelperName, arch: Arch): Expected[] {
@@ -214,6 +237,11 @@ export function expectedFiles(helper: HelperName, arch: Arch): Expected[] {
       return [bin('zoom/zoom-platform.sh')]
     case 'umu':
       return [bin('umu/umu-run')]
+    case 'butler':
+      // The program loads the two libraries from next to itself: without them it starts and then fails
+      return ['butler', '7z.so', 'libc7zip.so'].map((file) =>
+        bin(`${arch}/linux/butler/${file}`)
+      )
   }
 }
 
@@ -230,5 +258,7 @@ export function releaseUrl(
   tag: string,
   asset: Asset
 ): string {
+  if (helper === 'butler')
+    return `https://broth.itch.zone/butler/${asset.asset(tag)}/${tag}/archive/default`
   return `https://github.com/${REPOS[helper]}/releases/download/${tag}/${asset.asset(tag)}`
 }
