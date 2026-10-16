@@ -304,7 +304,7 @@ export default class ZoomGame implements Game {
     let executable: string = ''
 
     if (installPlatform === 'linux') {
-      const downloadPath = join(installPath, installers[0].filename)
+      const downloadPath = join(downloadRoot, installers[0].filename)
 
       if (downloadPath.endsWith('.tar.xz')) {
         logInfo(`Extracting ${downloadPath}...`, LogPrefix.Zoom)
@@ -329,6 +329,7 @@ export default class ZoomGame implements Game {
           await fs.promises.chmod(executable, '755')
         }
       } else {
+        executable = downloadPath
         await fs.promises.chmod(executable, '755')
         installResult = await spawnAsync(executable, [], {
           cwd: installPath

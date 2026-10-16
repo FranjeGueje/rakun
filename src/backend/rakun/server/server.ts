@@ -167,6 +167,15 @@ export type ServerSetup = {
   webDir?: string
 }
 
+/** The path of a request URL, or undefined when it does not parse */
+function pathOf(url = '/'): string | undefined {
+  try {
+    return new URL(url, 'http://localhost').pathname
+  } catch {
+    return undefined
+  }
+}
+
 export function createApiServer(
   token: string,
   { web = 'local', webDir = defaultWebDir() }: ServerSetup = {}
@@ -175,7 +184,10 @@ export function createApiServer(
     const refused = refusal(req, web)
     if (refused) return sendJson(res, 403, { error: refused })
 
-    const { pathname } = new URL(req.url ?? '/', 'http://localhost')
+    const pathname = pathOf(req.url)
+    if (pathname === undefined) {
+      return sendJson(res, 400, { error: 'Bad request' })
+    }
 
     if (req.method === 'GET' && pathname === '/health') {
       return sendJson(res, 200, {

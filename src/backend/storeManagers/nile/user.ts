@@ -38,14 +38,12 @@ export class NileUser {
     }
     const output: NileLoginData = JSON.parse(stdout)
 
-    logInfo(['Register data is:', output], LogPrefix.Nile)
     return output
   }
 
   static async login(
     data: NileRegisterData
   ): Promise<{ status: 'done' | 'failed'; user: NileUserData | undefined }> {
-    logDebug(['Got register data:', data], LogPrefix.Nile)
     const { code, code_verifier, serial, client_id } = data
     // Nile prints output to stderr
     const { stderr: output } = await libraryManagerMap['nile'].runRunnerCommand(

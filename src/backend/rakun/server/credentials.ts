@@ -12,7 +12,9 @@ export const credentialsPath = join(appFolder, 'api.json')
 function isCredentials(value: unknown): value is ApiCredentials {
   const candidate = value as Partial<ApiCredentials> | null
   return (
-    typeof candidate?.port === 'number' && typeof candidate.token === 'string'
+    typeof candidate?.port === 'number' &&
+    typeof candidate.token === 'string' &&
+    candidate.token.length >= 32
   )
 }
 

@@ -1,5 +1,11 @@
 import axios, { AxiosError } from 'axios'
-import { existsSync, unlinkSync, writeFileSync, readFileSync } from 'fs'
+import {
+  chmodSync,
+  existsSync,
+  unlinkSync,
+  writeFileSync,
+  readFileSync
+} from 'fs'
 import { logError, logInfo, LogPrefix, logWarning } from 'backend/logger'
 import { configStore } from './electronStores'
 import { isOnline } from '../../online_monitor'
@@ -39,7 +45,8 @@ export class ZoomUser {
       return { status: 'error' }
     }
     try {
-      writeFileSync(tokenPath, token, { encoding: 'utf-8' })
+      writeFileSync(tokenPath, token, { encoding: 'utf-8', mode: 0o600 })
+      chmodSync(tokenPath, 0o600)
       logInfo('Zoom token saved successfully', LogPrefix.Zoom)
       verifiedUntil = 0
       configStore.set('isLoggedIn', true)

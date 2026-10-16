@@ -223,7 +223,13 @@ function getRunnerCallWithoutCredentials(
     command = libraryManagerMap['legendary'].commandToArgsArray(command)
 
   const modifiedCommand = [...command]
-  for (const sensitiveArg of ['--code', '--token']) {
+  for (const sensitiveArg of [
+    '--code',
+    '--token',
+    '--code-verifier',
+    '--serial',
+    '--client-id'
+  ]) {
     if (runnerPath === 'powershell') {
       const argumentListIndex = modifiedCommand.indexOf('-ArgumentList') + 1
       if (!argumentListIndex) continue
