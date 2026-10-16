@@ -159,7 +159,8 @@ export async function callRunner(
 
       res({
         stdout: stdout.join(),
-        stderr: stderr.join('\n')
+        stderr: stderr.join('\n'),
+        code
       })
     })
 
@@ -169,8 +170,14 @@ export async function callRunner(
   })
 
   promise = promise
-    .then(({ stdout, stderr }) => {
-      return { stdout, stderr, fullCommand: safeCommand }
+    .then(({ stdout, stderr, code }) => {
+      if (code) {
+        logWarning(
+          ['Command exited with code', code, `"${safeCommand}"`],
+          runner.logPrefix
+        )
+      }
+      return { stdout, stderr, code, fullCommand: safeCommand }
     })
     .catch((error) => {
       if (abortController.signal.aborted) {

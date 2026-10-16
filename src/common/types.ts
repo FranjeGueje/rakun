@@ -72,6 +72,8 @@ export type ExecResult = {
   fullCommand?: string
   error?: string
   abort?: boolean
+  /** The exit code of the helper (null when a signal ended it). Not set when it never ran */
+  code?: number | null
 }
 
 export interface ExtraInfo {
