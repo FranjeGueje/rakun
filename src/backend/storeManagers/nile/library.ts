@@ -24,9 +24,26 @@ import NileGame from './games'
 import type { LibraryManager } from 'common/types/game_manager'
 import { shareInFlight } from 'backend/utils/inflight'
 import { nileRefusedToken } from './refused_token'
+import { parseHelperJson } from '../helper_output'
 import { clearSessionExpired, markSessionExpired } from '../session_state'
 
 const installInfoInFlight = new Map<string, Promise<NileInstallInfo>>()
+
+const isStringList = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((item) => typeof item === 'string')
+
+const isDownloadInfo = (value: unknown): value is NileGameDownloadInfo =>
+  typeof (value as NileGameDownloadInfo | null)?.download_size === 'number'
+
+/** The parts of a game of library.json that rakun reads without asking */
+const isNileGame = (value: unknown): value is NileGameInfo => {
+  const product = (value as NileGameInfo | null)?.product
+  return (
+    typeof product?.id === 'string' &&
+    typeof product.productDetail?.details === 'object' &&
+    product.productDetail.details !== null
+  )
+}
 
 const refusedRenewing = ({ stdout, stderr, error }: ExecResult) =>
   nileRefusedToken(`${stdout}\n${stderr}\n${error}`)
@@ -73,9 +90,26 @@ export default class NileLibraryManager implements LibraryManager {
     if (!existsSync(nileLibrary)) {
       return
     }
-    const libraryJSON: NileGameInfo[] = JSON.parse(
-      readFileSync(nileLibrary, 'utf-8')
-    )
+    // library.json is nile's: if it is not a list of games we know, the library
+    // we hold stays as it was (and the reason is logged), it is not emptied
+    let libraryJSON: NileGameInfo[]
+    try {
+      const all = parseHelperJson(
+        'nile',
+        'library.json',
+        readFileSync(nileLibrary, 'utf-8'),
+        Array.isArray as (value: unknown) => value is unknown[]
+      )
+      libraryJSON = all.filter(isNileGame)
+      if (libraryJSON.length < all.length)
+        logWarning(
+          `${all.length - libraryJSON.length} games of nile's library.json are not in the shape rakun reads and were left out`,
+          LogPrefix.Nile
+        )
+    } catch (error) {
+      logError(['Could not read the Amazon library:', error], LogPrefix.Nile)
+      return
+    }
     libraryJSON.forEach((game) => {
       const { product } = game
       const { title, productDetail } = product
@@ -176,7 +210,12 @@ export default class NileLibraryManager implements LibraryManager {
       return []
     }
 
-    const updates: string[] = JSON.parse(output)
+    const updates = parseHelperJson(
+      'nile',
+      'list-updates --json',
+      output,
+      isStringList
+    )
     logInfo(
       `Found ${updates.length} game${updates.length !== 1 ? 's' : ''} to update`,
       LogPrefix.Nile
@@ -349,7 +388,12 @@ export default class NileLibraryManager implements LibraryManager {
       if (!output?.trim()) {
         throw Error(`Empty response from nile for ${appName}`)
       }
-      const { download_size }: NileGameDownloadInfo = JSON.parse(output)
+      const { download_size } = parseHelperJson(
+        'nile',
+        'install --info --json',
+        output,
+        isDownloadInfo
+      )
       const installInfo = {
         game: {
           id: appName,

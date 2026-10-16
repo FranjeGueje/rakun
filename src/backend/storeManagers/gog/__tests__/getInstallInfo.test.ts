@@ -86,6 +86,27 @@ describe('GOGLibraryManager.getInstallInfo', () => {
     expect(manager.runRunnerCommand).toHaveBeenCalledTimes(1)
   })
 
+  it.each([
+    ['another shape', '{"message":"gogdl changed"}'],
+    ['no languages', '{"size":{},"dlcs":[],"folder_name":"G"}'],
+    ['not JSON', 'Traceback (most recent call last):']
+  ])(
+    'output with %s is not taken for a game: no info, no TypeError, nothing saved',
+    async (_, stdout) => {
+      manager.runRunnerCommand = jest.fn().mockResolvedValue({
+        stdout,
+        stderr: '',
+        error: undefined,
+        abort: false
+      })
+
+      await expect(
+        manager.getInstallInfo('test-game', 'windows')
+      ).resolves.toBeUndefined()
+      expect(mockedInstallInfoStore.set).not.toHaveBeenCalled()
+    }
+  )
+
   it('should return install info when stdout has valid JSON', async () => {
     const validInfo = {
       size: { '*': { download_size: 3000, disk_size: 5000 } },

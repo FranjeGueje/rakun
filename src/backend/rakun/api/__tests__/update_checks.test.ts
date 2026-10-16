@@ -77,10 +77,16 @@ describe('checkGameUpdates', () => {
     expect(list()).toHaveBeenCalledTimes(2)
   })
 
+  test('a store whose helper gives output rakun does not know has nothing to update, and does not stop the check', async () => {
+    list().mockRejectedValueOnce(new Error('nile list-updates: not the output'))
+
+    expect(await invokeHandler('checkGameUpdates')).toEqual([])
+  })
+
   test('a failed check does not stick: the next one runs', async () => {
     list().mockRejectedValueOnce(new Error('offline')).mockResolvedValue(['g2'])
 
-    await expect(invokeHandler('checkGameUpdates')).rejects.toThrow('offline')
+    await invokeHandler('checkGameUpdates')
 
     expect(await invokeHandler('checkGameUpdates')).toEqual(['g2'])
   })

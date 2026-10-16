@@ -48,6 +48,7 @@ import { userDataPath } from 'backend/constants/paths'
 import GOGGame from './games'
 import type { LibraryManager, PreflightOp } from 'common/types/game_manager'
 import { shareInFlight } from 'backend/utils/inflight'
+import { parseHelperJson } from '../helper_output'
 import { hasDuplicates, uniqueInstalled } from '../installed_list'
 import { GlobalConfig } from 'backend/config'
 
@@ -63,6 +64,19 @@ const installInfoInFlight = new Map<
   string,
   Promise<GogInstallInfo | undefined>
 >()
+
+/** The parts of `gogdl info` that rakun reads without asking: if one is missing the output is not the one it knows */
+const isGogInfo = (value: unknown): value is GOGDLInstallInfo => {
+  const info = value as Partial<GOGDLInstallInfo> | null
+  return (
+    typeof info?.folder_name === 'string' &&
+    Array.isArray(info.languages) &&
+    info.languages.every((language) => typeof language === 'string') &&
+    typeof info.size === 'object' &&
+    info.size !== null &&
+    Array.isArray(info.dlcs)
+  )
+}
 
 export default class GOGLibraryManager implements LibraryManager {
   private readonly gameCache: Map<string, GOGGame> = new Map()
@@ -541,7 +555,7 @@ export default class GOGLibraryManager implements LibraryManager {
 
     let gogInfo: GOGDLInstallInfo
     try {
-      gogInfo = JSON.parse(res.stdout)
+      gogInfo = parseHelperJson('gogdl', 'info', res.stdout, isGogInfo)
     } catch (error) {
       logError(
         ['Error when parsing JSON file on getInstallInfo', error],

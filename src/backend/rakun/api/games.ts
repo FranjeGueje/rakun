@@ -39,7 +39,17 @@ async function checkGameUpdates(): Promise<string[]> {
   for (const runner of Object.keys(
     libraryManagerMap
   ) as (keyof typeof libraryManagerMap)[]) {
-    let gamesToUpdate = await libraryManagerMap[runner].listUpdateableGames()
+    // A store whose helper answers in a way rakun does not know has nothing to
+    // update for now: the stores after it are still asked
+    let gamesToUpdate: string[] = []
+    try {
+      gamesToUpdate = await libraryManagerMap[runner].listUpdateableGames()
+    } catch (error) {
+      logError(
+        [`Could not list the updates of ${runner}:`, error],
+        LogPrefix.Backend
+      )
+    }
     if (autoUpdateGames) {
       gamesToUpdate = await autoUpdate(runner, gamesToUpdate)
     }

@@ -8,6 +8,7 @@ import { isOnline } from '../../online_monitor'
 import { GOGCredentials, UserData } from 'common/types/gog'
 import { libraryManagerMap } from '../index'
 import { clearCache } from 'backend/utils'
+import { redactSecrets } from '../helper_output'
 import { clearSessionExpired, markSessionExpired } from '../session_state'
 import { gogdlAuthConfig } from './constants'
 
@@ -16,17 +17,7 @@ import { gogdlAuthConfig } from './constants'
  * traceback, which can echo the token URL including the client secret and the
  * authorization code.
  */
-function redactAuthSecrets(text: string): string {
-  return text
-    .replace(
-      /((?:client_secret|code|refresh_token|access_token)=)[^&\s"']+/gi,
-      '$1<redacted>'
-    )
-    .replace(
-      /("(?:access_token|refresh_token|session_id|user_id)"\s*:\s*")[^"]*"/gi,
-      '$1<redacted>"'
-    )
-}
+const redactAuthSecrets = redactSecrets
 
 /** What gogdl hands out as credentials: the token and who it is for (anything else is not credentials) */
 function isCredentials(value: unknown): value is GOGCredentials {

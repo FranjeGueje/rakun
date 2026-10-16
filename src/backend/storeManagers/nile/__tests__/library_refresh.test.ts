@@ -220,3 +220,70 @@ describe('NileLibraryManager.updateInstalledPathInJSON and a file it cannot read
     expect(writeFileSync).not.toHaveBeenCalled()
   })
 })
+
+describe('NileLibraryManager and output of nile that rakun does not know', () => {
+  const manager = () => {
+    const library = new NileLibraryManager()
+    mockedIsLoggedIn.mockReturnValue({} as never)
+    jest.mocked(getNileBin).mockReturnValue({ dir: '/tmp', bin: 'nile' })
+    return library
+  }
+
+  test('a list of updates in another shape is an error that names the command, not «no updates»', async () => {
+    jest.mocked(callRunner).mockResolvedValue({
+      stdout: '{"updates":["g1"]}',
+      stderr: '',
+      code: 0
+    })
+
+    await expect(manager().listUpdateableGames()).rejects.toThrow(
+      'list-updates'
+    )
+  })
+
+  test('a good list of updates comes back as it is', async () => {
+    jest.mocked(callRunner).mockResolvedValue({
+      stdout: '["g1","g2"]',
+      stderr: '',
+      code: 0
+    })
+
+    expect(await manager().listUpdateableGames()).toEqual(['g1', 'g2'])
+  })
+
+  test('a library.json that is not a list leaves the library as it was', () => {
+    jest.mocked(existsSync).mockReturnValue(true)
+    jest.mocked(readFileSync).mockReturnValue('{"games":[]}')
+    const library = manager()
+    const set = jest.spyOn(
+      (library as unknown as { library: Map<string, unknown> }).library,
+      'set'
+    )
+
+    expect(() => library.loadGamesInAccount()).not.toThrow()
+    expect(set).not.toHaveBeenCalled()
+  })
+
+  test('a game that is not in the shape rakun reads is left out, the others are kept', () => {
+    jest.mocked(existsSync).mockReturnValue(true)
+    jest.mocked(readFileSync).mockReturnValue(
+      JSON.stringify([
+        { product: { id: 'bad' } },
+        {
+          product: {
+            id: 'good',
+            title: 'Good',
+            productDetail: { details: {}, iconUrl: 'i' }
+          }
+        }
+      ])
+    )
+    const library = manager()
+
+    library.loadGamesInAccount()
+
+    const held = (library as unknown as { library: Map<string, unknown> })
+      .library
+    expect([...held.keys()]).toEqual(['good'])
+  })
+})
