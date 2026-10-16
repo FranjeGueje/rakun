@@ -6,15 +6,15 @@ Commands that change something (`install`, `update`, `repair`, `uninstall`) wait
 
 ## Starting and stopping
 
-| Command                                        | What it does                                                                                                      |
-| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `start [--web local\|network\|off] [--port N]` | start rakun in the background                                                                                     |
-| `stop [--force]`                               | stop it (`--force` even if a download is running)                                                                 |
-| `install-service [--web ...] [--port N]`       | systemd user service, started at every login                                                                      |
-| `uninstall-service`                            | stop it and remove the service                                                                                    |
-| `self-update [--check] [--force]`              | install the newest rakun (`--check`: only say if there is one)                                                    |
-| `status [--check]`                             | version, sessions, queue, helpers (or "rakun is stopped"); `--check` asks GOG and Zoom if the session still works |
-| `-s <command>`                                 | run one command with rakun up, then stop it again                                                                 |
+| Command                                        | What it does                                                                                                               |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `start [--web local\|network\|off] [--port N]` | start rakun in the background                                                                                              |
+| `stop [--force]`                               | stop it (`--force` even if a download is running)                                                                          |
+| `install-service [--web ...] [--port N]`       | systemd user service, started at every login                                                                               |
+| `uninstall-service`                            | stop it and remove the service                                                                                             |
+| `self-update [--check] [--force]`              | install the newest rakun (`--check`: only say if there is one)                                                             |
+| `status [--check]`                             | version, sessions, queue, helpers (or "rakun is stopped"); `--check` asks GOG, Zoom and itch.io if the session still works |
+| `-s <command>`                                 | run one command with rakun up, then stop it again                                                                          |
 
 ### `-s`: start only while a command runs
 

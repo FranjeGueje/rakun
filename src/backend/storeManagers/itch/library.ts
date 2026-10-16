@@ -8,6 +8,8 @@ import { isOnline } from '../../online_monitor'
 import ItchGameManager from './games'
 import { ItchUser } from './user'
 import { getButlerd } from './client'
+import { isAuthRefusal } from './butlerd'
+import { clearSessionExpired, markSessionExpired } from '../session_state'
 import {
   configStore,
   installedGamesStore,
@@ -53,8 +55,11 @@ export default class ItchLibraryManager implements LibraryManager {
       this.keepInstalledOutsideLibrary()
     } catch (error) {
       logError(['Failed to refresh the itch library:', error], LogPrefix.Itch)
+      // itch.io refused the key: the library stays as it was, the session is marked
+      if (isAuthRefusal(error)) markSessionExpired('itch')
       return { stdout: '', stderr: 'Error loading library' }
     }
+    clearSessionExpired('itch')
     libraryStore.set('games', Array.from(library.values()).map(withoutInstall))
     logInfo(`Library refreshed: ${library.size} games`, LogPrefix.Itch)
     return { stdout: 'Library refreshed', stderr: '' }

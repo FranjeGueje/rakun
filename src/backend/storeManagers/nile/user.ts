@@ -121,7 +121,7 @@ export class NileUser {
     }
 
     configStore.set('userData', user)
-    logInfo('Saved user data to config file', LogPrefix.Nile)
+    logDebug('Saved user data to config file', LogPrefix.Nile)
 
     return user
   }

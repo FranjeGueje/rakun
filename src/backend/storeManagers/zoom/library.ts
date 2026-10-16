@@ -353,7 +353,7 @@ export default class ZoomLibraryManager implements LibraryManager {
   }
 
   async listUpdateableGames(): Promise<string[]> {
-    logWarning('listUpdateableGames not implemented for Zoom', LogPrefix.Zoom)
+    logDebug('listUpdateableGames not implemented for Zoom', LogPrefix.Zoom)
     return []
   }
 

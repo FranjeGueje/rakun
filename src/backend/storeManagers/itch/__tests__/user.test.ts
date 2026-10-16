@@ -27,6 +27,7 @@ import { logError } from 'backend/logger'
 import { clearCache } from '../../../utils'
 import { revokeToken } from '../oauth'
 import { ItchUser } from '../user'
+import { ButlerdError, isAuthRefusal } from '../butlerd'
 
 const revoke = jest.mocked(revokeToken)
 
@@ -91,5 +92,56 @@ describe('logout', () => {
     expect(logError).toHaveBeenCalled()
     expect(ItchUser.isLoggedIn()).toBe(false)
     expect(mockStore.oauthToken).toBeUndefined()
+  })
+})
+
+// The words are the ones butler really gave for a revoked key
+const REVOKED = 'itch.io API error (403): /profile: invalid key'
+
+describe('isAuthRefusal', () => {
+  test('a revoked key is a refusal, whatever the 401 or 403', () => {
+    expect(isAuthRefusal(new ButlerdError(1, REVOKED))).toBe(true)
+    expect(
+      isAuthRefusal(new ButlerdError(1, 'itch.io API error (401): /profile'))
+    ).toBe(true)
+  })
+
+  test('a server error, a network failure or any other error is not', () => {
+    expect(
+      isAuthRefusal(new ButlerdError(1, 'itch.io API error (500): /profile'))
+    ).toBe(false)
+    expect(isAuthRefusal(new ButlerdError(1, 'cave not found'))).toBe(false)
+    expect(isAuthRefusal(new Error(REVOKED))).toBe(false)
+    expect(isAuthRefusal(undefined)).toBe(false)
+  })
+})
+
+describe('check', () => {
+  test('with no saved login it is out, without asking butler', async () => {
+    expect(await ItchUser.check()).toBe(false)
+    expect(mockCall).not.toHaveBeenCalled()
+  })
+
+  test('butler accepts the saved login: it works', async () => {
+    mockStore.profileId = 7
+
+    expect(await ItchUser.check()).toBe(true)
+    expect(mockCall).toHaveBeenCalledWith('Profile.UseSavedLogin', {
+      profileId: 7
+    })
+  })
+
+  test('itch.io refuses the key: out', async () => {
+    mockStore.profileId = 7
+    mockCall.mockRejectedValue(new ButlerdError(1, REVOKED))
+
+    expect(await ItchUser.check()).toBe(false)
+  })
+
+  test('butler or the network failed: cannot tell', async () => {
+    mockStore.profileId = 7
+    mockCall.mockRejectedValue(new Error('connection refused'))
+
+    expect(await ItchUser.check()).toBeUndefined()
   })
 })

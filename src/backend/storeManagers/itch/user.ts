@@ -1,6 +1,6 @@
 import { logError, logInfo, LogPrefix } from 'backend/logger'
 import type { ItchUser as ItchUserData } from 'common/types/itch'
-import { ButlerdError } from './butlerd'
+import { ButlerdError, isAuthRefusal } from './butlerd'
 import { getButlerd } from './client'
 import { configStore } from './electronStores'
 import { clearCache } from '../../utils'
@@ -31,6 +31,18 @@ export class ItchUser {
     if (oauth) configStore.set('oauthToken', apiKey)
     else configStore.delete('oauthToken')
     logInfo(`Logged in as ${profile.user.username}`, LogPrefix.Itch)
+  }
+
+  /** Asks itch.io through butler if the saved login still works: true, false (refused), or nothing when it could not be told */
+  static async check(): Promise<boolean | undefined> {
+    const profileId = configStore.get_nodefault('profileId')
+    if (profileId === undefined) return false
+    try {
+      await (await getButlerd()).call('Profile.UseSavedLogin', { profileId })
+      return true
+    } catch (error) {
+      return isAuthRefusal(error) ? false : undefined
+    }
   }
 
   static async logout(): Promise<void> {

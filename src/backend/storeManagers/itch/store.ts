@@ -21,7 +21,8 @@ export const itch: Store<ItchLibraryManager> = {
       loggedIn: ItchUser.isLoggedIn(),
       name: ItchUser.username()
     }),
-    logout: () => ItchUser.logout()
+    logout: () => ItchUser.logout(),
+    check: () => ItchUser.check()
   },
   login: {
     urlParam: 'code',

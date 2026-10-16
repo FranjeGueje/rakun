@@ -24,7 +24,7 @@ In `network` mode, settings, folders, logs and a few more channels only answer t
 
 ## A store says "session expired"
 
-`rakunctl status` (and the Accounts screen of the web) shows `session expired, log in again (the games are kept)` when a store refused the login you had: the token ran out or was revoked. Nothing is deleted and you are not logged out. Your library and the installed games stay as they were, and what is in Steam keeps working. Install, update and repair say that the session has expired until you log in again: `rakunctl login <store>` (or select the store in the web). `rakunctl status --check` asks GOG and Zoom if the session still works, and clears the mark if it does.
+`rakunctl status` (and the Accounts screen of the web) shows `session expired, log in again (the games are kept)` when a store refused the login you had: the token ran out or was revoked. Nothing is deleted and you are not logged out. Your library and the installed games stay as they were, and what is in Steam keeps working. Install, update and repair say that the session has expired until you log in again: `rakunctl login <store>` (or select the store in the web). `rakunctl status --check` asks GOG, Zoom and itch.io if the session still works, and clears the mark if it does.
 
 ## Games in Steam
 

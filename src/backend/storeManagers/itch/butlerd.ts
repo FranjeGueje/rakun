@@ -49,6 +49,18 @@ export class ButlerdError extends Error {
   }
 }
 
+/**
+ * itch.io refused the key or the token (revoked, or never valid): butlerd
+ * answers «itch.io API error (403): /profile: invalid key». A network failure
+ * or a server error is another thing and is not this.
+ */
+export function isAuthRefusal(error: unknown): boolean {
+  return (
+    error instanceof ButlerdError &&
+    /itch\.io API error \((401|403)\)/.test(error.message)
+  )
+}
+
 /** The line butlerd prints with its address, or undefined for any other line (logs) */
 export function parseHandshake(line: string): Handshake | undefined {
   try {
