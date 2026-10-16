@@ -1,5 +1,5 @@
 import { invokeHandler } from 'backend/ipc'
-import { sendGameStatusUpdate, isEpicServiceOffline } from 'backend/utils'
+import { sendGameStatusUpdate } from 'backend/utils'
 import { isOnline } from 'backend/online_monitor'
 import { libraryManagerMap } from 'backend/storeManagers'
 import { showDialogBoxModalAuto } from 'backend/dialog/dialog'
@@ -13,7 +13,6 @@ jest.mock('fs', () => ({
 }))
 jest.mock('backend/config', () => ({ GlobalConfig: { get: jest.fn() } }))
 jest.mock('backend/utils', () => ({
-  isEpicServiceOffline: jest.fn(),
   sendGameStatusUpdate: jest.fn()
 }))
 jest.mock('backend/utils/uninstaller', () => ({
@@ -58,7 +57,7 @@ const statuses = () =>
 // The config resets the mocks before each test: what they answer is set here
 beforeEach(() => {
   jest.mocked(isOnline).mockReturnValue(true)
-  jest.mocked(isEpicServiceOffline).mockResolvedValue(false)
+  delete (libraryManagerMap.legendary as { preflight?: unknown }).preflight
   const game = { getGameInfo: () => ({ title: 'Game' }), repair, importGame }
   for (const runner of ['gog', 'legendary'] as const)
     jest
@@ -145,11 +144,15 @@ describe('importGame', () => {
     expect(statuses()).toEqual(['importing', 'done'])
   })
 
-  test('Epic with its servers down is refused with a warning, before importing', async () => {
-    jest.mocked(isEpicServiceOffline).mockResolvedValue(true)
+  test('a store that refuses the import is warned about, before importing', async () => {
+    ;(libraryManagerMap.legendary as { preflight?: unknown }).preflight = jest
+      .fn()
+      .mockResolvedValue('Epic Servers are down')
 
     expect(await run({ runner: 'legendary' })).toEqual({ status: 'error' })
-    expect(showDialogBoxModalAuto).toHaveBeenCalled()
+    expect(showDialogBoxModalAuto).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Epic Servers are down' })
+    )
     expect(importGame).not.toHaveBeenCalled()
   })
 })

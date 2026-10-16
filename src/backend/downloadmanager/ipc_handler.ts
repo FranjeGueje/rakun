@@ -10,6 +10,7 @@ import {
 } from './downloadqueue'
 
 import { stores } from 'backend/storeManagers'
+import { libraryOf } from 'backend/storeManagers/library_of'
 import type { DMQueueElement, InstallParams } from 'common/types'
 
 /** Installing over an installed game would download it all again and nothing else */
@@ -38,7 +39,7 @@ addHandler('install', async (_e, args) => {
   if (
     Array.isArray(args.installDlcs) &&
     args.installDlcs.length > 0 &&
-    args.runner === 'legendary'
+    libraryOf(args.runner).queuesDlcs
   ) {
     for (const dlc of args.installDlcs) {
       const dlcQueueElement: DMQueueElement = {

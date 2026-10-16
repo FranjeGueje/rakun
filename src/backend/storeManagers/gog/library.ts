@@ -46,7 +46,7 @@ import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { gogdlConfigPath } from './constants'
 import { userDataPath } from 'backend/constants/paths'
 import GOGGame from './games'
-import type { LibraryManager } from 'common/types/game_manager'
+import type { LibraryManager, PreflightOp } from 'common/types/game_manager'
 import { shareInFlight } from 'backend/utils/inflight'
 import { hasDuplicates, uniqueInstalled } from '../installed_list'
 import { GlobalConfig } from 'backend/config'
@@ -66,6 +66,13 @@ const installInfoInFlight = new Map<
 
 export default class GOGLibraryManager implements LibraryManager {
   private readonly gameCache: Map<string, GOGGame> = new Map()
+
+  // A manifest left by an earlier try makes the install end as soon as it starts
+  async preflight(op: PreflightOp, appName: string): Promise<undefined> {
+    const manifest = join(gogdlConfigPath, 'manifests', appName)
+    if (op === 'install' && existsSync(manifest)) rmSync(manifest)
+    return undefined
+  }
 
   async init() {
     await this.refresh()

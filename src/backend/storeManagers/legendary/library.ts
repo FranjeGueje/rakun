@@ -35,7 +35,7 @@ import { LegendaryAppName, LegendaryPlatform } from './commands/base'
 import { Path } from 'backend/schemas'
 import { Entries } from 'type-fest'
 import { legendaryConfigPath, legendaryMetadata } from './constants'
-import { LibraryManager } from 'common/types/game_manager'
+import { LibraryManager, PreflightOp } from 'common/types/game_manager'
 import LegendaryGame from './games'
 import { shareInFlight } from 'backend/utils/inflight'
 
@@ -49,6 +49,14 @@ const installInfoInFlight = new Map<string, Promise<LegendaryInstallInfo>>()
 
 export default class LegendaryLibraryManager implements LibraryManager {
   private readonly gameCache: Map<LegendaryAppName, LegendaryGame> = new Map()
+
+  readonly queuesDlcs = true
+
+  async preflight(op: PreflightOp): Promise<string | undefined> {
+    if (!(await isEpicServiceOffline())) return undefined
+    const done = { install: 'installed', update: 'updated', import: 'imported' }
+    return `Epic Servers are having major outage right now, the game cannot be ${done[op]}!`
+  }
 
   async init() {
     this.loadGamesInAccount()

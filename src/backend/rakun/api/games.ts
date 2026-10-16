@@ -2,7 +2,9 @@ import type { StatusPromise } from 'common/types'
 import { existsSync, watch } from 'fs'
 import { addHandler, addListener } from 'backend/ipc'
 import { GlobalConfig } from 'backend/config'
-import { isEpicServiceOffline, sendGameStatusUpdate } from 'backend/utils'
+import { sendGameStatusUpdate } from 'backend/utils'
+import { isRefused } from 'backend/storeManagers/preflight'
+import { libraryOf } from 'backend/storeManagers/library_of'
 import { uninstallGameCallback } from 'backend/utils/uninstaller'
 import {
   logError,
@@ -42,14 +44,9 @@ addHandler('isGameAvailable', async (e, args) => {
 
 addHandler('getGameInfo', async (event, appName, runner) => {
   // Fastpath since we sometimes have to request info for a GOG game as Legendary because we don't know it's a GOG game yet
-  if (
-    runner === 'legendary' &&
-    !libraryManagerMap['legendary'].hasGame(appName)
-  ) {
-    return null
-  }
-  // An itch.io game that is in none of the user's lists is added by its id
-  if (runner === 'itch') await libraryManagerMap['itch'].ensureGame(appName)
+  if (libraryOf(runner).hasGame?.(appName) === false) return null
+  // A game that is in none of the user's lists (itch.io) is added by its id
+  await libraryOf(runner).ensureGame?.(appName)
   const tempGameInfo = libraryManagerMap[runner].getGame(appName).getGameInfo()
   // The game managers return an empty object if they couldn't fetch the game
   // info, since most of the backend assumes getting it can never fail (and
@@ -62,12 +59,7 @@ addHandler('getGameInfo', async (event, appName, runner) => {
 
 addHandler('getExtraInfo', async (event, appName, runner) => {
   // Fastpath since we sometimes have to request info for a GOG game as Legendary because we don't know it's a GOG game yet
-  if (
-    runner === 'legendary' &&
-    !libraryManagerMap['legendary'].hasGame(appName)
-  ) {
-    return null
-  }
+  if (libraryOf(runner).hasGame?.(appName) === false) return null
   return libraryManagerMap[runner].getGame(appName).getExtraInfo()
 })
 
@@ -193,18 +185,7 @@ addHandler(
 addHandler(
   'importGame',
   async (event, { appName, path, runner, platform }): StatusPromise => {
-    if (runner === 'legendary') {
-      const epicOffline = await isEpicServiceOffline()
-      if (epicOffline) {
-        showDialogBoxModalAuto({
-          title: 'Warning',
-          message:
-            'Epic Servers are having major outage right now, the game cannot be imported!',
-          type: 'ERROR'
-        })
-        return { status: 'error' }
-      }
-    }
+    if (await isRefused(runner, 'import', appName)) return { status: 'error' }
 
     const { title } = libraryManagerMap[runner].getGame(appName).getGameInfo()
     sendGameStatusUpdate({
