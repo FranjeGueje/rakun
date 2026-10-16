@@ -33,12 +33,19 @@ export class ItchUser {
     logInfo(`Logged in as ${profile.user.username}`, LogPrefix.Itch)
   }
 
-  /** Asks itch.io through butler if the saved login still works: true, false (refused), or nothing when it could not be told */
+  /**
+   * Asks itch.io through butler if the saved login still works: true, false
+   * (refused), or nothing when it could not be told. UseSavedLogin alone does
+   * not ask itch.io (it answers from butler's database, also with no network),
+   * so a page of the keys is asked fresh, which has to go to the server.
+   */
   static async check(): Promise<boolean | undefined> {
     const profileId = configStore.get_nodefault('profileId')
     if (profileId === undefined) return false
     try {
-      await (await getButlerd()).call('Profile.UseSavedLogin', { profileId })
+      const butlerd = await getButlerd()
+      await butlerd.call('Profile.UseSavedLogin', { profileId })
+      await butlerd.call('Fetch.ProfileOwnedKeys', { profileId, fresh: true })
       return true
     } catch (error) {
       return isAuthRefusal(error) ? false : undefined

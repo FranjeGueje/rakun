@@ -122,13 +122,28 @@ describe('check', () => {
     expect(mockCall).not.toHaveBeenCalled()
   })
 
-  test('butler accepts the saved login: it works', async () => {
+  test('butler and itch.io accept it: it works, and the server was really asked', async () => {
     mockStore.profileId = 7
 
     expect(await ItchUser.check()).toBe(true)
     expect(mockCall).toHaveBeenCalledWith('Profile.UseSavedLogin', {
       profileId: 7
     })
+    expect(mockCall).toHaveBeenCalledWith('Fetch.ProfileOwnedKeys', {
+      profileId: 7,
+      fresh: true
+    })
+  })
+
+  test('the saved login passes butler but the fresh fetch is refused: out', async () => {
+    mockStore.profileId = 7
+    mockCall.mockImplementation((method: string) =>
+      method === 'Fetch.ProfileOwnedKeys'
+        ? Promise.reject(new ButlerdError(1, REVOKED))
+        : Promise.resolve({})
+    )
+
+    expect(await ItchUser.check()).toBe(false)
   })
 
   test('itch.io refuses the key: out', async () => {
