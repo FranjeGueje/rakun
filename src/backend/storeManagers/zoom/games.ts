@@ -1,3 +1,4 @@
+import { pickWindowsExecutable } from './executables'
 import {
   getFileSize,
   parseSize,
@@ -5,7 +6,7 @@ import {
   sendProgressUpdate,
   moveOnUnix
 } from '../../utils'
-import { join, relative, dirname } from 'node:path'
+import { join, dirname } from 'node:path'
 import * as fs from 'fs'
 import type { SpawnOptions } from 'child_process'
 import axios, { AxiosProgressEvent } from 'axios'
@@ -188,6 +189,89 @@ export default class ZoomGame implements Game {
     })
   }
 
+  /** Downloads each installer into `downloadRoot` (those already there are kept); `undefined` when all are in place */
+  private async downloadInstallers(
+    installers: ZoomDownloadFile[],
+    downloadRoot: string,
+    signal: AbortSignal,
+    totalSize: number
+  ): Promise<InstallResult | undefined> {
+    let downloaded = 0
+    for (const file of installers) {
+      const downloadPath = join(downloadRoot, file.filename)
+      let fileDownloaded = 0
+
+      // Create game directory
+      fs.mkdirSync(downloadRoot, { recursive: true })
+
+      // Download the installer
+      logInfo(
+        `Downloading installer from ${file.url} to ${downloadPath}`,
+        LogPrefix.Zoom
+      )
+
+      if (!existsSync(downloadPath)) {
+        try {
+          const response = await axios.get(file.url!, {
+            responseType: 'stream',
+            signal,
+            onDownloadProgress: (progressEvent: AxiosProgressEvent) => {
+              let percent: undefined | number
+              if (progressEvent.bytes) {
+                fileDownloaded = fileDownloaded + progressEvent.bytes
+                percent = Math.round(
+                  ((downloaded + fileDownloaded) * 100) / totalSize
+                )
+              }
+
+              this.onInstallOrUpdateOutput(
+                'installing',
+                `${percent}`,
+                totalSize
+              )
+            }
+          })
+
+          await saveStreamToFile(response.data, downloadPath)
+          logInfo(`Installer downloaded to ${downloadPath}`, LogPrefix.Zoom)
+
+          downloaded = downloaded + parseSize(file.size)
+        } catch (error) {
+          if (signal.aborted) return { status: 'abort' }
+          logError(['Failed to download installer:', error], LogPrefix.Zoom)
+          return {
+            status: 'error',
+            error: `Failed to download installer: ${String(error)}`
+          }
+        }
+      } else {
+        logDebug(`File already exists ${downloadPath}, skipping`)
+      }
+    }
+    return undefined
+  }
+
+  /** Saves the game as installed, in the installed list and in the library */
+  private recordInstalled(installedData: InstalledInfo) {
+    installedGamesStore.set(
+      'installed',
+      upsertInstalled(installedGamesStore.get('installed', []), installedData)
+    )
+    void libraryManagerMap['zoom'].refresh()
+    const libraryGame = this.getGameInfo()
+    if (libraryGame) {
+      libraryGame.is_installed = true
+      libraryGame.install = installedData
+      libraryManagerMap['zoom'].updateGameInLibrary(libraryGame)
+      libraryStore.set(
+        'games',
+        libraryStore
+          .get('games', [])
+          .map((g) => (g.app_name === this.id ? libraryGame : g))
+      )
+    }
+  }
+
   async install({
     path,
     platformToInstall,
@@ -248,59 +332,14 @@ export default class ZoomGame implements Game {
     const totalSize = installers
       .map((file) => parseSize(file.size))
       .reduce((acc, num) => acc + num, 0)
-    let downloaded = 0
 
-    for (const file of installers) {
-      const downloadPath = join(downloadRoot, file.filename)
-      let fileDownloaded = 0
-
-      // Create game directory
-      fs.mkdirSync(downloadRoot, { recursive: true })
-
-      // Download the installer
-      logInfo(
-        `Downloading installer from ${file.url} to ${downloadPath}`,
-        LogPrefix.Zoom
-      )
-
-      if (!existsSync(downloadPath)) {
-        try {
-          const response = await axios.get(file.url!, {
-            responseType: 'stream',
-            signal,
-            onDownloadProgress: (progressEvent: AxiosProgressEvent) => {
-              let percent: undefined | number
-              if (progressEvent.bytes) {
-                fileDownloaded = fileDownloaded + progressEvent.bytes
-                percent = Math.round(
-                  ((downloaded + fileDownloaded) * 100) / totalSize
-                )
-              }
-
-              this.onInstallOrUpdateOutput(
-                'installing',
-                `${percent}`,
-                totalSize
-              )
-            }
-          })
-
-          await saveStreamToFile(response.data, downloadPath)
-          logInfo(`Installer downloaded to ${downloadPath}`, LogPrefix.Zoom)
-
-          downloaded = downloaded + parseSize(file.size)
-        } catch (error) {
-          if (signal.aborted) return { status: 'abort' }
-          logError(['Failed to download installer:', error], LogPrefix.Zoom)
-          return {
-            status: 'error',
-            error: `Failed to download installer: ${String(error)}`
-          }
-        }
-      } else {
-        logDebug(`File already exists ${downloadPath}, skipping`)
-      }
-    }
+    const failed = await this.downloadInstallers(
+      installers,
+      downloadRoot,
+      signal,
+      totalSize
+    )
+    if (failed) return failed
 
     // Execute the installer
     let installResult: ExecResult
@@ -438,56 +477,10 @@ export default class ZoomGame implements Game {
       }
 
       if (!isDosbox) {
-        const findExes = async (dir: string): Promise<string[]> => {
-          let exes: string[] = []
-          try {
-            const list = await fs.promises.readdir(dir, { withFileTypes: true })
-            for (const file of list) {
-              const fullPath = join(dir, file.name)
-              if (file.isDirectory()) {
-                exes = exes.concat(await findExes(fullPath))
-              } else if (file.name.toLowerCase().endsWith('.exe')) {
-                exes.push(fullPath)
-              }
-            }
-          } catch (error) {
-            logError(
-              `Error finding .exe files in ${dir}: ${String(error)}`,
-              LogPrefix.Zoom
-            )
-          }
-          return exes
-        }
-        const exes = (await findExes(installPath))
-          .map((f) => relative(installPath, f))
-          .filter((name) => !/setup|unins|redist/i.test(name))
-
-        if (exes.length === 1) {
-          finalExecutable = exes[0]
-        } else if (exes.length > 1) {
-          const gameName = gameInfo.title
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, '')
-          const bestMatch = exes.find((exe) =>
-            exe
-              .toLowerCase()
-              .replace(/[^a-z0-9]/g, '')
-              .includes(gameName)
-          )
-          if (bestMatch) {
-            finalExecutable = bestMatch
-          } else {
-            let largestSize = 0
-            for (const exe of exes) {
-              const exePath = join(installPath, exe)
-              const stats = fs.statSync(exePath)
-              if (stats.size > largestSize) {
-                largestSize = stats.size
-                finalExecutable = exe
-              }
-            }
-          }
-        }
+        finalExecutable = await pickWindowsExecutable(
+          installPath,
+          gameInfo.title
+        )
       }
     } else {
       finalExecutable = executable
@@ -517,23 +510,7 @@ export default class ZoomGame implements Game {
       buildId: '',
       pinnedVersion: false
     }
-    installedGamesStore.set(
-      'installed',
-      upsertInstalled(installedGamesStore.get('installed', []), installedData)
-    )
-    void libraryManagerMap['zoom'].refresh()
-    const libraryGame = this.getGameInfo()
-    if (libraryGame) {
-      libraryGame.is_installed = true
-      libraryGame.install = installedData
-      libraryManagerMap['zoom'].updateGameInLibrary(libraryGame)
-      libraryStore.set(
-        'games',
-        libraryStore
-          .get('games', [])
-          .map((g) => (g.app_name === this.id ? libraryGame : g))
-      )
-    }
+    this.recordInstalled(installedData)
 
     logInfo(`Installation of ${this.id} completed.`, LogPrefix.Zoom)
     return { status: 'done', installPath }
