@@ -385,7 +385,9 @@ function removeQuoteIfNecessary(stringToUnquote: string) {
 // for us
 function killPattern(pattern: string) {
   logInfo(['Trying to kill', pattern], LogPrefix.Backend)
-  const ret = spawnSync('pkill', ['-f', pattern])
+  // pkill reads the pattern as a regex: escape it so "." matches only a dot
+  const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const ret = spawnSync('pkill', ['-f', '--', escaped])
   logInfo(['Killed', pattern], LogPrefix.Backend)
   return ret
 }
@@ -526,7 +528,7 @@ export async function moveOnUnix(
         })
       }
     )
-    if (code !== 1) {
+    if (code === 0) {
       logInfo(`Finished Moving ${title}`, LogPrefix.Backend)
       // remove the old install path
       await spawnAsync('rm', ['-rf', install_path])
@@ -540,7 +542,7 @@ export async function moveOnUnix(
       install_path,
       destination
     ])
-    if (code !== 1) {
+    if (code === 0) {
       return { status: 'done', installPath: destination }
     } else {
       logError(`Error: ${stderr}`, LogPrefix.Backend)
@@ -696,7 +698,7 @@ export const writeConfig = (config: Partial<AppSettings>) => {
     })
   }
 
-  GlobalConfig.get().set(config as AppSettings)
+  GlobalConfig.get().set({ ...oldConfig, ...config })
   GlobalConfig.get().flush()
 }
 

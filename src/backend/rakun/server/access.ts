@@ -19,6 +19,8 @@ const LOCAL_ONLY_CHANNELS: ReadonlySet<string> = new Set([
   // Secrets and what is on the disk
   'getLogContent',
   'listFolders',
+  // Kills processes by name
+  'kill',
   // Downloads programs that rakun then runs
   'updateHelpers',
   // Move or register game folders anywhere

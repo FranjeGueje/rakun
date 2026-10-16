@@ -247,6 +247,9 @@ addHandler(
 )
 
 addHandler('kill', async (event, appName, runner) => {
+  if (!/^[\w.-]+$/.test(appName)) {
+    throw new Error(`Invalid app name '${appName}'`)
+  }
   callAbortController(appName)
   return libraryManagerMap[runner].getGame(appName).stop()
 })
