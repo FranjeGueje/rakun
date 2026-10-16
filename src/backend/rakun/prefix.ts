@@ -1,4 +1,11 @@
-import { existsSync, mkdirSync, rmSync, symlinkSync, unlinkSync } from 'fs'
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  rmSync,
+  symlinkSync,
+  unlinkSync
+} from 'fs'
 import { dirname, join } from 'path'
 import { logInfo, logError, logWarning } from 'backend/logger'
 import { rakunMountPath, rakunGamesPath } from 'backend/constants/paths'
@@ -48,9 +55,8 @@ export function symlinkPrefix(
 
     mkdirSync(dirname(compatPath), { recursive: true })
 
-    if (existsSync(compatPath)) {
-      rmSync(compatPath, { recursive: true, force: true })
-    }
+    // Also a link whose target is gone, which existsSync does not see
+    rmSync(compatPath, { recursive: true, force: true })
 
     symlinkSync(installPath, compatPath)
     logInfo(`Prefix symlinked: ${compatPath} → ${installPath}`, LOG_PREFIX)
@@ -74,7 +80,7 @@ export function removePrefixSymlink(steamAppId: number): void {
       String(steamAppId)
     )
 
-    if (existsSync(compatPath)) {
+    if (lstatSync(compatPath, { throwIfNoEntry: false })?.isSymbolicLink()) {
       unlinkSync(compatPath)
       logInfo(`Removed prefix symlink ${compatPath}`, LOG_PREFIX)
     }

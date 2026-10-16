@@ -1,6 +1,6 @@
 import {
   chmodSync,
-  existsSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -121,7 +121,8 @@ export function createGameSymlink(
   }
   const linkPath = join(rakunGamesPath, basename(installPath))
   try {
-    if (existsSync(linkPath)) {
+    // A link whose target is gone does not «exist» for existsSync: look at the link itself
+    if (lstatSync(linkPath, { throwIfNoEntry: false })?.isSymbolicLink()) {
       unlinkSync(linkPath)
     }
     mkdirSync(rakunGamesPath, { recursive: true })
