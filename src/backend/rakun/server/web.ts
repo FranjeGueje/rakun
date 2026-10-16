@@ -17,7 +17,7 @@ const CSP =
   "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
   "img-src 'self' https: data:; connect-src 'self'; frame-ancestors 'none'"
 
-export type WebFile = { type: string; body: Buffer | string }
+type WebFile = { type: string; body: Buffer | string }
 
 /** The web sits next to the bundle (rakun/web in a release, build/web in a checkout); `RAKUN_WEB_DIR` points elsewhere */
 export function defaultWebDir(): string {

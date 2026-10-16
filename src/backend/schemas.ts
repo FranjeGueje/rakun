@@ -6,7 +6,7 @@ import path from 'path'
  */
 export type Brand<T, Name extends string> = T & { readonly __brand: Name }
 
-export type Schema<T> = { parse: (value: unknown) => T }
+type Schema<T> = { parse: (value: unknown) => T }
 
 /** `parse` gives the value back as `T`, or throws if `isValid` says no */
 export function schema<T>(

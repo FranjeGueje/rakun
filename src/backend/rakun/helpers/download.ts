@@ -26,7 +26,7 @@ import {
 
 const USER_AGENT = 'RakunBinaryUpdater/1.0'
 
-export type DownloadOptions = {
+type DownloadOptions = {
   /** The latest release of each helper instead of the version rakun was tested with: nothing is checked */
   latest?: boolean
   /** The architectures whose tools are downloaded (the Windows ones are always x64) */

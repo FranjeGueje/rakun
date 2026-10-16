@@ -30,7 +30,7 @@ import { helpers } from './commands/helpers'
 import { installService, uninstallService } from './commands/systemd'
 import { selfUpdate } from './commands/selfupdate'
 
-export const HELP = `Usage: rakunctl [options] <command> [arguments]
+const HELP = `Usage: rakunctl [options] <command> [arguments]
 
 Service
   start [--web MODE] [--port N]     Start rakun in the background

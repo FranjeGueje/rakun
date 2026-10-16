@@ -20,7 +20,7 @@ import {
 /** What `getHelpers` answers, with the helper as one of the known names */
 export type HelperEntry = HelperInfo & { helper: HelperName }
 
-export const TAGS_FILE = '.release_tags'
+const TAGS_FILE = '.release_tags'
 
 export const machineArch = (): Arch =>
   process.arch === 'arm64' ? 'arm64' : 'x64'

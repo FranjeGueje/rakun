@@ -1,7 +1,7 @@
 import { existsSync } from 'fs'
 import { isSteamDeckGameMode } from 'backend/constants/environment'
 
-export type DisplayCheck = { ok: true } | { ok: false; reason: string }
+type DisplayCheck = { ok: true } | { ok: false; reason: string }
 
 const LOCAL_DISPLAY = /^:(\d+)(\.\d+)?$/
 

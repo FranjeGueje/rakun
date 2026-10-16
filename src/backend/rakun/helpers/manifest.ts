@@ -212,7 +212,7 @@ export const ASSETS: Asset[] = [
   }
 ]
 
-export type Expected = { root: Root; file: string }
+type Expected = { root: Root; file: string }
 
 /** The files that tell a helper is there, for the tools of `arch` */
 export function expectedFiles(helper: HelperName, arch: Arch): Expected[] {

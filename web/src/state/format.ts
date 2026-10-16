@@ -17,7 +17,7 @@ export function progressText(status: GameStatus | undefined): string {
 export const percentOf = (status: GameStatus | undefined): number =>
   Math.max(0, Math.min(100, status?.progress?.percent ?? 0))
 
-export type FinishedKind = 'done' | 'error' | 'abort' | 'other'
+type FinishedKind = 'done' | 'error' | 'abort' | 'other'
 
 export function finishedKind(element: DMQueueElement): FinishedKind {
   if (element.status === 'done') return 'done'

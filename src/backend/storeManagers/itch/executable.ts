@@ -10,7 +10,7 @@ const run = promisify(execFile)
 export type Platform = 'windows' | 'linux'
 
 /** A file butler thinks can be run: its path relative to the folder it looked in */
-export type Candidate = { path: string; flavor: string; size: number }
+type Candidate = { path: string; flavor: string; size: number }
 
 /**
  * What the file of an installer, an uninstaller or a crash reporter is called (without its

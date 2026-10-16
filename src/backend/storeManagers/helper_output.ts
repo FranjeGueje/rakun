@@ -36,7 +36,7 @@ export class HelperOutputError extends Error {
 const unrecognized = new Map<string, string>()
 
 /** Remembers, and logs the first time, that a helper gave an output rakun does not know */
-export function markHelperOutputUnrecognized(error: HelperOutputError) {
+function markHelperOutputUnrecognized(error: HelperOutputError) {
   const key = `${error.helper} ${error.command}`
   if (unrecognized.has(key)) return
   unrecognized.set(key, error.message)

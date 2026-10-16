@@ -4,7 +4,7 @@ import type { AccountStatus } from 'common/rakun/accounts'
 import type { LoginInfo, LoginResult } from 'common/rakun/login'
 
 /** How a store keeps its session on disk and how to check or end it */
-export interface StoreSession {
+interface StoreSession {
   /** Who is logged in, from local data only (no network) */
   account: () => AccountStatus
   logout: () => Promise<void>

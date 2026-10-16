@@ -114,7 +114,7 @@ export type GameAction =
 export type Build = 'windows' | 'linux'
 
 /** A Linux build next to a Windows one: the user chooses (a stale library has no `is_windows_native`: assume it) */
-export const hasBothBuilds = (game: GameInfo): boolean =>
+const hasBothBuilds = (game: GameInfo): boolean =>
   !!game.is_linux_native && game.is_windows_native !== false
 
 /** What can be done with a game now. Nothing, while another operation holds it. */

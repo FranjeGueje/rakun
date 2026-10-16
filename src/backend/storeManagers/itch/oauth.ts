@@ -76,7 +76,7 @@ export function matchesPending(
 }
 
 /** What itch.io appended to the address it sent the browser to */
-export type Callback = { code?: string; state?: string; error?: string }
+type Callback = { code?: string; state?: string; error?: string }
 
 /** The `code`, `state` and `error` of a callback address; undefined for anything that is not an address */
 export function parseCallback(pasted: string): Callback | undefined {

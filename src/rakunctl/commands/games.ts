@@ -22,7 +22,7 @@ const FINAL_STATUSES = new Set(['done', 'error', 'canceled'])
 type Build = 'windows' | 'linux'
 
 /** `--platform`: nothing, or the build to install */
-export function parsePlatform(value: string | undefined): Build | undefined {
+function parsePlatform(value: string | undefined): Build | undefined {
   if (value === undefined || value === 'windows' || value === 'linux')
     return value
   throw new CliError('--platform must be windows or linux')
@@ -206,7 +206,7 @@ async function failureInQueue(
   return last.error ?? ''
 }
 
-export const failureMessage = (reason: string) =>
+const failureMessage = (reason: string) =>
   `The download failed: ${reason || 'see the rakun logs'}`
 
 /** Starts the work and, unless --no-wait, follows it until it ends */
@@ -291,7 +291,7 @@ async function updateGame(
 }
 
 /** The installed games with a newer version, of one store or of all, that are not already queued */
-export async function pendingUpdates(
+async function pendingUpdates(
   ctx: Ctx,
   runner?: Runner
 ): Promise<UpdateableGame[]> {

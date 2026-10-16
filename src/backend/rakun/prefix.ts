@@ -36,7 +36,7 @@ export async function preparePrefix(
     symlinkPrefix(steamAppId, symlink.linkPath)
   } else {
     windowify(gameInfo, installPath)
-    await prepareUmuPrefix(gameInfo, installPath, steamAppId)
+    await prepareUmuPrefix(gameInfo, steamAppId)
   }
 }
 
@@ -107,7 +107,6 @@ function replaceSymlink(target: string, linkPath: string): void {
 
 async function prepareUmuPrefix(
   gameInfo: GameInfo,
-  installPath: string,
   steamAppId: number
 ): Promise<void> {
   const steamPath = getSteamPath()

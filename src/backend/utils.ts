@@ -38,53 +38,6 @@ function getGame(id: string, runner: Runner): Game {
   return libraryManagerMap[runner].getGame(id)
 }
 
-/**
- * Compares 2 SemVer strings following "major.minor.patch".
- * Checks if target is newer than base.
- */
-function semverGt(target: string, base: string) {
-  if (!target || !base) {
-    return false
-  }
-  target = target.replace('v', '')
-
-  // beta to beta
-  if (base.includes('-beta') && target.includes('-beta')) {
-    const bSplit = base.split('-beta.')
-    const tSplit = target.split('-beta.')
-
-    // same major beta?
-    if (bSplit[0] === tSplit[0]) {
-      base = bSplit[1]
-      target = tSplit[1]
-      return target > base
-    } else {
-      base = bSplit[0]
-      target = tSplit[0]
-    }
-  }
-
-  // beta to stable
-  if (base.includes('-beta')) {
-    base = base.split('-beta.')[0]
-  }
-
-  // stable to beta
-  if (target.includes('-beta')) {
-    target = target.split('-beta.')[0]
-  }
-
-  const [bmajor, bminor, bpatch] = base.split('.').map(Number)
-  const [tmajor, tminor, tpatch] = target.split('.').map(Number)
-
-  let isGE = false
-  // A pretty nice piece of logic if you ask me. :P
-  isGE ||= tmajor > bmajor
-  isGE ||= tmajor === bmajor && tminor > bminor
-  isGE ||= tmajor === bmajor && tminor === bminor && tpatch > bpatch
-  return isGE
-}
-
 const getFileSize = formatBytes
 
 async function isEpicServiceOffline(
@@ -313,18 +266,6 @@ function quoteIfNecessary(stringToQuote: string) {
   }
 
   return String(stringToQuote)
-}
-
-function removeQuoteIfNecessary(stringToUnquote: string) {
-  if (
-    stringToUnquote &&
-    stringToUnquote.startsWith('"') &&
-    stringToUnquote.endsWith('"')
-  ) {
-    return stringToUnquote.replace(/^"+/, '').replace(/"+$/, '')
-  }
-
-  return String(stringToUnquote)
 }
 
 // can be removed if legendary and gogdl handle SIGTERM and SIGKILL
@@ -659,7 +600,6 @@ export {
   getNileBin,
   formatEpicStoreUrl,
   quoteIfNecessary,
-  removeQuoteIfNecessary,
   killPattern,
   getFileSize,
   memoryLog,
@@ -669,10 +609,4 @@ export {
   sendProgressUpdate,
   axiosClient,
   parseSize
-}
-
-// Exported only for testing purpose
-// ts-prune-ignore-next
-export const testingExportsUtils = {
-  semverGt
 }

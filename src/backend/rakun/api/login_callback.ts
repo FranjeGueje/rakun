@@ -8,7 +8,7 @@ import { clearSessionExpired } from '../../storeManagers/session_state'
 import { startRefresh } from './refresh'
 
 /** What the browser is told when it comes back from itch.io */
-export type CallbackReply = { status: number; title: string; message: string }
+type CallbackReply = { status: number; title: string; message: string }
 
 /**
  * The browser of the user came back from itch.io. No token is needed (a page

@@ -38,7 +38,7 @@ export function isLoopback(address: string | undefined): boolean {
 }
 
 /** The addresses and names this machine answers to, apart from localhost */
-export function ownNames(): string[] {
+function ownNames(): string[] {
   const name = hostname().toLowerCase()
   const addresses = Object.values(networkInterfaces())
     .flatMap((list) => list ?? [])

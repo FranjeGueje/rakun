@@ -53,7 +53,7 @@ export type CallMap = {
 export type CallChannel = keyof CallMap
 
 /** The events of rakun (`GET /events`) the client listens to */
-export const EVENT_CHANNELS = [
+const EVENT_CHANNELS = [
   'gameStatusUpdate',
   'progressUpdate',
   'changedDMQueueInformation',
@@ -66,7 +66,7 @@ export const EVENT_CHANNELS = [
 /** The last `helpersProgress` line of an update: it is over */
 export const HELPERS_DONE = 'done'
 
-export type EventChannel = (typeof EVENT_CHANNELS)[number]
+type EventChannel = (typeof EVENT_CHANNELS)[number]
 
 export type RakunEvent = { event: EventChannel; args: unknown[] }
 

@@ -161,7 +161,7 @@ function handleEvents(req: IncomingMessage, res: ServerResponse) {
  *   GET  /<file>            rakun's own web, if there is one (no token: it carries it)
  * Everything but /health needs the `x-rakun-token` header.
  */
-export type ServerSetup = {
+type ServerSetup = {
   /** Who can open the web (the API is always on this machine unless it is `network`) */
   web?: WebAccess
   webDir?: string

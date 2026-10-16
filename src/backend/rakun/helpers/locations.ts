@@ -48,7 +48,7 @@ export const missingHelpers = (): string[] =>
     .filter(({ state }) => state === 'missing')
     .map(({ helper }) => helper)
 
-export const HELPERS_HINT = 'Run: rakunctl helpers update'
+const HELPERS_HINT = 'Run: rakunctl helpers update'
 
 /** At start: what a full tarball carries goes where it is used, and what is still missing is said */
 export function checkHelpersAtStart(): void {

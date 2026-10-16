@@ -4,7 +4,7 @@ import { spawn } from 'child_process'
 
 const LOG_PREFIX = 'UMU'
 
-export interface UmuLaunchOptions {
+interface UmuLaunchOptions {
   winePrefix: string
   gameId: string
   protonPath: string

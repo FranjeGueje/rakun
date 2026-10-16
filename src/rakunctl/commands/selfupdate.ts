@@ -18,7 +18,7 @@ const RELEASES_URL =
 /** The only build the releases publish */
 const PUBLISHED_ARCH = 'x64'
 
-export type Latest = { version: string; url: string }
+type Latest = { version: string; url: string }
 
 type Release = {
   tag_name?: string

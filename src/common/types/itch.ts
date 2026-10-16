@@ -1,5 +1,5 @@
 /** The platforms butlerd reports for a game or an upload (`windows`, `linux`, `osx`) */
-export type ItchPlatforms = Partial<Record<'windows' | 'linux' | 'osx', string>>
+type ItchPlatforms = Partial<Record<'windows' | 'linux' | 'osx', string>>
 
 /** Subset of butlerd's `Game` that rakun reads */
 export interface ItchGame {

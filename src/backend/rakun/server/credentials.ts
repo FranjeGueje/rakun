@@ -5,7 +5,7 @@ import { appFolder } from 'backend/constants/paths'
 
 export const DEFAULT_PORT = 17370
 
-export type ApiCredentials = { port: number; token: string }
+type ApiCredentials = { port: number; token: string }
 
 export const credentialsPath = join(appFolder, 'api.json')
 

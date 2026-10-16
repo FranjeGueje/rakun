@@ -14,7 +14,7 @@ export const RUNNER_BAT = 'Launcher_games.bat'
 /** The script that starts Comet for a GOG game, next to the runner */
 export const COMET_BAT = 'comet.bat'
 /** The options of the runner: next to it, created once and never overwritten */
-export const RUNNER_INI = 'Launcher_games.ini'
+const RUNNER_INI = 'Launcher_games.ini'
 /** Where the runner leaves the log of a game (inside the mount) when `LOG_TO_FILE` is on */
 const LOGS_DIR = 'logs'
 
