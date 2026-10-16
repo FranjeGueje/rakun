@@ -46,7 +46,6 @@ jest.mock('../executable', () => ({
   writeStartScript: jest.fn()
 }))
 
-import { logError } from 'backend/logger'
 import {
   onGameInstalled,
   onGameRepaired,
@@ -123,7 +122,10 @@ describe('install', () => {
   const args = { path: '/games', platformToInstall: 'windows' as const }
 
   test('is done as soon as the game is on the disk and saved, with its executable', async () => {
-    expect(await game().install(args)).toEqual({ status: 'done' })
+    expect(await game().install(args)).toEqual({
+      status: 'done',
+      installPath: '/games/pacapong'
+    })
 
     expect(mockStored.installed).toEqual([
       expect.objectContaining({
@@ -134,26 +136,8 @@ describe('install', () => {
         caveId: 'cave-1'
       })
     ])
-    expect(mockedOnGameInstalled).toHaveBeenCalledWith(
-      expect.anything(),
-      '/games/pacapong'
-    )
-  })
-
-  test('a failure in Steam is logged and does not undo an install that worked', async () => {
-    mockedOnGameInstalled.mockRejectedValue(new Error('no Steam'))
-
-    expect(await game().install(args)).toEqual({ status: 'done' })
-    await new Promise((resolve) => setImmediate(resolve))
-
-    expect(logError).toHaveBeenCalledWith(
-      [
-        expect.stringContaining('Steam integration of 21301'),
-        expect.any(Error)
-      ],
-      'Itch'
-    )
-    expect(mockStored.installed).toHaveLength(1)
+    // Steam is the queue's business: it gets the install path from the answer
+    expect(mockedOnGameInstalled).not.toHaveBeenCalled()
   })
 
   test('says which build is missing when the game has none for the platform', async () => {

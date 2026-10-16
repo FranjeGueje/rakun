@@ -19,7 +19,6 @@ import { existsSync } from 'fs'
 import { killPattern, moveOnUnix, sendProgressUpdate } from 'backend/utils'
 import { GlobalConfig } from 'backend/config'
 import {
-  onGameInstalled,
   onGameImported,
   onGameMoved,
   onGameUninstalled
@@ -226,7 +225,6 @@ export default class NileGameManager implements Game {
       }
       return { status: 'error', error: res.error }
     }
-    void onGameInstalled(this).catch((err) => logError(err, LogPrefix.Nile))
     libraryManagerMap['nile'].installState(this.id, true)
     return { status: 'done' }
   }

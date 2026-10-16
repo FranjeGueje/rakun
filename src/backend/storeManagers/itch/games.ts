@@ -10,11 +10,7 @@ import type {
 import type { ItchGame, ItchUpload } from 'common/types/itch'
 import type { Game, InstallResult } from 'common/types/game_manager'
 import { logError, logInfo, logWarning, LogPrefix } from 'backend/logger'
-import {
-  onGameInstalled,
-  onGameRepaired,
-  onGameUninstalled
-} from 'backend/rakun/game_events'
+import { onGameRepaired, onGameUninstalled } from 'backend/rakun/game_events'
 import { sendFrontendMessage } from '../../ipc'
 import { sendProgressUpdate } from '../../utils'
 import { libraryManagerMap } from '..'
@@ -108,8 +104,7 @@ export default class ItchGameManager implements Game {
       platform === 'linux' ? 'linux' : 'windows'
     )
     if (!executable) return { status: 'error', error: noExecutable(queued) }
-    this.inBackground(onGameInstalled(this, queued.installFolder))
-    return { status: 'done' }
+    return { status: 'done', installPath: queued.installFolder }
   }
 
   /** Steam is not the install: a failure there is logged, it does not undo a game that is on the disk */

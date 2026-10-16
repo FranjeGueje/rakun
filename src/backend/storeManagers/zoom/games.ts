@@ -28,17 +28,13 @@ import {
   logDebug
 } from 'backend/logger'
 
-import {
-  onGameInstalled,
-  onGameMoved,
-  onGameUninstalled
-} from 'backend/rakun/game_events'
+import { onGameMoved, onGameUninstalled } from 'backend/rakun/game_events'
 import { helperFile } from 'backend/rakun/helpers/locations'
 import { GlobalConfig } from 'backend/config'
 import { ZoomInstallPlatform, ZoomDownloadFile } from 'common/types/zoom'
 import { showDialogBoxModalAuto } from '../../dialog/dialog'
 import { sendFrontendMessage } from '../../ipc'
-import { Game } from 'common/types/game_manager'
+import { Game, InstallResult } from 'common/types/game_manager'
 import { displayForInstaller } from './display'
 import { removeInstalled, upsertInstalled } from '../installed_list'
 import { libraryManagerMap } from '..'
@@ -197,10 +193,7 @@ export default class ZoomGame implements Game {
     path,
     platformToInstall,
     installLanguage
-  }: InstallArgs): Promise<{
-    status: 'done' | 'error' | 'abort'
-    error?: string
-  }> {
+  }: InstallArgs): Promise<InstallResult> {
     logInfo(
       `Installing ${this.id} to ${path} for platform ${platformToInstall}`,
       LogPrefix.Zoom
@@ -544,10 +537,7 @@ export default class ZoomGame implements Game {
     }
 
     logInfo(`Installation of ${this.id} completed.`, LogPrefix.Zoom)
-    void onGameInstalled(this, installPath).catch((err) =>
-      logError(err, LogPrefix.Zoom)
-    )
-    return { status: 'done' }
+    return { status: 'done', installPath }
   }
 
   async moveInstall(

@@ -10,6 +10,8 @@ import {
 export interface InstallResult {
   status: 'done' | 'error' | 'abort'
   error?: string
+  /** Where the game was installed, when the store knows it better than its game info yet does */
+  installPath?: string
 }
 
 export type RemoveArgs = {

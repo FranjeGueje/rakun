@@ -27,7 +27,6 @@ import {
 
 import { gameInfoStore } from './electronStores'
 import {
-  onGameInstalled,
   onGameImported,
   onGameMoved,
   onGameUninstalled
@@ -563,9 +562,6 @@ export default class LegendaryGame implements Game {
       }
       return { status: 'error', error: res.error }
     }
-    void onGameInstalled(this).catch((err) =>
-      logError(err, LogPrefix.Legendary)
-    )
 
     return { status: 'done' }
   }

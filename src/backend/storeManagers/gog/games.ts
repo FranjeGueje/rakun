@@ -28,7 +28,6 @@ import {
 import { GOGUser } from './user'
 
 import {
-  onGameInstalled,
   onGameImported,
   onGameMoved,
   onGameUninstalled
@@ -246,10 +245,7 @@ export default class GOGGame implements Game {
     installLanguage = defaultInstallLanguage,
     build,
     branch
-  }: InstallArgs): Promise<{
-    status: 'done' | 'error' | 'abort'
-    error?: string
-  }> {
+  }: InstallArgs): Promise<InstallResult> {
     const credentials = await GOGUser.getCredentials()
 
     if (!credentials) {
@@ -371,10 +367,7 @@ export default class GOGGame implements Game {
         )
       }
     }
-    void onGameInstalled(this, install_path).catch((err) =>
-      logError(err, LogPrefix.Gog)
-    )
-    return { status: 'done' }
+    return { status: 'done', installPath: install_path }
   }
 
   async moveInstall(
