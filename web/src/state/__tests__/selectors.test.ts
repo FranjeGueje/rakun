@@ -15,10 +15,34 @@ import {
 
 // The capabilities each store reports, by the runner of the game under test
 const CAPS: Record<'gog' | 'zoom' | 'legendary' | 'nile', StoreCaps> = {
-  gog: { import: true, lowercasePlatform: true, directLaunch: false },
-  zoom: { import: false, lowercasePlatform: true, directLaunch: true },
-  legendary: { import: true, lowercasePlatform: false, directLaunch: false },
-  nile: { import: true, lowercasePlatform: false, directLaunch: false }
+  gog: {
+    import: true,
+    update: true,
+    repair: true,
+    lowercasePlatform: true,
+    directLaunch: false
+  },
+  zoom: {
+    import: false,
+    update: false,
+    repair: false,
+    lowercasePlatform: true,
+    directLaunch: true
+  },
+  legendary: {
+    import: true,
+    update: true,
+    repair: true,
+    lowercasePlatform: false,
+    directLaunch: false
+  },
+  nile: {
+    import: true,
+    update: true,
+    repair: true,
+    lowercasePlatform: false,
+    directLaunch: false
+  }
 }
 const capsOf = (g: GameInfo) => (CAPS as Record<string, StoreCaps>)[g.runner]
 const actionsFor = (
@@ -181,6 +205,14 @@ describe('actionsFor', () => {
         false
       )
     ).toEqual([])
+  })
+
+  test('a store that cannot repair or update does not offer it', () => {
+    const zoom = game('a', { runner: 'zoom', is_installed: true })
+    expect(actionsFor(zoom, undefined, true)).toEqual(['uninstall'])
+    expect(
+      actionsFor(game('a', { is_installed: true }), undefined, true)
+    ).toEqual(['update', 'repair', 'uninstall'])
   })
 
   test('isBusy', () => {

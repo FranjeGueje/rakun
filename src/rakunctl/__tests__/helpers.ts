@@ -2,7 +2,13 @@ import type { Api, ApiEvent } from '../client'
 import type { StoreInfo } from 'common/rakun/stores'
 import type { Ctx } from '../context'
 
-const UPPER = { import: true, lowercasePlatform: false, directLaunch: false }
+const UPPER = {
+  import: true,
+  update: true,
+  repair: true,
+  lowercasePlatform: false,
+  directLaunch: false
+}
 const LOWER = { ...UPPER, lowercasePlatform: true }
 
 export const STORES: StoreInfo[] = [
@@ -13,7 +19,13 @@ export const STORES: StoreInfo[] = [
     id: 'zoom',
     name: 'zoom',
     label: 'Zoom',
-    caps: { ...LOWER, import: false, directLaunch: true }
+    caps: {
+      ...LOWER,
+      import: false,
+      update: false,
+      repair: false,
+      directLaunch: true
+    }
   }
 ]
 

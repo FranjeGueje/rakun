@@ -12,7 +12,13 @@ const game = (app_name: string, extra: Partial<GameInfo> = {}): GameInfo => ({
   ...extra
 })
 
-const CAPS = { import: true, lowercasePlatform: false, directLaunch: false }
+const CAPS = {
+  import: true,
+  update: true,
+  repair: true,
+  lowercasePlatform: false,
+  directLaunch: false
+}
 
 const basics: Basics = {
   stores: [

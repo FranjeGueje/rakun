@@ -19,7 +19,13 @@ import type {
 import App from '../App'
 import { emptyQueue, fakeRakun, game, settings } from './fakeRakun'
 
-const CAPS = { import: true, lowercasePlatform: false, directLaunch: false }
+const CAPS = {
+  import: true,
+  update: true,
+  repair: true,
+  lowercasePlatform: false,
+  directLaunch: false
+}
 const stores: StoreInfo[] = [
   { id: 'legendary', name: 'epic', label: 'Epic', caps: CAPS },
   {

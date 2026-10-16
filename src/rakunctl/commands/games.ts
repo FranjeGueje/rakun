@@ -283,6 +283,9 @@ async function updateGame(
   version: Version = {}
 ) {
   const { app_name: appName, runner } = gameInfo
+  const { caps, label } = await storeOf(ctx, runner)
+  if (!caps.update)
+    throw new CliError(`Updating is not supported for ${label} games`)
   const params: UpdateParams = { appName, runner, gameInfo, ...version }
   await run(ctx, appName, wait, () => ctx.api.call('updateGame', params), true)
 }
@@ -353,6 +356,9 @@ export const update: Command = async (ctx, args, opts) => {
 
 export const repair: Command = async (ctx, args, opts) => {
   const [runner, appName] = await gameArgs(ctx, args)
+  const { caps, label } = await storeOf(ctx, runner)
+  if (!caps.repair)
+    throw new CliError(`Repairing is not supported for ${label} games`)
   await run(ctx, appName, opts.wait, () =>
     ctx.api.call('repair', appName, runner)
   )

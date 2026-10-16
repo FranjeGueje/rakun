@@ -574,7 +574,9 @@ export default class ZoomGame implements Game {
 
   async repair(): Promise<ExecResult> {
     logWarning(`Repair not implemented for Zoom: ${this.id}`, LogPrefix.Zoom)
-    return { stdout: '', stderr: 'Repair not implemented' }
+    // An error, so that nobody takes it for a repair that worked (Steam would be told)
+    const error = 'Repair is not supported for Zoom games'
+    return { stdout: '', stderr: error, error }
   }
 
   async uninstall(): Promise<ExecResult> {

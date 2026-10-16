@@ -883,6 +883,19 @@ describe('game commands', () => {
     expect(removed.calls).toEqual([['uninstall', ['g1', 'legendary', true]]])
   })
 
+  test('repair and update refuse a store that has neither', async () => {
+    const { ctx, calls } = fakeCtx({ getGameInfo: game({ runner: 'zoom' }) })
+
+    await expect(repair(ctx, ['zoom', 'g1'], opts)).rejects.toThrow(
+      'Repairing is not supported for Zoom games'
+    )
+    await expect(update(ctx, ['zoom', 'g1'], opts)).rejects.toThrow(
+      'Updating is not supported for Zoom games'
+    )
+    expect(calls.map(([channel]) => channel)).not.toContain('repair')
+    expect(calls.map(([channel]) => channel)).not.toContain('updateGame')
+  })
+
   test('progress is printed once per whole percent', async () => {
     const progress = (percent: number) => ({
       event: 'progressUpdate',

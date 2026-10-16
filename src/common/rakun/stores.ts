@@ -4,6 +4,10 @@ import type { Runner } from 'common/types'
 export type StoreCaps = {
   /** A game that is already on the disk can be registered */
   import: boolean
+  /** An installed game can be updated to a newer version */
+  update: boolean
+  /** An installed game can be repaired */
+  repair: boolean
   /** The platform is sent as `windows`, not `Windows` */
   lowercasePlatform: boolean
   /** Steam runs the game's executable itself, with no runner (`.bat`) in between */

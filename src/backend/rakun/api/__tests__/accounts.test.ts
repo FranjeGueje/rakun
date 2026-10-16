@@ -73,11 +73,18 @@ describe('getStores', () => {
     const caps = Object.fromEntries(stores.map((s) => [s.id, s.caps]))
     expect(caps.legendary).toEqual({
       import: true,
+      update: true,
+      repair: true,
       lowercasePlatform: false,
       directLaunch: false
     })
     expect(caps.gog.lowercasePlatform).toBe(true)
-    expect(caps.zoom).toMatchObject({ import: false, directLaunch: true })
+    expect(caps.zoom).toMatchObject({
+      import: false,
+      update: false,
+      repair: false,
+      directLaunch: true
+    })
   })
 })
 

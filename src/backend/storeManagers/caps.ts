@@ -3,6 +3,8 @@ import type { StoreCaps } from 'common/rakun/stores'
 
 const upper: StoreCaps = {
   import: true,
+  update: true,
+  repair: true,
   lowercasePlatform: false,
   directLaunch: false
 }
@@ -16,6 +18,12 @@ export const STORE_CAPS: Record<Runner, StoreCaps> = {
   legendary: upper,
   nile: upper,
   gog: lower,
-  zoom: { ...lower, import: false, directLaunch: true },
+  zoom: {
+    ...lower,
+    import: false,
+    update: false,
+    repair: false,
+    directLaunch: true
+  },
   itch: { ...lower, import: false }
 }

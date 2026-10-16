@@ -22,6 +22,8 @@ export type AccountsStatus = Record<Runner, AccountStatus>
 /** What a store can do and how it differs from the others */
 export type StoreCaps = {
   import: boolean
+  update: boolean
+  repair: boolean
   lowercasePlatform: boolean
   directLaunch: boolean
 }

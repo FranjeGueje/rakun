@@ -133,15 +133,16 @@ export function actionsFor(
       : ['install']
     return caps.import ? [...install, 'importFolder'] : install
   }
-  return needsUpdate
-    ? ['update', 'repair', 'uninstall']
-    : ['repair', 'uninstall']
+  const manage: GameAction[] = []
+  if (caps.update && needsUpdate) manage.push('update')
+  if (caps.repair) manage.push('repair')
+  return [...manage, 'uninstall']
 }
 
 const windowsFor = (caps: StoreCaps): InstallPlatform =>
   caps.lowercasePlatform ? 'windows' : 'Windows'
 
-/** What a store can do; a store rakun did not report can do nothing special */
+/** What a store can do; for one rakun did not report, the usual: manage the game but not import it */
 export function capsOf(
   stores: StoreInfo[],
   runner: GameInfo['runner']
@@ -149,6 +150,8 @@ export function capsOf(
   return (
     stores.find((store) => store.id === runner)?.caps ?? {
       import: false,
+      update: true,
+      repair: true,
       lowercasePlatform: false,
       directLaunch: false
     }

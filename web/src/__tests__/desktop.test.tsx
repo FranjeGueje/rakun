@@ -12,7 +12,13 @@ import { emptyQueue, fakeRakun, game, settings } from './fakeRakun'
 
 /** The page run by a desktop app (Relic): it can quit, start rakun and log in in a window */
 
-const CAPS = { import: true, lowercasePlatform: false, directLaunch: false }
+const CAPS = {
+  import: true,
+  update: true,
+  repair: true,
+  lowercasePlatform: false,
+  directLaunch: false
+}
 const stores: StoreInfo[] = [
   { id: 'legendary', name: 'epic', label: 'Epic', caps: CAPS },
   {
