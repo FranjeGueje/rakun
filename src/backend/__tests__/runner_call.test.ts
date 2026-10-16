@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events'
 import { spawn } from 'child_process'
 import { callRunner } from '../runner_call'
-import { logError, logWarning } from '../logger'
+import { logError, logInfo, logWarning } from '../logger'
 import { memoryLog, quoteIfNecessary } from '../utils'
 import { createAbortController } from '../utils/aborthandler/aborthandler'
 
@@ -69,6 +69,31 @@ describe('callRunner', () => {
     expect(logWarning).toHaveBeenCalledWith(
       ['Command exited with code', 2, expect.any(String)],
       'Legendary'
+    )
+  })
+
+  test.each([
+    [['auth', '--code', 'SECRET-A']],
+    [['auth', '--code=SECRET-A']],
+    [['auth', '--refresh-token', 'SECRET-A']],
+    [['register', '--code-verifier=SECRET-A', '--serial', 'SECRET-B']]
+  ])('the logged command does not carry the secrets of %j', async (parts) => {
+    program({ code: 0 })
+
+    await callRunner(parts, runner, {})
+
+    const logged = JSON.stringify(jest.mocked(logInfo).mock.calls)
+    expect(logged).not.toContain('SECRET-')
+    expect(logged).toContain('<redacted>')
+  })
+
+  test('a flag that is not a secret is shown as it is', async () => {
+    program({ code: 0 })
+
+    await callRunner(['install', '--base-path', '/games', 'g1'], runner, {})
+
+    expect(JSON.stringify(jest.mocked(logInfo).mock.calls)).toContain(
+      '--base-path /games'
     )
   })
 

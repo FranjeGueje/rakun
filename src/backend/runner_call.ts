@@ -221,6 +221,32 @@ export async function callRunner(
   return promise
 }
 
+const POWERSHELL_SENSITIVE_ARGS = [
+  '--code',
+  '--token',
+  '--code-verifier',
+  '--serial',
+  '--client-id'
+]
+
+// A flag that carries a secret, by what it is called: a helper that renames or
+// adds one (--refresh-token, --code=…) must not start to show it in the log
+const SENSITIVE_FLAG =
+  /^--[\w-]*(?:token|secret|code|serial|client-id|password|verifier)[\w-]*(=.*)?$/i
+
+/** Hides the value of every sensitive flag, written `--flag value` or `--flag=value` */
+function redactSensitiveFlags(command: string[]) {
+  command.forEach((part, index) => {
+    const match = SENSITIVE_FLAG.exec(part)
+    if (!match) return
+    if (match[1] !== undefined) {
+      command[index] = `${part.slice(0, part.indexOf('='))}=<redacted>`
+    } else if (index + 1 < command.length) {
+      command[index + 1] = '<redacted>'
+    }
+  })
+}
+
 function getRunnerCallWithoutCredentials(
   command: string[] | LegendaryCommand,
   env: Record<string, string> | NodeJS.ProcessEnv = {},
@@ -230,14 +256,8 @@ function getRunnerCallWithoutCredentials(
     command = libraryManagerMap['legendary'].commandToArgsArray(command)
 
   const modifiedCommand = [...command]
-  for (const sensitiveArg of [
-    '--code',
-    '--token',
-    '--code-verifier',
-    '--serial',
-    '--client-id'
-  ]) {
-    if (runnerPath === 'powershell') {
+  if (runnerPath === 'powershell') {
+    for (const sensitiveArg of POWERSHELL_SENSITIVE_ARGS) {
       const argumentListIndex = modifiedCommand.indexOf('-ArgumentList') + 1
       if (!argumentListIndex) continue
       modifiedCommand[argumentListIndex] = modifiedCommand[
@@ -246,13 +266,9 @@ function getRunnerCallWithoutCredentials(
         new RegExp(`"${sensitiveArg}","(.*?)"`),
         `"${sensitiveArg}","<redacted>"`
       )
-    } else {
-      const sensitiveArgIndex = modifiedCommand.indexOf(sensitiveArg)
-      if (sensitiveArgIndex === -1) {
-        continue
-      }
-      modifiedCommand[sensitiveArgIndex + 1] = '<redacted>'
     }
+  } else {
+    redactSensitiveFlags(modifiedCommand)
   }
 
   const formattedEnvVars: string[] = []
