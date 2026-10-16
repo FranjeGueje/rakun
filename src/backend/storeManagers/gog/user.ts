@@ -17,11 +17,29 @@ import { gogdlAuthConfig } from './constants'
  * authorization code.
  */
 function redactAuthSecrets(text: string): string {
-  return text.replace(
-    /((?:client_secret|code|refresh_token|access_token)=)[^&\s"']+/gi,
-    '$1<redacted>'
+  return text
+    .replace(
+      /((?:client_secret|code|refresh_token|access_token)=)[^&\s"']+/gi,
+      '$1<redacted>'
+    )
+    .replace(
+      /("(?:access_token|refresh_token|session_id|user_id)"\s*:\s*")[^"]*"/gi,
+      '$1<redacted>"'
+    )
+}
+
+/** What gogdl hands out as credentials: the token and who it is for (anything else is not credentials) */
+function isCredentials(value: unknown): value is GOGCredentials {
+  const candidate = value as Partial<GOGCredentials> | null
+  return (
+    typeof candidate?.access_token === 'string' &&
+    candidate.access_token !== '' &&
+    candidate.user_id !== undefined
   )
 }
+
+/** gogdl writes this to stderr when it could not reach GOG to renew the token: no answer, not a refusal */
+const COULD_NOT_REACH = 'Failed to refresh credentials'
 
 function authLogSanitizer(line: string) {
   try {
@@ -68,7 +86,8 @@ export class GOGUser {
 
     try {
       const data: GOGLoginData = JSON.parse(stdout.trim())
-      if (data?.error) {
+      // A login is a token: any JSON without one (a message, null, {}) is not one
+      if (data?.error || !isCredentials(data)) {
         return { status: 'error' }
       }
     } catch (err) {
@@ -76,8 +95,8 @@ export class GOGUser {
       // because it cannot write auth.json) stdout is empty and the reason only
       // shows up in the traceback.
       logError(
-        `GOG login failed to parse std output from gogdl. stdout: ${stdout.trim()}, ` +
-          `stderr: ${redactAuthSecrets(stderr.trim())}, error ${String(err)}`,
+        `GOG login failed to parse std output from gogdl. stdout: ${redactAuthSecrets(stdout.trim())}, ` +
+          `stderr: ${redactAuthSecrets(stderr.trim())}, error ${redactAuthSecrets(String(err))}`,
         LogPrefix.Gog
       )
       return { status: 'error' }
@@ -152,7 +171,7 @@ export class GOGUser {
   }
 
   private static async fetchCredentials(): Promise<GOGCredentials | undefined> {
-    const { stdout } = await libraryManagerMap['gog'].runRunnerCommand(
+    const { stdout, stderr } = await libraryManagerMap['gog'].runRunnerCommand(
       ['auth'],
       {
         abortId: 'gogdl-get-credentials',
@@ -161,32 +180,42 @@ export class GOGUser {
     )
     const trimmed = stdout?.trim()
     if (!trimmed) {
-      logWarning(
-        'gogdl auth returned empty output - re-login may be required',
-        LogPrefix.Gog
-      )
-      // Nothing came back while there is a session: the token could not be
-      // refreshed. The next time gogdl answers, the mark goes
-      if (GOGUser.isLoggedIn()) markSessionExpired('gog')
+      // gogdl did not even answer (it crashed, auth.json was being written,
+      // it is not there): that says nothing about the session
+      logWarning('gogdl auth returned empty output', LogPrefix.Gog)
       return undefined
     }
     try {
-      const credentials = JSON.parse(trimmed) as GOGCredentials | undefined
-      if (credentials) {
-        clearSessionExpired('gog')
-        // Never hold credentials past the token's own lifetime. gogdl reports
-        // `expires_in` as the token's total validity and we cannot tell when it
-        // was issued, so the short TTL is what actually bounds this in practice
-        // — the cap only matters if gogdl ever reports a very short-lived token.
-        const ttl = Math.min(
-          CREDENTIALS_TTL_MS,
-          (credentials.expires_in ?? 0) * 1000
+      const credentials: unknown = JSON.parse(trimmed)
+      if (!isCredentials(credentials)) {
+        // «null» is how gogdl says it could not renew the token. With «Failed
+        // to refresh credentials» it never reached GOG (no network): that is
+        // not a refusal and marks nothing
+        logWarning(
+          'gogdl auth gave no credentials - re-login may be required',
+          LogPrefix.Gog
         )
-        cachedCredentials = { value: credentials, expiresAt: Date.now() + ttl }
+        if (GOGUser.isLoggedIn() && !stderr?.includes(COULD_NOT_REACH))
+          markSessionExpired('gog')
+        return undefined
       }
+      clearSessionExpired('gog')
+      // Never hold credentials past the token's own lifetime. gogdl reports
+      // `expires_in` as the token's total validity and we cannot tell when it
+      // was issued, so the short TTL is what actually bounds this in practice
+      // — the cap only matters if gogdl ever reports a very short-lived token.
+      const ttl = Math.min(
+        CREDENTIALS_TTL_MS,
+        (credentials.expires_in ?? 0) * 1000
+      )
+      cachedCredentials = { value: credentials, expiresAt: Date.now() + ttl }
       return credentials
     } catch (error) {
-      logError(['Error getting GOG credentials:', error])
+      // The text of a parse error can carry a piece of what was parsed
+      logError(
+        ['Error getting GOG credentials:', redactAuthSecrets(String(error))],
+        LogPrefix.Gog
+      )
       return undefined
     }
   }

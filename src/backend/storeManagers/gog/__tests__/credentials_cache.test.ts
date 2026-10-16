@@ -23,6 +23,7 @@ jest.mock('axios')
 
 import { GOGUser } from '../user'
 import { configStore } from '../electronStores'
+import { logError } from 'backend/logger'
 import { clearSessionExpired, isSessionExpired } from '../../session_state'
 import { libraryManagerMap } from '../../index'
 import { isOnline } from '../../../online_monitor'
@@ -136,10 +137,10 @@ describe('GOGUser.getCredentials - caching', () => {
     expect(runRunnerCommand).toHaveBeenCalledTimes(2)
   })
 
-  test('empty output while there is a session marks it expired, and credentials clear the mark', async () => {
+  test('«null» with a session, and gogdl never said it could not reach GOG: GOG refused, the session is marked expired, and credentials clear the mark', async () => {
     jest.mocked(configStore.get_nodefault).mockReturnValue(true)
-    runRunnerCommand.mockResolvedValue({ stdout: '' })
-    await GOGUser.getCredentials()
+    runRunnerCommand.mockResolvedValue({ stdout: 'null\n', stderr: '' })
+    await expect(GOGUser.getCredentials()).resolves.toBeUndefined()
     expect(isSessionExpired('gog')).toBe(true)
 
     GOGUser.invalidateCredentialsCache()
@@ -148,13 +149,46 @@ describe('GOGUser.getCredentials - caching', () => {
     expect(isSessionExpired('gog')).toBe(false)
   })
 
-  test('empty output with no session is not an expired one', async () => {
-    jest.mocked(configStore.get_nodefault).mockReturnValue(false)
-    runRunnerCommand.mockResolvedValue({ stdout: '' })
+  test('«null» because gogdl could not reach GOG is not a refusal: no mark', async () => {
+    jest.mocked(configStore.get_nodefault).mockReturnValue(true)
+    runRunnerCommand.mockResolvedValue({
+      stdout: 'null\n',
+      stderr: '[AUTH] ERROR: Failed to refresh credentials'
+    })
 
     await GOGUser.getCredentials()
 
     expect(isSessionExpired('gog')).toBe(false)
+  })
+
+  test('empty output says nothing about the session: no mark', async () => {
+    jest.mocked(configStore.get_nodefault).mockReturnValue(true)
+    runRunnerCommand.mockResolvedValue({ stdout: '', stderr: 'Traceback...' })
+
+    await GOGUser.getCredentials()
+
+    expect(isSessionExpired('gog')).toBe(false)
+  })
+
+  test('«null» with no session is not an expired one', async () => {
+    jest.mocked(configStore.get_nodefault).mockReturnValue(false)
+    runRunnerCommand.mockResolvedValue({ stdout: 'null', stderr: '' })
+
+    await GOGUser.getCredentials()
+
+    expect(isSessionExpired('gog')).toBe(false)
+  })
+
+  test('JSON that is not credentials (an error, no token) is not cached and not trusted', async () => {
+    runRunnerCommand.mockResolvedValue({
+      stdout: '{"error": true}',
+      stderr: ''
+    })
+
+    await expect(GOGUser.getCredentials()).resolves.toBeUndefined()
+    await GOGUser.getCredentials()
+
+    expect(runRunnerCommand).toHaveBeenCalledTimes(2)
   })
 
   test('does not cache unparseable gogdl output', async () => {
@@ -189,5 +223,48 @@ describe('GOGUser - cache invalidation', () => {
     await GOGUser.getCredentials()
 
     expect(runRunnerCommand).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('GOGUser.login', () => {
+  beforeEach(() => {
+    // offline: the details that follow a good login are not asked for here
+    mockedIsOnline.mockReturnValue(false)
+  })
+
+  test('gogdl gave a token and who it is for: logged in', async () => {
+    runRunnerCommand.mockResolvedValue({
+      stdout: JSON.stringify(credentials),
+      stderr: ''
+    })
+
+    expect((await GOGUser.login('code')).status).toBe('done')
+    expect(configStore.set).toHaveBeenCalledWith('isLoggedIn', true)
+  })
+
+  test.each([
+    ['{}'],
+    ['null'],
+    ['{"message":"deprecated"}'],
+    ['{"error":true}']
+  ])('JSON with no token (%s) is not a login', async (stdout) => {
+    runRunnerCommand.mockResolvedValue({ stdout, stderr: '' })
+
+    expect((await GOGUser.login('code')).status).toBe('error')
+    expect(configStore.set).not.toHaveBeenCalledWith('isLoggedIn', true)
+  })
+
+  test('output that is not JSON is an error, and the log does not carry a token', async () => {
+    runRunnerCommand.mockResolvedValue({
+      stdout:
+        'DeprecationWarning: x\n{"access_token": "SECRET-TOKEN", "refresh_token": "SECRET-REFRESH", broken',
+      stderr: ''
+    })
+
+    expect((await GOGUser.login('code')).status).toBe('error')
+
+    const logged = JSON.stringify(jest.mocked(logError).mock.calls)
+    expect(logged).not.toContain('SECRET-TOKEN')
+    expect(logged).not.toContain('SECRET-REFRESH')
   })
 })
