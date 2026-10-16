@@ -45,11 +45,9 @@ const list = () =>
 
 // The config resets the mocks before each test: what they answer is set here
 beforeEach(() => {
-  jest
-    .mocked(GlobalConfig.get)
-    .mockReturnValue({
-      getSettings: () => ({ autoUpdateGames: false })
-    } as never)
+  jest.mocked(GlobalConfig.get).mockReturnValue({
+    getSettings: () => ({ autoUpdateGames: false })
+  } as never)
 })
 
 describe('checkGameUpdates', () => {
