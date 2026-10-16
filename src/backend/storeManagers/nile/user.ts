@@ -109,6 +109,7 @@ export class NileUser {
       abortId: 'nile-logout'
     })
 
+    res.error ??= exitFailure(res)
     if (res.abort || res.error) {
       const reason = res.error ?? 'abort by user'
       logError(['Failed to logout:', reason], LogPrefix.Nile)

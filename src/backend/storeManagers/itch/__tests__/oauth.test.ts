@@ -194,4 +194,11 @@ describe('revokeToken', () => {
   test('fails when itch.io does not accept it', async () => {
     await expect(revokeToken('T', reply({}, false, 500))).rejects.toThrow('500')
   })
+
+  test('does not wait for ever: the request has a time limit (a logout with no network)', async () => {
+    const fetchFn = reply({})
+    await revokeToken('TOKEN', fetchFn)
+
+    expect(fetchFn.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal)
+  })
 })

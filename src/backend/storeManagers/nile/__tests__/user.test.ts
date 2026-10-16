@@ -102,7 +102,8 @@ describe('NileUser.logout', () => {
 
   it.each([
     ['fails', { error: 'boom' }],
-    ['is aborted', { abort: true }]
+    ['is aborted', { abort: true }],
+    ['ends with an error code', { code: 1 }]
   ])(
     'says so when the command %s, and keeps the session as it was',
     async (_, result) => {

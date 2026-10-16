@@ -121,6 +121,8 @@ export async function exchangeCode(
   return body.access_token
 }
 
+const REVOKE_TIMEOUT_MS = 10_000
+
 /** Makes itch.io forget the token; a failure is the caller's to log, it must not stop a logout */
 export async function revokeToken(
   token: string,
@@ -129,7 +131,9 @@ export async function revokeToken(
   const response = await fetchFn(ITCH_REVOKE_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ token, client_id: ITCH_CLIENT_ID })
+    body: new URLSearchParams({ token, client_id: ITCH_CLIENT_ID }),
+    // Offline, a logout must not wait for the network to give up by itself
+    signal: AbortSignal.timeout(REVOKE_TIMEOUT_MS)
   })
   if (!response.ok) throw new Error(`itch.io answered ${response.status}`)
 }

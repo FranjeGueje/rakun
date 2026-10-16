@@ -63,10 +63,15 @@ export class LegendaryUser {
       logMessagePrefix: 'Logging out'
     })
 
+    res.error ??= exitFailure(res)
+    // The command may end well and the session still be there: that is what
+    // the client must not be told is a logout
+    if (!res.error && !res.abort && existsSync(legendaryUserInfo)) {
+      res.error = 'the session file is still there'
+    }
     if (res.error || res.abort) {
       const reason = res.error ?? 'abort by user'
       logError(['Failed to logout:', reason], LogPrefix.Legendary)
-      // The session file is still there: do not tell the client it is out
       throw new Error(`Could not log out of Epic: ${reason}`)
     }
 

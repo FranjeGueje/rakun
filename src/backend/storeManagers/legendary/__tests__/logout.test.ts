@@ -5,6 +5,10 @@ jest.mock('backend/logger', () => ({
   logInfo: jest.fn(),
   logWarning: jest.fn()
 }))
+jest.mock('fs', () => ({
+  ...jest.requireActual('fs'),
+  existsSync: jest.fn()
+}))
 jest.mock('backend/utils', () => ({ clearCache: jest.fn() }))
 jest.mock('../../../utils', () => ({ clearCache: jest.fn() }))
 jest.mock('../../index', () => ({ libraryManagerMap: {} }))
@@ -13,6 +17,7 @@ jest.mock('../constants', () => ({
   legendaryConfigPath: '/tmp/none'
 }))
 
+import { existsSync } from 'fs'
 import { clearCache } from '../../../utils'
 import { libraryManagerMap } from '../../index'
 import { LegendaryUser } from '../user'
@@ -27,8 +32,28 @@ beforeEach(() => {
 })
 
 describe('LegendaryUser.logout', () => {
+  test('a command that ended well but left the session file is not a logout', async () => {
+    runRunnerCommand.mockResolvedValue({ stdout: '', stderr: '', code: 0 })
+    jest.mocked(existsSync).mockReturnValue(true)
+
+    await expect(LegendaryUser.logout()).rejects.toThrow(
+      'the session file is still there'
+    )
+    expect(clearCache).not.toHaveBeenCalled()
+  })
+
+  test('a code other than 0 is not a logout either', async () => {
+    runRunnerCommand.mockResolvedValue({ stdout: '', stderr: 'x', code: 1 })
+    jest.mocked(existsSync).mockReturnValue(false)
+
+    await expect(LegendaryUser.logout()).rejects.toThrow(
+      'Could not log out of Epic'
+    )
+  })
+
   test('after `auth --delete` worked, the caches are cleared', async () => {
     runRunnerCommand.mockResolvedValue({ stdout: '', stderr: '' })
+    jest.mocked(existsSync).mockReturnValue(false)
 
     await LegendaryUser.logout()
 
