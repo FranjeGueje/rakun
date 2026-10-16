@@ -126,16 +126,14 @@ describe('NileUser.getUserData', () => {
   })
 
   it('reads the user nile saved', () => {
-    jest
-      .mocked(readFileSync)
-      .mockReturnValue('{"name":"Fco","user_id":"u1"}' as never)
+    jest.mocked(readFileSync).mockReturnValue('{"name":"Fco","user_id":"u1"}')
 
     expect(NileUser.getUserData()).toEqual({ name: 'Fco', user_id: 'u1' })
     expect(configStore.set).toHaveBeenCalledWith('userData', expect.anything())
   })
 
   it('a file that cannot be read does not log anybody out: what was known stays', () => {
-    jest.mocked(readFileSync).mockReturnValue('{"name":"Fc' as never)
+    jest.mocked(readFileSync).mockReturnValue('{"name":"Fc')
     jest.mocked(configStore.get_nodefault).mockReturnValue({ name: 'Fco' })
 
     expect(NileUser.getUserData()).toEqual({ name: 'Fco' })
@@ -145,7 +143,7 @@ describe('NileUser.getUserData', () => {
   it.each([['null'], ['{}']])(
     'a file with %s in it means nobody',
     (content) => {
-      jest.mocked(readFileSync).mockReturnValue(content as never)
+      jest.mocked(readFileSync).mockReturnValue(content)
 
       expect(NileUser.getUserData()).toBeUndefined()
       expect(configStore.delete).toHaveBeenCalledWith('userData')
@@ -164,9 +162,7 @@ describe('NileUser.login', () => {
 
   beforeEach(() => {
     jest.mocked(existsSync).mockReturnValue(true)
-    jest
-      .mocked(readFileSync)
-      .mockReturnValue('{"name":"Fco","user_id":"u1"}' as never)
+    jest.mocked(readFileSync).mockReturnValue('{"name":"Fco","user_id":"u1"}')
   })
 
   it.each([['Succesfully'], ['Successfully']])(
