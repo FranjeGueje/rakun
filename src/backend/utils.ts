@@ -1,13 +1,12 @@
 import { callAllAbortControllers } from './utils/aborthandler/aborthandler'
-import { Runner, GameInfo, GameStatus } from 'common/types'
+import { Runner, GameStatus } from 'common/types'
 import axios from 'axios'
 import https from 'node:https'
-import { exec, spawn, SpawnOptions, spawnSync } from 'child_process'
+import { spawn, SpawnOptions, spawnSync } from 'child_process'
 import { createWriteStream, existsSync, mkdirSync, rmSync } from 'fs'
-import { promisify } from 'util'
 
 import { logError, logInfo, LogPrefix, logWarning } from 'backend/logger'
-import { basename, dirname, join } from 'path'
+import { dirname } from 'path'
 import { formatBytes } from 'common/formatBytes'
 import { showDialogBoxModalAuto, askQuestion } from './dialog/dialog'
 import { sendFrontendMessage } from './ipc'
@@ -15,7 +14,6 @@ import { GlobalConfig } from './config'
 import { libraryManagerMap, RUNNERS } from 'backend/storeManagers'
 import { libraryOf } from 'backend/storeManagers/library_of'
 import { markSessionExpired } from 'backend/storeManagers/session_state'
-import { readdir, lstat } from 'fs/promises'
 import { backendEvents } from './backend_events'
 import { pipeline } from 'stream/promises'
 import type { Readable } from 'stream'
@@ -25,14 +23,11 @@ import {
   vendorNameCache
 } from './utils/systeminfo/gpu/pci_ids'
 import type { AppSettings } from 'common/types'
-import { helperExists, helperFile } from './rakun/helpers/locations'
 
 import { gogdlAuthConfig } from './storeManagers/gog/constants'
 import { tokenPath as zoomTokenPath } from './storeManagers/zoom/constants'
 import { isOnline } from './online_monitor'
 import type { Game } from 'common/types/game_manager'
-
-const execAsync = promisify(exec)
 
 function getGame(id: string, runner: Runner): Game {
   return libraryManagerMap[runner].getGame(id)
@@ -172,59 +167,6 @@ function clearCache(library?: Runner) {
   vendorNameCache.clear()
 }
 
-function splitPathAndName(fullPath: string): { dir: string; bin: string } {
-  const dir = dirname(fullPath)
-  const bin = basename(fullPath)
-  // Make sure to always return this as `dir, bin` to not break path
-  // resolution when using `join(...Object.values(...))`
-  return { dir, bin }
-}
-
-function archSpecificBinary(binaryName: string) {
-  // Try to use the arch-native binary first, if that doesn't exist fall back to
-  // the x64 version (assume a compatibility layer like box64 is installed)
-  const archSpecific = join(process.arch, process.platform, binaryName)
-  if (helperExists(archSpecific)) return helperFile(archSpecific)
-  return helperFile(join('x64', process.platform, binaryName))
-}
-
-let defaultLegendaryPath: string | undefined = undefined
-function getLegendaryBin(): { dir: string; bin: string } {
-  const settings = GlobalConfig.get().getSettings()
-  if (settings?.altLegendaryBin) {
-    return splitPathAndName(settings.altLegendaryBin)
-  }
-
-  if (!defaultLegendaryPath)
-    defaultLegendaryPath = archSpecificBinary('legendary')
-
-  return splitPathAndName(defaultLegendaryPath)
-}
-
-let defaultGogdlPath: string | undefined = undefined
-function getGOGdlBin(): { dir: string; bin: string } {
-  const settings = GlobalConfig.get().getSettings()
-  if (settings?.altGogdlBin) {
-    return splitPathAndName(settings.altGogdlBin)
-  }
-
-  if (!defaultGogdlPath) defaultGogdlPath = archSpecificBinary('gogdl')
-
-  return splitPathAndName(defaultGogdlPath)
-}
-
-let defaultNilePath: string | undefined = undefined
-function getNileBin(): { dir: string; bin: string } {
-  const settings = GlobalConfig.get().getSettings()
-  if (settings?.altNileBin) {
-    return splitPathAndName(settings.altNileBin)
-  }
-
-  if (!defaultNilePath) defaultNilePath = archSpecificBinary('nile')
-
-  return splitPathAndName(defaultNilePath)
-}
-
 export function createNecessaryFolders() {
   // The GOG and Zoom auth folders have to exist before either store can log
   // in: gogdl writes its auth.json with a plain open(path, 'w') and ZoomUser
@@ -319,130 +261,6 @@ export const spawnAsync = async (
   })
 }
 
-export async function moveOnUnix(
-  newInstallPath: string,
-  gameInfo: GameInfo
-): Promise<
-  { status: 'done'; installPath: string } | { status: 'error'; error: string }
-> {
-  const {
-    install: { install_path },
-    title
-  } = gameInfo
-  if (!install_path) {
-    return { status: 'error', error: 'No install path found' }
-  }
-
-  const destination = join(newInstallPath, basename(install_path))
-
-  let currentFile = ''
-
-  let rsyncExists = false
-  try {
-    await execAsync('which rsync')
-    rsyncExists = true
-  } catch (error) {
-    logError(error, LogPrefix.Gog)
-  }
-  if (rsyncExists) {
-    const origin = install_path + '/'
-    logInfo(
-      `moving command: rsync --archive --compress --no-human-readable --remove-source-files --info=name,progress ${origin} ${destination} `,
-      LogPrefix.Backend
-    )
-    const { code, stderr } = await spawnAsync(
-      'rsync',
-      [
-        '--archive',
-        '--compress',
-        '--no-human-readable',
-        '--remove-source-files',
-        '--info=name,progress',
-        origin,
-        destination
-      ],
-      { stdio: 'pipe' },
-      (data) => {
-        let percent = 0
-        let eta = ''
-        let bytes = '0'
-
-        // Multiple output lines might be buffered into a single `data`, so
-        // we have to iterate over every line (we can't just look at the last
-        // one since that might skip new files)
-        for (const outLine of data.trim().split('\n')) {
-          // Rsync outputs either the file currently being transferred or a
-          // progress report. To know which one of those `outLine` is, we check
-          // if it includes a %, :, and starts with a space
-          // If all of these aren't the case, it's *most likely* a filename
-          // FIXME: This is pretty hacky, but I don't see an obvious way to
-          //        "divide" the two output types other than that
-          const isFilenameOutput =
-            !outLine.includes('%') &&
-            !outLine.includes(':') &&
-            !outLine.startsWith(' ')
-
-          if (isFilenameOutput) {
-            // If we have a filename output, set `lastFile` and reset all
-            // other metrics. Either there'll be a progress update in the next
-            // line of `data`, or we've just started copying and thus start at 0
-            currentFile = outLine
-            percent = 0
-            eta = ''
-            bytes = '0'
-          } else {
-            // If we got the progress update, try to read out the bytes, ETA and
-            // percent
-            const bytesMatch = outLine.match(/^\s+(\d+)/)?.[1]
-            const etaMatch = outLine.match(/(\d+:\d{2}:\d{2})/)?.[1]
-            const percentMatch = outLine.match(/(\d+)%/)?.[1]
-            if (bytesMatch) bytes = getFileSize(Number(bytesMatch))
-            if (etaMatch) eta = etaMatch
-            if (percentMatch) percent = Number(percentMatch)
-          }
-        }
-
-        sendFrontendMessage('progressUpdate', {
-          appName: gameInfo.app_name,
-          runner: gameInfo.runner,
-          status: 'moving',
-          progress: {
-            percent,
-            eta,
-            bytes,
-            file: currentFile
-          }
-        })
-      }
-    )
-    if (code === 0) {
-      logInfo(`Finished Moving ${title}`, LogPrefix.Backend)
-      // remove the old install path
-      await spawnAsync('rm', ['-rf', install_path])
-    } else {
-      logError(`Error: ${stderr}`, LogPrefix.Backend)
-      return { status: 'error', error: stderr }
-    }
-  } else {
-    const { code, stderr } = await spawnAsync('mv', [
-      '-f',
-      install_path,
-      destination
-    ])
-    if (code === 0) {
-      return { status: 'done', installPath: destination }
-    } else {
-      logError(`Error: ${stderr}`, LogPrefix.Backend)
-      return { status: 'error', error: stderr }
-    }
-  }
-  return { status: 'done', installPath: destination }
-}
-
-// helper object for an array with a length limit
-// this is used when calling system processes to not store the complete output in memory
-//
-// the `limit` is the number of messages, it doesn't mean it will be exactly `limit` lines since a message can be multi-line
 const memoryLog = (limit = 50) => {
   const lines: string[] = []
 
@@ -457,47 +275,6 @@ const memoryLog = (limit = 50) => {
       return lines.toReversed().join(separator)
     }
   }
-}
-
-function removeFolder(path: string, folderName: string) {
-  if (path === 'default') {
-    const { defaultInstallPath } = GlobalConfig.get().getSettings()
-    const path = defaultInstallPath.replaceAll("'", '')
-    const folderToDelete = `${path}/${folderName}`
-    if (existsSync(folderToDelete)) {
-      return setTimeout(() => {
-        rmSync(folderToDelete, { recursive: true })
-      }, 5000)
-    }
-    return
-  }
-
-  const folderToDelete = `${path}/${folderName}`.replaceAll("'", '')
-  if (existsSync(folderToDelete)) {
-    return setTimeout(() => {
-      rmSync(folderToDelete, { recursive: true })
-    }, 2000)
-  }
-  return
-}
-
-async function getPathDiskSize(path: string): Promise<number> {
-  const statData = await lstat(path)
-  let size = 0
-  if (statData.isSymbolicLink()) {
-    return 0
-  }
-  if (statData.isDirectory()) {
-    const contents = await readdir(path)
-
-    for (const item of contents) {
-      const itemPath = join(path, item)
-      size += await getPathDiskSize(itemPath)
-    }
-    return size
-  }
-
-  return statData.size
 }
 
 function sendGameStatusUpdate(payload: GameStatus) {
@@ -589,22 +366,20 @@ export const writeConfig = (config: Partial<AppSettings>) => {
   GlobalConfig.get().flush()
 }
 
+export { getLegendaryBin, getGOGdlBin, getNileBin } from './utils/binaries'
+export { moveOnUnix, removeFolder, getPathDiskSize } from './utils/disk'
+
 export {
   errorHandler,
   handleExit,
   isEpicServiceOffline,
   removeSpecialcharacters,
   clearCache,
-  getLegendaryBin,
-  getGOGdlBin,
-  getNileBin,
   formatEpicStoreUrl,
   quoteIfNecessary,
   killPattern,
   getFileSize,
   memoryLog,
-  removeFolder,
-  getPathDiskSize,
   sendGameStatusUpdate,
   sendProgressUpdate,
   axiosClient,
