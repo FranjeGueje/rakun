@@ -23,8 +23,13 @@ import { nileConfigPath, nileInstalled, nileLibrary } from './constants'
 import NileGame from './games'
 import type { LibraryManager } from 'common/types/game_manager'
 import { shareInFlight } from 'backend/utils/inflight'
+import { nileRefusedToken } from './refused_token'
+import { clearSessionExpired, markSessionExpired } from '../session_state'
 
 const installInfoInFlight = new Map<string, Promise<NileInstallInfo>>()
+
+const refusedRenewing = ({ stdout, stderr, error }: ExecResult) =>
+  nileRefusedToken(`${stdout}\n${stderr}\n${error}`)
 
 export default class NileLibraryManager implements LibraryManager {
   clearCache() {
@@ -190,6 +195,9 @@ export default class NileLibraryManager implements LibraryManager {
 
     if (res.error) {
       logError(['Failed to refresh library:', res.error], LogPrefix.Nile)
+    } else if (!refusedRenewing(res)) {
+      // The sync went through Amazon with the token: it works
+      clearSessionExpired('nile')
     }
     return {
       stderr: '',
@@ -480,11 +488,14 @@ export default class NileLibraryManager implements LibraryManager {
     }
     options.env.NILE_CONFIG_PATH = dirname(nileConfigPath)
 
-    return callRunner(
+    const result = await callRunner(
       commandParts,
       { name: 'nile', logPrefix: LogPrefix.Nile, bin, dir },
       options
     )
+    // Any command can find out that Amazon refused to renew the token
+    if (refusedRenewing(result)) markSessionExpired('nile')
+    return result
   }
 
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */

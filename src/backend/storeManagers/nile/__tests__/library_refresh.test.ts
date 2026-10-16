@@ -39,6 +39,9 @@ jest.mock('fs', () => ({
 }))
 
 import NileLibraryManager from '../library'
+import { callRunner } from 'backend/runner_call'
+import { getNileBin } from 'backend/utils'
+import { clearSessionExpired, isSessionExpired } from '../../session_state'
 import { NileUser } from '../user'
 
 // The backend jest config sets resetMocks, so implementations have to be
@@ -104,5 +107,57 @@ describe('NileLibraryManager.refresh', () => {
       'read-installed',
       'read-library'
     ])
+  })
+})
+
+describe('NileLibraryManager and a token Amazon will not renew', () => {
+  let manager: NileLibraryManager
+
+  beforeEach(() => {
+    clearSessionExpired('nile')
+    jest.mocked(getNileBin).mockReturnValue({ dir: '/tmp', bin: 'nile' })
+    manager = new NileLibraryManager()
+    mockedIsLoggedIn.mockReturnValue({} as never)
+    jest.spyOn(manager, 'refreshInstalled').mockImplementation(() => undefined)
+    jest
+      .spyOn(manager, 'loadGamesInAccount')
+      .mockImplementation(() => undefined)
+  })
+
+  test('a command whose output says nile could not renew the token marks the session', async () => {
+    jest.mocked(callRunner).mockResolvedValue({
+      stdout: '',
+      stderr: 'ERROR [AUTH]:\t Failed to refresh the token {"error":"x"}'
+    })
+
+    await manager.runRunnerCommand(['library', 'sync'])
+
+    expect(isSessionExpired('nile')).toBe(true)
+  })
+
+  test('the same words over a dead connection do not', async () => {
+    jest.mocked(callRunner).mockResolvedValue({
+      stdout: '',
+      stderr:
+        'Failed to refresh the token\nrequests.exceptions.ConnectionError: Max retries exceeded'
+    })
+
+    await manager.runRunnerCommand(['library', 'sync'])
+
+    expect(isSessionExpired('nile')).toBe(false)
+  })
+
+  test('a library sync that goes through clears the mark', async () => {
+    jest.mocked(callRunner).mockResolvedValueOnce({
+      stdout: '',
+      stderr: 'Failed to refresh the token'
+    })
+    await manager.refresh()
+    expect(isSessionExpired('nile')).toBe(true)
+
+    jest.mocked(callRunner).mockResolvedValue({ stdout: '', stderr: '' })
+    await manager.refresh()
+
+    expect(isSessionExpired('nile')).toBe(false)
   })
 })
