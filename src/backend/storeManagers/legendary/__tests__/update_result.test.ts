@@ -31,6 +31,7 @@ jest.mock('../constants', () => ({ legendaryInstalled: '/tmp/installed.json' }))
 
 import { libraryManagerMap } from '../../index'
 import LegendaryGame from '../games'
+import type { LegendaryAppName } from '../commands/base'
 
 const runRunnerCommand = jest.fn()
 
@@ -43,7 +44,7 @@ beforeEach(() => {
 })
 
 const game = () => {
-  const legendary = new LegendaryGame('g1')
+  const legendary = new LegendaryGame('g1' as LegendaryAppName)
   legendary.getGameInfo = jest
     .fn()
     .mockReturnValue({ install: { platform: 'Windows' } })
