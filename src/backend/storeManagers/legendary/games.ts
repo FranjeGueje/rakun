@@ -30,6 +30,7 @@ import { isOnline } from '../../online_monitor'
 import { Catalog, Product } from 'common/types/epic-graphql'
 import { sendFrontendMessage } from '../../ipc'
 import { Game, InstallResult } from 'common/types/game_manager'
+import { exitFailure } from '../helper_result'
 import {
   LegendaryAppName,
   LegendaryPlatform,
@@ -460,6 +461,8 @@ export default class LegendaryGame implements Game {
       logMessagePrefix: `Updating ${this.appName}`
     })
 
+    res.error ??= exitFailure(res)
+
     if (res.abort) {
       return { status: 'abort' }
     }
@@ -539,6 +542,8 @@ export default class LegendaryGame implements Game {
       })
     }
 
+    res.error ??= exitFailure(res)
+
     if (res.abort) {
       return { status: 'abort' }
     }
@@ -567,6 +572,8 @@ export default class LegendaryGame implements Game {
       abortId: this.appName,
       logMessagePrefix: `Uninstalling ${this.appName}`
     })
+
+    res.error ??= exitFailure(res)
 
     if (res.error) {
       logError(
@@ -605,6 +612,8 @@ export default class LegendaryGame implements Game {
       logWriters: [repairLogWriter],
       logMessagePrefix: `Repairing ${this.appName}`
     })
+
+    res.error ??= exitFailure(res)
 
     if (res.error) {
       logError(

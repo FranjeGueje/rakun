@@ -88,4 +88,23 @@ describe('LegendaryGame.update', () => {
     )
     expect(statuses).toEqual(['updating'])
   })
+
+  test('a code other than 0 is an error even when nothing said ERROR', async () => {
+    runRunnerCommand.mockResolvedValue({
+      stdout: '',
+      stderr: 'usage: helper update [-h]',
+      code: 2
+    })
+
+    const result = await game().update()
+
+    expect(result.status).toBe('error')
+    expect(result.error).toContain('code 2')
+  })
+
+  test('exit 0 is done, as before', async () => {
+    runRunnerCommand.mockResolvedValue({ stdout: '', stderr: '', code: 0 })
+
+    expect(await game().update()).toEqual({ status: 'done' })
+  })
 })

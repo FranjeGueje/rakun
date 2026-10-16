@@ -6,6 +6,7 @@ import {
   InstallProgress
 } from 'common/types'
 import { Game, InstallResult } from 'common/types/game_manager'
+import { exitFailure } from '../helper_result'
 import { libraryManagerMap } from '..'
 import {
   LogPrefix,
@@ -210,6 +211,8 @@ export default class NileGameManager implements Game {
       return { status: 'abort' }
     }
 
+    res.error ??= exitFailure(res)
+
     if (res.error) {
       if (!res.error.includes('signal')) {
         logError(
@@ -218,6 +221,13 @@ export default class NileGameManager implements Game {
         )
       }
       return { status: 'error', error: res.error }
+    }
+    // nile writes the install to its installed.json when it ends well: a
+    // helper that said nothing wrong and recorded nothing did not install it
+    if (!libraryManagerMap['nile'].getInstallMetadata(this.id)) {
+      const error = 'nile ended but did not record the installation'
+      logError(['Failed to install', `${this.id}:`, error], LogPrefix.Nile)
+      return { status: 'error', error }
     }
     libraryManagerMap['nile'].installState(this.id, true)
     return { status: 'done' }
@@ -278,6 +288,8 @@ export default class NileGameManager implements Game {
       }
     )
 
+    res.error ??= exitFailure(res)
+
     if (res.error) {
       logError(['Failed to repair', `${this.id}:`, res.error], LogPrefix.Nile)
     }
@@ -293,6 +305,8 @@ export default class NileGameManager implements Game {
       abortId: this.id,
       logMessagePrefix: `Uninstalling ${this.id}`
     })
+
+    res.error ??= exitFailure(res)
 
     if (res.error) {
       logError(
@@ -327,6 +341,8 @@ export default class NileGameManager implements Game {
     if (res.abort) {
       return { status: 'abort' }
     }
+
+    res.error ??= exitFailure(res)
 
     if (res.error) {
       if (!res.error.includes('signal')) {

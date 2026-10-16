@@ -1,5 +1,6 @@
 import { libraryManagerMap } from '..'
 import { removeInstalled, upsertInstalled } from '../installed_list'
+import { exitFailure, hasFiles } from '../helper_result'
 import { join } from 'path'
 import { GlobalConfig } from '../../config'
 import {
@@ -284,9 +285,10 @@ export default class GOGGame implements Game {
       return { status: 'abort' }
     }
 
-    if (res.error) {
-      logError(['Failed to install', `${this.id}:`, res.error], LogPrefix.Gog)
-      return { status: 'error', error: res.error }
+    const failure = res.error ?? exitFailure(res)
+    if (failure) {
+      logError(['Failed to install', `${this.id}:`, failure], LogPrefix.Gog)
+      return { status: 'error', error: failure }
     }
 
     // Installation succeded
@@ -324,6 +326,12 @@ export default class GOGGame implements Game {
       join(path, installInfo.folder_name)
     )
     const install_path = join(path, installInfo.folder_name)
+    // gogdl may end well and leave nothing: the game is not installed then
+    if (!hasFiles(install_path)) {
+      const error = `Nothing was installed in ${install_path}`
+      logError(error, LogPrefix.Gog)
+      return { status: 'error', error }
+    }
 
     const installedData: InstalledInfo = {
       platform: installPlatform,
@@ -423,8 +431,10 @@ export default class GOGGame implements Game {
       logMessagePrefix: `Repairing ${this.id}`
     })
 
-    if (res.error) {
-      logError(['Failed to repair', `${this.id}:`, res.error], LogPrefix.Gog)
+    const failure = res.error ?? exitFailure(res)
+    if (failure) {
+      res.error = failure
+      logError(['Failed to repair', `${this.id}:`, failure], LogPrefix.Gog)
     }
 
     return res
@@ -545,9 +555,10 @@ export default class GOGGame implements Game {
       return { status: 'abort' }
     }
 
-    if (res.error) {
-      logError(['Failed to update', `${this.id}:`, res.error], LogPrefix.Gog)
-      return { status: 'error', error: res.error }
+    const failure = res.error ?? exitFailure(res)
+    if (failure) {
+      logError(['Failed to update', `${this.id}:`, failure], LogPrefix.Gog)
+      return { status: 'error', error: failure }
     }
 
     const installedArray = installedGamesStore.get('installed', [])

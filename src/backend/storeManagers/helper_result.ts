@@ -1,3 +1,4 @@
+import { existsSync, readdirSync } from 'fs'
 import type { ExecResult } from 'common/types'
 
 const LAST_LINES = 3
@@ -9,6 +10,11 @@ const lastLines = (text: string | undefined, count: number) =>
     .map((line) => line.trim())
     .filter(Boolean)
     .slice(-count)
+
+/** The folder of a game is there and has something in it (a helper that said nothing wrong may still have left it empty) */
+export function hasFiles(folder: string): boolean {
+  return existsSync(folder) && readdirSync(folder).length > 0
+}
 
 /**
  * Why a helper that ran did not do its job: it ended with an exit code other
