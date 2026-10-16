@@ -19,9 +19,15 @@ import type {
 import App from '../App'
 import { emptyQueue, fakeRakun, game, settings } from './fakeRakun'
 
+const CAPS = { import: true, lowercasePlatform: false, directLaunch: false }
 const stores: StoreInfo[] = [
-  { id: 'legendary', name: 'epic', label: 'Epic' },
-  { id: 'gog', name: 'gog', label: 'GOG' }
+  { id: 'legendary', name: 'epic', label: 'Epic', caps: CAPS },
+  {
+    id: 'gog',
+    name: 'gog',
+    label: 'GOG',
+    caps: { ...CAPS, lowercasePlatform: true }
+  }
 ]
 const signedIn = {
   legendary: { loggedIn: true, name: 'Ana' },

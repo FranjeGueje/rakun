@@ -12,10 +12,12 @@ const game = (app_name: string, extra: Partial<GameInfo> = {}): GameInfo => ({
   ...extra
 })
 
+const CAPS = { import: true, lowercasePlatform: false, directLaunch: false }
+
 const basics: Basics = {
   stores: [
-    { id: 'gog', name: 'gog', label: 'GOG' },
-    { id: 'legendary', name: 'epic', label: 'Epic' }
+    { id: 'gog', name: 'gog', label: 'GOG', caps: CAPS },
+    { id: 'legendary', name: 'epic', label: 'Epic', caps: CAPS }
   ],
   settings: {
     language: 'es',

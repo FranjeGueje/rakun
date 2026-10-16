@@ -13,6 +13,7 @@ import type { GogInstallInfo } from 'common/types/gog'
 import type { ApiEvent } from '../client'
 import { CliError } from '../client'
 import { progressLine, statusLine, table } from '../format'
+import type { StoreCaps } from 'common/rakun/stores'
 import { parseStore } from '../stores'
 import { Command, Ctx, Options, requireArg, show } from '../context'
 
@@ -27,15 +28,21 @@ export function parsePlatform(value: string | undefined): Build | undefined {
   throw new CliError('--platform must be windows or linux')
 }
 
-// GOG and Zoom name platforms in lower case, Epic and Amazon capitalised
+// Some stores name platforms in lower case (their `lowercasePlatform` capability), the others capitalised
 export function platformFor(
-  { runner, is_linux_native }: GameInfo,
+  { is_linux_native }: GameInfo,
+  { lowercasePlatform }: Pick<StoreCaps, 'lowercasePlatform'>,
   build?: Build
 ) {
   if (build === 'linux' || (!build && is_linux_native)) return 'linux'
-  return runner === 'gog' || runner === 'zoom' || runner === 'itch'
-    ? 'windows'
-    : 'Windows'
+  return lowercasePlatform ? 'windows' : 'Windows'
+}
+
+/** What the store of a runner can do, as rakun reports it */
+async function storeOf(ctx: Ctx, runner: Runner) {
+  const store = (await ctx.stores()).find((s) => s.id === runner)
+  if (!store) throw new CliError(`Unknown store "${runner}"`)
+  return store
 }
 
 /** Refuses a build the game does not have (a stale library may not say: only a «no» refuses) */
@@ -141,6 +148,7 @@ export async function installParams(
 ): Promise<InstallParams> {
   const build = parsePlatform(platform)
   const gameInfo = await loadGame(ctx, appName, runner)
+  const { caps } = await storeOf(ctx, runner)
   checkBuild(gameInfo, build)
   const version = await checkVersion(ctx, gameInfo, {
     build: wantedBuild,
@@ -154,7 +162,7 @@ export async function installParams(
     runner,
     gameInfo,
     path: path ?? settings.defaultInstallPath,
-    platformToInstall: platformFor(gameInfo, build),
+    platformToInstall: platformFor(gameInfo, caps, build),
     installLanguage: lang,
     // No list means every DLC; an empty one means none
     installDlcs: skipDlcs ? [] : undefined,
@@ -247,10 +255,9 @@ export const importFolder: Command = async (ctx, args, opts) => {
   const [runner, appName] = await gameArgs(ctx, args)
   const path = resolve(requireArg(args, 2, 'folder'))
   const build = parsePlatform(opts.platform)
-  if (runner === 'zoom')
-    throw new CliError('Importing is not supported for Zoom')
-  if (runner === 'itch')
-    throw new CliError('Importing is not supported for itch.io')
+  const { caps, label } = await storeOf(ctx, runner)
+  if (!caps.import)
+    throw new CliError(`Importing is not supported for ${label}`)
   const game = await loadGame(ctx, appName, runner)
   checkBuild(game, build)
   if (game.is_installed)
@@ -259,7 +266,7 @@ export const importFolder: Command = async (ctx, args, opts) => {
     appName,
     runner,
     path,
-    platform: platformFor(game, build)
+    platform: platformFor(game, caps, build)
   }
   await ctx.api.call('importGame', params)
   if (!(await loadGame(ctx, appName, runner)).is_installed)

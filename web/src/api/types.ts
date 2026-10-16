@@ -19,12 +19,20 @@ export type AccountStatus = { loggedIn: boolean; name?: string }
 
 export type AccountsStatus = Record<Runner, AccountStatus>
 
+/** What a store can do and how it differs from the others */
+export type StoreCaps = {
+  import: boolean
+  lowercasePlatform: boolean
+  directLaunch: boolean
+}
+
 /** What a client needs to list and name a store */
 export type StoreInfo = {
   id: Runner
   /** Short name to type or show: `epic`, `gog`, `amazon`, `zoom` */
   name: string
   label: string
+  caps: StoreCaps
 }
 
 /** One helper binary (legendary, gogdl, nile, comet, epic-integration, zoom-platform, umu, butler) */

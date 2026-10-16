@@ -1,9 +1,20 @@
 import type { Runner } from 'common/types'
 
+/** What a store can do and how it differs from the others; clients ask this instead of naming stores */
+export type StoreCaps = {
+  /** A game that is already on the disk can be registered */
+  import: boolean
+  /** The platform is sent as `windows`, not `Windows` */
+  lowercasePlatform: boolean
+  /** Steam runs the game's executable itself, with no runner (`.bat`) in between */
+  directLaunch: boolean
+}
+
 /** What a client needs to list and name a store */
 export type StoreInfo = {
   id: Runner
   /** Short name to type or show: `epic`, `gog`, `amazon`, `zoom` */
   name: string
   label: string
+  caps: StoreCaps
 }

@@ -5,6 +5,7 @@ import type {
   InstallParams,
   InstallPlatform,
   Runner,
+  StoreCaps,
   StoreInfo
 } from '../api/types'
 import type { Ownership } from '../api/bridge'
@@ -120,7 +121,8 @@ export const hasBothBuilds = (game: GameInfo): boolean =>
 export function actionsFor(
   game: GameInfo,
   status: GameStatus | undefined,
-  needsUpdate: boolean
+  needsUpdate: boolean,
+  caps: StoreCaps
 ): GameAction[] {
   if (status?.status === 'queued') return ['removeFromQueue']
   if (status && DOWNLOADING.has(status.status)) return ['cancel']
@@ -129,31 +131,45 @@ export function actionsFor(
     const install: GameAction[] = hasBothBuilds(game)
       ? ['installWindows', 'installLinux']
       : ['install']
-    // Zoom and itch.io have no way to register a game that is already on the disk
-    return game.runner === 'zoom' || game.runner === 'itch'
-      ? install
-      : [...install, 'importFolder']
+    return caps.import ? [...install, 'importFolder'] : install
   }
   return needsUpdate
     ? ['update', 'repair', 'uninstall']
     : ['repair', 'uninstall']
 }
 
-const windowsFor = (game: GameInfo): InstallPlatform =>
-  game.runner === 'gog' || game.runner === 'zoom' || game.runner === 'itch'
-    ? 'windows'
-    : 'Windows'
+const windowsFor = (caps: StoreCaps): InstallPlatform =>
+  caps.lowercasePlatform ? 'windows' : 'Windows'
+
+/** What a store can do; a store rakun did not report can do nothing special */
+export function capsOf(
+  stores: StoreInfo[],
+  runner: GameInfo['runner']
+): StoreCaps {
+  return (
+    stores.find((store) => store.id === runner)?.caps ?? {
+      import: false,
+      lowercasePlatform: false,
+      directLaunch: false
+    }
+  )
+}
 
 /** The one asked for; otherwise, as `rakunctl` does, a native Linux game gets its Linux build */
-export function platformFor(game: GameInfo, build?: Build): InstallPlatform {
-  if (build === 'windows') return windowsFor(game)
+export function platformFor(
+  game: GameInfo,
+  caps: StoreCaps,
+  build?: Build
+): InstallPlatform {
+  if (build === 'windows') return windowsFor(caps)
   if (build === 'linux' || game.is_linux_native) return 'linux'
-  return windowsFor(game)
+  return windowsFor(caps)
 }
 
 export function installParams(
   game: GameInfo,
   path: string,
+  caps: StoreCaps,
   build?: Build
 ): InstallParams {
   return {
@@ -161,7 +177,7 @@ export function installParams(
     runner: game.runner,
     gameInfo: game,
     path,
-    platformToInstall: platformFor(game, build)
+    platformToInstall: platformFor(game, caps, build)
   }
 }
 

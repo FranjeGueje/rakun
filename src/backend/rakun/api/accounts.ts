@@ -1,5 +1,6 @@
 import { addHandler } from 'backend/ipc'
 import { getStore, RUNNERS, stores } from 'backend/storeManagers'
+import { STORE_CAPS } from 'backend/storeManagers/caps'
 import type { AccountsStatus } from 'common/rakun/accounts'
 import type { StoreInfo } from 'common/rakun/stores'
 
@@ -7,7 +8,7 @@ import type { StoreInfo } from 'common/rakun/stores'
 addHandler('getStores', (): StoreInfo[] =>
   RUNNERS.map((runner) => {
     const { id, name, label } = stores[runner]
-    return { id, name, label }
+    return { id, name, label, caps: STORE_CAPS[runner] }
   })
 )
 

@@ -153,7 +153,12 @@ describe('accounts commands', () => {
       stores: () =>
         Promise.resolve([
           ...STORES,
-          { id: 'itch' as const, name: 'itch', label: 'itch.io' }
+          {
+            id: 'itch' as const,
+            name: 'itch',
+            label: 'itch.io',
+            caps: { ...STORES[0].caps, import: false, lowercasePlatform: true }
+          }
         ])
     })
 
@@ -313,13 +318,14 @@ describe('library commands', () => {
 
 describe('game commands', () => {
   test('platformFor follows the store naming', () => {
-    expect(platformFor(game({ runner: 'gog' }))).toBe('windows')
-    expect(platformFor(game({ runner: 'zoom' }))).toBe('windows')
-    expect(platformFor(game({ runner: 'legendary' }))).toBe('Windows')
-    expect(platformFor(game({ runner: 'nile' }))).toBe('Windows')
-    expect(platformFor(game({ runner: 'gog', is_linux_native: true }))).toBe(
-      'linux'
-    )
+    const lower = { lowercasePlatform: true }
+    const upper = { lowercasePlatform: false }
+    expect(platformFor(game({ runner: 'gog' }), lower)).toBe('windows')
+    expect(platformFor(game({ runner: 'legendary' }), upper)).toBe('Windows')
+    expect(
+      platformFor(game({ runner: 'gog', is_linux_native: true }), lower)
+    ).toBe('linux')
+    expect(platformFor(game({ runner: 'gog' }), lower, 'linux')).toBe('linux')
   })
 
   test('install uses the default path and waits until done', async () => {
@@ -924,7 +930,9 @@ describe('stores of rakun', () => {
   test('an unknown store lists the names rakun reports', async () => {
     const { ctx } = fakeCtx()
     ctx.stores = () =>
-      Promise.resolve([{ id: 'legendary', name: 'epic', label: 'Epic' }])
+      Promise.resolve([
+        { id: 'legendary', name: 'epic', label: 'Epic', caps: STORES[0].caps }
+      ])
 
     await expect(login(ctx, ['steam'], opts)).rejects.toThrow(
       'Unknown store "steam" (epic)'
@@ -934,7 +942,14 @@ describe('stores of rakun', () => {
   test('a store rakun added later works without changing rakunctl', async () => {
     const { ctx, calls } = fakeCtx()
     ctx.stores = () =>
-      Promise.resolve([{ id: 'itch' as never, name: 'itch', label: 'itch.io' }])
+      Promise.resolve([
+        {
+          id: 'itch' as never,
+          name: 'itch',
+          label: 'itch.io',
+          caps: STORES[0].caps
+        }
+      ])
 
     await logout(ctx, ['itch'], opts)
 

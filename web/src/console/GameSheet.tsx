@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { GameInfo, GameStatus } from '../api/types'
+import type { GameInfo, GameStatus, StoreCaps } from '../api/types'
 import type { Translate } from '../i18n'
 import type { StringKey } from '../i18n/strings'
 import { useLayer } from '../input/useInput'
@@ -40,6 +40,7 @@ type Props = {
   game: GameInfo
   status: GameStatus | undefined
   needsUpdate: boolean
+  caps: StoreCaps
   defaultInstallPath: string
   actions: Actions
   t: Translate
@@ -50,12 +51,13 @@ export function GameSheet({
   game,
   status,
   needsUpdate,
+  caps,
   defaultInstallPath,
   actions,
   t,
   onClose
 }: Props) {
-  const available = actionsFor(game, status, needsUpdate)
+  const available = actionsFor(game, status, needsUpdate, caps)
   const [focus, setFocus] = useState(0)
   const [asking, setAsking] = useState<GameAction | null>(null)
   const [picking, setPicking] = useState(false)

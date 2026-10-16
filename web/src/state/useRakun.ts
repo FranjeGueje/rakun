@@ -3,7 +3,7 @@ import { HELPERS_DONE, type RakunEvent } from '../api/channels'
 import type { GameInfo, GameStatus, Runner } from '../api/types'
 import { mark } from '../perf'
 import { initialState, reducer, type State } from './reducer'
-import { installParams, platformFor, type Build } from './selectors'
+import { capsOf, installParams, platformFor, type Build } from './selectors'
 
 export type Actions = {
   install: (game: GameInfo, build?: Build) => void
@@ -203,7 +203,12 @@ export function useRakun(): { state: State; actions: Actions } {
       run(() =>
         window.rakun.call(
           'install',
-          installParams(game, stateRef.current.defaultInstallPath, build)
+          installParams(
+            game,
+            stateRef.current.defaultInstallPath,
+            capsOf(stateRef.current.stores, game.runner),
+            build
+          )
         )
       ),
     importFolder: (game, path) =>
@@ -212,7 +217,10 @@ export function useRakun(): { state: State; actions: Actions } {
           appName: game.app_name,
           runner: game.runner,
           path,
-          platform: platformFor(game)
+          platform: platformFor(
+            game,
+            capsOf(stateRef.current.stores, game.runner)
+          )
         })
         const games = await window.rakun.call('getLibrary', game.runner)
         await loadLibrary(game.runner)

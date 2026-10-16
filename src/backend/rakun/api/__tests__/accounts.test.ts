@@ -1,3 +1,4 @@
+import type { StoreInfo } from 'common/rakun/stores'
 import { invokeHandler } from 'backend/ipc'
 import './../accounts'
 
@@ -58,12 +59,25 @@ describe('getAccounts', () => {
 
 describe('getStores', () => {
   test('lists id, name and label of every store in order', async () => {
-    expect(await invokeHandler('getStores')).toEqual([
+    const stores = (await invokeHandler('getStores')) as StoreInfo[]
+    expect(stores.map(({ id, name, label }) => ({ id, name, label }))).toEqual([
       { id: 'legendary', name: 'epic', label: 'Epic' },
       { id: 'gog', name: 'gog', label: 'GOG' },
       { id: 'nile', name: 'amazon', label: 'Amazon' },
       { id: 'zoom', name: 'zoom', label: 'Zoom' }
     ])
+  })
+
+  test('says what each store can do', async () => {
+    const stores = (await invokeHandler('getStores')) as StoreInfo[]
+    const caps = Object.fromEntries(stores.map((s) => [s.id, s.caps]))
+    expect(caps.legendary).toEqual({
+      import: true,
+      lowercasePlatform: false,
+      directLaunch: false
+    })
+    expect(caps.gog.lowercasePlatform).toBe(true)
+    expect(caps.zoom).toMatchObject({ import: false, directLaunch: true })
   })
 })
 
