@@ -18,11 +18,7 @@ import {
 import { existsSync } from 'fs'
 import { killPattern, moveOnUnix, sendProgressUpdate } from 'backend/utils'
 import { GlobalConfig } from 'backend/config'
-import {
-  onGameImported,
-  onGameMoved,
-  onGameUninstalled
-} from 'backend/rakun/game_events'
+import { onGameImported } from 'backend/rakun/game_events'
 import { sendFrontendMessage } from '../../ipc'
 import { isLinux } from 'backend/constants/environment'
 
@@ -256,10 +252,7 @@ export default class NileGameManager implements Game {
       this.id,
       moveResult.installPath
     )
-    void onGameMoved(this, moveResult.installPath).catch((err) =>
-      logError(err, LogPrefix.Nile)
-    )
-    return { status: 'done' }
+    return { status: 'done', installPath: moveResult.installPath }
   }
 
   async repair(): Promise<ExecResult> {
@@ -309,7 +302,6 @@ export default class NileGameManager implements Game {
         LogPrefix.Nile
       )
     } else if (!res.abort) {
-      await onGameUninstalled(this)
       libraryManagerMap['nile'].installState(this.id, false)
     }
     sendFrontendMessage('refreshLibrary', 'nile')

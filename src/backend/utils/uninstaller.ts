@@ -2,6 +2,7 @@ import { GlobalConfig } from 'backend/config'
 import { logError, logInfo, LogPrefix } from 'backend/logger'
 import { libraryManagerMap } from 'backend/storeManagers'
 import { sendGameStatusUpdate } from 'backend/utils'
+import { onGameUninstalled } from 'backend/rakun/game_events'
 import { Runner } from 'common/types'
 import { existsSync, rmSync } from 'fs'
 
@@ -52,8 +53,9 @@ export const uninstallGameCallback = async (
 
   try {
     const result = await game.uninstall({ shouldRemovePrefix })
-    uninstalled = !result?.error
     if (result?.error) logError(result.error, LogPrefix.Backend)
+    uninstalled = !result?.error && !result?.abort
+    if (uninstalled) await onGameUninstalled(game)
   } catch (error) {
     logError(error, LogPrefix.Backend)
   }

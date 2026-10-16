@@ -26,11 +26,7 @@ import {
 } from 'backend/logger'
 
 import { gameInfoStore } from './electronStores'
-import {
-  onGameImported,
-  onGameMoved,
-  onGameUninstalled
-} from 'backend/rakun/game_events'
+import { onGameImported } from 'backend/rakun/game_events'
 import { isOnline } from '../../online_monitor'
 import { Catalog, Product } from 'common/types/epic-graphql'
 import { sendFrontendMessage } from '../../ipc'
@@ -295,9 +291,7 @@ export default class LegendaryGame implements Game {
    * Parent folder to move app to.
    * Amends install path by adding the appropriate folder name.
    */
-  async moveInstall(
-    newInstallPath: string
-  ): Promise<{ status: 'done' } | { status: 'error'; error: string }> {
+  async moveInstall(newInstallPath: string): Promise<InstallResult> {
     const gameInfo = this.getGameInfo()
     logInfo(`Moving ${gameInfo.title} to ${newInstallPath}`, LogPrefix.Gog)
 
@@ -318,10 +312,7 @@ export default class LegendaryGame implements Game {
       this.appName,
       moveResult.installPath
     )
-    void onGameMoved(this, moveResult.installPath).catch((err) =>
-      logError(err, LogPrefix.Legendary)
-    )
-    return { status: 'done' }
+    return { status: 'done', installPath: moveResult.installPath }
   }
 
   // used when downloading games, store the download size read from Legendary's output
@@ -585,7 +576,6 @@ export default class LegendaryGame implements Game {
       )
     } else if (!res.abort) {
       libraryManagerMap['legendary'].installState(this.appName, false)
-      await onGameUninstalled(this)
     }
     sendFrontendMessage('refreshLibrary', 'legendary')
     return res

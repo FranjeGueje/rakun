@@ -28,7 +28,6 @@ import {
   logDebug
 } from 'backend/logger'
 
-import { onGameMoved, onGameUninstalled } from 'backend/rakun/game_events'
 import { helperFile } from 'backend/rakun/helpers/locations'
 import { GlobalConfig } from 'backend/config'
 import { ZoomInstallPlatform, ZoomDownloadFile } from 'common/types/zoom'
@@ -540,9 +539,7 @@ export default class ZoomGame implements Game {
     return { status: 'done', installPath }
   }
 
-  async moveInstall(
-    newInstallPath: string
-  ): Promise<{ status: 'done' } | { status: 'error'; error: string }> {
+  async moveInstall(newInstallPath: string): Promise<InstallResult> {
     const gameInfo = this.getGameInfo()
     logInfo(`Moving ${gameInfo.title} to ${newInstallPath}`, LogPrefix.Zoom)
 
@@ -572,11 +569,7 @@ export default class ZoomGame implements Game {
     installedGamesStore.set('installed', array)
     void libraryManagerMap['zoom'].refresh()
 
-    void onGameMoved(this, moveResult.installPath).catch((err) =>
-      logError(err, LogPrefix.Zoom)
-    )
-
-    return { status: 'done' }
+    return { status: 'done', installPath: moveResult.installPath }
   }
 
   async repair(): Promise<ExecResult> {
@@ -601,7 +594,6 @@ export default class ZoomGame implements Game {
     const gameInfo = this.getGameInfo()
     gameInfo.is_installed = false
     gameInfo.install = { is_dlc: false }
-    await onGameUninstalled(this)
     sendFrontendMessage('pushGameToLibrary', gameInfo)
     return { stdout: 'Uninstalled', stderr: '' }
   }

@@ -27,11 +27,7 @@ import {
 } from 'backend/logger'
 import { GOGUser } from './user'
 
-import {
-  onGameImported,
-  onGameMoved,
-  onGameUninstalled
-} from 'backend/rakun/game_events'
+import { onGameImported } from 'backend/rakun/game_events'
 import { GogInstallPlatform } from 'common/types/gog'
 import { sendFrontendMessage } from '../../ipc'
 import { Game, InstallResult, RemoveArgs } from 'common/types/game_manager'
@@ -370,9 +366,7 @@ export default class GOGGame implements Game {
     return { status: 'done', installPath: install_path }
   }
 
-  async moveInstall(
-    newInstallPath: string
-  ): Promise<{ status: 'done' } | { status: 'error'; error: string }> {
+  async moveInstall(newInstallPath: string): Promise<InstallResult> {
     const gameInfo = this.getGameInfo()
     logInfo(`Moving ${gameInfo.title} to ${newInstallPath}`, LogPrefix.Gog)
 
@@ -393,11 +387,7 @@ export default class GOGGame implements Game {
       this.id,
       moveResult.installPath
     )
-    void onGameMoved(this, moveResult.installPath).catch((err) =>
-      logError(err, LogPrefix.Gog)
-    )
-
-    return { status: 'done' }
+    return { status: 'done', installPath: moveResult.installPath }
   }
 
   /*
@@ -468,7 +458,6 @@ export default class GOGGame implements Game {
     const gameInfo = this.getGameInfo()
     gameInfo.is_installed = false
     gameInfo.install = { is_dlc: false }
-    await onGameUninstalled(this)
     sendFrontendMessage('pushGameToLibrary', gameInfo)
     return res
   }

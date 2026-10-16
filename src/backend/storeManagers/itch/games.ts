@@ -10,7 +10,7 @@ import type {
 import type { ItchGame, ItchUpload } from 'common/types/itch'
 import type { Game, InstallResult } from 'common/types/game_manager'
 import { logError, logInfo, logWarning, LogPrefix } from 'backend/logger'
-import { onGameRepaired, onGameUninstalled } from 'backend/rakun/game_events'
+import { onGameRepaired } from 'backend/rakun/game_events'
 import { sendFrontendMessage } from '../../ipc'
 import { sendProgressUpdate } from '../../utils'
 import { libraryManagerMap } from '..'
@@ -219,7 +219,6 @@ export default class ItchGameManager implements Game {
 
     if (installed.caveId) await this.removeCave(installed.caveId)
     this.forgetInstalled()
-    await onGameUninstalled(this)
     return { stdout: 'Uninstalled', stderr: '' }
   }
 

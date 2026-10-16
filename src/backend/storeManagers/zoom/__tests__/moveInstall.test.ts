@@ -28,12 +28,10 @@ jest.mock('../../index', () => ({
 import ZoomGame from '../games'
 import { installedGamesStore } from '../electronStores'
 import { moveOnUnix } from '../../../utils'
-import { onGameMoved } from 'backend/rakun/game_events'
 import { libraryManagerMap } from '../../index'
 
 const mockedInstalledGamesStore = jest.mocked(installedGamesStore)
 const mockedMoveOnUnix = jest.mocked(moveOnUnix)
-const mockedOnGameMoved = jest.mocked(onGameMoved)
 
 describe('ZoomGame.moveInstall', () => {
   const appName = 'test-zoom-game'
@@ -41,7 +39,6 @@ describe('ZoomGame.moveInstall', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    mockedOnGameMoved.mockResolvedValue(undefined)
     game = new ZoomGame(appName)
     game.getGameInfo = jest.fn().mockReturnValue({
       app_name: appName,
@@ -51,7 +48,7 @@ describe('ZoomGame.moveInstall', () => {
     })
   })
 
-  it('moves the game, updates the store, and notifies onGameMoved', async () => {
+  it('moves the game and updates the store', async () => {
     mockedMoveOnUnix.mockResolvedValue({
       status: 'done',
       installPath: '/new/path/Test Zoom Game'
@@ -62,30 +59,14 @@ describe('ZoomGame.moveInstall', () => {
 
     const result = await game.moveInstall('/new/path')
 
-    expect(result).toEqual({ status: 'done' })
+    expect(result).toEqual({
+      status: 'done',
+      installPath: '/new/path/Test Zoom Game'
+    })
     expect(mockedInstalledGamesStore.set).toHaveBeenCalledWith('installed', [
       { appName, install_path: '/new/path/Test Zoom Game' }
     ])
     expect(libraryManagerMap['zoom'].refresh).toHaveBeenCalled()
-    expect(mockedOnGameMoved).toHaveBeenCalledWith(
-      game,
-      '/new/path/Test Zoom Game'
-    )
-  })
-
-  it('a Steam hook that fails does not fail the move', async () => {
-    mockedMoveOnUnix.mockResolvedValue({
-      status: 'done',
-      installPath: '/new/path/Test Zoom Game'
-    })
-    mockedInstalledGamesStore.get.mockReturnValue([
-      { appName, install_path: '/old/path/Test Zoom Game' }
-    ])
-    mockedOnGameMoved.mockRejectedValue(new Error('steam is closed'))
-
-    await expect(game.moveInstall('/new/path')).resolves.toEqual({
-      status: 'done'
-    })
   })
 
   it('returns an error and does not touch the store when the move fails', async () => {
@@ -98,7 +79,6 @@ describe('ZoomGame.moveInstall', () => {
 
     expect(result).toEqual({ status: 'error', error: 'disk full' })
     expect(mockedInstalledGamesStore.set).not.toHaveBeenCalled()
-    expect(mockedOnGameMoved).not.toHaveBeenCalled()
   })
 
   it('returns an error when the game is not found in the installed store', async () => {
@@ -114,6 +94,5 @@ describe('ZoomGame.moveInstall', () => {
 
     expect(result).toEqual({ status: 'error', error: "Game isn't installed" })
     expect(mockedInstalledGamesStore.set).not.toHaveBeenCalled()
-    expect(mockedOnGameMoved).not.toHaveBeenCalled()
   })
 })

@@ -293,7 +293,7 @@ describe('repair and update', () => {
 })
 
 describe('uninstall', () => {
-  test('removes the install from butler, forgets it and then tells Steam', async () => {
+  test('removes the install from butler and forgets it', async () => {
     mockStored.installed = [
       { appName: '21301', caveId: 'cave-1', install_path: '/games/pacapong' }
     ]
@@ -302,14 +302,11 @@ describe('uninstall', () => {
       order.push(method)
       return Promise.resolve({})
     })
-    mockedOnGameUninstalled.mockImplementation(() => {
-      order.push(`hook after ${mockStored.installed.length} installed`)
-      return Promise.resolve()
-    })
 
     const result = await game().uninstall()
 
-    expect(order).toEqual(['Uninstall.Perform', 'hook after 0 installed'])
+    expect(order).toEqual(['Uninstall.Perform'])
+    expect(mockStored.installed).toEqual([])
     expect(mockButlerd.call).toHaveBeenCalledWith('Uninstall.Perform', {
       caveId: 'cave-1',
       hard: true
@@ -329,7 +326,6 @@ describe('uninstall', () => {
 
     expect(result.stdout).toBe('Uninstalled')
     expect(mockStored.installed).toEqual([])
-    expect(mockedOnGameUninstalled).toHaveBeenCalled()
   })
 
   test('any other failure of butler leaves the game installed', async () => {

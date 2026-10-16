@@ -18,7 +18,7 @@ import { showDialogBoxModalAuto } from 'backend/dialog/dialog'
 import { callAbortController } from 'backend/utils/aborthandler/aborthandler'
 import { autoUpdate, libraryManagerMap } from 'backend/storeManagers'
 import { legendaryInstalled } from 'backend/storeManagers/legendary/constants'
-import { onGameRepaired } from 'backend/rakun/game_events'
+import { onGameMoved, onGameRepaired } from 'backend/rakun/game_events'
 import { refreshingRunners, startRefresh } from './refresh'
 
 addHandler('checkGameUpdates', async (): Promise<string[]> => {
@@ -154,9 +154,8 @@ addHandler(
       status: 'moving'
     })
 
-    const moveRes = await libraryManagerMap[runner]
-      .getGame(appName)
-      .moveInstall(path)
+    const game = libraryOf(runner).getGame(appName)
+    const moveRes = await game.moveInstall(path)
     if (moveRes.status === 'error') {
       logError(
         `Error while moving ${appName} to ${path}: ${moveRes.error} `,
@@ -172,6 +171,11 @@ addHandler(
 
     if (moveRes.status === 'done') {
       logInfo(`Finished moving ${appName} to ${path}.`, LogPrefix.Backend)
+      if (moveRes.installPath) {
+        void onGameMoved(game, moveRes.installPath).catch((err) =>
+          logError(err, LogPrefix.Backend)
+        )
+      }
     }
 
     sendGameStatusUpdate({
