@@ -7,6 +7,7 @@ import {
 } from '../../utils'
 import { join, relative, dirname } from 'node:path'
 import * as fs from 'fs'
+import type { SpawnOptions } from 'child_process'
 import axios, { AxiosProgressEvent } from 'axios'
 import { saveStreamToFile } from './download'
 import {
@@ -43,6 +44,7 @@ import { removeInstalled, upsertInstalled } from '../installed_list'
 import { libraryManagerMap } from '..'
 
 import { rm } from 'node:fs/promises'
+import { createAbortController } from 'backend/utils/aborthandler/aborthandler'
 
 export default class ZoomGame implements Game {
   private readonly id: string
@@ -243,6 +245,14 @@ export default class ZoomGame implements Game {
 
     fs.mkdirSync(installPath, { recursive: true })
 
+    // Pausing or cancelling aborts this controller (the queue calls it by game id)
+    const { signal } = createAbortController(this.id)
+    const run = (command: string, args: string[], options: SpawnOptions = {}) =>
+      spawnAsync(command, args, { ...options, signal }).catch((error) => {
+        if (!signal.aborted) throw error
+        return { code: null, stdout: '', stderr: 'Aborted' }
+      })
+
     const totalSize = installers
       .map((file) => parseSize(file.size))
       .reduce((acc, num) => acc + num, 0)
@@ -265,6 +275,7 @@ export default class ZoomGame implements Game {
         try {
           const response = await axios.get(file.url!, {
             responseType: 'stream',
+            signal,
             onDownloadProgress: (progressEvent: AxiosProgressEvent) => {
               let percent: undefined | number
               if (progressEvent.bytes) {
@@ -287,6 +298,7 @@ export default class ZoomGame implements Game {
 
           downloaded = downloaded + parseSize(file.size)
         } catch (error) {
+          if (signal.aborted) return { status: 'abort' }
           logError(['Failed to download installer:', error], LogPrefix.Zoom)
           return {
             status: 'error',
@@ -308,7 +320,7 @@ export default class ZoomGame implements Game {
 
       if (downloadPath.endsWith('.tar.xz')) {
         logInfo(`Extracting ${downloadPath}...`, LogPrefix.Zoom)
-        installResult = await spawnAsync('tar', [
+        installResult = await run('tar', [
           '-xf',
           downloadPath,
           '-C',
@@ -331,7 +343,7 @@ export default class ZoomGame implements Game {
       } else {
         executable = downloadPath
         await fs.promises.chmod(executable, '755')
-        installResult = await spawnAsync(executable, [], {
+        installResult = await run(executable, [], {
           cwd: installPath
         })
       }
@@ -358,7 +370,7 @@ export default class ZoomGame implements Game {
           `Running zoom-platform.sh: PROTONPATH=${protonPath} ${zoomPlatformScript} -i ${downloadPath} -d ${installPath}`,
           LogPrefix.Zoom
         )
-        const scriptResult = await spawnAsync(
+        const scriptResult = await run(
           'bash',
           [zoomPlatformScript, '-i', downloadPath, '-d', installPath],
           {
@@ -381,6 +393,9 @@ export default class ZoomGame implements Game {
         }
       }
     }
+
+    // The downloaded installers stay, so resuming does not download them again
+    if (signal.aborted) return { status: 'abort' }
 
     if (installResult.error) {
       logError(
@@ -618,12 +633,8 @@ export default class ZoomGame implements Game {
   }
 
   async stop(): Promise<void> {
-    logWarning(
-      `Stop not fully implemented for Zoom: ${this.id}`,
-      LogPrefix.Zoom
-    )
-    // For now, we don't have a specific process to stop for Zoom games
-    // If wine is used, it will be handled by the launcher's wine cleanup.
+    // Nothing to kill by name: pausing and cancelling go through the abort
+    // controller of the install (see install())
   }
 
   async isGameAvailable(): Promise<boolean> {
