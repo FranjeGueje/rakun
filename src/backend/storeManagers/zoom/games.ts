@@ -529,7 +529,9 @@ export default class ZoomGame implements Game {
     }
 
     logInfo(`Installation of ${this.id} completed.`, LogPrefix.Zoom)
-    await onGameInstalled(this, installPath)
+    void onGameInstalled(this, installPath).catch((err) =>
+      logError(err, LogPrefix.Zoom)
+    )
     return { status: 'done' }
   }
 
@@ -565,7 +567,9 @@ export default class ZoomGame implements Game {
     installedGamesStore.set('installed', array)
     void libraryManagerMap['zoom'].refresh()
 
-    await onGameMoved(this, moveResult.installPath)
+    void onGameMoved(this, moveResult.installPath).catch((err) =>
+      logError(err, LogPrefix.Zoom)
+    )
 
     return { status: 'done' }
   }

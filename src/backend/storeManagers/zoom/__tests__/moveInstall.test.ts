@@ -41,6 +41,7 @@ describe('ZoomGame.moveInstall', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    mockedOnGameMoved.mockResolvedValue(undefined)
     game = new ZoomGame(appName)
     game.getGameInfo = jest.fn().mockReturnValue({
       app_name: appName,
@@ -70,6 +71,21 @@ describe('ZoomGame.moveInstall', () => {
       game,
       '/new/path/Test Zoom Game'
     )
+  })
+
+  it('a Steam hook that fails does not fail the move', async () => {
+    mockedMoveOnUnix.mockResolvedValue({
+      status: 'done',
+      installPath: '/new/path/Test Zoom Game'
+    })
+    mockedInstalledGamesStore.get.mockReturnValue([
+      { appName, install_path: '/old/path/Test Zoom Game' }
+    ])
+    mockedOnGameMoved.mockRejectedValue(new Error('steam is closed'))
+
+    await expect(game.moveInstall('/new/path')).resolves.toEqual({
+      status: 'done'
+    })
   })
 
   it('returns an error and does not touch the store when the move fails', async () => {
