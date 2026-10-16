@@ -144,7 +144,11 @@ async function installAsset(
   }
 }
 
-/** The Zoom installer is a script on its own site, with no versions: its own line says which one it is */
+/**
+ * The Zoom installer is a script on its own site, with no versions: its own line
+ * says which one it is. It cannot be pinned or checked (Zoom may change the file
+ * and does not version it): docs/Helper-Binaries.md says so.
+ */
 async function installZoomScript(layout: Layout, fetchFn: typeof fetch) {
   const data = await getBuffer(fetchFn, ZOOM_SCRIPT_URL)
   writeAtomic(join(layout.binRoot, 'zoom', 'zoom-platform.sh'), data, 0o755)

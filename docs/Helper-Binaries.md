@@ -31,7 +31,7 @@ rakunctl helpers update     # download the missing ones (starts rakun for the ti
 > [!WARNING]
 > `--latest` checks nothing. rakun reads the output of these programs, so a new version can break it. Use it at your own risk.
 
-Zoom's installer script is the only one that cannot be checked: its address has no version, so there is no `sha256` to compare. It comes from Zoom's own site and counts as installed whatever version it says.
+Zoom's installer script is the only one that cannot be checked: its address has no version, so there is no `sha256` to compare. It comes from Zoom's own site and counts as installed whatever version it says. Zoom can change the file whenever it wants and does not publish versions of it, so rakun cannot pin it: it is a known limit, not something rakun can fix. rakun runs that script (with `bash`, as your user) to install the Windows installers of Zoom games, so trust it as much as you trust Zoom's site. Run `rakunctl helpers update` only when you want to fetch it again.
 
 ## Where they go
 
