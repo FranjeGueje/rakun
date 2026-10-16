@@ -50,3 +50,35 @@ describe('LegendaryUser.logout', () => {
     }
   )
 })
+
+describe('LegendaryUser.login', () => {
+  const info = { account_id: 'a1', displayName: 'Ann', user: 'deck' }
+
+  test('legendary saved a session: logged in', async () => {
+    runRunnerCommand.mockResolvedValue({ stdout: '', stderr: '', code: 0 })
+    jest.spyOn(LegendaryUser, 'getUserInfo').mockReturnValue(info)
+
+    expect(await LegendaryUser.login('CODE')).toEqual({
+      status: 'done',
+      data: info
+    })
+  })
+
+  test('it said nothing wrong but left no session (or an old one gone): not logged in', async () => {
+    runRunnerCommand.mockResolvedValue({ stdout: '', stderr: '', code: 0 })
+    jest.spyOn(LegendaryUser, 'getUserInfo').mockReturnValue(undefined)
+
+    expect((await LegendaryUser.login('CODE')).status).toBe('failed')
+  })
+
+  test('a code other than 0 is a failed login', async () => {
+    runRunnerCommand.mockResolvedValue({
+      stdout: '',
+      stderr: 'something else',
+      code: 1
+    })
+    jest.spyOn(LegendaryUser, 'getUserInfo').mockReturnValue(info)
+
+    expect((await LegendaryUser.login('CODE')).status).toBe('failed')
+  })
+})

@@ -19,7 +19,10 @@ jest.mock('backend/storeManagers', () => {
     name,
     label,
     session: {
-      account: () => state[runner],
+      account: () => {
+        if (state[runner] === undefined) throw new Error('unreadable')
+        return state[runner]
+      },
       // Read when used: the checks of a test are set after the mock is built
       get check() {
         return checks[runner]
@@ -218,5 +221,50 @@ describe('expired sessions', () => {
     markSessionExpired('gog')
     await invokeHandler('logout', 'gog')
     expect(isSessionExpired('gog')).toBe(false)
+  })
+})
+
+describe('a store whose account cannot be read', () => {
+  beforeEach(() => {
+    Object.assign(state, {
+      legendary: { loggedIn: true, name: 'epicuser' },
+      gog: { loggedIn: true, name: 'goguser' },
+      nile: { loggedIn: true, name: 'amazonuser' },
+      zoom: { loggedIn: true, name: 'zoomuser' }
+    })
+    for (const runner of Object.keys(checks)) delete checks[runner]
+  })
+  afterEach(() => {
+    Object.assign(state, { nile: { loggedIn: false } })
+  })
+
+  test('getAccounts still answers for the others, and that store has nobody', async () => {
+    delete state.nile
+
+    const accounts = (await invokeHandler('getAccounts')) as Record<
+      string,
+      { loggedIn: boolean; name?: string }
+    >
+
+    expect(accounts.nile).toEqual({ loggedIn: false })
+    expect(accounts.legendary).toEqual({ loggedIn: true, name: 'epicuser' })
+    expect(accounts.gog.loggedIn).toBe(true)
+    expect(accounts.zoom.loggedIn).toBe(true)
+  })
+
+  test('checkAccounts too, and a check that throws is only «cannot tell»', async () => {
+    delete state.nile
+    checks.gog = () => {
+      throw new Error('boom')
+    }
+
+    const result = (await invokeHandler('checkAccounts')) as Record<
+      string,
+      { loggedIn: boolean; verified: boolean }
+    >
+
+    expect(result.nile).toEqual({ loggedIn: false, verified: true })
+    expect(result.gog).toEqual({ loggedIn: true, verified: false })
+    expect(result.legendary.loggedIn).toBe(true)
   })
 })

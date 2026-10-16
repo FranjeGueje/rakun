@@ -1,4 +1,10 @@
-import { LogPrefix, logDebug, logError, logInfo } from 'backend/logger'
+import {
+  LogPrefix,
+  logDebug,
+  logError,
+  logInfo,
+  logWarning
+} from 'backend/logger'
 import {
   NileLoginData,
   NileRegisterData,
@@ -9,6 +15,7 @@ import { existsSync, readFileSync } from 'fs'
 import { configStore } from './electronStores'
 import { clearCache } from 'backend/utils'
 import { nileUserData } from './constants'
+import { exitFailure } from '../helper_result'
 
 function authLogSanitizer(line: string) {
   try {
@@ -46,7 +53,7 @@ export class NileUser {
   ): Promise<{ status: 'done' | 'failed'; user: NileUserData | undefined }> {
     const { code, code_verifier, serial, client_id } = data
     // Nile prints output to stderr
-    const { stderr: output } = await libraryManagerMap['nile'].runRunnerCommand(
+    const result = await libraryManagerMap['nile'].runRunnerCommand(
       [
         'register',
         '--code',
@@ -60,11 +67,20 @@ export class NileUser {
       ],
       { abortId: 'nile-login' }
     )
+    const output = result.stderr
 
-    const successRegex = /\[AUTH_MANAGER]:.*Succesfully registered a device/
-    if (!successRegex.test(output)) {
+    // nile spells it «Succesfully»; the fixed spelling must not break every login
+    const successRegex =
+      /\[AUTH_MANAGER]:.*Succe(?:s)?sfully registered a device/
+    if (!successRegex.test(output) || exitFailure(result)) {
       // Authentication failed
-      logError(['Authentication failed:', output], LogPrefix.Nile)
+      // What was sent can come back in nile's own words: it is not logged
+      const secrets = [code, code_verifier, serial, client_id].filter(Boolean)
+      const safe = secrets.reduce(
+        (text, secret) => text.split(secret).join('<redacted>'),
+        output
+      )
+      logError(['Authentication failed:', safe], LogPrefix.Nile)
       return {
         status: 'failed',
         user: undefined
@@ -113,8 +129,16 @@ export class NileUser {
       return
     }
 
-    const user: NileUserData = JSON.parse(readFileSync(nileUserData, 'utf-8'))
-    if (!Object.keys(user).length) {
+    let user: NileUserData | null
+    try {
+      user = JSON.parse(readFileSync(nileUserData, 'utf-8'))
+    } catch (error) {
+      // Cannot read it (cut short, being written): that does not log anybody
+      // out, and getAccounts asks for every store through here
+      logWarning(['current_user.json is unreadable:', error], LogPrefix.Nile)
+      return configStore.get_nodefault('userData')
+    }
+    if (!user || !Object.keys(user).length) {
       logInfo('user.json is empty', LogPrefix.Nile)
       configStore.delete('userData')
       return

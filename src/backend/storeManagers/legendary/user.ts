@@ -8,6 +8,7 @@ import { libraryManagerMap } from '..'
 import { LegendaryCommand } from './commands'
 import { NonEmptyString } from './commands/base'
 import { legendaryUserInfo } from './constants'
+import { exitFailure } from '../helper_result'
 
 export class LegendaryUser {
   public static async login(
@@ -39,11 +40,15 @@ export class LegendaryUser {
         return errorMessage(res.stderr)
       }
 
+      res.error ??= exitFailure(res)
       if (res.error || res.abort) {
         return errorMessage(res.error ?? 'abort by user')
       }
 
+      // A login is a session: if legendary left no user.json (or kept an old
+      // one that is not this login's), nobody is logged in whatever it said
       const userInfo = this.getUserInfo()
+      if (!userInfo) return errorMessage('legendary saved no session')
       return { status: 'done', data: userInfo }
     } catch (error) {
       return errorMessage(`${String(error)}`)
