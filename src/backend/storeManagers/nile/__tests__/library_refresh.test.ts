@@ -40,6 +40,7 @@ jest.mock('fs', () => ({
 
 import NileLibraryManager from '../library'
 import { callRunner } from 'backend/runner_call'
+import { existsSync, readFileSync, writeFileSync } from 'fs'
 import { getNileBin } from 'backend/utils'
 import { clearSessionExpired, isSessionExpired } from '../../session_state'
 import { NileUser } from '../user'
@@ -159,5 +160,63 @@ describe('NileLibraryManager and a token Amazon will not renew', () => {
     await manager.refresh()
 
     expect(isSessionExpired('nile')).toBe(false)
+  })
+})
+
+describe('NileLibraryManager.updateInstalledPathInJSON and a file it cannot read', () => {
+  // The config resets the mocks before each test: the file is there
+  beforeEach(() => {
+    jest.mocked(existsSync).mockReturnValue(true)
+  })
+
+  const update = (manager: NileLibraryManager) =>
+    (
+      manager as unknown as {
+        updateInstalledPathInJSON: (appName: string, path: string) => void
+      }
+    ).updateInstalledPathInJSON('g1', '/new/path')
+
+  test('installed.json is rewritten with the new path when it can be read', () => {
+    jest
+      .mocked(readFileSync)
+      .mockReturnValue(JSON.stringify([{ id: 'g1', path: '/old' }]))
+    const manager = new NileLibraryManager()
+
+    update(manager)
+
+    expect(writeFileSync).toHaveBeenCalledWith(
+      expect.stringContaining('installed.json'),
+      JSON.stringify([{ id: 'g1', path: '/new/path' }]),
+      'utf-8'
+    )
+  })
+
+  test('a file nile wrote in another shape is not written back empty', () => {
+    jest.mocked(readFileSync).mockReturnValue('{"not":"an array"}')
+    const manager = new NileLibraryManager()
+
+    update(manager)
+
+    expect(writeFileSync).not.toHaveBeenCalled()
+  })
+
+  test('nor is a file that is cut short', () => {
+    jest.mocked(readFileSync).mockReturnValue('[{"id":"g1","pa')
+    const manager = new NileLibraryManager()
+
+    update(manager)
+
+    expect(writeFileSync).not.toHaveBeenCalled()
+  })
+
+  test('a game that is not in it does not rewrite the file either', () => {
+    jest
+      .mocked(readFileSync)
+      .mockReturnValue(JSON.stringify([{ id: 'other', path: '/x' }]))
+    const manager = new NileLibraryManager()
+
+    update(manager)
+
+    expect(writeFileSync).not.toHaveBeenCalled()
   })
 })

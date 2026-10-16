@@ -38,6 +38,7 @@ export default class NileLibraryManager implements LibraryManager {
   }
 
   private installedGames: Map<string, NileInstallMetadataInfo> = new Map()
+  private installedReadOk = true
   private library: Map<string, GameInfo> = new Map()
   private readonly gameCache: Map<string, NileGame> = new Map()
 
@@ -229,6 +230,7 @@ export default class NileLibraryManager implements LibraryManager {
    */
   refreshInstalled() {
     this.installedGames.clear()
+    this.installedReadOk = true
     if (existsSync(nileInstalled)) {
       try {
         const installed: NileInstallMetadataInfo[] = JSON.parse(
@@ -238,6 +240,10 @@ export default class NileLibraryManager implements LibraryManager {
           this.installedGames.set(metadata.id, metadata)
         })
       } catch (error) {
+        // What we hold is empty because it could not be read, not because
+        // nothing is installed: it must never be written back
+        this.installedReadOk = false
+        this.installedGames.clear()
         logError(
           ['Corrupted installed.json file, cannot load installed games', error],
           LogPrefix.Nile
@@ -416,6 +422,17 @@ export default class NileLibraryManager implements LibraryManager {
   private updateInstalledPathInJSON(appName: string, newAppPath: string) {
     // Make sure we get the latest installed info
     this.refreshInstalled()
+    if (!this.installedReadOk) {
+      // Writing back what could not be read would leave nile with no installed games
+      logError(
+        [
+          'installed.json could not be read: the new path is not saved',
+          appName
+        ],
+        LogPrefix.Nile
+      )
+      return
+    }
 
     const installedGameInfo = this.installedGames.get(appName)
     if (installedGameInfo) installedGameInfo.path = newAppPath
@@ -424,6 +441,7 @@ export default class NileLibraryManager implements LibraryManager {
         `installed game info not found in changeGameInstallPath for ${appName}`,
         LogPrefix.Nile
       )
+      return
     }
 
     if (!existsSync(nileInstalled)) {
