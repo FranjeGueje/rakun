@@ -1,0 +1,8 @@
+{
+  "helper": "nile",
+  "case": "list-updates-nothing-installed",
+  "args": ["list-updates", "--json"],
+  "exit": 0,
+  "stdout": "[]\n",
+  "stderr": "ERROR [CLI]:\t No games installed\n"
+}

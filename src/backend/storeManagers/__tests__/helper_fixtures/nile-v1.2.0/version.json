@@ -1,0 +1,8 @@
+{
+  "helper": "nile",
+  "case": "version",
+  "args": ["--version"],
+  "exit": 0,
+  "stdout": "1.2.0 Robert Speedwagon\n",
+  "stderr": ""
+}

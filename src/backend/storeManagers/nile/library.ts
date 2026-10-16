@@ -7,7 +7,6 @@ import {
 } from 'backend/logger'
 import { CallRunnerOptions, ExecResult, GameInfo } from 'common/types'
 import {
-  NileGameDownloadInfo,
   NileGameInfo,
   NileInstallInfo,
   NileInstallMetadataInfo
@@ -25,25 +24,10 @@ import type { LibraryManager } from 'common/types/game_manager'
 import { shareInFlight } from 'backend/utils/inflight'
 import { nileRefusedToken } from './refused_token'
 import { parseHelperJson } from '../helper_output'
+import { isDownloadInfo, isNileGame, isStringList } from './output'
 import { clearSessionExpired, markSessionExpired } from '../session_state'
 
 const installInfoInFlight = new Map<string, Promise<NileInstallInfo>>()
-
-const isStringList = (value: unknown): value is string[] =>
-  Array.isArray(value) && value.every((item) => typeof item === 'string')
-
-const isDownloadInfo = (value: unknown): value is NileGameDownloadInfo =>
-  typeof (value as NileGameDownloadInfo | null)?.download_size === 'number'
-
-/** The parts of a game of library.json that rakun reads without asking */
-const isNileGame = (value: unknown): value is NileGameInfo => {
-  const product = (value as NileGameInfo | null)?.product
-  return (
-    typeof product?.id === 'string' &&
-    typeof product.productDetail?.details === 'object' &&
-    product.productDetail.details !== null
-  )
-}
 
 const refusedRenewing = ({ stdout, stderr, error }: ExecResult) =>
   nileRefusedToken(`${stdout}\n${stderr}\n${error}`)
