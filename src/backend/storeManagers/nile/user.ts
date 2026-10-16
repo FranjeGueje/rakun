@@ -93,9 +93,12 @@ export class NileUser {
       abortId: 'nile-logout'
     })
 
-    if (res.abort) {
-      logError('Failed to logout: abort by user', LogPrefix.Nile)
-      return
+    if (res.abort || res.error) {
+      const reason = res.error ?? 'abort by user'
+      logError(['Failed to logout:', reason], LogPrefix.Nile)
+      // nile's session file is still there, and account() reads it back: the
+      // client must not be told it is out
+      throw new Error(`Could not log out of Amazon: ${reason}`)
     }
 
     configStore.delete('userData')

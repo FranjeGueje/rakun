@@ -84,3 +84,36 @@ describe('NileUser.getUserData', () => {
     expect(configStore.delete).toHaveBeenCalledWith('userData')
   })
 })
+
+describe('NileUser.logout', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('forgets the stored user once nile has logged out', async () => {
+    mockedRunRunnerCommand.mockResolvedValue({ stdout: '', stderr: '' })
+
+    await NileUser.logout()
+
+    expect(configStore.delete).toHaveBeenCalledWith('userData')
+  })
+
+  it.each([
+    ['fails', { error: 'boom' }],
+    ['is aborted', { abort: true }]
+  ])(
+    'says so when the command %s, and keeps the session as it was',
+    async (_, result) => {
+      mockedRunRunnerCommand.mockResolvedValue({
+        stdout: '',
+        stderr: '',
+        ...result
+      })
+
+      await expect(NileUser.logout()).rejects.toThrow(
+        'Could not log out of Amazon'
+      )
+      expect(configStore.delete).not.toHaveBeenCalled()
+    }
+  )
+})

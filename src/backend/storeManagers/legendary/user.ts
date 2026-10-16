@@ -59,11 +59,10 @@ export class LegendaryUser {
     })
 
     if (res.error || res.abort) {
-      logError(
-        ['Failed to logout:', res.error ?? 'abort by user'],
-        LogPrefix.Legendary
-      )
-      return
+      const reason = res.error ?? 'abort by user'
+      logError(['Failed to logout:', reason], LogPrefix.Legendary)
+      // The session file is still there: do not tell the client it is out
+      throw new Error(`Could not log out of Epic: ${reason}`)
     }
 
     clearCache('legendary')
