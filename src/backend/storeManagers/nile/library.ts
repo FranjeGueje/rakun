@@ -27,6 +27,11 @@ import { shareInFlight } from 'backend/utils/inflight'
 const installInfoInFlight = new Map<string, Promise<NileInstallInfo>>()
 
 export default class NileLibraryManager implements LibraryManager {
+  clearCache() {
+    installStore.clear()
+    libraryStore.clear()
+  }
+
   private installedGames: Map<string, NileInstallMetadataInfo> = new Map()
   private library: Map<string, GameInfo> = new Map()
   private readonly gameCache: Map<string, NileGame> = new Map()

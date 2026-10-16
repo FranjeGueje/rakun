@@ -65,6 +65,8 @@ export interface LibraryManager {
   hasGame?: (appName: string) => boolean
   /** Adds a game that no list of the store has */
   ensureGame?: (appName: string) => Promise<void>
+  /** Forgets what the store keeps on the disk to answer fast (not the installed games) */
+  clearCache?: () => void
   /** The DLCs of an install are downloads of their own in the queue */
   queuesDlcs?: boolean
 }

@@ -1,8 +1,10 @@
 import { logInfo, logError } from 'backend/logger'
+import type { Runner } from 'common/types'
 
 const LOG_PREFIX = 'UMU'
 
-const umuStoreMap: Record<string, string | undefined> = {
+// A Record over every runner: a new store has to say its label here (or the compiler asks)
+const umuStoreMap: Record<Runner, string> = {
   legendary: 'egs',
   gog: 'gog',
   nile: 'amazon',
@@ -11,7 +13,7 @@ const umuStoreMap: Record<string, string | undefined> = {
 }
 
 export function getUmuStoreLabel(runner: string): string | undefined {
-  return umuStoreMap[runner]
+  return umuStoreMap[runner as Runner]
 }
 
 export async function searchUmuGameId(

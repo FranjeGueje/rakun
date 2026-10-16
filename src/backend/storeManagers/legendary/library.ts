@@ -26,7 +26,7 @@ import {
   LogPrefix,
   logWarning
 } from 'backend/logger'
-import { installStore, libraryStore } from './electronStores'
+import { gameInfoStore, installStore, libraryStore } from './electronStores'
 import { callRunner } from '../../runner_call'
 import { dirname, join } from 'path'
 import { isOnline } from 'backend/online_monitor'
@@ -51,6 +51,16 @@ export default class LegendaryLibraryManager implements LibraryManager {
   private readonly gameCache: Map<LegendaryAppName, LegendaryGame> = new Map()
 
   readonly queuesDlcs = true
+
+  clearCache() {
+    installStore.clear()
+    libraryStore.clear()
+    gameInfoStore.clear()
+    void this.runRunnerCommand(
+      { subcommand: 'cleanup' },
+      { abortId: 'legandary-cleanup' }
+    )
+  }
 
   async preflight(op: PreflightOp): Promise<string | undefined> {
     if (!(await isEpicServiceOffline())) return undefined

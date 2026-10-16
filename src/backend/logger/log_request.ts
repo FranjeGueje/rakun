@@ -1,12 +1,8 @@
 import { GAME_LOG_TYPES, type GetLogFileArgs } from './paths'
+import { RunnerToLogPrefixMap } from './constants'
 
-const LOG_RUNNERS: readonly unknown[] = [
-  'legendary',
-  'gog',
-  'nile',
-  'zoom',
-  'itch'
-]
+// Every store has a log prefix (a Record over the runners), so this follows the registry
+const LOG_RUNNERS: readonly unknown[] = Object.keys(RunnerToLogPrefixMap)
 
 function isSafeName(value: unknown): value is string {
   return (

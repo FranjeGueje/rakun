@@ -8,30 +8,12 @@ import { promisify } from 'util'
 
 import { logError, logInfo, LogPrefix, logWarning } from 'backend/logger'
 import { basename, dirname, join } from 'path'
-import {
-  gameInfoStore,
-  installStore,
-  libraryStore
-} from 'backend/storeManagers/legendary/electronStores'
-import {
-  apiInfoCache as GOGapiInfoCache,
-  installInfoStore as GOGinstallInfoStore,
-  libraryStore as GOGlibraryStore
-} from './storeManagers/gog/electronStores'
-import {
-  installStore as nileInstallStore,
-  libraryStore as nileLibraryStore
-} from './storeManagers/nile/electronStores'
-import {
-  installInfoStore as zoomInstallInfoStore,
-  libraryStore as zoomLibraryStore
-} from './storeManagers/zoom/electronStores'
-import { libraryStore as itchLibraryStore } from './storeManagers/itch/electronStores'
 import { formatBytes } from 'common/formatBytes'
 import { showDialogBoxModalAuto, askQuestion } from './dialog/dialog'
 import { sendFrontendMessage } from './ipc'
 import { GlobalConfig } from './config'
-import { libraryManagerMap } from 'backend/storeManagers'
+import { libraryManagerMap, RUNNERS } from 'backend/storeManagers'
+import { libraryOf } from 'backend/storeManagers/library_of'
 import { readdir, lstat } from 'fs/promises'
 import { backendEvents } from './backend_events'
 import { pipeline } from 'stream/promises'
@@ -244,31 +226,9 @@ function removeSpecialcharacters(text: string): string {
 }
 
 function clearCache(library?: Runner) {
-  if (library === 'gog' || !library) {
-    GOGlibraryStore.clear()
-    GOGinstallInfoStore.clear()
+  for (const runner of library ? [library] : RUNNERS) {
+    libraryOf(runner).clearCache?.()
   }
-  if (library === 'legendary' || !library) {
-    installStore.clear()
-    libraryStore.clear()
-    gameInfoStore.clear()
-    void libraryManagerMap['legendary'].runRunnerCommand(
-      { subcommand: 'cleanup' },
-      { abortId: 'legandary-cleanup' }
-    )
-  }
-  if (library === 'nile' || !library) {
-    nileInstallStore.clear()
-    nileLibraryStore.clear()
-  }
-  if (library === 'zoom' || !library) {
-    zoomInstallInfoStore.clear()
-    zoomLibraryStore.clear()
-  }
-  // Only the library: the installed list is the record of what is on the disk
-  if (library === 'itch' || !library) itchLibraryStore.clear()
-
-  if (library === 'gog' || !library) GOGapiInfoCache.clear()
   deviceNameCache.clear()
   vendorNameCache.clear()
 }

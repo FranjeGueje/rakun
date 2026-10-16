@@ -35,6 +35,11 @@ const library: Map<string, GameInfo> = new Map()
 const installedGames: Map<string, InstalledInfo> = new Map()
 
 export default class ZoomLibraryManager implements LibraryManager {
+  clearCache() {
+    installInfoStore.clear()
+    libraryStore.clear()
+  }
+
   async init() {
     await this.refresh()
   }

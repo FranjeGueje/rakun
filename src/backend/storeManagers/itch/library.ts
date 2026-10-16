@@ -25,6 +25,11 @@ const library: Map<string, GameInfo> = new Map()
 const installedGames: Map<string, InstalledInfo> = new Map()
 
 export default class ItchLibraryManager implements LibraryManager {
+  // Only the library: the installed list is the record of what is on the disk
+  clearCache() {
+    libraryStore.clear()
+  }
+
   async init() {
     await this.refresh()
   }

@@ -67,6 +67,12 @@ const installInfoInFlight = new Map<
 export default class GOGLibraryManager implements LibraryManager {
   private readonly gameCache: Map<string, GOGGame> = new Map()
 
+  clearCache() {
+    libraryStore.clear()
+    installInfoStore.clear()
+    apiInfoCache.clear()
+  }
+
   // A manifest left by an earlier try makes the install end as soon as it starts
   async preflight(op: PreflightOp, appName: string): Promise<undefined> {
     const manifest = join(gogdlConfigPath, 'manifests', appName)
