@@ -31,7 +31,7 @@ rakun es un pequeño servicio en segundo plano, sin ventana. Hablas con él desd
                         └────► Steam (acceso directo, prefijo, carátulas)
 ```
 
-Todo pasa por una API HTTP local en `127.0.0.1:17370`, protegida con un token. Ver [API.md](API.md).
+Todo pasa por una API HTTP local en `127.0.0.1:17370`, protegida con un token. Ver [API.md](API.md), que también explica quién puede leer ese token en tu máquina.
 
 ## En qué se basa
 

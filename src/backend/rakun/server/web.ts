@@ -33,7 +33,7 @@ export const webHeaders = {
 
 /**
  * The page learns the token and the web mode from its own server. The token is
- * the same for everyone who may load the page (nobody else can read it: CORS and `Host`).
+ * the same for everyone who may load the page: any process of this machine (a web page from the internet cannot: CORS, `Host` and `Origin`). See «The token in `local` mode» in API.md.
  */
 export function withMeta(html: string, token: string, mode: WebAccess): string {
   const meta =

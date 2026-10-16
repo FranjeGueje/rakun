@@ -31,7 +31,7 @@ rakun is a small background service with no window. You talk to it from a browse
                        └──────► Steam (shortcut, prefix, covers)
 ```
 
-Everything goes through a local HTTP API on `127.0.0.1:17370`, protected by a token. See [API.md](API.md).
+Everything goes through a local HTTP API on `127.0.0.1:17370`, protected by a token. See [API.md](API.md), which also says who can read that token on your machine.
 
 ## What it is built on
 
