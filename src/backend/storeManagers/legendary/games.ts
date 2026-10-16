@@ -35,7 +35,7 @@ import {
 import { isOnline } from '../../online_monitor'
 import { Catalog, Product } from 'common/types/epic-graphql'
 import { sendFrontendMessage } from '../../ipc'
-import { Game } from 'common/types/game_manager'
+import { Game, InstallResult } from 'common/types/game_manager'
 import {
   LegendaryAppName,
   LegendaryPlatform,
@@ -430,7 +430,7 @@ export default class LegendaryGame implements Game {
    * Update game.
    * Does NOT check for online connectivity.
    */
-  async update(): Promise<{ status: 'done' | 'error'; error?: string }> {
+  async update(): Promise<InstallResult> {
     sendGameStatusUpdate({
       appName: this.appName,
       runner: 'legendary',
@@ -471,11 +471,9 @@ export default class LegendaryGame implements Game {
       logMessagePrefix: `Updating ${this.appName}`
     })
 
-    sendGameStatusUpdate({
-      appName: this.appName,
-      runner: 'legendary',
-      status: 'done'
-    })
+    if (res.abort) {
+      return { status: 'abort' }
+    }
 
     if (res.error) {
       logError(

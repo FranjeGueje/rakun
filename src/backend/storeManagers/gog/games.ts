@@ -7,7 +7,6 @@ import {
   spawnAsync,
   moveOnUnix,
   sendProgressUpdate,
-  sendGameStatusUpdate,
   getPathDiskSize
 } from '../../utils'
 import {
@@ -36,7 +35,7 @@ import {
 } from 'backend/rakun/game_events'
 import { GogInstallPlatform } from 'common/types/gog'
 import { sendFrontendMessage } from '../../ipc'
-import { Game, RemoveArgs } from 'common/types/game_manager'
+import { Game, InstallResult, RemoveArgs } from 'common/types/game_manager'
 import { downloadArgs } from './download_args'
 import { wantsDlcs } from '../dlcs'
 import {
@@ -486,7 +485,7 @@ export default class GOGGame implements Game {
     branch?: string
     language?: string
     dlcs?: string[]
-  }): Promise<{ status: 'done' | 'error'; error?: string }> {
+  }): Promise<InstallResult> {
     const {
       installPlatform,
       gameData,
@@ -563,16 +562,11 @@ export default class GOGGame implements Game {
     })
 
     if (res.abort) {
-      return { status: 'done' }
+      return { status: 'abort' }
     }
 
     if (res.error) {
       logError(['Failed to update', `${this.id}:`, res.error], LogPrefix.Gog)
-      sendGameStatusUpdate({
-        appName: this.id,
-        runner: 'gog',
-        status: 'done'
-      })
       return { status: 'error', error: res.error }
     }
 
@@ -631,11 +625,6 @@ export default class GOGGame implements Game {
         )
       }
     }
-    sendGameStatusUpdate({
-      appName: this.id,
-      runner: 'gog',
-      status: 'done'
-    })
     gameData.install = gameObject
     sendFrontendMessage('pushGameToLibrary', gameData)
     return { status: 'done' }

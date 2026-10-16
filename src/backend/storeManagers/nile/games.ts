@@ -16,12 +16,7 @@ import {
 } from 'backend/logger'
 
 import { existsSync } from 'fs'
-import {
-  killPattern,
-  moveOnUnix,
-  sendGameStatusUpdate,
-  sendProgressUpdate
-} from 'backend/utils'
+import { killPattern, moveOnUnix, sendProgressUpdate } from 'backend/utils'
 import { GlobalConfig } from 'backend/config'
 import {
   onGameInstalled,
@@ -351,12 +346,6 @@ export default class NileGameManager implements Game {
       }
       return { status: 'error', error: res.error }
     }
-
-    sendGameStatusUpdate({
-      appName: this.id,
-      runner: 'nile',
-      status: 'done'
-    })
 
     return { status: 'done' }
   }
