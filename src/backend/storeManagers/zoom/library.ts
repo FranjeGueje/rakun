@@ -1,3 +1,4 @@
+import { basename } from 'path'
 import { hasDuplicates, uniqueInstalled } from '../installed_list'
 import { sendFrontendMessage } from '../../ipc'
 import { ZoomUser } from './user'
@@ -284,7 +285,8 @@ export default class ZoomLibraryManager implements LibraryManager {
 
         returnValue.push({
           url: downloadRequest.url,
-          filename: file.name,
+          // Only a name: it becomes a file in the download folder
+          filename: basename(file.name),
           total_size: parseSize(file.size),
           id: file.id,
           name: file.name,
