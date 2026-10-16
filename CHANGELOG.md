@@ -32,6 +32,13 @@ A new store, itch.io, and the first one that is not run by a client of its own: 
 - `rakunctl cache clear` also clears the itch.io library.
 - The folder of the itch.io data (`~/.config/rakun/itch_store`, with butler's database and the OAuth token) is for the user only (mode 0700).
 - `pnpm check-helper-binaries` compares butler with the latest one of itch's server.
+- Helper programs that change: if a store's tool prints something rakun does not understand, rakun says so (in the log, `rakunctl status` and `rakunctl helpers`) and keeps what it had instead of deleting it. At start it also warns when a helper is not the version rakun was tested with. Tests built from what the pinned helpers really print fail on purpose when a helper is bumped without checking it again (`scripts/capture-helper-fixtures.sh`, see `docs/Helper-Binaries.md`).
+- Code cleanup: dead code removed, files with a misleading name renamed, and the big `utils.ts` and Zoom's install split into smaller pieces. Nothing changes for the user.
+
+### Fixed
+
+- A failed install, update, repair or uninstall was reported as done when the store's tool ended with an error (for example GOG without disk space): the game was saved as installed and added to Steam with no files. Now the error is shown and nothing is saved. GOG also needs files in the game folder, and Amazon needs `nile` to have recorded the install.
+- Sessions are safer. Without a network no session is lost. Pasting a wrong login in Zoom no longer replaces the good session. A login only counts when there is a real session behind it. A broken account file no longer hides the other accounts. Logging out of Epic or Amazon now says so when it did not really happen. `nile` can no longer empty its list of installed games when a game is moved, and secrets are hidden better in the logs.
 
 ## 0.3.2 — Comet starts from its own script
 
