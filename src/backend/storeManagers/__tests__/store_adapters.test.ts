@@ -50,7 +50,12 @@ jest.mock('../nile/user', () => ({
   }
 }))
 jest.mock('../zoom/user', () => ({
-  ZoomUser: { getUserDetails: jest.fn(), login: jest.fn(), logout: jest.fn() }
+  ZoomUser: {
+    getUserDetails: jest.fn(),
+    login: jest.fn(),
+    loginVerified: jest.fn(),
+    logout: jest.fn()
+  }
 }))
 jest.mock('../legendary/electronStores', () => ({
   libraryStore: { get: jest.fn() }
@@ -240,24 +245,33 @@ describe('Zoom', () => {
   })
 
   test('submit hands Zoom the callback address carrying the token', async () => {
-    jest.mocked(ZoomUser.login).mockReturnValue({ status: 'done' })
+    jest.mocked(ZoomUser.loginVerified).mockResolvedValue({ status: 'done' })
 
     expect(await stores.zoom.login.submit('a b')).toEqual({ ok: true })
 
-    const url = new URL(jest.mocked(ZoomUser.login).mock.calls[0][0])
+    const url = new URL(jest.mocked(ZoomUser.loginVerified).mock.calls[0][0])
     expect(url.origin).toBe('https://www.zoom-platform.com')
     expect(url.searchParams.get('li_token')).toBe('a b')
-    expect(ZoomUser.getUserDetails).toHaveBeenCalled()
   })
 
-  test('a rejected token does not ask for the user details', async () => {
-    jest.mocked(ZoomUser.login).mockReturnValue({ status: 'error' })
+  test('a token that could not be saved is a failed login', async () => {
+    jest.mocked(ZoomUser.loginVerified).mockResolvedValue({ status: 'error' })
 
     expect(await stores.zoom.login.submit('x')).toEqual({
       ok: false,
       error: 'The store rejected the login'
     })
-    expect(ZoomUser.getUserDetails).not.toHaveBeenCalled()
+  })
+
+  test('a token Zoom refused says the session was kept', async () => {
+    jest
+      .mocked(ZoomUser.loginVerified)
+      .mockResolvedValue({ status: 'rejected' })
+
+    const reply = await stores.zoom.login.submit('x')
+
+    expect(reply.ok).toBe(false)
+    expect(reply.error).toContain('kept as it was')
   })
 
   describe('check', () => {

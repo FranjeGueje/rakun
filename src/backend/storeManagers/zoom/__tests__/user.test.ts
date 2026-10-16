@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { existsSync, readFileSync, unlinkSync } from 'fs'
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'fs'
 import { configStore } from '../electronStores'
 import { isOnline } from '../../../online_monitor'
 import { ZoomUser } from '../user'
@@ -12,6 +12,7 @@ import {
 jest.mock('axios')
 jest.mock('fs', () => ({
   ...jest.requireActual('fs'),
+  chmodSync: jest.fn(),
   existsSync: jest.fn(),
   readFileSync: jest.fn(() => 'a-token'),
   unlinkSync: jest.fn(),
@@ -177,5 +178,71 @@ describe('ZoomUser - failures must not destroy the session', () => {
     await ZoomUser.isLoggedIn()
 
     expect(mockedAxios.get).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('ZoomUser.loginVerified', () => {
+  const url = 'https://www.zoom-platform.com/?li_token=new-token'
+  const tokenWrites = () =>
+    jest.mocked(writeFileSync).mock.calls.map(([, content]) => content)
+
+  test('Zoom accepts the token: it is kept', async () => {
+    await expect(ZoomUser.loginVerified(url)).resolves.toEqual({
+      status: 'done'
+    })
+
+    expect(tokenWrites()).toEqual(['new-token'])
+    expect(isSessionExpired('zoom')).toBe(false)
+  })
+
+  test('Zoom refuses it (401): the token that was working is put back', async () => {
+    // 'a-token' is what the file held
+    mockedAxios.get.mockRejectedValue(axiosError(401))
+
+    await expect(ZoomUser.loginVerified(url)).resolves.toEqual({
+      status: 'rejected'
+    })
+
+    expect(tokenWrites()).toEqual(['new-token', 'a-token'])
+    expect(isSessionExpired('zoom')).toBe(false)
+  })
+
+  test('Zoom refuses it and there was no session: the new token goes, nothing is left', async () => {
+    mockedAxios.get.mockRejectedValue(axiosError(403))
+    mockedExistsSync.mockReturnValueOnce(false).mockReturnValue(true)
+
+    await expect(ZoomUser.loginVerified(url)).resolves.toEqual({
+      status: 'rejected'
+    })
+
+    expect(mockedUnlinkSync).toHaveBeenCalledWith('/tmp/zoom.token')
+  })
+
+  test('the session was already expired and the new token is refused too: still expired', async () => {
+    markSessionExpired('zoom')
+    mockedAxios.get.mockRejectedValue(axiosError(401))
+
+    await ZoomUser.loginVerified(url)
+
+    expect(isSessionExpired('zoom')).toBe(true)
+  })
+
+  test('Zoom cannot be reached: nothing says the token is wrong, it stays', async () => {
+    mockedAxios.get.mockRejectedValue(axiosError())
+
+    await expect(ZoomUser.loginVerified(url)).resolves.toEqual({
+      status: 'done'
+    })
+
+    expect(tokenWrites()).toEqual(['new-token'])
+    expect(isSessionExpired('zoom')).toBe(false)
+  })
+
+  test('an address with no token is an error and touches nothing', async () => {
+    await expect(
+      ZoomUser.loginVerified('https://www.zoom-platform.com/')
+    ).resolves.toEqual({ status: 'error' })
+
+    expect(tokenWrites()).toEqual([])
   })
 })

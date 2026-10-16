@@ -52,10 +52,15 @@ export const zoom: Store<ZoomLibraryManager> = {
       }),
     submit: async (code) => {
       const callback = `${ZOOM_CALLBACK}?li_token=${encodeURIComponent(code)}`
-      if (ZoomUser.login(callback).status !== 'done') {
+      const { status } = await ZoomUser.loginVerified(callback)
+      if (status === 'rejected')
+        return {
+          ok: false,
+          error:
+            'Zoom did not accept that login: your session was kept as it was'
+        }
+      if (status !== 'done')
         return { ok: false, error: 'The store rejected the login' }
-      }
-      await ZoomUser.getUserDetails()
       return { ok: true }
     }
   }
