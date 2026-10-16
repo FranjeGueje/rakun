@@ -75,7 +75,7 @@ export function GameSheet({
       repair: () => actions.repair(game),
       uninstall: () => actions.uninstall(game),
       cancel: () => actions.cancelCurrent(),
-      removeFromQueue: () => actions.removeFromQueue(game.app_name)
+      removeFromQueue: () => actions.removeFromQueue(game)
     }
     doIt[action]()
     onClose()

@@ -26,7 +26,7 @@ import type { GetLogFileArgs } from 'backend/logger/paths'
 
 // ts-prune-ignore-next
 interface SyncIPCFunctions {
-  removeFromDMQueue: (appName: string) => void
+  removeFromDMQueue: (appName: string, runner?: Runner) => void
   clearFinishedDMQueue: () => void
   clearCache: (library?: Runner) => void
   resetRakun: () => void

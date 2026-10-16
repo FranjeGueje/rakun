@@ -42,6 +42,7 @@ import {
   clearFinished,
   initQueue,
   pauseCurrentDownload,
+  removeFromQueue,
   resumeCurrentDownload
 } from '../downloadqueue'
 import { installQueueElement } from '../utils'
@@ -176,5 +177,33 @@ describe('pause and resume', () => {
     pauseCurrentDownload()
 
     expect(removeFolder).not.toHaveBeenCalled()
+  })
+})
+
+describe('removeFromQueue', () => {
+  const queued = (runner: string) =>
+    ({
+      type: 'install',
+      params: { appName: '123', runner }
+    }) as unknown as DMQueueElement
+
+  test('with the runner it removes the game of that store, not one of another with the same id', () => {
+    store['queue'] = [queued('itch'), queued('zoom')]
+
+    removeFromQueue('123', 'zoom')
+
+    expect(
+      (store['queue'] as DMQueueElement[]).map((el) => el.params.runner)
+    ).toEqual(['itch'])
+  })
+
+  test('without it, the first with that id (as clients that do not say the store)', () => {
+    store['queue'] = [queued('itch'), queued('zoom')]
+
+    removeFromQueue('123')
+
+    expect(
+      (store['queue'] as DMQueueElement[]).map((el) => el.params.runner)
+    ).toEqual(['zoom'])
   })
 })

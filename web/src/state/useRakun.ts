@@ -13,7 +13,7 @@ export type Actions = {
   repair: (game: GameInfo) => void
   uninstall: (game: GameInfo) => void
   cancelCurrent: () => void
-  removeFromQueue: (appName: string) => void
+  removeFromQueue: (game: GameInfo) => void
   pause: () => void
   resume: () => void
   clearFinished: () => void
@@ -244,8 +244,10 @@ export function useRakun(): { state: State; actions: Actions } {
       }),
     // Like `rakunctl cancel --remove-files`: what was half downloaded is deleted
     cancelCurrent: () => run(() => window.rakun.call('cancelDownload', true)),
-    removeFromQueue: (appName) =>
-      run(() => window.rakun.call('removeFromDMQueue', appName)),
+    removeFromQueue: (game) =>
+      run(() =>
+        window.rakun.call('removeFromDMQueue', game.app_name, game.runner)
+      ),
     pause: () => run(() => window.rakun.call('pauseCurrentDownload')),
     resume: () => run(() => window.rakun.call('resumeCurrentDownload')),
     clearFinished: () =>

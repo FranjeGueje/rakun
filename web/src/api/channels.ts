@@ -40,7 +40,7 @@ export type CallMap = {
   pauseCurrentDownload: { args: []; result: null }
   resumeCurrentDownload: { args: []; result: null }
   cancelDownload: { args: [boolean]; result: null }
-  removeFromDMQueue: { args: [string]; result: null }
+  removeFromDMQueue: { args: [string, Runner]; result: null }
   clearFinishedDMQueue: { args: []; result: null }
   getLoginInfo: { args: [Runner]; result: LoginInfo }
   submitLogin: { args: [Runner, string]; result: LoginResult }

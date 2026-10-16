@@ -2,7 +2,12 @@ import { libraryManagerMap } from 'backend/storeManagers'
 import { TypeCheckedStoreBackend } from './../electron_store'
 import { logError, logInfo, LogPrefix, logWarning } from 'backend/logger'
 import { getFileSize, removeFolder, sendGameStatusUpdate } from '../utils'
-import { DMQueueElement, DMStatus, DownloadManagerState } from 'common/types'
+import {
+  DMQueueElement,
+  DMStatus,
+  DownloadManagerState,
+  Runner
+} from 'common/types'
 import { installQueueElement, updateQueueElement } from './utils'
 import { sendFrontendMessage } from '../ipc'
 import { callAbortController } from 'backend/utils/aborthandler/aborthandler'
@@ -59,7 +64,9 @@ function addToFinished(element: DMQueueElement, status: DMStatus) {
   const elements = downloadManager.get('finished', [])
 
   const elementIndex = elements.findIndex(
-    (el) => el.params.appName === element.params.appName
+    (el) =>
+      el.params.appName === element.params.appName &&
+      el.params.runner === element.params.runner
   )
 
   if (elementIndex >= 0) {
@@ -122,7 +129,7 @@ async function runQueue(token: number) {
     } else {
       currentElement = null
       addToFinished(element, status)
-      removeFromQueue(element.params.appName)
+      removeFromQueue(element.params.appName, element.params.runner)
       element = isPaused() ? null : getFirstQueueElement()
     }
   }
@@ -187,11 +194,14 @@ async function addToQueue(element: DMQueueElement) {
   }
 }
 
-function removeFromQueue(appName: string) {
+/** Ids of two stores can be the same: with the runner it is the one of that store, without it the first with that id */
+function removeFromQueue(appName: string, runner?: Runner) {
   if (appName && downloadManager.has('queue')) {
     const elements = downloadManager.get('queue', [])
     const index = elements.findIndex(
-      (queueElement) => queueElement?.params.appName === appName
+      (queueElement) =>
+        queueElement?.params.appName === appName &&
+        (!runner || queueElement.params.runner === runner)
     )
     if (index !== -1) {
       elements.splice(index, 1)
@@ -225,13 +235,13 @@ function cancelCurrentDownload({ removeDownloaded = false }) {
     if (Array.isArray(currentElement.params.installDlcs)) {
       const dlcsToRemove = currentElement.params.installDlcs
       for (const dlc of dlcsToRemove) {
-        removeFromQueue(dlc)
+        removeFromQueue(dlc, currentElement.params.runner)
       }
     }
     if (isRunning()) {
       stopCurrentDownload()
     }
-    removeFromQueue(currentElement.params.appName)
+    removeFromQueue(currentElement.params.appName, currentElement.params.runner)
 
     if (removeDownloaded) {
       const { appName, runner } = currentElement.params
