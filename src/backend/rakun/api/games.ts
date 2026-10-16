@@ -24,8 +24,16 @@ import {
   onGameRepaired
 } from 'backend/rakun/game_events'
 import { refreshingRunners, startRefresh } from './refresh'
+import { shareInFlight } from 'backend/utils/inflight'
 
-addHandler('checkGameUpdates', async (): Promise<string[]> => {
+/** The web asks again each time a store reports a refresh: those asking while a check runs share it */
+const updateChecks = new Map<string, Promise<string[]>>()
+
+addHandler('checkGameUpdates', () =>
+  shareInFlight(updateChecks, 'all', checkGameUpdates)
+)
+
+async function checkGameUpdates(): Promise<string[]> {
   let oldGames: string[] = []
   const { autoUpdateGames } = GlobalConfig.get().getSettings()
   for (const runner of Object.keys(
@@ -39,7 +47,7 @@ addHandler('checkGameUpdates', async (): Promise<string[]> => {
   }
 
   return oldGames
-})
+}
 
 addHandler('isGameAvailable', async (e, args) => {
   const { appName, runner } = args
