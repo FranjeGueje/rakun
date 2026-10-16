@@ -28,7 +28,6 @@ import { helperExists, helperFile } from './rakun/helpers/locations'
 
 import { gogdlAuthConfig } from './storeManagers/gog/constants'
 import { tokenPath as zoomTokenPath } from './storeManagers/zoom/constants'
-import { isRunning } from './downloadmanager/downloadqueue'
 import { isOnline } from './online_monitor'
 import type { Game } from 'common/types/game_manager'
 
@@ -123,28 +122,13 @@ async function isEpicServiceOffline(
 }
 
 /**
- * Stops the daemon. If there are pending operations, the child processes that
- * run them (legendary, gogdl, nile) are killed first.
+ * Stops the daemon. Every helper process rakun started (legendary, gogdl, nile,
+ * the installers) has an abort controller while it runs: aborting them stops
+ * those and nothing else, unlike killing by name, which also reached a
+ * `legendary.exe` running in Wine.
  */
 function handleExit() {
-  if (isRunning()) {
-    // This is very hacky and can be removed if bineries handle SIGTERM and SIGKILL
-    // FIXME: we should keep track of what we are doing and kill just that
-    // this is really dangerous cause we can be killing other processes unrelated
-    // to what we are doing x_x
-    const possibleChildren = ['legendary', 'gogdl', 'nile']
-    possibleChildren.forEach((procName) => {
-      try {
-        killPattern(procName)
-      } catch (error) {
-        logInfo([`Unable to kill ${procName}, ignoring.`, error])
-      }
-    })
-
-    // Kill all child processes
-    callAllAbortControllers()
-  }
-
+  callAllAbortControllers()
   process.exit(0)
 }
 
