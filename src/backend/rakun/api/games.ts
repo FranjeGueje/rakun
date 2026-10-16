@@ -18,7 +18,11 @@ import { showDialogBoxModalAuto } from 'backend/dialog/dialog'
 import { callAbortController } from 'backend/utils/aborthandler/aborthandler'
 import { autoUpdate, libraryManagerMap } from 'backend/storeManagers'
 import { legendaryInstalled } from 'backend/storeManagers/legendary/constants'
-import { onGameMoved, onGameRepaired } from 'backend/rakun/game_events'
+import {
+  onGameImported,
+  onGameMoved,
+  onGameRepaired
+} from 'backend/rakun/game_events'
 import { refreshingRunners, startRefresh } from './refresh'
 
 addHandler('checkGameUpdates', async (): Promise<string[]> => {
@@ -206,10 +210,9 @@ addHandler(
       })
     }
 
+    const game = libraryOf(runner).getGame(appName)
     try {
-      const { abort, error } = await libraryManagerMap[runner]
-        .getGame(appName)
-        .importGame(path, platform)
+      const { abort, error } = await game.importGame(path, platform)
       if (abort || error) {
         abortMessage()
         // An abort is not a failure: whoever asked for it knows
@@ -227,6 +230,7 @@ addHandler(
       status: 'done'
     })
     logInfo(`imported ${title}`, LogPrefix.Backend)
+    void onGameImported(game).catch((err) => logError(err, LogPrefix.Backend))
     return { status: 'done' }
   }
 )

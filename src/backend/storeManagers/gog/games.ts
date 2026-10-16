@@ -27,7 +27,6 @@ import {
 } from 'backend/logger'
 import { GOGUser } from './user'
 
-import { onGameImported } from 'backend/rakun/game_events'
 import { GogInstallPlatform } from 'common/types/gog'
 import { sendFrontendMessage } from '../../ipc'
 import { Game, InstallResult, RemoveArgs } from 'common/types/game_manager'
@@ -136,7 +135,6 @@ export default class GOGGame implements Game {
         JSON.parse(res.stdout),
         folderPath
       )
-      void onGameImported(this).catch((err) => logError(err, LogPrefix.Gog))
     } catch (error) {
       logError([`Failed to import ${this.id}:`, error], LogPrefix.Gog)
       // Without this the caller would see the import as a success

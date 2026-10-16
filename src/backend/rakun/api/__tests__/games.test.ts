@@ -3,7 +3,11 @@ import { sendGameStatusUpdate } from 'backend/utils'
 import { isOnline } from 'backend/online_monitor'
 import { libraryManagerMap } from 'backend/storeManagers'
 import { showDialogBoxModalAuto } from 'backend/dialog/dialog'
-import { onGameMoved, onGameRepaired } from 'backend/rakun/game_events'
+import {
+  onGameImported,
+  onGameMoved,
+  onGameRepaired
+} from 'backend/rakun/game_events'
 import './../games'
 
 jest.mock('fs', () => ({
@@ -42,6 +46,7 @@ jest.mock('backend/storeManagers/legendary/constants', () => ({
   legendaryInstalled: '/tmp/installed.json'
 }))
 jest.mock('backend/rakun/game_events', () => ({
+  onGameImported: jest.fn(),
   onGameMoved: jest.fn(),
   onGameRepaired: jest.fn()
 }))
@@ -61,6 +66,7 @@ const statuses = () =>
 // The config resets the mocks before each test: what they answer is set here
 beforeEach(() => {
   jest.mocked(isOnline).mockReturnValue(true)
+  jest.mocked(onGameImported).mockResolvedValue(undefined)
   delete (libraryManagerMap.legendary as { preflight?: unknown }).preflight
   const game = {
     getGameInfo: () => ({ title: 'Game' }),
@@ -127,6 +133,14 @@ describe('importGame', () => {
     expect(await run()).toEqual({ status: 'done' })
     expect(importGame).toHaveBeenCalledWith('/g/one', 'windows')
     expect(statuses()).toEqual(['importing', 'done'])
+    expect(onGameImported).toHaveBeenCalledTimes(1)
+  })
+
+  test('an import that failed does not go to Steam', async () => {
+    importGame.mockResolvedValue({ stdout: '', stderr: '', error: 'no game' })
+
+    expect(await run()).toEqual({ status: 'error' })
+    expect(onGameImported).not.toHaveBeenCalled()
   })
 
   test('an error of the store answers error, and the game is not left busy', async () => {

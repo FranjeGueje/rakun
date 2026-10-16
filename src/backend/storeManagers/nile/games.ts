@@ -18,7 +18,6 @@ import {
 import { existsSync } from 'fs'
 import { killPattern, moveOnUnix, sendProgressUpdate } from 'backend/utils'
 import { GlobalConfig } from 'backend/config'
-import { onGameImported } from 'backend/rakun/game_events'
 import { sendFrontendMessage } from '../../ipc'
 import { isLinux } from 'backend/constants/environment'
 
@@ -101,7 +100,6 @@ export default class NileGameManager implements Game {
     }
 
     try {
-      void onGameImported(this).catch((err) => logError(err, LogPrefix.Nile))
       libraryManagerMap['nile'].installState(this.id, true)
     } catch (error) {
       logError(['Failed to import', `${this.id}:`, error], LogPrefix.Nile)

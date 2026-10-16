@@ -26,7 +26,6 @@ import {
 } from 'backend/logger'
 
 import { gameInfoStore } from './electronStores'
-import { onGameImported } from 'backend/rakun/game_events'
 import { isOnline } from '../../online_monitor'
 import { Catalog, Product } from 'common/types/epic-graphql'
 import { sendFrontendMessage } from '../../ipc'
@@ -635,7 +634,6 @@ export default class LegendaryGame implements Game {
       abortId: this.appName,
       logWriters: [logWriter]
     })
-    void onGameImported(this).catch((err) => logError(err, LogPrefix.Legendary))
     const errorMatch = res.stderr.match(/^.*ERROR:.*$/gm)?.join('') ?? ''
     res.error = (res.error ?? '') + errorMatch
     if (res.error) {
