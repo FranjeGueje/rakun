@@ -1,8 +1,11 @@
 import { execFileSync } from 'child_process'
 import {
+  chmodSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
   statSync,
+  symlinkSync,
   writeFileSync,
   readFileSync
 } from 'fs'
@@ -107,5 +110,32 @@ describe('start.sh', () => {
     expect(readFileSync(join(folder, 'start.sh'), 'utf-8')).toContain('exec ./')
     const out = execFileSync(join(folder, 'start.sh'), ['arg']).toString()
     expect(out.trim()).toMatch(/it's a game\|arg$/)
+  })
+
+  test('a start.sh that came as a link to a file of yours is replaced, not written through', () => {
+    const folder = mkdtempSync(join(tmpdir(), 'itch-start-'))
+    const mine = join(mkdtempSync(join(tmpdir(), 'itch-mine-')), 'bashrc')
+    writeFileSync(mine, 'my precious file')
+    writeFileSync(join(folder, 'run'), '#!/bin/sh\n')
+    symlinkSync(mine, join(folder, 'start.sh'))
+
+    writeStartScript(folder, 'run')
+
+    expect(readFileSync(mine, 'utf-8')).toBe('my precious file')
+    expect(lstatSync(join(folder, 'start.sh')).isSymbolicLink()).toBe(false)
+    expect(readFileSync(join(folder, 'start.sh'), 'utf-8')).toContain('exec ./')
+  })
+
+  test('an executable that is a link out of the install is refused, and left alone', () => {
+    const folder = mkdtempSync(join(tmpdir(), 'itch-start-'))
+    const outside = join(mkdtempSync(join(tmpdir(), 'itch-out-')), 'secret')
+    writeFileSync(outside, 'data')
+    chmodSync(outside, 0o600)
+    symlinkSync(outside, join(folder, 'run'))
+
+    expect(() => writeStartScript(folder, 'run')).toThrow(
+      'leads out of the install folder'
+    )
+    expect(statSync(outside).mode & 0o777).toBe(0o600)
   })
 })

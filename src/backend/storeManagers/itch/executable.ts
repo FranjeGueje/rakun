@@ -1,6 +1,6 @@
 import { execFile } from 'child_process'
-import { chmodSync, writeFileSync } from 'fs'
-import { basename, dirname, join } from 'path'
+import { chmodSync, realpathSync, rmSync, writeFileSync } from 'fs'
+import { basename, dirname, join, sep } from 'path'
 import { promisify } from 'util'
 import { machineArch } from 'backend/rakun/helpers/files'
 import { butlerBinary } from './client'
@@ -74,10 +74,26 @@ export function startScriptText(executable: string): string {
   return `#!/bin/sh\ncd ${cd} || exit 1\nexec ./${quote(basename(executable))} "$@"\n`
 }
 
+/**
+ * The executable has to be inside the install once the links of the game are
+ * followed: a game is somebody else's archive, and a link in it could point at
+ * a file of yours (which chmod would then change).
+ */
+function runnableInside(folder: string, executable: string): string {
+  const root = realpathSync(folder)
+  const real = realpathSync(join(folder, executable))
+  if (!real.startsWith(root + sep))
+    throw Error(`${executable} leads out of the install folder`)
+  return real
+}
+
 /** Writes `start.sh` in the install and makes it and the executable runnable */
 export function writeStartScript(folder: string, executable: string) {
-  chmodSync(join(folder, executable), 0o755)
+  chmodSync(runnableInside(folder, executable), 0o755)
   const script = join(folder, 'start.sh')
-  writeFileSync(script, startScriptText(executable))
+  // A `start.sh` that came with the game may be a link to somewhere else: remove
+  // it (the link, not what it points to) and write a file of our own
+  rmSync(script, { force: true })
+  writeFileSync(script, startScriptText(executable), { flag: 'wx' })
   chmodSync(script, 0o755)
 }
