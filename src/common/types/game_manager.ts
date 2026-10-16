@@ -72,3 +72,6 @@ export interface LibraryManager {
 }
 
 export type PreflightOp = 'install' | 'update' | 'import'
+
+/** What `isRefused` is asked about: the operations that talk to the store, repair among them */
+export type NetworkOp = PreflightOp | 'repair'

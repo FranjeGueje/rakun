@@ -5,7 +5,12 @@ jest.mock('backend/logger', () => ({
   LogPrefix: { Gog: 'Gog' }
 }))
 jest.mock('../electronStores', () => ({
-  configStore: { get: jest.fn(), set: jest.fn(), clear: jest.fn() }
+  configStore: {
+    get: jest.fn(),
+    get_nodefault: jest.fn(),
+    set: jest.fn(),
+    clear: jest.fn()
+  }
 }))
 jest.mock('../../../online_monitor', () => ({ isOnline: jest.fn(() => true) }))
 jest.mock('../../index', () => ({
@@ -17,6 +22,8 @@ jest.mock('../constants', () => ({ gogdlAuthConfig: '/tmp/auth.json' }))
 jest.mock('axios')
 
 import { GOGUser } from '../user'
+import { configStore } from '../electronStores'
+import { clearSessionExpired, isSessionExpired } from '../../session_state'
 import { libraryManagerMap } from '../../index'
 import { isOnline } from '../../../online_monitor'
 
@@ -43,6 +50,7 @@ function respondWithCredentials(overrides: Record<string, unknown> = {}) {
 }
 
 beforeEach(() => {
+  clearSessionExpired('gog')
   jest.clearAllMocks()
   jest.useRealTimers()
   mockedIsOnline.mockReturnValue(true)
@@ -126,6 +134,27 @@ describe('GOGUser.getCredentials - caching', () => {
     await GOGUser.getCredentials()
 
     expect(runRunnerCommand).toHaveBeenCalledTimes(2)
+  })
+
+  test('empty output while there is a session marks it expired, and credentials clear the mark', async () => {
+    jest.mocked(configStore.get_nodefault).mockReturnValue(true)
+    runRunnerCommand.mockResolvedValue({ stdout: '' })
+    await GOGUser.getCredentials()
+    expect(isSessionExpired('gog')).toBe(true)
+
+    GOGUser.invalidateCredentialsCache()
+    respondWithCredentials()
+    await GOGUser.getCredentials()
+    expect(isSessionExpired('gog')).toBe(false)
+  })
+
+  test('empty output with no session is not an expired one', async () => {
+    jest.mocked(configStore.get_nodefault).mockReturnValue(false)
+    runRunnerCommand.mockResolvedValue({ stdout: '' })
+
+    await GOGUser.getCredentials()
+
+    expect(isSessionExpired('gog')).toBe(false)
   })
 
   test('does not cache unparseable gogdl output', async () => {

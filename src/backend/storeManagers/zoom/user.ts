@@ -11,6 +11,7 @@ import { configStore } from './electronStores'
 import { isOnline } from '../../online_monitor'
 import { ZoomCredentials } from 'common/types/zoom'
 import { clearCache } from 'backend/utils'
+import { clearSessionExpired, markSessionExpired } from '../session_state'
 import { tokenPath, apiUrl } from './constants'
 
 // isLoggedIn() is not a local check: it asks Zoom's API every time. Startup used
@@ -23,8 +24,7 @@ let loginCheckInFlight: Promise<boolean> | undefined
 
 /**
  * Only a rejection from Zoom means the session is really gone. A dropped
- * connection or a server error must not be treated as "logged out", because
- * that path deletes the user's token.
+ * connection or a server error must not mark it as expired.
  */
 function isAuthRejection(error: unknown): boolean {
   const status = (error as AxiosError)?.response?.status
@@ -90,6 +90,7 @@ export class ZoomUser {
       configStore.set('isLoggedIn', true)
     }
     verifiedUntil = Date.now() + LOGIN_CHECK_TTL_MS
+    clearSessionExpired('zoom')
   }
 
   private static handleVerificationFailure(error: unknown) {
@@ -104,7 +105,9 @@ export class ZoomUser {
       return
     }
     logError(['Zoom API login verification failed:', error], LogPrefix.Zoom)
-    this.logout()
+    // Zoom refused the token: it is kept (nobody is logged out behind their
+    // back) and the session is marked, until they log in again
+    markSessionExpired('zoom')
   }
 
   public static getCredentials(): ZoomCredentials | undefined {

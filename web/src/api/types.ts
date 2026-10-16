@@ -15,7 +15,11 @@ export type LoginInfo = {
 
 export type LoginResult = { ok: boolean; error?: string }
 
-export type AccountStatus = { loggedIn: boolean; name?: string }
+export type AccountStatus = {
+  loggedIn: boolean
+  name?: string
+  expired?: boolean
+}
 
 export type AccountsStatus = Record<Runner, AccountStatus>
 

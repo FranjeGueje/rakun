@@ -14,6 +14,7 @@ import { sendFrontendMessage } from './ipc'
 import { GlobalConfig } from './config'
 import { libraryManagerMap, RUNNERS } from 'backend/storeManagers'
 import { libraryOf } from 'backend/storeManagers/library_of'
+import { markSessionExpired } from 'backend/storeManagers/session_state'
 import { readdir, lstat } from 'fs/promises'
 import { backendEvents } from './backend_events'
 import { pipeline } from 'stream/promises'
@@ -194,6 +195,7 @@ async function errorHandler(
   }
 
   if (error.includes(expiredCredentials)) {
+    markSessionExpired(runner)
     return showDialogBoxModalAuto({
       title: plat,
       message: 'Your Crendentials have expired, Logout and Login Again!',

@@ -9,6 +9,7 @@ import {
   libraryStore
 } from './electronStores'
 import { tokenPath } from './constants'
+import { isSessionExpired } from '../session_state'
 
 const zoomLoginUrl =
   'https://www.zoom-platform.com/login?li=relic&return_li_token=true'
@@ -32,12 +33,12 @@ export const zoom: Store<ZoomLibraryManager> = {
       name: configStore.get_nodefault('username')
     }),
     logout: () => Promise.resolve(ZoomUser.logout()),
-    // A rejected token makes getUserDetails log out (and the token goes); an
-    // answer that never came (offline, Zoom down) leaves it, and says nothing
+    // A token Zoom refused marks the session expired; an answer that never
+    // came (offline, Zoom down) says nothing
     check: async () => {
       if (!existsSync(tokenPath)) return false
       if (await ZoomUser.getUserDetails()) return true
-      return existsSync(tokenPath) ? undefined : false
+      return isSessionExpired('zoom') ? false : undefined
     }
   },
   login: {

@@ -8,6 +8,7 @@ import { isOnline } from '../../online_monitor'
 import { GOGCredentials, UserData } from 'common/types/gog'
 import { libraryManagerMap } from '../index'
 import { clearCache } from 'backend/utils'
+import { clearSessionExpired, markSessionExpired } from '../session_state'
 import { gogdlAuthConfig } from './constants'
 
 /**
@@ -164,11 +165,15 @@ export class GOGUser {
         'gogdl auth returned empty output - re-login may be required',
         LogPrefix.Gog
       )
+      // Nothing came back while there is a session: the token could not be
+      // refreshed. The next time gogdl answers, the mark goes
+      if (GOGUser.isLoggedIn()) markSessionExpired('gog')
       return undefined
     }
     try {
       const credentials = JSON.parse(trimmed) as GOGCredentials | undefined
       if (credentials) {
+        clearSessionExpired('gog')
         // Never hold credentials past the token's own lifetime. gogdl reports
         // `expires_in` as the token's total validity and we cannot tell when it
         // was issued, so the short TTL is what actually bounds this in practice

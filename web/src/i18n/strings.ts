@@ -143,6 +143,8 @@ export const en = {
   'accounts.signedIn': 'Signed in as {name}',
   'accounts.signedInNoName': 'Signed in',
   'accounts.signedOut': 'Not signed in',
+  'accounts.expired':
+    'Session expired: select to sign in again (your games are kept)',
   'accounts.failed': 'Could not sign in: {error}',
   'accounts.waiting': 'Waiting for the login…',
   'accounts.logoutTitle': 'Sign out of {store}?',

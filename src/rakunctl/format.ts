@@ -53,11 +53,11 @@ export function accountsText(
 ): string {
   return stores
     .map(({ id, label }) => {
-      const { loggedIn, name } = accounts[id]
+      const { loggedIn, name, expired } = accounts[id]
       const asked = checked?.[id]
-      // The store was asked and refused a session that was stored here
-      if (loggedIn && asked?.verified && !asked.loggedIn)
-        return `${label}: session expired, log in again`
+      // The store refused the session (it says so by itself, or when asked)
+      if (loggedIn && (expired || (asked?.verified && !asked.loggedIn)))
+        return `${label}: session expired, log in again (the games are kept)`
       const who = loggedIn
         ? `logged in${name ? ` (${name})` : ''}`
         : 'not logged in'

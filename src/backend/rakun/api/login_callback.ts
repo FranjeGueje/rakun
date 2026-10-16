@@ -4,6 +4,7 @@ import {
   completeItchLogin
 } from '../../storeManagers/itch/login'
 import { loginErrorMessage } from '../../storeManagers/itch/user'
+import { clearSessionExpired } from '../../storeManagers/session_state'
 import { startRefresh } from './refresh'
 
 /** What the browser is told when it comes back from itch.io */
@@ -42,6 +43,7 @@ export async function itchCallback(
       message: `${loginErrorMessage(error)}. You can close this tab.`
     }
   }
+  clearSessionExpired('itch')
   startRefresh('itch')
   return {
     status: 200,

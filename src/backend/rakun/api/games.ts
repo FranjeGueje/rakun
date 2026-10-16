@@ -123,6 +123,7 @@ addHandler('repair', async (event, appName, runner) => {
     )
     return
   }
+  if (await isRefused(runner, 'repair', appName)) return
 
   sendGameStatusUpdate({
     appName,

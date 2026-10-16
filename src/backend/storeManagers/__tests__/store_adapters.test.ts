@@ -7,6 +7,7 @@ import { LegendaryUser } from '../legendary/user'
 import { GOGUser } from '../gog/user'
 import { NileUser } from '../nile/user'
 import { ZoomUser } from '../zoom/user'
+import { clearSessionExpired, markSessionExpired } from '../session_state'
 import * as legendaryStores from '../legendary/electronStores'
 import * as gogStores from '../gog/electronStores'
 import * as nileStores from '../nile/electronStores'
@@ -22,6 +23,7 @@ jest.mock('backend/constants/paths', () => {
     appFolder: `${root}/rakun`
   }
 })
+jest.mock('backend/logger')
 jest.mock('../legendary/user', () => ({
   LegendaryUser: {
     isLoggedIn: jest.fn(),
@@ -261,7 +263,10 @@ describe('Zoom', () => {
   describe('check', () => {
     const check = () => stores.zoom.session.check!()
     beforeEach(() => mkdirSync(join(tokenPath, '..'), { recursive: true }))
-    afterEach(() => rmSync(tokenPath, { force: true }))
+    afterEach(() => {
+      rmSync(tokenPath, { force: true })
+      clearSessionExpired('zoom')
+    })
 
     test('with no token the session is out, without asking', async () => {
       rmSync(tokenPath, { force: true })
@@ -277,10 +282,10 @@ describe('Zoom', () => {
       expect(await check()).toBe(true)
     })
 
-    test('Zoom rejects the token (it logs out and the token goes): out', async () => {
+    test('Zoom rejects the token (the session is marked expired, the token stays): out', async () => {
       writeFileSync(tokenPath, 'tok')
       jest.mocked(ZoomUser.getUserDetails).mockImplementation(() => {
-        rmSync(tokenPath)
+        markSessionExpired('zoom')
         return Promise.resolve(undefined)
       })
 

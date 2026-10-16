@@ -1,6 +1,11 @@
 import type { Runner } from 'common/types'
 
-export type AccountStatus = { loggedIn: boolean; name?: string }
+export type AccountStatus = {
+  loggedIn: boolean
+  name?: string
+  /** The store refused the session (token ran out or was revoked): log in again. Games are kept */
+  expired?: boolean
+}
 
 export type AccountsStatus = Record<Runner, AccountStatus>
 

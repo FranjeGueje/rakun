@@ -50,6 +50,7 @@ function LoginWays({ info, t }: { info: LoginInfo; t: Translate }) {
 
 function stateText(t: Translate, account: AccountsStatus[StoreInfo['id']]) {
   if (!account.loggedIn) return t('accounts.signedOut')
+  if (account.expired) return t('accounts.expired')
   return account.name
     ? t('accounts.signedIn', { name: account.name })
     : t('accounts.signedInNoName')
@@ -100,7 +101,8 @@ export function Accounts({
       window.rakun
         .call('getAccounts')
         .then((status) => {
-          if (!status[store.id].loggedIn) return
+          // An expired session still counts as one: wait for the new login
+          if (!status[store.id].loggedIn || status[store.id].expired) return
           setPasting(null)
           setAccounts(status)
           reloadStore.current(store.id)
@@ -158,7 +160,9 @@ export function Accounts({
 
   const activate = (store: StoreInfo | undefined) => {
     if (!store || !accounts || waiting) return
-    if (accounts[store.id].loggedIn) setAskLogout(store)
+    // An expired session is not signed out: select to sign in again
+    const { loggedIn, expired } = accounts[store.id]
+    if (loggedIn && !expired) setAskLogout(store)
     else void signIn(store)
   }
 

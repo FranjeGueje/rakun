@@ -117,6 +117,26 @@ describe('accounts commands', () => {
     expect(calls.map(([channel]) => channel)).toContain('checkAccounts')
   })
 
+  test('status says a session the store refused is expired, without --check', async () => {
+    const { ctx, lines } = fakeCtx({
+      getAccounts: {
+        legendary: { loggedIn: true, name: 'ann' },
+        gog: { loggedIn: true, name: 'bob', expired: true },
+        nile: { loggedIn: false },
+        zoom: { loggedIn: false }
+      },
+      getDMQueueInformation: { elements: [], finished: [] },
+      getHelpers: []
+    })
+
+    await status(ctx, [], opts)
+
+    expect(lines[0]).toContain('Epic: logged in (ann)\n')
+    expect(lines[0]).toContain(
+      'GOG: session expired, log in again (the games are kept)'
+    )
+  })
+
   test('status without --check does not ask the stores', async () => {
     const signedOut = { loggedIn: false }
     const { ctx, calls } = fakeCtx({

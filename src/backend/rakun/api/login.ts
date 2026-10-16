@@ -3,6 +3,7 @@ import type { LoginResult } from 'common/rakun/login'
 import { addHandler } from 'backend/ipc'
 import { logError, LogPrefix } from 'backend/logger'
 import { getStore } from 'backend/storeManagers'
+import { clearSessionExpired } from 'backend/storeManagers/session_state'
 import { extractLoginCode } from './login_input'
 import { startRefresh } from './refresh'
 
@@ -24,6 +25,7 @@ async function submitLogin(
     return { ok: false, error: String(error) }
   }
 
+  clearSessionExpired(runner)
   startRefresh(runner)
   return { ok: true }
 }

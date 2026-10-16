@@ -1,5 +1,10 @@
 import type { StoreInfo } from 'common/rakun/stores'
 import { invokeHandler } from 'backend/ipc'
+import {
+  clearSessionExpired,
+  isSessionExpired,
+  markSessionExpired
+} from 'backend/storeManagers/session_state'
 import './../accounts'
 
 const state: Record<string, { loggedIn: boolean; name?: string }> = {}
@@ -40,6 +45,7 @@ jest.mock('backend/storeManagers', () => {
     }
   }
 })
+jest.mock('backend/logger')
 jest.mock('backend/storeManagers/legendary/user', () => ({ LegendaryUser: {} }))
 jest.mock('backend/storeManagers/gog/user', () => ({ GOGUser: {} }))
 jest.mock('backend/storeManagers/nile/user', () => ({ NileUser: {} }))
@@ -116,6 +122,8 @@ describe('checkAccounts', () => {
       zoom: { loggedIn: true, name: 'zoomuser' }
     })
     for (const runner of Object.keys(checks)) delete checks[runner]
+    for (const runner of ['legendary', 'gog', 'nile', 'zoom'] as const)
+      clearSessionExpired(runner)
   })
 
   test('a store that can be asked says if the session works', async () => {
@@ -128,6 +136,16 @@ describe('checkAccounts', () => {
       gog: { loggedIn: true, verified: true },
       zoom: { loggedIn: false, verified: true }
     })
+  })
+
+  test('a store that refuses the session is marked expired, and one that accepts it is not', async () => {
+    checks.gog = () => Promise.resolve(true)
+    checks.zoom = () => Promise.resolve(false)
+
+    await invokeHandler('checkAccounts')
+
+    expect(isSessionExpired('zoom')).toBe(true)
+    expect(isSessionExpired('gog')).toBe(false)
   })
 
   test('a store with no way to ask answers what is stored, unverified', async () => {
@@ -154,5 +172,51 @@ describe('checkAccounts', () => {
       nile: { loggedIn: false, verified: true }
     })
     expect(check).not.toHaveBeenCalled()
+  })
+})
+
+describe('expired sessions', () => {
+  beforeEach(() => {
+    Object.assign(state, {
+      legendary: { loggedIn: true, name: 'epicuser' },
+      gog: { loggedIn: true, name: 'goguser' },
+      nile: { loggedIn: false },
+      zoom: { loggedIn: false }
+    })
+    for (const runner of ['legendary', 'gog', 'nile', 'zoom'] as const)
+      clearSessionExpired(runner)
+  })
+
+  test('getAccounts says which session the store refused, and keeps the rest of the account', async () => {
+    markSessionExpired('gog')
+
+    const accounts = (await invokeHandler('getAccounts')) as Record<
+      string,
+      { loggedIn: boolean; name?: string; expired?: boolean }
+    >
+
+    expect(accounts.gog).toEqual({
+      loggedIn: true,
+      name: 'goguser',
+      expired: true
+    })
+    expect(accounts.legendary.expired).toBeUndefined()
+  })
+
+  test('a store with no session at all is not «expired»', async () => {
+    markSessionExpired('nile')
+
+    const accounts = (await invokeHandler('getAccounts')) as Record<
+      string,
+      { expired?: boolean }
+    >
+
+    expect(accounts.nile.expired).toBeUndefined()
+  })
+
+  test('logging out ends it, and so does a failed logout not', async () => {
+    markSessionExpired('gog')
+    await invokeHandler('logout', 'gog')
+    expect(isSessionExpired('gog')).toBe(false)
   })
 })

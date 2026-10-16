@@ -3,6 +3,11 @@ import { existsSync, readFileSync, unlinkSync } from 'fs'
 import { configStore } from '../electronStores'
 import { isOnline } from '../../../online_monitor'
 import { ZoomUser } from '../user'
+import {
+  clearSessionExpired,
+  isSessionExpired,
+  markSessionExpired
+} from '../../session_state'
 
 jest.mock('axios')
 jest.mock('fs', () => ({
@@ -43,6 +48,7 @@ function axiosError(status?: number) {
 }
 
 beforeEach(() => {
+  clearSessionExpired('zoom')
   // The backend jest config sets resetMocks, which also wipes implementations
   // given in the jest.mock() factories -- so every one of them belongs here
   mockedExistsSync.mockReturnValue(true)
@@ -142,18 +148,25 @@ describe('ZoomUser - failures must not destroy the session', () => {
     expect(mockedUnlinkSync).not.toHaveBeenCalled()
   })
 
-  test('a 401 from Zoom does log the user out', async () => {
-    mockedAxios.get.mockRejectedValue(axiosError(401))
+  test.each([401, 403])(
+    'a %s from Zoom marks the session expired, and keeps the token',
+    async (status) => {
+      mockedAxios.get.mockRejectedValue(axiosError(status))
 
-    await expect(ZoomUser.isLoggedIn()).resolves.toBe(false)
-    expect(mockedUnlinkSync).toHaveBeenCalledWith('/tmp/zoom.token')
-  })
+      await expect(ZoomUser.isLoggedIn()).resolves.toBe(false)
+      expect(isSessionExpired('zoom')).toBe(true)
+      expect(mockedUnlinkSync).not.toHaveBeenCalled()
+      expect(mockedConfigStore.clear).not.toHaveBeenCalled()
+    }
+  )
 
-  test('a 403 from Zoom does log the user out', async () => {
-    mockedAxios.get.mockRejectedValue(axiosError(403))
+  test('a good answer from Zoom clears the mark', async () => {
+    markSessionExpired('zoom')
+    mockedAxios.get.mockResolvedValue({ data: { name: 'di' } })
 
-    await expect(ZoomUser.isLoggedIn()).resolves.toBe(false)
-    expect(mockedUnlinkSync).toHaveBeenCalledWith('/tmp/zoom.token')
+    await ZoomUser.isLoggedIn()
+
+    expect(isSessionExpired('zoom')).toBe(false)
   })
 
   test('a failed verification is not remembered as a success', async () => {
