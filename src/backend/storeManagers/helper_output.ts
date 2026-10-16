@@ -46,8 +46,18 @@ export function markHelperOutputUnrecognized(error: HelperOutputError) {
   )
 }
 
-/** What the helpers said that rakun did not understand, to show next to their versions */
+/** What the helpers said that rakun did not understand */
 export const helperOutputWarnings = (): string[] => [...unrecognized.values()]
+
+/** What this one helper said that rakun did not understand, to show next to its version */
+export const helperOutputWarningOf = (helper: string): string | undefined => {
+  const found = [...unrecognized.entries()].filter(([key]) =>
+    key.startsWith(`${helper} `)
+  )
+  return found.length
+    ? found.map(([, message]) => message).join('; ')
+    : undefined
+}
 
 /** A helper has been understood again: what it said before is no longer a warning */
 export const clearHelperOutputWarning = (helper: string, command: string) =>

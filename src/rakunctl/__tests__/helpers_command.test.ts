@@ -19,6 +19,21 @@ describe('helpersText', () => {
 })
 
 describe('helpersLine', () => {
+  test('says what a helper printed that rakun did not understand, even with every version as tested', () => {
+    const line = helpersLine([
+      {
+        helper: 'nile',
+        pinned: 'v1.2.0',
+        installed: 'v1.2.0',
+        state: 'ok',
+        warning: 'nile list-updates --json: not the output rakun knows'
+      }
+    ] as never)
+
+    expect(line).toContain('nile: nile list-updates --json: not the output')
+    expect(line).not.toBe('Helpers: all installed')
+  })
+
   test('names what is missing and what to run', () => {
     expect(helpersLine(list.filter((h) => h.state !== 'other') as never)).toBe(
       'Helpers: missing gogdl (run "rakunctl helpers update")'

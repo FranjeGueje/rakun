@@ -8,6 +8,7 @@ import {
 import { logInfo, logWarning } from 'backend/logger'
 import { helperStates, installFromBundle, type HelperEntry } from './files'
 import type { Layout } from './manifest'
+import { helperOutputWarningOf } from 'backend/storeManagers/helper_output'
 
 const LOG_PREFIX = 'Rakun'
 
@@ -35,7 +36,12 @@ export const helperExists = (relative: string): boolean =>
   existsSync(helperFile(relative))
 
 export const currentHelpers = (): HelperEntry[] =>
-  helperStates(helpersLayout(), { bundleBinRoot: bundleBinRoot() })
+  helperStates(helpersLayout(), { bundleBinRoot: bundleBinRoot() }).map(
+    (entry) => {
+      const warning = helperOutputWarningOf(entry.helper)
+      return warning ? { ...entry, warning } : entry
+    }
+  )
 
 export const missingHelpers = (): string[] =>
   currentHelpers()
@@ -58,5 +64,15 @@ export function checkHelpersAtStart(): void {
     logWarning(
       `Helper binaries missing: ${missing.join(', ')}. ${HELPERS_HINT}`,
       LOG_PREFIX
+    )
+
+  // rakun reads their output as it was in the tested version: say it when it is another
+  currentHelpers()
+    .filter(({ state }) => state === 'other')
+    .forEach(({ helper, installed, pinned }) =>
+      logWarning(
+        `${helper} is ${installed || 'another version'}, not the tested ${pinned}: what it prints may not be what rakun reads. ${HELPERS_HINT}`,
+        LOG_PREFIX
+      )
     )
 }

@@ -9,6 +9,8 @@ export type HelperInfo = {
   /** The one that is installed, if it is known */
   installed: string
   state: HelperState
+  /** What the helper printed that rakun did not understand (a newer version than the tested one?) */
+  warning?: string
 }
 
 /** The last `helpersProgress` line of an update: it is over (it says nothing else) */

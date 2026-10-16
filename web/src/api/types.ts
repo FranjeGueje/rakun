@@ -50,6 +50,8 @@ export type HelperInfo = {
   installed: string
   /** `ok`, `missing`, or `other` (another version, for instance after «latest») */
   state: 'ok' | 'missing' | 'other'
+  /** What the helper printed that rakun did not understand */
+  warning?: string
 }
 
 export type HelpersUpdate = {
