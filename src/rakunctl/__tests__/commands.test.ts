@@ -90,6 +90,51 @@ describe('accounts commands', () => {
     expect(lines[0]).toContain('Helpers: all installed')
   })
 
+  test('status --check asks the stores and says what they answered', async () => {
+    const { ctx, lines, calls } = fakeCtx({
+      getAccounts: {
+        legendary: { loggedIn: true, name: 'ann' },
+        gog: { loggedIn: true, name: 'bob' },
+        nile: { loggedIn: false },
+        zoom: { loggedIn: true, name: 'cy' }
+      },
+      checkAccounts: {
+        legendary: { loggedIn: true, verified: false },
+        gog: { loggedIn: true, verified: true },
+        nile: { loggedIn: false, verified: true },
+        zoom: { loggedIn: false, verified: true }
+      },
+      getDMQueueInformation: { elements: [], finished: [] },
+      getHelpers: []
+    })
+
+    await status(ctx, [], { ...opts, check: true })
+
+    expect(lines[0]).toContain('Epic: logged in (ann)\n')
+    expect(lines[0]).toContain('GOG: logged in (bob), verified')
+    expect(lines[0]).toContain('Amazon: not logged in')
+    expect(lines[0]).toContain('Zoom: session expired, log in again')
+    expect(calls.map(([channel]) => channel)).toContain('checkAccounts')
+  })
+
+  test('status without --check does not ask the stores', async () => {
+    const signedOut = { loggedIn: false }
+    const { ctx, calls } = fakeCtx({
+      getAccounts: {
+        legendary: signedOut,
+        gog: signedOut,
+        nile: signedOut,
+        zoom: signedOut
+      },
+      getDMQueueInformation: { elements: [], finished: [] },
+      getHelpers: []
+    })
+
+    await status(ctx, [], opts)
+
+    expect(calls.map(([channel]) => channel)).not.toContain('checkAccounts')
+  })
+
   test('status says which helpers are missing and what to do', async () => {
     const signedOut = { loggedIn: false }
     const { ctx, lines } = fakeCtx({

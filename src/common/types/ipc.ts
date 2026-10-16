@@ -16,7 +16,7 @@ import type {
   StatusPromise,
   UpdateParams
 } from '../types'
-import type { AccountsStatus } from 'common/rakun/accounts'
+import type { AccountsCheck, AccountsStatus } from 'common/rakun/accounts'
 import type { FolderListing } from 'common/rakun/folders'
 import type { LoginInfo, LoginResult } from 'common/rakun/login'
 import type { StoreInfo } from 'common/rakun/stores'
@@ -64,6 +64,7 @@ interface AsyncIPCFunctions {
   getStores: () => StoreInfo[]
   listFolders: (path?: string) => FolderListing
   getAccounts: () => AccountsStatus
+  checkAccounts: () => Promise<AccountsCheck>
   logout: (runner: Runner) => Promise<void>
   getLoginInfo: (runner: Runner) => Promise<LoginInfo>
   submitLogin: (runner: Runner, pasted: string) => Promise<LoginResult>

@@ -1,5 +1,5 @@
 import type { DMQueueElement, GameInfo, GameStatus } from 'common/types'
-import type { AccountsStatus } from 'common/rakun/accounts'
+import type { AccountsCheck, AccountsStatus } from 'common/rakun/accounts'
 import type { LoginInfo } from 'common/rakun/login'
 import type { StoreInfo } from 'common/rakun/stores'
 import { storeLabel } from './stores'
@@ -48,12 +48,20 @@ export function libraryText(games: GameInfo[], stores: StoreInfo[]): string {
 
 export function accountsText(
   accounts: AccountsStatus,
-  stores: StoreInfo[]
+  stores: StoreInfo[],
+  checked?: AccountsCheck
 ): string {
   return stores
     .map(({ id, label }) => {
       const { loggedIn, name } = accounts[id]
-      return `${label}: ${loggedIn ? `logged in${name ? ` (${name})` : ''}` : 'not logged in'}`
+      const asked = checked?.[id]
+      // The store was asked and refused a session that was stored here
+      if (loggedIn && asked?.verified && !asked.loggedIn)
+        return `${label}: session expired, log in again`
+      const who = loggedIn
+        ? `logged in${name ? ` (${name})` : ''}`
+        : 'not logged in'
+      return `${label}: ${who}${loggedIn && asked?.verified ? ', verified' : ''}`
     })
     .join('\n')
 }

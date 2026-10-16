@@ -35,7 +35,8 @@ export const HELP = `Usage: rakunctl [options] <command> [arguments]
 Service
   start [--web MODE] [--port N]     Start rakun in the background
   stop [--force]                    Stop it (--force: even while downloading)
-  status                            Show rakun, sessions and queue
+  status [--check]                  Show rakun, sessions and queue (--check
+                                    asks the stores if each session still works)
   install-service [--web MODE] [--port N]
                                     Install it as a systemd user service
                                     (starts at login)

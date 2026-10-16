@@ -8,6 +8,12 @@ export interface StoreSession {
   /** Who is logged in, from local data only (no network) */
   account: () => AccountStatus
   logout: () => Promise<void>
+  /**
+   * Asks the store over the network if the session still works: true it does,
+   * false it was rejected, nothing when it could not be told (offline, the
+   * store did not answer). A store whose session only lives in a file has none.
+   */
+  check?: () => Promise<boolean | undefined>
 }
 
 /** The two-step login with no embedded browser: show a URL, take back a code */

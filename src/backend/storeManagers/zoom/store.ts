@@ -31,7 +31,14 @@ export const zoom: Store<ZoomLibraryManager> = {
       loggedIn: existsSync(tokenPath) && !!configStore.get('isLoggedIn', false),
       name: configStore.get_nodefault('username')
     }),
-    logout: () => Promise.resolve(ZoomUser.logout())
+    logout: () => Promise.resolve(ZoomUser.logout()),
+    // A rejected token makes getUserDetails log out (and the token goes); an
+    // answer that never came (offline, Zoom down) leaves it, and says nothing
+    check: async () => {
+      if (!existsSync(tokenPath)) return false
+      if (await ZoomUser.getUserDetails()) return true
+      return existsSync(tokenPath) ? undefined : false
+    }
   },
   login: {
     urlParam: 'li_token',

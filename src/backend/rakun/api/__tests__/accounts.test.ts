@@ -5,6 +5,8 @@ import './../accounts'
 const state: Record<string, { loggedIn: boolean; name?: string }> = {}
 
 const logouts: string[] = []
+// What each store answers when asked over the network (a store with no entry has no way to ask)
+const checks: Record<string, () => Promise<boolean | undefined>> = {}
 
 jest.mock('backend/storeManagers', () => {
   const store = (runner: string, name: string, label: string) => ({
@@ -13,6 +15,10 @@ jest.mock('backend/storeManagers', () => {
     label,
     session: {
       account: () => state[runner],
+      // Read when used: the checks of a test are set after the mock is built
+      get check() {
+        return checks[runner]
+      },
       logout: () => {
         logouts.push(runner)
         return Promise.resolve()
@@ -98,5 +104,55 @@ describe('logout', () => {
     await expect(invokeHandler('logout', 'steam')).rejects.toThrow(
       'Unknown store "steam"'
     )
+  })
+})
+
+describe('checkAccounts', () => {
+  beforeEach(() => {
+    Object.assign(state, {
+      legendary: { loggedIn: true, name: 'epicuser' },
+      gog: { loggedIn: true, name: 'goguser' },
+      nile: { loggedIn: false },
+      zoom: { loggedIn: true, name: 'zoomuser' }
+    })
+    for (const runner of Object.keys(checks)) delete checks[runner]
+  })
+
+  test('a store that can be asked says if the session works', async () => {
+    checks.gog = () => Promise.resolve(true)
+    checks.zoom = () => Promise.resolve(false)
+
+    const result = await invokeHandler('checkAccounts')
+
+    expect(result).toMatchObject({
+      gog: { loggedIn: true, verified: true },
+      zoom: { loggedIn: false, verified: true }
+    })
+  })
+
+  test('a store with no way to ask answers what is stored, unverified', async () => {
+    expect(await invokeHandler('checkAccounts')).toMatchObject({
+      legendary: { loggedIn: true, verified: false }
+    })
+  })
+
+  test('an answer that never came, or a failure, leaves it unverified', async () => {
+    checks.gog = () => Promise.resolve(undefined)
+    checks.zoom = () => Promise.reject(new Error('timeout'))
+
+    expect(await invokeHandler('checkAccounts')).toMatchObject({
+      gog: { loggedIn: true, verified: false },
+      zoom: { loggedIn: true, verified: false }
+    })
+  })
+
+  test('a store with no session is not asked: it is certainly out', async () => {
+    const check = jest.fn()
+    checks.nile = check
+
+    expect(await invokeHandler('checkAccounts')).toMatchObject({
+      nile: { loggedIn: false, verified: true }
+    })
+    expect(check).not.toHaveBeenCalled()
   })
 })

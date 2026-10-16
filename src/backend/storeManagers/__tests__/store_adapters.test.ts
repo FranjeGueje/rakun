@@ -257,6 +257,70 @@ describe('Zoom', () => {
     })
     expect(ZoomUser.getUserDetails).not.toHaveBeenCalled()
   })
+
+  describe('check', () => {
+    const check = () => stores.zoom.session.check!()
+    beforeEach(() => mkdirSync(join(tokenPath, '..'), { recursive: true }))
+    afterEach(() => rmSync(tokenPath, { force: true }))
+
+    test('with no token the session is out, without asking', async () => {
+      rmSync(tokenPath, { force: true })
+
+      expect(await check()).toBe(false)
+      expect(ZoomUser.getUserDetails).not.toHaveBeenCalled()
+    })
+
+    test('Zoom confirms the token: the session works', async () => {
+      writeFileSync(tokenPath, 'tok')
+      jest.mocked(ZoomUser.getUserDetails).mockResolvedValue({ username: 'di' })
+
+      expect(await check()).toBe(true)
+    })
+
+    test('Zoom rejects the token (it logs out and the token goes): out', async () => {
+      writeFileSync(tokenPath, 'tok')
+      jest.mocked(ZoomUser.getUserDetails).mockImplementation(() => {
+        rmSync(tokenPath)
+        return Promise.resolve(undefined)
+      })
+
+      expect(await check()).toBe(false)
+    })
+
+    test('no answer and the token still there: cannot tell', async () => {
+      writeFileSync(tokenPath, 'tok')
+      jest.mocked(ZoomUser.getUserDetails).mockResolvedValue(undefined)
+
+      expect(await check()).toBeUndefined()
+    })
+  })
+})
+
+describe('GOG check', () => {
+  const check = () => stores.gog.session.check!()
+
+  test('without a session it is out, without asking', async () => {
+    jest.mocked(GOGUser.isLoggedIn).mockReturnValue(false)
+
+    expect(await check()).toBe(false)
+    expect(GOGUser.getUserDetails).not.toHaveBeenCalled()
+  })
+
+  test('the user details came: it works', async () => {
+    jest.mocked(GOGUser.isLoggedIn).mockReturnValue(true)
+    jest
+      .mocked(GOGUser.getUserDetails)
+      .mockResolvedValue({ username: 'x' } as never)
+
+    expect(await check()).toBe(true)
+  })
+
+  test('they did not (rejected or unreachable, GOG does not say which): cannot tell', async () => {
+    jest.mocked(GOGUser.isLoggedIn).mockReturnValue(true)
+    jest.mocked(GOGUser.getUserDetails).mockResolvedValue(undefined)
+
+    expect(await check()).toBeUndefined()
+  })
 })
 
 // What every store has to offer, whatever it wraps. A new store is added to

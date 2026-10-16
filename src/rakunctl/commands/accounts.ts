@@ -1,4 +1,4 @@
-import type { AccountsStatus } from 'common/rakun/accounts'
+import type { AccountsCheck, AccountsStatus } from 'common/rakun/accounts'
 import type { LoginInfo, LoginResult } from 'common/rakun/login'
 import type { DMQueueElement, Runner } from 'common/types'
 import { CliError } from '../client'
@@ -9,9 +9,13 @@ import type { HelperInfo } from 'common/rakun/helpers'
 import { helpersLine } from './helpers'
 import { Command, requireArg, show, type Ctx } from '../context'
 
-export const status: Command = async (ctx) => {
+export const status: Command = async (ctx, _args, opts) => {
   const health = await ctx.api.health()
   const accounts = await ctx.api.call<AccountsStatus>('getAccounts')
+  // --check also asks the stores over the network, so it takes longer
+  const checked = opts.check
+    ? await ctx.api.call<AccountsCheck>('checkAccounts')
+    : undefined
   const queue = await ctx.api.call<{ elements: DMQueueElement[] }>(
     'getDMQueueInformation'
   )
@@ -21,6 +25,7 @@ export const status: Command = async (ctx) => {
     running: true,
     health,
     accounts,
+    ...(checked ? { checked } : {}),
     queue: queue.elements.length,
     helpers
   }
@@ -28,7 +33,7 @@ export const status: Command = async (ctx) => {
     [
       `rakun ${health.version}`,
       ...webLines(health.web, ctx.api.port),
-      accountsText(accounts, stores),
+      accountsText(accounts, stores, checked),
       `Queue: ${queue.elements.length} pending`,
       helpersLine(helpers)
     ].join('\n')

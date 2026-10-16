@@ -26,7 +26,12 @@ export const gog: Store<GOGLibraryManager> = {
       loggedIn: !!GOGUser.isLoggedIn(),
       name: configStore.get_nodefault('userData')?.username
     }),
-    logout: () => Promise.resolve(GOGUser.logout())
+    logout: () => Promise.resolve(GOGUser.logout()),
+    // getUserDetails does not tell «rejected» from «could not ask»: only a yes counts
+    check: async () => {
+      if (!GOGUser.isLoggedIn()) return false
+      return (await GOGUser.getUserDetails()) ? true : undefined
+    }
   },
   login: {
     urlParam: 'code',
