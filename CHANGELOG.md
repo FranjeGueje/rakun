@@ -43,6 +43,7 @@ A new store, itch.io, and the first one that is not run by a client of its own: 
 ### Removed
 
 - The helper `zoom-platform.sh` (and its entry in `rakunctl helpers`, `THIRD_PARTY` and the packages): Zoom's installer cannot run silent, so rakun no longer needs Zoom's script. The search for the executable of a Windows game moved to the runner.
+- The detection of DOSBox games installed with Zoom's Windows installer. It copied their files and set the game as a Linux one with `dosbox` as its executable, but there was no `start.sh` for Steam to launch, so it did not work; those games now go through the runner and Proton like the others.
 
 ### Fixed
 
