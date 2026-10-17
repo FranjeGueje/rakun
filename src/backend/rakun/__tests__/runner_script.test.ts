@@ -1,17 +1,18 @@
 import {
   batValue,
   gameRunnerText,
-  itchGameId,
   logName,
   runnerScriptText,
   RUNNER_BAT,
   RUNNER_NAME,
   RUNNER_VERSION,
-  SCRIPTS_DIR,
   STORES_WITH_RUNNER,
+  storeBatName,
+  storeScriptText,
   writeRunnerIni,
   writeRunnerScript
 } from '../runner_script'
+import { SCRIPTS_DIR } from '../runner/bat'
 
 jest.mock('fs', () => ({
   ...jest.requireActual('fs'),
@@ -24,13 +25,9 @@ jest.mock('backend/constants/paths', () => ({ rakunMountPath: '/mock/mount' }))
 
 import { existsSync, mkdirSync, writeFileSync } from 'fs'
 
-/** The lines of one store: from its label up to the next `goto :end` */
-const blockOf = (label: string) => {
-  const lines = runnerScriptText().split('\n')
-  const start = lines.indexOf(`:${label}`)
-  const end = lines.indexOf('goto :end', start)
-  return lines.slice(start, end + 1)
-}
+/** The lines of the script of one store */
+const scriptOf = (store: (typeof STORES_WITH_RUNNER)[number]) =>
+  storeScriptText(store).split('\n')
 
 describe('the runner script', () => {
   const text = runnerScriptText()
@@ -53,70 +50,27 @@ describe('the runner script', () => {
       expect(text).toContain(line)
   })
 
-  test('goes to the block of its store, whatever the case, and refuses the rest', () => {
-    for (const store of STORES_WITH_RUNNER)
-      expect(text).toContain(`if /i "%STORE%"=="${store}" goto :${store}`)
+  test('calls the script of its store, refuses an unknown one and keeps the exit code', () => {
     expect(text).toContain('if "%STORE%"=="" (')
     expect(text).toContain('echo [ERROR]: STORE is not set.')
+    expect(text).toContain(
+      'set "RK_STORE_BAT=%LAUNCHERS%\\scripts\\store_%STORE%.bat"'
+    )
+    expect(text).toContain('if not exist "%RK_STORE_BAT%" (')
     expect(text).toContain('echo [ERROR]: unknown store "%STORE%".')
+    expect(text).toContain('call "%RK_STORE_BAT%" %*')
+    expect(text).toContain('set "RK_CODE=%errorlevel%"')
+    expect(text.trimEnd()).toContain('exit /b %RK_CODE%')
   })
 
-  test('each store has its label between two bands, apart from the others', () => {
-    const lines = text.split('\n')
-    for (const store of STORES_WITH_RUNNER) {
-      const at = lines.indexOf(`:${store}`)
-      expect(lines[at - 2]).toBe(`rem ${'/'.repeat(60)}`)
-      expect(lines[at - 1]).toBe(`rem ${'*'.repeat(60)}`)
-      expect(lines[at + 1]).toBe(`rem ${'*'.repeat(60)}`)
-      expect(lines[at + 2]).toBe(`rem ${'\\'.repeat(60)}`)
-    }
-  })
-
-  test('legendary: checks the tool, shows the status and launches the game', () => {
-    const block = blockOf('legendary')
-    expect(block).toContain('if not exist "%LAUNCHERS%\\bin\\legendary.exe" (')
-    expect(block).toContain('if "%RK_SHOW_VERSIONS%"=="1" legendary status')
-    expect(block).toContain('legendary launch %IDGAME% %*')
-  })
-
-  test('amazon: checks the tool and launches the game', () => {
-    const block = blockOf('nile')
-    expect(block).toContain('if not exist "%LAUNCHERS%\\bin\\nile.exe" (')
-    expect(block).toContain(
-      `if "%RK_SHOW_VERSIONS%"=="1" for /f "delims=" %%v in ('nile --version') do echo nile version: %%v`
-    )
-    expect(block).toContain('nile launch %IDGAME% -- %*')
-  })
-
-  test('gog: checks its tools and login, starts Comet and launches the game', () => {
-    const block = blockOf('gog')
-    expect(block).toContain('if not exist "%LAUNCHERS%\\bin\\gogdl.exe" (')
-    expect(block).toContain('if not exist "%LAUNCHERS%\\bin\\comet.exe" (')
-    expect(block).toContain(
-      'if not exist "%LAUNCHERS%\\gog_store\\auth.json" ('
-    )
-    expect(block).toContain('if "%RK_SHOW_VERSIONS%"=="1" comet.exe --version')
-    expect(block).not.toContain('dummy')
-    expect(block).toContain(
-      'call "%LAUNCHERS%\\scripts\\comet.bat" "%GOGUSER%"'
-    )
-    expect(block).toContain(
-      '@gogdl --auth-config-path "%LAUNCHERS%\\gog_store\\auth.json" launch --platform windows %RK_TASK%"c:\\games\\%GAMEFOLDER%" %IDGAME% -- %*'
-    )
-  })
-
-  test('GOG passes --prefer-task only for a PLAYTASK that is a number other than 0', () => {
-    const block = blockOf('gog')
-    for (const line of [
-      'set "RK_TASK="',
-      'if defined PLAYTASK set "RK_TASK=--prefer-task %PLAYTASK% "',
-      'if defined PLAYTASK for /f "delims=0123456789" %%a in ("%PLAYTASK%") do set "RK_TASK="',
-      'if "%PLAYTASK%"=="0" set "RK_TASK="'
+  test('the runner holds nothing of any store: each has a script of its own', () => {
+    for (const tool of [
+      'legendary launch',
+      'gogdl',
+      'nile launch',
+      'dir /s /b'
     ])
-      expect(block).toContain(line)
-    expect(block.indexOf('set "RK_TASK="')).toBeLessThan(
-      block.findIndex((line) => line.startsWith('@gogdl'))
-    )
+      expect(text).not.toContain(tool)
   })
 
   test('reads its options from the ini, with a default for each one', () => {
@@ -142,7 +96,7 @@ describe('the runner script', () => {
     )
   })
 
-  test('is written into the scripts folder of the mount', () => {
+  test('is written into the scripts folder of the mount, with the script of each store', () => {
     const path = writeRunnerScript()
 
     expect(path).toBe(`/mock/mount/${SCRIPTS_DIR}/${RUNNER_BAT}`)
@@ -151,6 +105,16 @@ describe('the runner script', () => {
       recursive: true
     })
     expect(writeFileSync).toHaveBeenCalledWith(path, text, 'utf-8')
+    for (const store of STORES_WITH_RUNNER)
+      expect(writeFileSync).toHaveBeenCalledWith(
+        `/mock/mount/scripts/store_${store}.bat`,
+        storeScriptText(store),
+        'utf-8'
+      )
+  })
+
+  test('a store script is named store_<store>.bat', () => {
+    expect(storeBatName('zoom')).toBe('store_zoom.bat')
   })
 })
 
@@ -211,7 +175,7 @@ describe('the file of each game', () => {
     expect(text).toContain('set "PLAYTASK=0"')
   })
 
-  test('every store with a runner has its dispatch line and its block', () => {
+  test('every store with a runner has its script', () => {
     expect(STORES_WITH_RUNNER).toEqual([
       'legendary',
       'gog',
@@ -219,31 +183,24 @@ describe('the file of each game', () => {
       'itch',
       'zoom'
     ])
-    const runner = runnerScriptText()
     for (const store of STORES_WITH_RUNNER) {
-      expect(runner).toContain(`goto :${store}`)
-      expect(blockOf(store).length).toBeGreaterThan(2)
+      const lines = scriptOf(store)
+      expect(lines[0]).toBe('@echo off')
+      expect(lines.length).toBeGreaterThan(5)
+      expect(lines).toContain(`rem ${store}`)
+      expect(lines).toContain(
+        'rem Called by Launcher_games.bat after it sets up the common part: do not run it alone.'
+      )
     }
   })
 
-  test('itch: checks the executable, runs it from its folder and waits for it', () => {
-    const block = blockOf('itch')
-    expect(block).toContain('set "RK_EXE=c:\\games\\%IDGAME%"')
-    expect(block).toContain('if not exist "%RK_EXE%" (')
-    expect(block).toContain('    exit /b 1')
-    expect(block).toContain('for %%i in ("%RK_EXE%") do set "RK_DIR=%%~dpi"')
-    expect(block).toContain('cd /d "%RK_DIR%"')
-    expect(block).toContain('start "" /wait "%RK_EXE%" %*')
-    expect(block.at(-1)).toBe('goto :end')
-  })
-
-  test('itchGameId: the folder and the path of the executable, with the slashes cmd needs', () => {
-    expect(itchGameId('pacapong', 'pacapong.exe')).toBe(
-      'pacapong\\pacapong.exe'
-    )
-    expect(itchGameId('game', 'bin/win/Game.exe')).toBe(
-      'game\\bin\\win\\Game.exe'
-    )
+  test('no store script has the footer or a label of the runner: they come back to it', () => {
+    for (const store of STORES_WITH_RUNNER) {
+      const text = storeScriptText(store)
+      expect(text).not.toContain('goto :end')
+      expect(text).not.toContain('\n:end')
+      expect(text).not.toContain('goto :eof')
+    }
   })
 
   test('an itch game carries its executable as IDGAME, and none of the GOG variables', () => {
@@ -288,34 +245,7 @@ describe('the file of each game', () => {
     ).toThrow('There is no runner for the store "steam"')
   })
 
-  test('zoom: installs once, with its window, and then starts the game it found', () => {
-    const block = blockOf('zoom')
-    expect(block).toContain(
-      'if defined INSTALLER if exist "%RK_ZOOM_DIR%\\%INSTALLER%" ('
-    )
-    expect(block).toContain(
-      '    start "" /wait "%RK_ZOOM_DIR%\\%INSTALLER%" /NORESTART /SP- "/LOADINF=%RK_ZOOM_DIR%\\zoom_installer.inf"'
-    )
-    expect(block).toContain('    if errorlevel 1 (')
-    expect(block).toContain('    rmdir /s /q "%RK_ZOOM_DIR%"')
-    expect(block).toContain('start "" /wait "%RK_EXE%" %*')
-    expect(block.at(-1)).toBe('goto :end')
-  })
-
-  test('zoom: an installer or redistributable is told by its file name, not by the folder it is in', () => {
-    const block = blockOf('zoom').join('\n')
-    expect(block).toContain('set "RK_C=%%~nxf"')
-    expect(block).toContain('"!RK_C:unins=!"=="!RK_C!"')
-    expect(block).toContain('"!RK_C:setup=!"=="!RK_C!"')
-    expect(block).toContain('"!RK_C:redist=!"=="!RK_C!"')
-    expect(block).toContain('echo %%f')
-  })
-
-  test('zoom: with INSTALL_ONLY the block ends once the game is found, before starting it', () => {
-    const block = blockOf('zoom')
-    const stop = block.indexOf('if "%INSTALL_ONLY%"=="1" exit /b 0')
-    expect(stop).toBeGreaterThan(-1)
-    expect(stop).toBeLessThan(block.indexOf('start "" /wait "%RK_EXE%" %*'))
+  test('zoom: a game with INSTALL_ONLY installs and stops, one without it does not say so', () => {
     expect(
       gameRunnerText({ store: 'zoom', appName: 'g', installOnly: true })
     ).toContain('set "INSTALL_ONLY=1"')

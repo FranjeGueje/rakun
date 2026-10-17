@@ -2,9 +2,12 @@ import { mkdirSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { rakunMountPath } from 'backend/constants/paths'
 import { logInfo } from 'backend/logger'
-import { COMET_BAT, SCRIPTS_DIR, section } from './runner_script'
+import { SCRIPTS_DIR, section } from './runner/bat'
 
 const LOG_PREFIX = 'Rakun'
+
+/** The script that starts Comet for a GOG game, next to the scripts of the stores */
+export const COMET_BAT = 'comet.bat'
 
 export const COMET_SERVICE_NAME = 'FranjeGueje Comet Service'
 export const COMET_SERVICE_VERSION = 1
