@@ -10,8 +10,10 @@ export type StoreCaps = {
   repair: boolean
   /** The platform is sent as `windows`, not `Windows` */
   lowercasePlatform: boolean
-  /** Steam runs the game's executable itself, with no runner (`.bat`) in between */
+  /** The prefix of the game is its own folder (Zoom's installers build it there), not one of Steam's */
   directLaunch: boolean
+  /** A Windows game can be installed now (interactive) or on its first launch from Steam */
+  installModes: boolean
 }
 
 /** What a client needs to list and name a store */

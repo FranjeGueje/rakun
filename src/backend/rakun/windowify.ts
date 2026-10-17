@@ -27,7 +27,7 @@ import { gogdlConfigPath } from 'backend/storeManagers/gog/constants'
 import { GameInfo } from 'common/types'
 import type { GameRunner } from './steam_shortcuts/types'
 import { createGameSymlink } from './steam_shortcuts/add_game'
-import { SCRIPTS_DIR } from './runner_script'
+import { SCRIPTS_DIR } from './runner/bat'
 import { eosOverlayScriptText } from './eos_overlay_script'
 
 const LOG_PREFIX = 'Rakun'

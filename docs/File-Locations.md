@@ -23,8 +23,7 @@
 ├── bin/                     — The helper binaries (rakunctl helpers update)
 ├── runner/                  — one small .bat per game for Steam (Windows games)
 └── mount/                   — Mount structure for Proton prefixes
-    ├── scripts/             — Launcher_games.bat (the runner), Launcher_games.ini (its options) and eos-overlay.bat
-    └── logs/                — <game name>.log of the runner, if LOG_TO_FILE=1 in the ini
+    └── scripts/             — Launcher_games.bat (the runner), store_<store>.bat (what each store does), Launcher_games.ini (its options), comet.bat and eos-overlay.bat
 
 ~/Games/Rakun/              — Default game install path
 ```

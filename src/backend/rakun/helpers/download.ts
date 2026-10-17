@@ -20,8 +20,7 @@ import {
   Layout,
   RELEASE_TAGS,
   releaseUrl,
-  REPOS,
-  ZOOM_SCRIPT_URL
+  REPOS
 } from './manifest'
 
 const USER_AGENT = 'RakunBinaryUpdater/1.0'
@@ -144,17 +143,6 @@ async function installAsset(
   }
 }
 
-/**
- * The Zoom installer is a script on its own site, with no versions: its own line
- * says which one it is. It cannot be pinned or checked (Zoom may change the file
- * and does not version it): docs/Helper-Binaries.md says so.
- */
-async function installZoomScript(layout: Layout, fetchFn: typeof fetch) {
-  const data = await getBuffer(fetchFn, ZOOM_SCRIPT_URL)
-  writeAtomic(join(layout.binRoot, 'zoom', 'zoom-platform.sh'), data, 0o755)
-  return /INSTALLER_VERSION="([^"]+)"/.exec(data.toString('utf-8'))?.[1]
-}
-
 async function installHelper(
   layout: Layout,
   helper: HelperName,
@@ -163,13 +151,6 @@ async function installHelper(
   fetchFn: typeof fetch
 ) {
   const { latest = false, onProgress } = options
-  if (helper === 'zoom-platform') {
-    onProgress?.(`Downloading ${helper} from ${ZOOM_SCRIPT_URL}`)
-    const version = await installZoomScript(layout, fetchFn)
-    // Not pinned by hash (the script changes in its place): its version is what is recorded
-    recordTag(layout.binRoot, helper, version ?? RELEASE_TAGS[helper])
-    return
-  }
   const repo = REPOS[helper]
   const tag =
     latest && repo ? await latestTag(repo, fetchFn) : RELEASE_TAGS[helper]

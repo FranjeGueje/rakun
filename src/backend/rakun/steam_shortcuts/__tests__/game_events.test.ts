@@ -585,9 +585,33 @@ describe('onGameUninstalled', () => {
     expect(mockedUnlinkSync).toHaveBeenCalledWith(
       '/home/user/.local/share/rakun/games/itchgame'
     )
-    expect(mockedRemovePrefixSymlink).not.toHaveBeenCalled()
+    expect(mockedRemovePrefixSymlink).toHaveBeenCalledWith(555)
     expect(mockedDeleteGrids).toHaveBeenCalledWith(555)
     expect(mockedRemoveShortcut).toHaveBeenCalledWith('21301')
+  })
+
+  test('a native Zoom game keeps its start.sh: only the .bat of a runner is deleted', async () => {
+    mockGetGameInfo.mockReturnValue({
+      title: 'ZoomGame',
+      app_name: 'guid',
+      runner: 'zoom'
+    })
+    mockedFindShortcut.mockReturnValue({
+      gameName: 'ZoomGame',
+      appId: 'guid',
+      store: 'zoom',
+      steamAppId: 556,
+      execPath: '/home/user/.local/share/rakun/games/zoomgame/start.sh',
+      installPath: '/games/zoomgame'
+    })
+    mockedExistsSync.mockReturnValue(true)
+
+    await onGameUninstalled(mockGame as never)
+
+    expect(mockedUnlinkSync).not.toHaveBeenCalledWith(
+      '/home/user/.local/share/rakun/games/zoomgame/start.sh'
+    )
+    expect(mockedRemoveShortcut).toHaveBeenCalledWith('guid')
   })
 })
 

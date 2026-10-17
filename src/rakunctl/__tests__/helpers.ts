@@ -7,7 +7,8 @@ const UPPER = {
   update: true,
   repair: true,
   lowercasePlatform: false,
-  directLaunch: false
+  directLaunch: false,
+  installModes: false
 }
 const LOWER = { ...UPPER, lowercasePlatform: true }
 
@@ -24,7 +25,8 @@ export const STORES: StoreInfo[] = [
       import: false,
       update: false,
       repair: false,
-      directLaunch: true
+      directLaunch: true,
+      installModes: true
     }
   }
 ]

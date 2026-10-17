@@ -210,6 +210,10 @@ export type UserInfo = {
   displayName: string
   user: string
 }
+/** Zoom's Windows games: `interactive` installs now with the installer's window; `steam` leaves the installer to the first launch from Steam */
+export const INSTALL_MODES = ['steam', 'interactive'] as const
+export type InstallMode = (typeof INSTALL_MODES)[number]
+
 export interface InstallArgs {
   path: string
   platformToInstall: InstallPlatform
@@ -218,6 +222,7 @@ export interface InstallArgs {
   installLanguage?: string
   branch?: string
   build?: string
+  installMode?: InstallMode
 }
 
 export interface InstallParams extends InstallArgs {

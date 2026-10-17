@@ -182,7 +182,7 @@ scripts/smoke.sh pauseCurrentDownload
 scripts/smoke.sh resumeCurrentDownload
 ```
 
-Zoom (experimental): **Windows** games open the installer wizard in a window, so rakun has to be started with a screen (desktop mode) and with `protonPath` set; without them the install ends in error. rakun checks it **before downloading** (with no `DISPLAY`, with the graphical server down or in game mode it fails at once and `rakunctl install` says why); it is a best-effort check: after switching between desktop and game mode, restart rakun. The Linux ones do not need a screen.
+Zoom (experimental): **Windows** games open the installer wizard in a window, and there are two ways to run it (`rakunctl install zoom <id> --mode interactive|steam`; steam is the default). **Interactive**: rakun runs the installer now, so it has to be started with a screen (desktop mode) and with `protonPath` set; without them the install ends in error, and the installer stays downloaded to try again. **steam**: rakun only downloads the installer and adds the game to Steam; the first Play opens the wizard (choose GE-Proton in the game's Steam properties first), and the Play after that starts the game. Cancelling the wizard keeps the installer for another try. The Linux games do not need a screen.
 
 A shortcut added to Steam is **not removed** on uninstall: remove it by hand from the Steam library.
 

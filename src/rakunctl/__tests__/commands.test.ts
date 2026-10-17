@@ -741,6 +741,37 @@ describe('game commands', () => {
     ).toBeUndefined()
   })
 
+  test('install --mode sends the mode of a store that has them', async () => {
+    const { ctx, calls } = fakeCtx(
+      {
+        getGameInfo: game({ runner: 'zoom' }),
+        requestAppSettings: { defaultInstallPath: '/games' },
+        getDMQueueInformation: { finished: [] }
+      },
+      [update1('done')]
+    )
+
+    await install(ctx, ['zoom', 'g1'], { ...opts, mode: 'steam' })
+
+    expect(calls[2][1]).toMatchObject([{ installMode: 'steam' }])
+  })
+
+  test('install --mode is refused for a bad value and for a store without modes', async () => {
+    const replies = {
+      getGameInfo: game(),
+      requestAppSettings: { defaultInstallPath: '/games' }
+    }
+    await expect(
+      install(fakeCtx(replies).ctx, ['gog', 'g1'], { ...opts, mode: 'fast' })
+    ).rejects.toThrow('--mode must be interactive or steam')
+    await expect(
+      install(fakeCtx(replies).ctx, ['gog', 'g1'], {
+        ...opts,
+        mode: 'steam'
+      })
+    ).rejects.toThrow('gog has no install modes')
+  })
+
   test('install of an unknown game fails before queueing', async () => {
     const { ctx, calls } = fakeCtx({ getGameInfo: null })
 
@@ -1051,6 +1082,12 @@ describe('cli', () => {
       },
       json: true
     })
+  })
+
+  test('parses --mode', () => {
+    expect(
+      parseCli(['install', 'zoom', 'g1', '--mode', 'steam']).opts.mode
+    ).toBe('steam')
   })
 
   test('parses --skip-dlcs', () => {

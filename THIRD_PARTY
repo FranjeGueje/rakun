@@ -20,9 +20,6 @@ comet                GOG Galaxy         https://github.com/imLinguin/comet
 heroic-epic-integration (EpicGamesLauncher.exe)
                                         https://github.com/BananaWorks07/heroic-epic-integration
                      MIT (licenses/heroic-epic-integration.MIT.txt)
-zoom-platform.sh     Zoom Platform      https://zoom-platform.sh/zoom-platform.sh
-                     Written by Zoom Platform; downloaded from its own site.
-                     It has no licence text that rakun knows of.
 butler               itch.io store      https://github.com/itchio/butler
                      MIT (licenses/butler.MIT.txt). Downloaded from itch's own server
                      (broth.itch.zone), together with the two libraries it loads:

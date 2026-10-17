@@ -20,7 +20,8 @@ async function installQueueElement(params: InstallParams): Promise<{
     installLanguage,
     platformToInstall,
     build,
-    branch
+    branch,
+    installMode
   } = params
   const { title } = libraryManagerMap[runner].getGame(appName).getGameInfo()
 
@@ -57,7 +58,8 @@ async function installQueueElement(params: InstallParams): Promise<{
       platformToInstall,
       installLanguage,
       build,
-      branch
+      branch,
+      installMode
     })
 
     if (status === 'error') {

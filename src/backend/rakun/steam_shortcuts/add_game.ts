@@ -30,7 +30,6 @@ import type {
 } from './types'
 import { GameInfo } from 'common/types'
 import { gameRunnerText } from '../runner_script'
-import { runsExecutableDirectly } from '../direct_launch'
 
 const LOG_PREFIX = 'Rakun'
 
@@ -38,20 +37,6 @@ export function createRunnerFile(
   gameInfo: GameInfo,
   installPath: string
 ): { path: string } | { error: string } {
-  if (runsExecutableDirectly(gameInfo.runner)) {
-    const executable = gameInfo.install.executable
-    if (!executable) {
-      return { error: `No executable found for the ${gameInfo.runner} game` }
-    }
-
-    const symlink = createGameSymlink(installPath)
-    if ('error' in symlink) {
-      return { error: symlink.error }
-    }
-
-    return { path: join(symlink.linkPath, executable) }
-  }
-
   try {
     const runnerPath = createRakunBat(
       installPath,

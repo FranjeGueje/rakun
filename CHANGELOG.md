@@ -20,12 +20,17 @@ A new store, itch.io, and the first one that is not run by a client of its own: 
 - The helper `butler` 15.32.0 (x64 and arm64, checked by sha256, with `7z.so` and `libc7zip.so`, which it loads from next to itself: it counts as installed only with the three). `rakunctl helpers update` downloads it from itch's server, and the `-full` tarballs carry it with the texts of the licences of the three. `--latest` does not move it (itch's server has no release list rakun reads).
 - The runner has an `itch` block: the `.bat` of an itch.io game sets `IDGAME` to its executable (`<folder>\<path>` under `c:\games`) and the runner goes to its folder and runs it, waiting for it to close. An update that moves the executable makes rakun write the `.bat` again. The runner is still v1.
 - `umu` prepares the prefix of an itch.io game as store `itchio`.
+- Zoom's Windows games have two ways to install, told apart by `installMode` in `install` (`rakunctl install zoom <id> --mode steam|interactive`, and two buttons in the web, «Add to Steam» and «Install now»; the stores say it in `caps.installModes`):
+  - `steam` (the default, needs no screen): rakun downloads the installer into the game's prefix (`C:\zoom_installer`) and adds the game to Steam; the first Play opens the installer's window and the next ones start the game.
+  - `interactive`: rakun runs that same `.bat` now, with its window (needs a desktop session and `protonPath`), so the game is installed when the command ends.
 - `getLoginInfo` can carry `callback` (the browser comes back to rakun, so a client waits for the session) and `alternative` (a second way to log in, with its own page).
 
 ### Changed
 
 - The covers of the web: a picture whose shape is more than 15% away from the card's (3:4) is shown whole over a blurred copy of itself, instead of being cut to fill the card (itch.io only has a wide cover, which looked zoomed in). The ones that fit are filled as before.
-- The stores with a runner are one list in the code (`STORE_BLOCKS`): the dispatch and the blocks of the runner come from it, so they cannot drift apart.
+- Zoom's Windows games go through the runner like the other stores (`STORE=zoom`, with `INSTALLER` and, when rakun installs now, `INSTALL_ONLY` in the game's `.bat`). Their Steam prefix is still the game's own folder, and a native Linux game still starts its `start.sh`. The `directLaunch` capability now means «the prefix is the game's folder».
+- The logs of a game, the one of the runner (`LOG_TO_FILE=1`) and Comet's `comet.log`, go to `C:\logs` of the game's own prefix instead of the shared mount, so two games no longer write on each other. Logs already in `mount/logs` stay where they are. A `.bat` without `GAMENAME` no longer makes a log name with a `\` in it.
+- The runner is split: `Launcher_games.bat` keeps what every game shares (options, header, log) and calls `store_<store>.bat` (`store_legendary.bat`, `store_gog.bat`, `store_nile.bat`, `store_itch.bat`, `store_zoom.bat`), one per store, written next to it at every start. The `.bat` of a game does not change. In the code each store is a module of `rakun/runner/`, and the stores with a runner are one list (`STORE_LINES`), so the dispatch and the scripts cannot drift apart.
 - The `.bat` of a game never gets a path for a name: a `/` in the title is replaced (it failed, or wrote somewhere else). Titles that were already fine keep their file.
 - `windowify` says it has nothing to translate for a store that keeps no installed file, instead of warning that it is not implemented.
 - The error of `getInstallInfo` is logged under the prefix of its own store (it fell back to GOG's).
@@ -34,6 +39,11 @@ A new store, itch.io, and the first one that is not run by a client of its own: 
 - `pnpm check-helper-binaries` compares butler with the latest one of itch's server.
 - Helper programs that change: if a store's tool prints something rakun does not understand, rakun says so (in the log, `rakunctl status` and `rakunctl helpers`) and keeps what it had instead of deleting it. At start it also warns when a helper is not the version rakun was tested with. Tests built from what the pinned helpers really print fail on purpose when a helper is bumped without checking it again (`scripts/capture-helper-fixtures.sh`, see `docs/Helper-Binaries.md`).
 - Code cleanup: dead code removed, files with a misleading name renamed, and the big `utils.ts` and Zoom's install split into smaller pieces. Nothing changes for the user.
+
+### Removed
+
+- The helper `zoom-platform.sh` (and its entry in `rakunctl helpers`, `THIRD_PARTY` and the packages): Zoom's installer cannot run silent, so rakun no longer needs Zoom's script. The search for the executable of a Windows game moved to the runner.
+- The detection of DOSBox games installed with Zoom's Windows installer. It copied their files and set the game as a Linux one with `dosbox` as its executable, but there was no `start.sh` for Steam to launch, so it did not work; those games now go through the runner and Proton like the others.
 
 ### Fixed
 

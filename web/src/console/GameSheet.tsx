@@ -12,6 +12,8 @@ import { FolderPicker } from './FolderPicker'
 const LABELS: Record<GameAction, StringKey> = {
   install: 'sheet.install',
   installWindows: 'sheet.installWindows',
+  installInteractive: 'sheet.installInteractive',
+  installSteam: 'sheet.installSteam',
   installLinux: 'sheet.installLinux',
   importFolder: 'sheet.importFolder',
   update: 'sheet.update',
@@ -69,6 +71,8 @@ export function GameSheet({
     const doIt: Record<GameAction, () => void> = {
       install: () => actions.install(game),
       installWindows: () => actions.install(game, 'windows'),
+      installInteractive: () => actions.install(game, 'windows', 'interactive'),
+      installSteam: () => actions.install(game, 'windows', 'steam'),
       installLinux: () => actions.install(game, 'linux'),
       importFolder: () => undefined, // picks a folder first: see `choose`
       update: () => actions.update(game),

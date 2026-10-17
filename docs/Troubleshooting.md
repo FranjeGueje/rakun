@@ -34,7 +34,7 @@ Force GE-Proton in the game's Steam properties (rakun does not set the compatibi
 
 ### The runner's window closes too fast to read it
 
-Set `LOG_TO_FILE=1` in `~/.local/share/rakun/mount/scripts/Launcher_games.ini` and launch the game again: the output of the runner is in `~/.local/share/rakun/mount/logs/<game name>.log`. See [Steam integration](Steam-Integration.md#runner-options-launcher_gamesini).
+Set `LOG_TO_FILE=1` in `~/.local/share/rakun/mount/scripts/Launcher_games.ini` and launch the game again: the output of the runner is in `C:\logs\<game name>.log` of the game's own prefix (`~/.steam/steam/steamapps/compatdata/<steam id>/drive_c/logs/`; for Zoom, `drive_c/logs` inside the game's folder). Comet's log of a GOG game, `comet.log`, is in the same folder. See [Steam integration](Steam-Integration.md#runner-options-launcher_gamesini).
 
 ### `No GE-Proton configured` in the log (older versions)
 

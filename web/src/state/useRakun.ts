@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react'
 import { HELPERS_DONE, type RakunEvent } from '../api/channels'
-import type { GameInfo, GameStatus, Runner } from '../api/types'
+import type { GameInfo, GameStatus, InstallMode, Runner } from '../api/types'
 import { mark } from '../perf'
 import { initialState, reducer, type State } from './reducer'
 import { capsOf, installParams, platformFor, type Build } from './selectors'
 
 export type Actions = {
-  install: (game: GameInfo, build?: Build) => void
+  install: (game: GameInfo, build?: Build, mode?: InstallMode) => void
   /** Registers a game that is already in `path`, without downloading it */
   importFolder: (game: GameInfo, path: string) => void
   update: (game: GameInfo) => void
@@ -199,7 +199,7 @@ export function useRakun(): { state: State; actions: Actions } {
   )
 
   const actions: Actions = {
-    install: (game, build) =>
+    install: (game, build, mode) =>
       run(() =>
         window.rakun.call(
           'install',
@@ -207,7 +207,8 @@ export function useRakun(): { state: State; actions: Actions } {
             game,
             stateRef.current.defaultInstallPath,
             capsOf(stateRef.current.stores, game.runner),
-            build
+            build,
+            mode
           )
         )
       ),

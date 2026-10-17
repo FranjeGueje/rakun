@@ -6,16 +6,15 @@ import {
   symlinkSync,
   unlinkSync
 } from 'fs'
-import { dirname, join } from 'path'
+import { basename, dirname, join } from 'path'
 import { logInfo, logError, logWarning } from 'backend/logger'
 import { rakunMountPath, rakunGamesPath } from 'backend/constants/paths'
 import { getSteamPath } from './steam_shortcuts/steam_helpers'
-import { createGameSymlink } from './steam_shortcuts/add_game'
 import { GlobalConfig } from 'backend/config'
 import { getUmuStoreLabel, searchUmuGameId, launchUmu } from './umu'
 import { windowify, EOS_OVERLAY_BAT } from './windowify'
 import { GameInfo } from 'common/types'
-import { runsExecutableDirectly } from './direct_launch'
+import { prefixIsGameFolder } from './direct_launch'
 
 const LOG_PREFIX = 'Rakun'
 
@@ -24,20 +23,18 @@ export async function preparePrefix(
   steamAppId: number,
   installPath: string
 ): Promise<void> {
-  if (runsExecutableDirectly(gameInfo.runner)) {
-    const symlink = createGameSymlink(installPath)
-    if ('error' in symlink) {
-      logError(
-        `Failed to prepare ${gameInfo.runner} prefix: ${symlink.error}`,
-        LOG_PREFIX
-      )
-      return
-    }
-    symlinkPrefix(steamAppId, symlink.linkPath)
-  } else {
-    windowify(gameInfo, installPath)
-    await prepareUmuPrefix(gameInfo, steamAppId)
-  }
+  windowify(gameInfo, installPath)
+  if (
+    prefixIsGameFolder(gameInfo.runner) &&
+    !linkPrefixToGame(steamAppId, installPath)
+  )
+    return
+  await prepareUmuPrefix(gameInfo, steamAppId)
+}
+
+/** The prefix of Steam is the game's folder, reached through rakun's link to it (`windowify` made it) */
+function linkPrefixToGame(steamAppId: number, installPath: string): boolean {
+  return symlinkPrefix(steamAppId, join(rakunGamesPath, basename(installPath)))
 }
 
 export function symlinkPrefix(
@@ -123,7 +120,9 @@ async function prepareUmuPrefix(
     mkdirSync(driveC, { recursive: true })
 
     replaceSymlink(rakunMountPath, join(driveC, 'Launchers'))
-    replaceSymlink(rakunGamesPath, join(driveC, 'games'))
+    // A prefix that is the game's own folder would link back to itself
+    if (!prefixIsGameFolder(gameInfo.runner))
+      replaceSymlink(rakunGamesPath, join(driveC, 'games'))
 
     const epicDataDir = join(
       driveC,

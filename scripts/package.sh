@@ -16,7 +16,7 @@
 #   rakun/public/bin/   legendary, gogdl, nile and butler (a folder: it needs its two
 #                        libraries next to it) for <arch>/linux, the x64/win32 ones
 #                        (they run inside Wine/Proton, so both architectures need
-#                        them, comet.exe among them), umu and zoom
+#                        them, comet.exe among them) and umu
 #
 # Usage: scripts/package.sh [x64|arm64|all] [--full]      (default: all, normal only)
 #   RAKUN_NODE_BINARY=/path/to/node   use this node instead of downloading it
@@ -98,7 +98,7 @@ check_binaries() { # arch
             exit 1
         }
     done
-    for required in public/bin/x64/win32 public/bin/zoom/zoom-platform.sh; do
+    for required in public/bin/x64/win32; do
         [ -e "$required" ] || {
             echo "Error: missing $required. Run: pnpm download-helper-binaries" >&2
             exit 1
@@ -123,7 +123,7 @@ stage_helpers() { # arch, stage: what the full tarball adds
     for helper in "${LINUX_HELPERS[@]}"; do
         cp -r "public/bin/$1/linux/$helper" "$bin/$1/linux/"
     done
-    cp -r public/bin/umu public/bin/zoom "$bin/"
+    cp -r public/bin/umu "$bin/"
     mkdir -p "$bin/x64"
     cp -r public/bin/x64/win32 "$bin/x64/"
     cp public/bin/.release_tags "$bin/"

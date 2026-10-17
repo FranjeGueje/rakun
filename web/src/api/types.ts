@@ -30,6 +30,7 @@ export type StoreCaps = {
   repair: boolean
   lowercasePlatform: boolean
   directLaunch: boolean
+  installModes: boolean
 }
 
 /** What a client needs to list and name a store */
@@ -41,7 +42,7 @@ export type StoreInfo = {
   caps: StoreCaps
 }
 
-/** One helper binary (legendary, gogdl, nile, comet, epic-integration, zoom-platform, umu, butler) */
+/** One helper binary (legendary, gogdl, nile, comet, epic-integration, umu, butler) */
 export type HelperInfo = {
   helper: string
   /** The version rakun was tested with */
@@ -122,6 +123,9 @@ export type GameStatus = {
 export type DMStatus = 'done' | 'error' | 'abort' | 'paused'
 export type DownloadManagerState = 'idle' | 'running' | 'paused' | 'stopped'
 
+/** Zoom's Windows games: install now with the installer's window, or on the first launch from Steam */
+export type InstallMode = 'interactive' | 'steam'
+
 export type InstallParams = {
   appName: string
   runner: Runner
@@ -131,6 +135,7 @@ export type InstallParams = {
   installLanguage?: string
   /** Omitted: every DLC */
   installDlcs?: string[]
+  installMode?: InstallMode
 }
 
 /** A game that is already on the disk, in `path`, to be registered */
