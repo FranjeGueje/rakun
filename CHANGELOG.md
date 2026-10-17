@@ -47,6 +47,7 @@ A new store, itch.io, and the first one that is not run by a client of its own: 
 
 ### Fixed
 
+- Uninstalling a Zoom game that the web still showed as installed did nothing (the installed list no longer had it, and the saved library kept the green mark). It now clears the mark, in the saved library too, so it survives a restart without network.
 - A failed install, update, repair or uninstall was reported as done when the store's tool ended with an error (for example GOG without disk space): the game was saved as installed and added to Steam with no files. Now the error is shown and nothing is saved. GOG also needs files in the game folder, and Amazon needs `nile` to have recorded the install.
 - Sessions are safer. Without a network no session is lost. Pasting a wrong login in Zoom no longer replaces the good session. A login only counts when there is a real session behind it. A broken account file no longer hides the other accounts. Logging out of Epic or Amazon now says so when it did not really happen. `nile` can no longer empty its list of installed games when a game is moved, and secrets are hidden better in the logs.
 

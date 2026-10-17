@@ -169,10 +169,9 @@ export default class ZoomLibraryManager implements LibraryManager {
       return
     }
     const installedInfo = installedGames.get(game.app_name)
-    if (installedInfo) {
-      game.is_installed = true
-      game.install = installedInfo
-    }
+    // The saved library can be older than the installed list: the list decides
+    game.is_installed = !!installedInfo
+    game.install = installedInfo ?? { is_dlc: false }
 
     return game
   }

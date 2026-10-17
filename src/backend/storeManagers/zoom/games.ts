@@ -433,11 +433,37 @@ export default class ZoomGame implements Game {
     return { stdout: '', stderr: error, error }
   }
 
+  /**
+   * Drops the game from the installed list and from the saved library, so that
+   * it shows as not installed also after a restart that cannot reach Zoom.
+   */
+  private markUninstalled(array: InstalledInfo[]) {
+    installedGamesStore.set('installed', removeInstalled(array, this.id))
+    libraryManagerMap['zoom'].refreshInstalled()
+    const gameInfo = this.getGameInfo()
+    gameInfo.is_installed = false
+    gameInfo.install = { is_dlc: false }
+    libraryStore.set(
+      'games',
+      libraryStore
+        .get('games', [])
+        .map((g) => (g.app_name === this.id ? gameInfo : g))
+    )
+    sendFrontendMessage('pushGameToLibrary', gameInfo)
+  }
+
   async uninstall(): Promise<ExecResult> {
     const array = installedGamesStore.get('installed', [])
     const object = array.find((game) => game.appName === this.id)
     if (!object) {
-      throw Error("Game isn't installed")
+      // The library says installed but the list does not know it: there is
+      // nothing to remove, only the stale mark to clear
+      logWarning(
+        `${this.id} is not in the installed list: clearing its mark`,
+        LogPrefix.Zoom
+      )
+      this.markUninstalled(array)
+      return { stdout: 'Uninstalled', stderr: '' }
     }
 
     logInfo(['Removing', object.install_path], LogPrefix.Zoom)
@@ -445,12 +471,7 @@ export default class ZoomGame implements Game {
     if (fs.existsSync(object.install_path)) {
       fs.rmSync(object.install_path, { recursive: true })
     }
-    installedGamesStore.set('installed', removeInstalled(array, this.id))
-    void libraryManagerMap['zoom'].refresh()
-    const gameInfo = this.getGameInfo()
-    gameInfo.is_installed = false
-    gameInfo.install = { is_dlc: false }
-    sendFrontendMessage('pushGameToLibrary', gameInfo)
+    this.markUninstalled(array)
     return { stdout: 'Uninstalled', stderr: '' }
   }
 
@@ -460,14 +481,7 @@ export default class ZoomGame implements Game {
   }
 
   async forceUninstall(): Promise<void> {
-    const installed = installedGamesStore.get('installed', [])
-    const newInstalled = installed.filter((g) => g.appName !== this.id)
-    installedGamesStore.set('installed', newInstalled)
-    void libraryManagerMap['zoom'].refresh()
-    const gameInfo = this.getGameInfo()
-    gameInfo.is_installed = false
-    gameInfo.install = { is_dlc: false }
-    sendFrontendMessage('pushGameToLibrary', gameInfo)
+    this.markUninstalled(installedGamesStore.get('installed', []))
   }
 
   async stop(): Promise<void> {
