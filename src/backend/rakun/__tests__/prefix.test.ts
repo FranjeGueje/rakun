@@ -182,12 +182,8 @@ describe('removePrefixSymlink', () => {
 })
 
 describe('preparePrefix', () => {
-  test('zoom: symlinks the prefix to the rakun game symlink, not the raw install path', async () => {
+  test('zoom: the prefix is the rakun link to the game folder, and it has no games link of its own', async () => {
     const { preparePrefix } = freshPrefix()
-    createGameSymlink = jest.mocked(
-      require('../steam_shortcuts/add_game').createGameSymlink
-    )
-    createGameSymlink.mockReturnValue({ linkPath: '/games/zoom' })
 
     await preparePrefix(
       { title: 'ZoomGame', app_name: 'zoom_app', runner: 'zoom' } as never,
@@ -195,11 +191,18 @@ describe('preparePrefix', () => {
       '/mnt/disk2/ZoomGame'
     )
 
-    expect(createGameSymlink).toHaveBeenCalledWith('/mnt/disk2/ZoomGame')
-    expect(mockedMkdirSync).toHaveBeenCalled()
+    expect(createGameSymlink).not.toHaveBeenCalled()
     expect(mockedSymlinkSync).toHaveBeenCalledWith(
-      '/games/zoom',
+      '/games/ZoomGame',
       '/steam/steamapps/compatdata/123'
+    )
+    expect(mockedSymlinkSync).toHaveBeenCalledWith(
+      '/mount',
+      '/steam/steamapps/compatdata/123/drive_c/Launchers'
+    )
+    expect(mockedSymlinkSync).not.toHaveBeenCalledWith(
+      '/games',
+      expect.stringContaining('drive_c/games')
     )
   })
 
@@ -243,27 +246,7 @@ describe('preparePrefix', () => {
     expect(logError).not.toHaveBeenCalled()
   })
 
-  test('zoom: does not symlink the prefix when the game symlink fails', async () => {
-    const { preparePrefix } = freshPrefix()
-    createGameSymlink = jest.mocked(
-      require('../steam_shortcuts/add_game').createGameSymlink
-    )
-    createGameSymlink.mockReturnValue({ error: 'permission denied' })
-
-    await preparePrefix(
-      { title: 'ZoomGame', app_name: 'zoom_app', runner: 'zoom' } as never,
-      123,
-      '/mnt/disk2/ZoomGame'
-    )
-
-    expect(mockedSymlinkSync).not.toHaveBeenCalled()
-    expect(logError).toHaveBeenCalledWith(
-      expect.stringContaining('Failed to prepare zoom prefix'),
-      'Rakun'
-    )
-  })
-
-  test('calls windowify for non-zoom games', async () => {
+  test('calls windowify for every game', async () => {
     const { preparePrefix } = freshPrefix()
 
     await preparePrefix(

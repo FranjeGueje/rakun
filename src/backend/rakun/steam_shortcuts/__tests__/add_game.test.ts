@@ -357,10 +357,15 @@ describe('createRakunBat', () => {
     expect(existsSync(path)).toBe(true)
   })
 
-  test('Zoom has no runner', () => {
-    expect(() =>
-      createRakunBat('/some/path/ZoomGame', 'ZoomGame', 'zoom', '')
-    ).toThrow('There is no runner for the store "zoom"')
+  test('Zoom: the .bat carries the file name of the installer', () => {
+    const path = createRakunBat(
+      tmpDir.name,
+      'ZoomGame',
+      'zoom',
+      'guid',
+      'Setup.exe'
+    )
+    expect(readFileSync(path, 'utf-8')).toContain('set "INSTALLER=Setup.exe"')
   })
 
   test('overwrites existing file with new content', () => {
@@ -401,34 +406,22 @@ describe('createRunnerFile', () => {
     runnerDir.removeCallback()
   })
 
-  test('zoom: symlinks the install path into rakunGamesPath and points at the executable through it', () => {
+  test('zoom: a Windows game goes through the runner .bat like the rest', () => {
     const gameInfo = {
       runner: 'zoom',
-      install: { executable: 'drive_c/Game/game.exe' }
+      title: 'ZoomGame',
+      app_name: 'guid',
+      install: { executable: 'Setup.exe', platform: 'windows' }
     } as unknown as GameInfo
 
     const result = createRunnerFile(gameInfo, installDir.name)
 
-    expect('path' in result).toBe(true)
-    const linkPath = join(gamesDir.name, basename(installDir.name))
-    expect(existsSync(linkPath)).toBe(true)
     expect((result as { path: string }).path).toBe(
-      join(linkPath, 'drive_c/Game/game.exe')
+      join(mockRakunRunnerPath, 'ZoomGame.bat')
     )
   })
 
-  test('zoom: returns an error when there is no executable', () => {
-    const gameInfo = {
-      runner: 'zoom',
-      install: { executable: '' }
-    } as unknown as GameInfo
-
-    const result = createRunnerFile(gameInfo, installDir.name)
-
-    expect(result).toEqual({ error: 'No executable found for the zoom game' })
-  })
-
-  test('non-zoom: creates a .bat runner file', () => {
+  test('creates a .bat runner file', () => {
     const gameInfo = {
       runner: 'legendary',
       title: 'LegGame',

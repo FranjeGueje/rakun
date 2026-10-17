@@ -6,7 +6,8 @@ const upper: StoreCaps = {
   update: true,
   repair: true,
   lowercasePlatform: false,
-  directLaunch: false
+  directLaunch: false,
+  installModes: false
 }
 const lower: StoreCaps = { ...upper, lowercasePlatform: true }
 
@@ -23,7 +24,8 @@ export const STORE_CAPS: Record<Runner, StoreCaps> = {
     import: false,
     update: false,
     repair: false,
-    directLaunch: true
+    directLaunch: true,
+    installModes: true
   },
   itch: { ...lower, import: false }
 }

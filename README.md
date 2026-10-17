@@ -72,7 +72,7 @@ Prefer the mouse? Open **http://127.0.0.1:17370** in a browser on the same machi
 
 ![Installing a game from the web: Windows or Linux build, or import a folder](docs/images/install.png)
 
-For Windows games, install [GE-Proton](https://github.com/GloriousEggroll/proton-ge-custom) and, once per game, choose it in the game's Steam properties → Compatibility. Zoom's Windows installers need a desktop session.
+For Windows games, install [GE-Proton](https://github.com/GloriousEggroll/proton-ge-custom) and, once per game, choose it in the game's Steam properties → Compatibility. Zoom's Windows games can be installed interactively (needs a desktop session) or added to Steam, where the installer opens the first time you play.
 
 ## Build
 

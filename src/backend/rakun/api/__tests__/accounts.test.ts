@@ -91,14 +91,16 @@ describe('getStores', () => {
       update: true,
       repair: true,
       lowercasePlatform: false,
-      directLaunch: false
+      directLaunch: false,
+      installModes: false
     })
     expect(caps.gog.lowercasePlatform).toBe(true)
     expect(caps.zoom).toMatchObject({
       import: false,
       update: false,
       repair: false,
-      directLaunch: true
+      directLaunch: true,
+      installModes: true
     })
   })
 })

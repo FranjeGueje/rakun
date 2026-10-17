@@ -24,7 +24,8 @@ const CAPS = {
   update: true,
   repair: true,
   lowercasePlatform: false,
-  directLaunch: false
+  directLaunch: false,
+  installModes: false
 }
 const stores: StoreInfo[] = [
   { id: 'legendary', name: 'epic', label: 'Epic', caps: CAPS },

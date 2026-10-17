@@ -2,6 +2,7 @@ import type {
   AppSettings,
   GameInfo,
   GameStatus,
+  InstallMode,
   InstallParams,
   InstallPlatform,
   Runner,
@@ -102,6 +103,8 @@ export const isBusy = (status?: GameStatus): boolean =>
 export type GameAction =
   | 'install'
   | 'installWindows'
+  | 'installInteractive'
+  | 'installSteam'
   | 'installLinux'
   | 'importFolder'
   | 'update'
@@ -117,6 +120,16 @@ export type Build = 'windows' | 'linux'
 const hasBothBuilds = (game: GameInfo): boolean =>
   !!game.is_linux_native && game.is_windows_native !== false
 
+/** What installs a game that is not installed: the build to choose, and for Zoom's Windows one, where its installer runs */
+function installActions(game: GameInfo, caps: StoreCaps): GameAction[] {
+  const windows: GameAction[] = caps.installModes
+    ? ['installSteam', 'installInteractive']
+    : ['installWindows']
+  if (hasBothBuilds(game)) return [...windows, 'installLinux']
+  if (caps.installModes && !game.is_linux_native) return windows
+  return ['install']
+}
+
 /** What can be done with a game now. Nothing, while another operation holds it. */
 export function actionsFor(
   game: GameInfo,
@@ -128,9 +141,7 @@ export function actionsFor(
   if (status && DOWNLOADING.has(status.status)) return ['cancel']
   if (isBusy(status)) return []
   if (!game.is_installed) {
-    const install: GameAction[] = hasBothBuilds(game)
-      ? ['installWindows', 'installLinux']
-      : ['install']
+    const install = installActions(game, caps)
     return caps.import ? [...install, 'importFolder'] : install
   }
   const manage: GameAction[] = []
@@ -153,7 +164,8 @@ export function capsOf(
       update: true,
       repair: true,
       lowercasePlatform: false,
-      directLaunch: false
+      directLaunch: false,
+      installModes: false
     }
   )
 }
@@ -173,14 +185,16 @@ export function installParams(
   game: GameInfo,
   path: string,
   caps: StoreCaps,
-  build?: Build
+  build?: Build,
+  installMode?: InstallMode
 ): InstallParams {
   return {
     appName: game.app_name,
     runner: game.runner,
     gameInfo: game,
     path,
-    platformToInstall: platformFor(game, caps, build)
+    platformToInstall: platformFor(game, caps, build),
+    ...(installMode ? { installMode } : {})
   }
 }
 

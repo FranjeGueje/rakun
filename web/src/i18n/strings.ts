@@ -24,6 +24,8 @@ export const en = {
   'sheet.install': 'Install',
   'sheet.installWindows': 'Install Windows version',
   'sheet.installLinux': 'Install Linux version',
+  'sheet.installInteractive': 'Install now',
+  'sheet.installSteam': 'Add to Steam',
   'sheet.importFolder': 'Import from a folder',
   'sheet.update': 'Update',
   'sheet.repair': 'Repair',

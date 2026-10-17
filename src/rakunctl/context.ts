@@ -24,6 +24,8 @@ export type Options = {
   /** Only for `install` and `update` of one GOG game: a build and a branch of it */
   build?: string
   branch?: string
+  /** Only for `install` of a store with install modes (Zoom): where its Windows installer runs */
+  mode?: string
   removeFiles?: boolean
   yes?: boolean
   force?: boolean

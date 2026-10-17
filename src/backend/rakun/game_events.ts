@@ -16,7 +16,6 @@ import {
   removeShortcut
 } from './steam_shortcuts'
 import { preparePrefix, removePrefixSymlink } from './prefix'
-import { runsExecutableDirectly } from './direct_launch'
 import type {
   AddGameToSteamResult,
   SteamShortcut
@@ -274,11 +273,12 @@ export async function onGameUninstalled(game: Game) {
 
   const known = findShortcut(appName)
 
-  if (known && runsExecutableDirectly(known.store)) {
-    if (known?.steamAppId) {
-      removePrefixSymlink(known.steamAppId)
-    }
-  } else if (known?.execPath) {
+  if (known?.steamAppId) {
+    removePrefixSymlink(known.steamAppId)
+  }
+
+  // Only the runner's `.bat` is ours: a native game's shortcut points at its own start.sh
+  if (known?.execPath?.endsWith('.bat')) {
     try {
       if (existsSync(known.execPath)) {
         unlinkSync(known.execPath)

@@ -2,11 +2,9 @@ import { STORE_CAPS } from 'backend/storeManagers/caps'
 import type { Runner } from 'common/types'
 
 /**
- * Stores whose game Steam runs as it is, with no runner in between: the shortcut
- * points at the executable itself and the prefix is the game's own folder (the
- * `directLaunch` capability). Only Zoom, whose installers build the prefix
- * inside it; every other store goes through the runner (`.bat`) and a prefix of
- * its own.
+ * The prefix of Steam is the game's own folder (the `directLaunch` capability):
+ * Zoom's installers build the prefix inside it, so its games keep the prefix where
+ * the game is, not in a folder of Steam's.
  */
-export const runsExecutableDirectly = (store: Runner): boolean =>
+export const prefixIsGameFolder = (store: Runner): boolean =>
   STORE_CAPS[store].directLaunch
