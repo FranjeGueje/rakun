@@ -20,28 +20,32 @@ const CAPS: Record<'gog' | 'zoom' | 'legendary' | 'nile', StoreCaps> = {
     update: true,
     repair: true,
     lowercasePlatform: true,
-    directLaunch: false
+    directLaunch: false,
+    installModes: false
   },
   zoom: {
     import: false,
     update: false,
     repair: false,
     lowercasePlatform: true,
-    directLaunch: true
+    directLaunch: true,
+    installModes: true
   },
   legendary: {
     import: true,
     update: true,
     repair: true,
     lowercasePlatform: false,
-    directLaunch: false
+    directLaunch: false,
+    installModes: false
   },
   nile: {
     import: true,
     update: true,
     repair: true,
     lowercasePlatform: false,
-    directLaunch: false
+    directLaunch: false,
+    installModes: false
   }
 }
 const capsOf = (g: GameInfo) => (CAPS as Record<string, StoreCaps>)[g.runner]
@@ -55,8 +59,9 @@ const platformFor = (g: GameInfo, build?: 'windows' | 'linux') =>
 const installParams = (
   g: GameInfo,
   path: string,
-  build?: 'windows' | 'linux'
-) => installParamsWith(g, path, capsOf(g), build)
+  build?: 'windows' | 'linux',
+  mode?: 'interactive' | 'steam'
+) => installParamsWith(g, path, capsOf(g), build, mode)
 
 const game = (app_name: string, extra: Partial<GameInfo> = {}): GameInfo => ({
   runner: 'gog',
@@ -169,6 +174,30 @@ describe('actionsFor', () => {
     ])
   })
 
+  test("Zoom's Windows game is installed now or from Steam; a native Linux one has no choice", () => {
+    expect(actionsFor(game('a', { runner: 'zoom' }), undefined, false)).toEqual(
+      ['installSteam', 'installInteractive']
+    )
+    expect(
+      actionsFor(
+        game('a', { runner: 'zoom', is_linux_native: true }),
+        undefined,
+        false
+      )
+    ).toEqual(['installSteam', 'installInteractive', 'installLinux'])
+    expect(
+      actionsFor(
+        game('a', {
+          runner: 'zoom',
+          is_linux_native: true,
+          is_windows_native: false
+        }),
+        undefined,
+        false
+      )
+    ).toEqual(['install'])
+  })
+
   test('an installed one can be repaired or uninstalled, updated first if it needs it', () => {
     const installed = game('a', { is_installed: true })
     expect(actionsFor(installed, undefined, false)).toEqual([
@@ -261,7 +290,7 @@ describe('installing', () => {
       'importFolder'
     ])
     expect(actionsFor(game('a', { runner: 'zoom' }), undefined, false)).toEqual(
-      ['install']
+      ['installSteam', 'installInteractive']
     )
     expect(
       actionsFor(game('a', { is_installed: true }), undefined, false)
@@ -289,6 +318,15 @@ describe('installing', () => {
       path: '/juegos',
       platformToInstall: 'Windows'
     })
+  })
+
+  test('the mode of a Zoom install goes with them, and no mode adds nothing', () => {
+    const g = game('a', { runner: 'zoom' })
+    expect(installParams(g, '/g', 'windows', 'steam')).toMatchObject({
+      platformToInstall: 'windows',
+      installMode: 'steam'
+    })
+    expect(installParams(g, '/g', 'windows')).not.toHaveProperty('installMode')
   })
 })
 

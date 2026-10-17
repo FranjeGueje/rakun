@@ -37,6 +37,24 @@ describe('install', () => {
     expect(addToQueue).not.toHaveBeenCalled()
   })
 
+  test('refuses an install mode that does not exist, queuing nothing', async () => {
+    readLibrary.mockReturnValue([{ app_name: 'g1', is_installed: false }])
+
+    await expect(
+      invokeHandler('install', { ...params, installMode: 'silent' })
+    ).rejects.toThrow('unknown install mode "silent": use steam or interactive')
+    expect(addToQueue).not.toHaveBeenCalled()
+  })
+
+  test('passes the two modes there are', async () => {
+    readLibrary.mockReturnValue([{ app_name: 'g1', is_installed: false }])
+
+    await invokeHandler('install', { ...params, installMode: 'steam' })
+    await invokeHandler('install', { ...params, installMode: 'interactive' })
+
+    expect(addToQueue).toHaveBeenCalledTimes(2)
+  })
+
   test('only the game asked for counts, not the others installed', async () => {
     readLibrary.mockReturnValue([{ app_name: 'other', is_installed: true }])
 

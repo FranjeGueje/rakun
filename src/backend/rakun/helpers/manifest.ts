@@ -11,7 +11,6 @@ export type HelperName =
   | 'nile'
   | 'comet'
   | 'epic-integration'
-  | 'zoom-platform'
   | 'umu'
   | 'butler'
 
@@ -29,7 +28,6 @@ export const HELPERS: HelperName[] = [
   'nile',
   'comet',
   'epic-integration',
-  'zoom-platform',
   'umu',
   'butler'
 ]
@@ -41,14 +39,13 @@ export const RELEASE_TAGS: Record<HelperName, string> = {
   nile: 'v1.2.0',
   comet: 'v0.3.2',
   'epic-integration': 'v0.4',
-  'zoom-platform': 'v1.0.1',
   // NOTE: umu-launcher tags have no `v` prefix
   umu: '1.4.4',
   // itch's butler comes from their own server, not GitHub
   butler: '15.32.0'
 }
 
-/** GitHub repos the helpers come from. zoom-platform and butler are not on GitHub */
+/** GitHub repos the helpers come from. butler is not on GitHub */
 export const REPOS: Partial<Record<HelperName, string>> = {
   legendary: 'legendary-gl/legendary',
   gogdl: 'Heroic-Games-Launcher/heroic-gogdl',
@@ -57,8 +54,6 @@ export const REPOS: Partial<Record<HelperName, string>> = {
   'epic-integration': 'BananaWorks07/heroic-epic-integration',
   umu: 'Open-Wine-Components/umu-launcher'
 }
-
-export const ZOOM_SCRIPT_URL = 'https://zoom-platform.sh/zoom-platform.sh'
 
 /**
  * `file`: saved as `target`. `zip`: unpacked into the win root. `tar`: unpacked
@@ -233,8 +228,6 @@ export function expectedFiles(helper: HelperName, arch: Arch): Expected[] {
       ]
     case 'epic-integration':
       return [win('EpicGamesLauncher.exe')]
-    case 'zoom-platform':
-      return [bin('zoom/zoom-platform.sh')]
     case 'umu':
       return [bin('umu/umu-run')]
     case 'butler':

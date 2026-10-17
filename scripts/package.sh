@@ -98,7 +98,7 @@ check_binaries() { # arch
             exit 1
         }
     done
-    for required in public/bin/x64/win32 public/bin/zoom/zoom-platform.sh; do
+    for required in public/bin/x64/win32; do
         [ -e "$required" ] || {
             echo "Error: missing $required. Run: pnpm download-helper-binaries" >&2
             exit 1

@@ -43,7 +43,7 @@ rakunctl self-update             # install it
 It writes `~/.config/systemd/user/rakun.service` (`Restart=on-failure`) and runs `systemctl --user enable --now`. Do not mix it with `systemd-run --unit=rakun`: both are called `rakun`.
 
 > [!WARNING]
-> The service has no `DISPLAY`, so **Zoom's Windows installers do not work with it**. And with `webAccess=network`, the web would be open to the network, unprotected, at every login. The command warns about both.
+> The service has no `DISPLAY`, so **Zoom's Windows games cannot be installed interactively with it** (the default, `--mode steam`, does work). And with `webAccess=network`, the web would be open to the network, unprotected, at every login. The command warns about both.
 
 ## Accounts and helpers
 

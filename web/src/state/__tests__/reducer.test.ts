@@ -17,7 +17,8 @@ const CAPS = {
   update: true,
   repair: true,
   lowercasePlatform: false,
-  directLaunch: false
+  directLaunch: false,
+  installModes: false
 }
 
 const basics: Basics = {

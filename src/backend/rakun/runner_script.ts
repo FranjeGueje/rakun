@@ -2,6 +2,11 @@ import { existsSync, mkdirSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { rakunMountPath } from 'backend/constants/paths'
 import { logInfo } from 'backend/logger'
+import {
+  ZOOM_EXE_NAME,
+  ZOOM_INF_NAME,
+  ZOOM_INSTALLER_DIR
+} from 'common/rakun/zoom'
 import type { GameRunner } from './steam_shortcuts/types'
 
 const LOG_PREFIX = 'Rakun'
@@ -132,12 +137,63 @@ const itchLines = [
   'goto :end'
 ]
 
+const ZOOM_EXE_FILE = `C:\\${ZOOM_EXE_NAME}`
+
+/**
+ * Zoom's installer cannot run silent: the first launch runs it (with its window)
+ * and deletes it when it ends well, and any later launch finds it gone and starts
+ * the game. `INSTALLER` is its file name.
+ *
+ * The game's executable is the first `.exe` that is not an installer or a
+ * redistributable (by its file name, not its path): `dir /o-s` puts the biggest
+ * first. It is found once and kept in a file. With `INSTALL_ONLY` (rakun
+ * installing now) the block ends there, without starting the game.
+ */
+const zoomLines = [
+  ...storeBanner('zoom'),
+  ...section('INSTALL (first launch only)'),
+  `set "RK_ZOOM_DIR=C:\\${ZOOM_INSTALLER_DIR}"`,
+  'if defined INSTALLER if exist "%RK_ZOOM_DIR%\\%INSTALLER%" (',
+  '    echo Installing the game ...',
+  `    start "" /wait "%RK_ZOOM_DIR%\\%INSTALLER%" /NORESTART /SP- "/LOADINF=%RK_ZOOM_DIR%\\${ZOOM_INF_NAME}"`,
+  '    if errorlevel 1 (',
+  '        echo [ERROR]: the installer did not finish. Launch the game again to retry.',
+  '        timeout /t 3 /nobreak >nul',
+  '        exit /b 1',
+  '    )',
+  '    rmdir /s /q "%RK_ZOOM_DIR%"',
+  `    del "${ZOOM_EXE_FILE}" >nul 2>&1`,
+  ')',
+  ...section('FIND THE GAME'),
+  `if not exist "${ZOOM_EXE_FILE}" (`,
+  '    setlocal enabledelayedexpansion',
+  '    set "RK_FOUND="',
+  '    for /f "delims=" %%f in (\'dir /s /b /a-d /o-s "C:\\ZOOM PLATFORM\\*.exe"\') do (',
+  '        set "RK_C=%%~nxf"',
+  '        if not defined RK_FOUND if "!RK_C:unins=!"=="!RK_C!" if "!RK_C:setup=!"=="!RK_C!" if "!RK_C:redist=!"=="!RK_C!" (',
+  `            >"${ZOOM_EXE_FILE}" echo %%f`,
+  '            set "RK_FOUND=1"',
+  '        )',
+  '    )',
+  '    endlocal',
+  ')',
+  ...missingTool('game executable', ZOOM_EXE_FILE),
+  'if "%INSTALL_ONLY%"=="1" exit /b 0',
+  ...section('START THE GAME'),
+  `set /p RK_EXE=<"${ZOOM_EXE_FILE}"`,
+  'for %%i in ("%RK_EXE%") do set "RK_DIR=%%~dpi"',
+  'cd /d "%RK_DIR%"',
+  'start "" /wait "%RK_EXE%" %*',
+  'goto :end'
+]
+
 /** The block of each store the runner knows: the dispatch and the blocks come from here, so they cannot drift apart */
 const STORE_BLOCKS = {
   legendary: legendaryLines,
   gog: gogLines,
   nile: nileLines,
-  itch: itchLines
+  itch: itchLines,
+  zoom: zoomLines
 } satisfies Partial<Record<GameRunner, string[]>>
 
 export const STORES_WITH_RUNNER = Object.keys(STORE_BLOCKS) as GameRunner[]
@@ -246,7 +302,8 @@ export function gameRunnerText({
   title,
   folder,
   username,
-  executable
+  executable,
+  installOnly
 }: {
   store: GameRunner
   appName: string
@@ -256,8 +313,10 @@ export function gameRunnerText({
   folder?: string
   /** GOG: the user Comet logs in with */
   username?: string
-  /** itch.io: the executable of the game, relative to its folder */
+  /** itch.io: the executable of the game, relative to its folder; Zoom: the file name of its installer */
   executable?: string
+  /** Zoom: install the game and stop, instead of starting it */
+  installOnly?: boolean
 }): string {
   if (!STORES_WITH_RUNNER.includes(store))
     throw new Error(`There is no runner for the store "${store}"`)
@@ -266,6 +325,12 @@ export function gameRunnerText({
     ['STORE', store],
     ['IDGAME', gameId(store, appName, folder, executable)],
     ...(gameName ? ([['GAMENAME', gameName]] as [string, string][]) : []),
+    ...(store === 'zoom'
+      ? ([
+          ['INSTALLER', executable ?? ''],
+          ...(installOnly ? [['INSTALL_ONLY', '1']] : [])
+        ] as [string, string][])
+      : []),
     ...(store === 'gog'
       ? ([
           ['GAMEFOLDER', folder ?? ''],

@@ -3,6 +3,7 @@ import type {
   ImportGameArgs,
   GameInfo,
   GameStatus,
+  InstallMode,
   InstallParams,
   Runner,
   UpdateParams
@@ -26,6 +27,13 @@ function parsePlatform(value: string | undefined): Build | undefined {
   if (value === undefined || value === 'windows' || value === 'linux')
     return value
   throw new CliError('--platform must be windows or linux')
+}
+
+/** `--mode`: nothing, or where the installer of a store with install modes runs */
+function parseMode(value: string | undefined): InstallMode | undefined {
+  if (value === undefined || value === 'interactive' || value === 'steam')
+    return value
+  throw new CliError('--mode must be interactive or steam')
 }
 
 // Some stores name platforms in lower case (their `lowercasePlatform` capability), the others capitalised
@@ -140,16 +148,20 @@ export async function installParams(
     skipDlcs,
     platform,
     build: wantedBuild,
-    branch: wantedBranch
+    branch: wantedBranch,
+    mode
   }: Pick<
     Options,
-    'path' | 'lang' | 'skipDlcs' | 'platform' | 'build' | 'branch'
+    'path' | 'lang' | 'skipDlcs' | 'platform' | 'build' | 'branch' | 'mode'
   >
 ): Promise<InstallParams> {
   const build = parsePlatform(platform)
+  const installMode = parseMode(mode)
   const gameInfo = await loadGame(ctx, appName, runner)
   const { caps } = await storeOf(ctx, runner)
   checkBuild(gameInfo, build)
+  if (installMode && !caps.installModes)
+    throw new CliError(`${runner} has no install modes: drop --mode`)
   const version = await checkVersion(ctx, gameInfo, {
     build: wantedBuild,
     branch: wantedBranch
@@ -166,6 +178,7 @@ export async function installParams(
     installLanguage: lang,
     // No list means every DLC; an empty one means none
     installDlcs: skipDlcs ? [] : undefined,
+    installMode,
     ...version
   }
 }

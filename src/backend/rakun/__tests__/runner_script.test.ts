@@ -212,7 +212,13 @@ describe('the file of each game', () => {
   })
 
   test('every store with a runner has its dispatch line and its block', () => {
-    expect(STORES_WITH_RUNNER).toEqual(['legendary', 'gog', 'nile', 'itch'])
+    expect(STORES_WITH_RUNNER).toEqual([
+      'legendary',
+      'gog',
+      'nile',
+      'itch',
+      'zoom'
+    ])
     const runner = runnerScriptText()
     for (const store of STORES_WITH_RUNNER) {
       expect(runner).toContain(`goto :${store}`)
@@ -277,8 +283,57 @@ describe('the file of each game', () => {
   })
 
   test('the stores that have no runner are refused', () => {
-    expect(() => gameRunnerText({ store: 'zoom', appName: '1' })).toThrow(
-      'There is no runner for the store "zoom"'
+    expect(() =>
+      gameRunnerText({ store: 'steam' as never, appName: '1' })
+    ).toThrow('There is no runner for the store "steam"')
+  })
+
+  test('zoom: installs once, with its window, and then starts the game it found', () => {
+    const block = blockOf('zoom')
+    expect(block).toContain(
+      'if defined INSTALLER if exist "%RK_ZOOM_DIR%\\%INSTALLER%" ('
     )
+    expect(block).toContain(
+      '    start "" /wait "%RK_ZOOM_DIR%\\%INSTALLER%" /NORESTART /SP- "/LOADINF=%RK_ZOOM_DIR%\\zoom_installer.inf"'
+    )
+    expect(block).toContain('    if errorlevel 1 (')
+    expect(block).toContain('    rmdir /s /q "%RK_ZOOM_DIR%"')
+    expect(block).toContain('start "" /wait "%RK_EXE%" %*')
+    expect(block.at(-1)).toBe('goto :end')
+  })
+
+  test('zoom: an installer or redistributable is told by its file name, not by the folder it is in', () => {
+    const block = blockOf('zoom').join('\n')
+    expect(block).toContain('set "RK_C=%%~nxf"')
+    expect(block).toContain('"!RK_C:unins=!"=="!RK_C!"')
+    expect(block).toContain('"!RK_C:setup=!"=="!RK_C!"')
+    expect(block).toContain('"!RK_C:redist=!"=="!RK_C!"')
+    expect(block).toContain('echo %%f')
+  })
+
+  test('zoom: with INSTALL_ONLY the block ends once the game is found, before starting it', () => {
+    const block = blockOf('zoom')
+    const stop = block.indexOf('if "%INSTALL_ONLY%"=="1" exit /b 0')
+    expect(stop).toBeGreaterThan(-1)
+    expect(stop).toBeLessThan(block.indexOf('start "" /wait "%RK_EXE%" %*'))
+    expect(
+      gameRunnerText({ store: 'zoom', appName: 'g', installOnly: true })
+    ).toContain('set "INSTALL_ONLY=1"')
+    expect(gameRunnerText({ store: 'zoom', appName: 'g' })).not.toContain(
+      'INSTALL_ONLY'
+    )
+  })
+
+  test('zoom: the installer is the only thing its .bat adds to the common variables', () => {
+    const text = gameRunnerText({
+      store: 'zoom',
+      appName: 'guid',
+      title: 'Gorky 17',
+      executable: 'Gorky-17-Setup.exe'
+    })
+    expect(text).toContain('set "STORE=zoom"')
+    expect(text).toContain('set "IDGAME=guid"')
+    expect(text).toContain('set "INSTALLER=Gorky-17-Setup.exe"')
+    expect(text).not.toContain('GAMEFOLDER')
   })
 })

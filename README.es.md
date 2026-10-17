@@ -72,7 +72,7 @@ Para actualizar rakun más adelante: `rakunctl self-update` (`--check` solo dice
 
 ![Instalar un juego desde la web: versión de Windows o de Linux, o importar una carpeta](docs/images/install.png)
 
-Para juegos de Windows, instala [GE-Proton](https://github.com/GloriousEggroll/proton-ge-custom) y, una vez por juego, elígelo en las propiedades del juego en Steam → Compatibilidad. Los instaladores de Windows de Zoom necesitan una sesión de escritorio.
+Para juegos de Windows, instala [GE-Proton](https://github.com/GloriousEggroll/proton-ge-custom) y, una vez por juego, elígelo en las propiedades del juego en Steam → Compatibilidad. Los juegos de Windows de Zoom se pueden instalar de forma interactiva (necesita una sesión de escritorio) o añadir a Steam, donde el instalador se abre la primera vez que juegas.
 
 ## Compilar
 

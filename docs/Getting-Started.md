@@ -77,7 +77,7 @@ You can do all of this in the web too: open `http://127.0.0.1:17370` in a browse
 - Linux and Steam
 - `curl`, `xdg-open` and `unzip`
 - For Windows games, GE-Proton in `~/.local/share/Steam/compatibilitytools.d` (rakun picks the first `*proton*` folder; change it with `rakunctl config protonPath <folder>`)
-- For Zoom Platform's **Windows** games, a screen (`DISPLAY`): the installer is a normal Windows wizard. rakun checks this before downloading and refuses at once without one, or in Steam's game mode. Zoom support is experimental; its Linux installers do not need a screen.
+- For Zoom Platform's **Windows** games, a screen (`DISPLAY`) only if you install them interactively: the installer is a normal Windows wizard, and rakun refuses at once without a screen, or in Steam's game mode. The default, **add to Steam**, needs no screen: the wizard opens the first time you play. Zoom support is experimental; its Linux installers do not need a screen.
 
 ---
 

@@ -56,9 +56,12 @@ Library
 Games
   install <store> <appName> [--path DIR] [--lang CODE] [--skip-dlcs]
           [--platform windows|linux] [--build ID] [--branch NAME]
+          [--mode interactive|steam]
                                     Install a game (with both builds, the Linux
                                     one unless --platform says otherwise;
-                                    --build, --branch: GOG only, see versions)
+                                    --build, --branch: GOG only, see versions;
+                                    --mode: Zoom's Windows games, on the
+                                    first launch in Steam (default) or now)
   versions <store> <appName>        List the builds and branches of a GOG game
   import <store> <appName> <folder> [--platform windows|linux]
                                     Register a game that is already in a folder
@@ -142,6 +145,7 @@ export function parseCli(argv: string[]) {
       latest: { type: 'boolean' },
       build: { type: 'string' },
       branch: { type: 'string' },
+      mode: { type: 'string' },
       'remove-files': { type: 'boolean' },
       yes: { type: 'boolean' },
       force: { type: 'boolean' },
@@ -163,6 +167,7 @@ export function parseCli(argv: string[]) {
     latest: values.latest,
     build: values.build,
     branch: values.branch,
+    mode: values.mode,
     removeFiles: values['remove-files'],
     yes: values.yes,
     force: values.force,

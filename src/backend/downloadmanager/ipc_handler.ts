@@ -11,6 +11,7 @@ import {
 
 import { stores } from 'backend/storeManagers'
 import { libraryOf } from 'backend/storeManagers/library_of'
+import { INSTALL_MODES } from 'common/types'
 import type { DMQueueElement, InstallParams } from 'common/types'
 
 /** Installing over an installed game would download it all again and nothing else */
@@ -23,8 +24,17 @@ function refuseIfInstalled({ appName, runner }: InstallParams) {
   if (installed) throw new Error('already installed: use repair or update')
 }
 
+/** `installMode` is one of the two there are, or not there */
+function refuseUnknownInstallMode({ installMode }: InstallParams) {
+  if (installMode && !INSTALL_MODES.includes(installMode))
+    throw new Error(
+      `unknown install mode "${String(installMode)}": use ${INSTALL_MODES.join(' or ')}`
+    )
+}
+
 addHandler('install', async (_e, args) => {
   refuseIfInstalled(args)
+  refuseUnknownInstallMode(args)
   const dmQueueElement: DMQueueElement = {
     params: args,
     type: 'install',
