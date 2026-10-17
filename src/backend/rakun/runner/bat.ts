@@ -1,5 +1,7 @@
 /** Folder of the mount for the scripts that run inside the prefixes */
 export const SCRIPTS_DIR = 'scripts'
+/** Where the logs of a game go: the folder is the prefix's own, not the shared mount */
+export const LOGS_PATH = 'C:\\logs'
 
 const RULE = 'rem ============================================================'
 export const section = (title: string) => ['', RULE, `rem ${title}`, RULE, '']

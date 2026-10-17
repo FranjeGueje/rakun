@@ -3,6 +3,7 @@ import { join } from 'path'
 import { rakunMountPath } from 'backend/constants/paths'
 import { logInfo } from 'backend/logger'
 import {
+  LOGS_PATH,
   SCRIPTS_DIR,
   section,
   type GameOptions,
@@ -22,8 +23,6 @@ export const RUNNER_VERSION = 1
 export const RUNNER_BAT = 'Launcher_games.bat'
 /** The options of the runner: next to it, created once and never overwritten */
 const RUNNER_INI = 'Launcher_games.ini'
-/** Where the runner leaves the log of a game (inside the mount) when `LOG_TO_FILE` is on */
-const LOGS_DIR = 'logs'
 
 /** Where the runner is inside a prefix: the mount is `C:\Launchers` there */
 const RUNNER_WINDOWS_PATH = `C:\\Launchers\\${SCRIPTS_DIR}\\${RUNNER_BAT}`
@@ -39,7 +38,7 @@ const RUNNER_OPTIONS = [
   [
     'LOG_TO_FILE',
     '0',
-    'the output goes to logs/<game name>.log, not the window'
+    'the output goes to C:\\logs\\<game name>.log of the prefix, not the window'
   ]
 ] as const
 
@@ -79,6 +78,7 @@ export function runnerScriptText(): string {
     'set "LAUNCHERS=C:\\Launchers"',
     ...optionsLines(),
     'if not defined GAMENAME set "GAMENAME=%STORE%-%IDGAME%"',
+    'set "GAMENAME=%GAMENAME:\\=_%"',
     'if "%RK_LOG_TO_FILE%"=="1" if not defined RK_INLOG goto :logged',
     '',
     'if not "%RK_SHOW_HEADER%"=="0" (',
@@ -129,8 +129,8 @@ function loggedLines(): string[] {
   return [
     ':logged',
     'set "RK_INLOG=1"',
-    `mkdir "%LAUNCHERS%\\${LOGS_DIR}" >nul 2>&1`,
-    `call "%~f0" %* > "%LAUNCHERS%\\${LOGS_DIR}\\%GAMENAME%.log" 2>&1`,
+    `mkdir "${LOGS_PATH}" >nul 2>&1`,
+    `call "%~f0" %* > "${LOGS_PATH}\\%GAMENAME%.log" 2>&1`,
     'exit /b %errorlevel%'
   ]
 }

@@ -39,7 +39,7 @@ describe('the Comet script', () => {
       'xcopy /y /q "%ORIGINFILE%" "%TARGETDIR%\\" >nul 2>&1',
       '    sc create "GalaxyCommunication" binpath= "%TARGETDIR%\\GalaxyCommunication.exe"',
       '"%LAUNCHERS%\\bin\\update-permissions.exe" >nul 2>&1',
-      'start "" /b "%LAUNCHERS%\\bin\\comet.exe" --from-heroic --username "%GOGUSER%" >"%LAUNCHERS%\\logs\\comet.log" 2>&1'
+      'start "" /b "%LAUNCHERS%\\bin\\comet.exe" --from-heroic --username "%GOGUSER%" >"C:\\logs\\comet.log" 2>&1'
     ])
       expect(lines).toContain(line)
   })

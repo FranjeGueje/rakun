@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { rakunMountPath } from 'backend/constants/paths'
 import { logInfo } from 'backend/logger'
-import { SCRIPTS_DIR, section } from './runner/bat'
+import { LOGS_PATH, SCRIPTS_DIR, section } from './runner/bat'
 
 const LOG_PREFIX = 'Rakun'
 
@@ -52,8 +52,8 @@ export function cometScriptText(): string {
     'echo COMET IS RUNNING.',
     "echo If you've closed the game, you can close this window now.",
     'echo ---------------------------------------------------------',
-    'mkdir "%LAUNCHERS%\\logs" >nul 2>&1',
-    'start "" /b "%LAUNCHERS%\\bin\\comet.exe" --from-heroic --username "%GOGUSER%" >"%LAUNCHERS%\\logs\\comet.log" 2>&1',
+    `mkdir "${LOGS_PATH}" >nul 2>&1`,
+    `start "" /b "%LAUNCHERS%\\bin\\comet.exe" --from-heroic --username "%GOGUSER%" >"${LOGS_PATH}\\comet.log" 2>&1`,
     'goto :eof',
     '',
     ':bad_arguments',

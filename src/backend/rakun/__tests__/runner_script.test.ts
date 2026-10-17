@@ -88,12 +88,13 @@ describe('the runner script', () => {
     expect(text).toContain(
       'if "%RK_LOG_TO_FILE%"=="1" if not defined RK_INLOG goto :logged'
     )
-    expect(text).toContain(
-      'call "%~f0" %* > "%LAUNCHERS%\\logs\\%GAMENAME%.log" 2>&1'
-    )
+    expect(text).toContain('call "%~f0" %* > "C:\\logs\\%GAMENAME%.log" 2>&1')
     expect(text).toContain(
       'if not defined GAMENAME set "GAMENAME=%STORE%-%IDGAME%"'
     )
+    expect(text).toContain('set "GAMENAME=%GAMENAME:\\=_%"')
+    expect(text).toContain('mkdir "C:\\logs" >nul 2>&1')
+    expect(text).not.toContain('%LAUNCHERS%\\logs')
   })
 
   test('is written into the scripts folder of the mount, with the script of each store', () => {
