@@ -113,55 +113,41 @@ export async function callRunner(
       signal: abortController.signal
     })
 
-    const stdout = memoryLog()
+    // stdout is parsed (JSON): it is kept whole and as it came. Of stderr, the
+    // progress of a download, only the last chunks matter
+    const stdout: string[] = []
     const stderr = memoryLog()
 
-    child.stdout.setEncoding('utf-8')
-    child.stdout.on('data', (data: string) => {
+    const forward = (data: string) => {
       const stringToLog = options?.logSanitizer
         ? options.logSanitizer(data)
         : data
-
       options?.logWriters?.forEach((writer) => writer.writeString(stringToLog))
+      options?.onOutput?.(data, child)
+    }
 
-      if (options?.onOutput) {
-        options.onOutput(data, child)
-      }
-
-      stdout.push(data.trim())
+    child.stdout.setEncoding('utf-8')
+    child.stdout.on('data', (data: string) => {
+      forward(data)
+      stdout.push(data)
     })
 
     child.stderr.setEncoding('utf-8')
     child.stderr.on('data', (data: string) => {
-      const stringToLog = options?.logSanitizer
-        ? options.logSanitizer(data)
-        : data
-
-      options?.logWriters?.forEach((writer) => writer.writeString(stringToLog))
-
-      if (options?.onOutput) {
-        options.onOutput(data, child)
-      }
-
-      stderr.push(data.trim())
+      forward(data)
+      stderr.push(data)
     })
 
     child.on('close', (code, signal) => {
-      void errorHandler(
-        `${stdout.join().concat(stderr.join())}`,
-        appName,
-        runner.name
-      )
+      const output = stdout.join('').trim()
+      const errors = stderr.join().trim()
+      void errorHandler(`${output}${errors}`, appName, runner.name)
 
       if (signal && !child.killed) {
         rej(new Error(`Process terminated with signal ${signal}`))
       }
 
-      res({
-        stdout: stdout.join(),
-        stderr: stderr.join('\n'),
-        code
-      })
+      res({ stdout: output, stderr: errors, code })
     })
 
     child.on('error', (error) => {

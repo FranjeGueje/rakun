@@ -26,16 +26,22 @@ jest.mock('../utils/aborthandler/aborthandler', () => ({
 }))
 
 /** A program that ends at once, or that cannot even be run (`error`) */
-function program({ error, code = 0 }: { error?: Error; code?: number } = {}) {
+function program({
+  error,
+  code = 0,
+  stdout = []
+}: { error?: Error; code?: number; stdout?: string[] } = {}) {
   jest.mocked(spawn).mockImplementation((() => {
     const child = Object.assign(new EventEmitter(), {
       stdout: Object.assign(new EventEmitter(), { setEncoding: jest.fn() }),
       stderr: Object.assign(new EventEmitter(), { setEncoding: jest.fn() }),
       killed: false
     })
-    setImmediate(() =>
-      error ? child.emit('error', error) : child.emit('close', code, null)
-    )
+    setImmediate(() => {
+      for (const chunk of stdout) child.stdout.emit('data', chunk)
+      if (error) child.emit('error', error)
+      else child.emit('close', code, null)
+    })
     return child
   }) as never)
 }
@@ -150,5 +156,22 @@ describe('callRunner', () => {
     const result = await callRunner(['--version'], runner, {})
 
     expect(result.error).toBeUndefined()
+  })
+
+  test('the output comes back as it came, also cut on a space', async () => {
+    program({ stdout: ['{"title": "Half', ' Life", ', '"size": 1}\n'] })
+
+    const result = await callRunner(['info'], runner, {})
+
+    expect(JSON.parse(result.stdout)).toEqual({ title: 'Half Life', size: 1 })
+  })
+
+  test('a long output keeps its start', async () => {
+    const chunks = Array.from({ length: 120 }, (_, i) => `${i},`)
+    program({ stdout: ['[', ...chunks, '-1]'] })
+
+    const result = await callRunner(['list'], runner, {})
+
+    expect(JSON.parse(result.stdout)).toHaveLength(121)
   })
 })
