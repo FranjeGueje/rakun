@@ -12,7 +12,7 @@ import {
 import { tmpdir } from 'os'
 import { basename, dirname, join } from 'path'
 import { logError, logInfo } from 'backend/logger'
-import { spawnAsync } from 'backend/utils'
+import { openExternal } from 'backend/utils/open_external'
 import {
   rakunRunnerPath,
   rakunGamesPath,
@@ -199,20 +199,6 @@ export async function addGameToSteam(
   }
 }
 
-// `xdg-open` picks its handler from the desktop environment variables, and the
-// daemon may not have them (e.g. no KDE_SESSION_VERSION when started from a
-// systemd user service): it then fails silently with exit code 0. `gio open`
-// goes straight to the registered steam:// handler.
-async function openSteamUrl(steamUrl: string): Promise<void> {
-  try {
-    const { code } = await spawnAsync('gio', ['open', steamUrl])
-    if (code === 0) return
-  } catch {
-    // gio is not installed: fall back to xdg-open
-  }
-  await spawnAsync('xdg-open', [steamUrl])
-}
-
 async function sendToSteam(
   gameName: string,
   runnerPath: string,
@@ -220,16 +206,9 @@ async function sendToSteam(
 ): Promise<AddGameToSteamResult> {
   const steamUrl = `steam://addnonsteamgame/${encodeURIComponent(desktopPath)}`
 
-  try {
-    await openSteamUrl(steamUrl)
-    logInfo(`Opened ${steamUrl}`, LOG_PREFIX)
-  } catch (error) {
-    logError(`Failed to open steam:// URL: ${String(error)}`, LOG_PREFIX)
-    return {
-      success: false,
-      error: `Failed to open steam:// URL: ${String(error)}`
-    }
-  }
+  if (!(await openExternal(steamUrl)))
+    return { success: false, error: `Failed to open steam:// URL ${steamUrl}` }
+  logInfo(`Opened ${steamUrl}`, LOG_PREFIX)
 
   logInfo(`Waiting for "${gameName}" to be added to Steam...`, LOG_PREFIX)
 

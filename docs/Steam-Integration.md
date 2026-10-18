@@ -134,7 +134,7 @@ If a GE-Proton is available, rakun runs `umu-run exit` to initialize the prefix.
 
 rakun uses the `steam://addnonsteamgame/` protocol to add games to Steam. It never writes directly to `shortcuts.vdf`. The process:
 
-1. Writes a temporary `.desktop` in `/tmp` (`Name` = game title, `Exec` = runner path) so the shortcut gets the game's name instead of the runner's filename, then opens `steam://addnonsteamgame/<desktop-path>` via xdg-open
+1. Writes a temporary `.desktop` in `/tmp` (`Name` = game title, `Exec` = runner path) so the shortcut gets the game's name instead of the runner's filename, then opens `steam://addnonsteamgame/<desktop-path>` with `gio open` (`xdg-open` as the fallback)
 2. Steam adds the shortcut by itself, with no dialog
 3. rakun polls `shortcuts.vdf` every 1.5s for up to 15s, looking for a shortcut whose `Exe` is the runner
 4. Once it appears, it reads the assigned `steamAppId`

@@ -16,7 +16,7 @@ import {
 } from '../add_game'
 import { GameInfo } from 'common/types'
 import * as steamHelpers from '../steam_helpers'
-import { spawnAsync } from 'backend/utils'
+import { openExternal } from 'backend/utils/open_external'
 
 jest.mock('backend/logger', () => ({
   logInfo: jest.fn(),
@@ -24,8 +24,8 @@ jest.mock('backend/logger', () => ({
   logWarning: jest.fn()
 }))
 jest.mock('backend/config')
-jest.mock('backend/utils', () => ({
-  spawnAsync: jest.fn()
+jest.mock('backend/utils/open_external', () => ({
+  openExternal: jest.fn()
 }))
 jest.mock('../steam_helpers', () => ({
   findShortcutInAllUsers: jest.fn(),
@@ -65,7 +65,7 @@ describe('addGameToSteam', () => {
   })
 
   test('returns error when steam:// URL fails to open', async () => {
-    jest.mocked(spawnAsync).mockRejectedValue(new Error('xdg-open not found'))
+    jest.mocked(openExternal).mockResolvedValue(false)
 
     const result = await addGameToSteam({
       gameName: 'MyGame',
@@ -92,7 +92,7 @@ describe('addGameToSteam', () => {
       success: false,
       error: 'No Steam userdata directories found in /x'
     })
-    expect(spawnAsync).not.toHaveBeenCalled()
+    expect(openExternal).not.toHaveBeenCalled()
   })
 
   test('a shortcut without a usable id does not count as added', async () => {
@@ -101,9 +101,7 @@ describe('addGameToSteam', () => {
       .mockReturnValueOnce({ entry: null, found: false })
       .mockReturnValue({ entry: { Exe: '/tmp/MyGame.bat' }, found: true })
     mockedGetShortcutId.mockReturnValue(0)
-    jest
-      .mocked(spawnAsync)
-      .mockResolvedValue({ code: 0, stdout: '', stderr: '' })
+    jest.mocked(openExternal).mockResolvedValue(true)
 
     const pending = addGameToSteam({
       gameName: 'MyGame',
@@ -137,14 +135,14 @@ describe('addGameToSteam', () => {
     const desktopPathFromUrl = (url: string) =>
       decodeURIComponent(url.replace('steam://addnonsteamgame/', ''))
 
-    // Steam is mocked to "add" the game as soon as xdg-open is called; the
+    // Steam is mocked to "add" the game as soon as the URL is opened; the
     // .desktop is captured then because it is deleted when the call returns.
     function captureDesktop(): { path: string; content: string }[] {
       const captured: { path: string; content: string }[] = []
-      jest.mocked(spawnAsync).mockImplementation(async (_cmd, args) => {
-        const path = desktopPathFromUrl(args[0])
+      jest.mocked(openExternal).mockImplementation(async (url) => {
+        const path = desktopPathFromUrl(url)
         captured.push({ path, content: readFileSync(path, 'utf-8') })
-        return { code: 0, stdout: '', stderr: '' }
+        return true
       })
       mockedFindShortcutInAllUsers
         .mockReturnValueOnce({ entry: null, found: false })
@@ -207,11 +205,11 @@ describe('addGameToSteam', () => {
       expect(existsSync(dirname(captured[0].path))).toBe(false)
     })
 
-    test('removes the temporary .desktop when xdg-open fails', async () => {
+    test('removes the temporary .desktop when the URL cannot be opened', async () => {
       let desktopPath = ''
-      jest.mocked(spawnAsync).mockImplementation(async (_cmd, args) => {
-        desktopPath = desktopPathFromUrl(args[0])
-        throw new Error('xdg-open not found')
+      jest.mocked(openExternal).mockImplementation(async (url) => {
+        desktopPath = desktopPathFromUrl(url)
+        return false
       })
 
       const result = await addGameToSteam({
@@ -236,7 +234,7 @@ describe('addGameToSteam', () => {
       })
 
       expect(result).toEqual({ success: true, steamAppId: 7, existed: true })
-      expect(spawnAsync).not.toHaveBeenCalled()
+      expect(openExternal).not.toHaveBeenCalled()
     })
 
     test('looks for the shortcut by id and by what it runs, not by title', async () => {
