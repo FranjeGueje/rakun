@@ -95,7 +95,6 @@ interface AsyncIPCFunctions {
   }) => Promise<boolean>
 
   'steamgriddb.hasApiKey': () => Promise<boolean>
-  'steamgriddb.setApiKey': (key: string) => Promise<void>
 }
 
 interface FrontendMessages {

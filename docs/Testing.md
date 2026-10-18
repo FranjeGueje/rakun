@@ -167,7 +167,7 @@ Without a SteamGridDB key rakun does not download the images when it adds a game
 
 ```bash
 scripts/smoke.sh steamgriddb.hasApiKey                  # {"result":false} if missing
-scripts/smoke.sh steamgriddb.setApiKey '["YOUR_KEY"]'
+scripts/smoke.sh setSetting '[{"key":"steamGridDbApiKey","value":"YOUR_KEY"}]'
 ```
 
 A game installed before setting the key has to be reinstalled to get them.

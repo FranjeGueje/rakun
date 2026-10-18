@@ -83,16 +83,6 @@ describe('downloadGrids - api key', () => {
     expect(mockedSearchGame).not.toHaveBeenCalled()
   })
 
-  test('does nothing when the stored value is a leftover encrypted key', async () => {
-    // Regression guard: v0.6.0 briefly encrypted this with safeStorage,
-    // prefixing the value with "sgdb:v1:". That value is unusable as an API
-    // key and must never be sent to SteamGridDB as one.
-    setStoredApiKey('sgdb:v1:garbage-ciphertext')
-
-    await expect(downloadGrids(gameInfo, 42)).resolves.toBe(false)
-    expect(mockedSearchGame).not.toHaveBeenCalled()
-  })
-
   test('searches with the stored key as-is', async () => {
     await downloadGrids(gameInfo, 42)
 

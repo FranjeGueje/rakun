@@ -50,7 +50,6 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   'resetRakun',
   'stopRakun',
   'steamgriddb.hasApiKey',
-  'steamgriddb.setApiKey',
   'getRakunVersion',
   'getLogContent'
 ])

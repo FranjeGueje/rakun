@@ -15,7 +15,6 @@ const LOCAL_ONLY_CHANNELS: ReadonlySet<string> = new Set([
   'setSetting',
   'resetRakun',
   'stopRakun',
-  'steamgriddb.setApiKey',
   // Secrets and what is on the disk
   'getLogContent',
   'listFolders',

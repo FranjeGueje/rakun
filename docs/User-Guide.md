@@ -73,7 +73,7 @@ On itch.io, pausing or cancelling stops butler and removes what it had written; 
 
 ## Steam covers
 
-Covers (header, portrait, hero, logo, icon) come from SteamGridDB and need your own key: paste it in the web settings, or call `rakunctl call steamgriddb.setApiKey '["YOUR_KEY"]'`. Without a key rakun adds the game to Steam without images. A game installed before setting the key needs a `repair` to get them.
+Covers (header, portrait, hero, logo, icon) come from SteamGridDB and need your own key: paste it in the web settings, or call `rakunctl config steamGridDbApiKey YOUR_KEY`. Without a key rakun adds the game to Steam without images. A game installed before setting the key needs a `repair` to get them.
 
 ## The web
 
