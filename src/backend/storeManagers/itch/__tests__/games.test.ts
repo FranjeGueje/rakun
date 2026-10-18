@@ -112,7 +112,7 @@ beforeEach(() => {
   mockedFindExecutable.mockResolvedValue('pacapong.exe')
   mockedOnGameInstalled.mockResolvedValue({ success: true })
   mockedOnGameRepaired.mockResolvedValue(undefined)
-  mockedOnGameUninstalled.mockResolvedValue(undefined)
+  mockedOnGameUninstalled.mockReturnValue(undefined)
   mockButlerd.on.mockImplementation(() => jest.fn())
   jest.mocked(installLocationFor).mockResolvedValue('location-id')
   butlerdAnswers()

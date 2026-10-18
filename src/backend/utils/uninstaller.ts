@@ -71,7 +71,7 @@ export const uninstallGameCallback = async (
     const result = await game.uninstall({ shouldRemovePrefix })
     if (result?.error) logError(result.error, LogPrefix.Backend)
     uninstalled = !result?.error && !result?.abort
-    if (uninstalled) await onGameUninstalled(game)
+    if (uninstalled) onGameUninstalled(game)
   } catch (error) {
     logError(error, LogPrefix.Backend)
   }

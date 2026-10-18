@@ -31,7 +31,7 @@ jest.mock('backend/storeManagers/legendary/constants', () => ({
   legendaryInstalled: '/tmp/installed.json'
 }))
 jest.mock('backend/rakun/game_events', () => ({
-  onGameImported: jest.fn(),
+  onGameInstalled: jest.fn(),
   onGameMoved: jest.fn(),
   onGameRepaired: jest.fn()
 }))

@@ -1,11 +1,10 @@
 import {
   onGameInstalled,
   onGameUninstalled,
-  onGameImported,
   onGameMoved,
   onGameRepaired
 } from '../../game_events'
-import { existsSync, unlinkSync, mkdirSync, symlinkSync } from 'fs'
+import { existsSync, unlinkSync } from 'fs'
 import {
   addGameToSteam,
   createRunnerFile,
@@ -87,8 +86,6 @@ const mockedCreateGameSymlink = jest.mocked(createGameSymlink)
 const mockedCreateRakunBat = jest.mocked(createRakunBat)
 const mockedExistsSync = jest.mocked(existsSync)
 const mockedUnlinkSync = jest.mocked(unlinkSync)
-const mockedMkdirSync = jest.mocked(mkdirSync)
-const mockedSymlinkSync = jest.mocked(symlinkSync)
 const mockedDeleteGrids = jest.mocked(deleteGrids)
 const mockedPreparePrefix = jest.mocked(preparePrefix)
 const mockedRemovePrefixSymlink = jest.mocked(removePrefixSymlink)
@@ -485,7 +482,7 @@ describe('onGameUninstalled', () => {
     })
     mockedExistsSync.mockReturnValue(true)
 
-    await onGameUninstalled(mockGame as never)
+    onGameUninstalled(mockGame as never)
 
     expect(mockedExistsSync).toHaveBeenCalledWith('/path/to/TestGame.bat')
     expect(mockedUnlinkSync).toHaveBeenCalledWith('/path/to/TestGame.bat')
@@ -502,7 +499,7 @@ describe('onGameUninstalled', () => {
 
     mockedFindShortcut.mockReturnValue(undefined)
 
-    await onGameUninstalled(mockGame as never)
+    onGameUninstalled(mockGame as never)
 
     expect(mockedDeleteGrids).not.toHaveBeenCalled()
     expect(mockedRemoveShortcut).toHaveBeenCalledWith('untracked')
@@ -524,7 +521,7 @@ describe('onGameUninstalled', () => {
       installPath: '/games/zoom'
     })
 
-    await onGameUninstalled(mockGame as never)
+    onGameUninstalled(mockGame as never)
 
     expect(mockedRemovePrefixSymlink).toHaveBeenCalledWith(999)
     expect(mockedUnlinkSync).toHaveBeenCalledWith(
@@ -554,7 +551,7 @@ describe('onGameUninstalled', () => {
     })
     mockedExistsSync.mockReturnValue(true)
 
-    await onGameUninstalled(mockGame as never)
+    onGameUninstalled(mockGame as never)
 
     expect(mockedUnlinkSync).toHaveBeenCalledWith('/path/to/LegendaryGame.bat')
     expect(mockedUnlinkSync).toHaveBeenCalledWith(
@@ -579,7 +576,7 @@ describe('onGameUninstalled', () => {
     })
     mockedExistsSync.mockReturnValue(true)
 
-    await onGameUninstalled(mockGame as never)
+    onGameUninstalled(mockGame as never)
 
     expect(mockedUnlinkSync).toHaveBeenCalledWith('/runner/ItchGame.bat')
     expect(mockedUnlinkSync).toHaveBeenCalledWith(
@@ -606,45 +603,12 @@ describe('onGameUninstalled', () => {
     })
     mockedExistsSync.mockReturnValue(true)
 
-    await onGameUninstalled(mockGame as never)
+    onGameUninstalled(mockGame as never)
 
     expect(mockedUnlinkSync).not.toHaveBeenCalledWith(
       '/home/user/.local/share/rakun/games/zoomgame/start.sh'
     )
     expect(mockedRemoveShortcut).toHaveBeenCalledWith('guid')
-  })
-})
-
-describe('onGameImported', () => {
-  test('delegates to onGameInstalled', async () => {
-    mockGetGameInfo.mockReturnValue({
-      title: 'ImportedGame',
-      app_name: 'imported_app',
-      runner: 'legendary',
-      install: { install_path: '/games/imported' }
-    })
-
-    mockedFindShortcut.mockReturnValue(undefined)
-    mockedAddGameToSteam.mockResolvedValueOnce({
-      success: true,
-      steamAppId: 789
-    })
-
-    await onGameImported(mockGame as never)
-
-    expect(mockedCreateRunnerFile).toHaveBeenCalled()
-    expect(mockedAddGameToSteam).toHaveBeenCalledWith({
-      gameName: 'ImportedGame',
-      runnerPath: '/path/to/TestGame.bat'
-    })
-    expect(mockedAddShortcut).toHaveBeenCalledWith(
-      'ImportedGame',
-      'imported_app',
-      'legendary',
-      789,
-      '/games/imported',
-      '/path/to/TestGame.bat'
-    )
   })
 })
 
@@ -666,16 +630,16 @@ describe('onGameMoved', () => {
       installPath: '/games/old'
     })
 
-    await onGameMoved(mockGame as never, '/games/new')
+    mockedCreateGameSymlink.mockReturnValue({
+      linkPath: '/home/user/.local/share/rakun/games/new'
+    })
+
+    onGameMoved(mockGame as never, '/games/new')
 
     expect(mockedUnlinkSync).toHaveBeenCalledWith(
       expect.stringContaining('rakun/games/old')
     )
-    expect(mockedMkdirSync).toHaveBeenCalled()
-    expect(mockedSymlinkSync).toHaveBeenCalledWith(
-      '/games/new',
-      expect.stringContaining('rakun/games/new')
-    )
+    expect(mockedCreateGameSymlink).toHaveBeenCalledWith('/games/new')
     expect(mockedAddShortcut).toHaveBeenCalledWith(
       'MovedGame',
       'moved_app',
@@ -707,6 +671,39 @@ describe('onGameMoved', () => {
     expect(mockedCreateRakunBat).not.toHaveBeenCalled()
   })
 
+  test('a folder with the same name keeps its link: it is only pointed again', () => {
+    mockGetGameInfo.mockReturnValue({
+      title: 'MovedGame',
+      app_name: 'moved_app',
+      runner: 'gog',
+      install: { install_path: '/games/Game' }
+    })
+    mockedFindShortcut.mockReturnValue({
+      gameName: 'MovedGame',
+      appId: 'moved_app',
+      store: 'gog',
+      steamAppId: 123,
+      execPath: '/x/MovedGame.bat',
+      installPath: '/games/Game'
+    })
+    mockedCreateGameSymlink.mockReturnValue({
+      linkPath: '/home/user/.local/share/rakun/games/Game'
+    })
+
+    onGameMoved(mockGame as never, '/mnt/sd/Game')
+
+    expect(mockedUnlinkSync).not.toHaveBeenCalled()
+    expect(mockedCreateGameSymlink).toHaveBeenCalledWith('/mnt/sd/Game')
+    expect(mockedAddShortcut).toHaveBeenCalledWith(
+      'MovedGame',
+      'moved_app',
+      'gog',
+      123,
+      '/mnt/sd/Game',
+      '/x/MovedGame.bat'
+    )
+  })
+
   test('skips when game is not tracked', async () => {
     mockGetGameInfo.mockReturnValue({
       title: 'UntrackedGame',
@@ -717,10 +714,10 @@ describe('onGameMoved', () => {
 
     mockedFindShortcut.mockReturnValue(undefined)
 
-    await onGameMoved(mockGame as never, '/games/new')
+    onGameMoved(mockGame as never, '/games/new')
 
     expect(mockedUnlinkSync).not.toHaveBeenCalled()
-    expect(mockedSymlinkSync).not.toHaveBeenCalled()
+    expect(mockedCreateGameSymlink).not.toHaveBeenCalled()
     expect(mockedAddShortcut).not.toHaveBeenCalled()
   })
 
@@ -741,11 +738,9 @@ describe('onGameMoved', () => {
       installPath: '/games/old'
     })
 
-    mockedSymlinkSync.mockImplementation(() => {
-      throw new Error('permission denied')
-    })
+    mockedCreateGameSymlink.mockReturnValue({ error: 'permission denied' })
 
-    await onGameMoved(mockGame as never, '/games/new')
+    onGameMoved(mockGame as never, '/games/new')
 
     expect(mockedAddShortcut).not.toHaveBeenCalled()
   })
@@ -771,15 +766,16 @@ describe('onGameMoved', () => {
       installPath: '/games/old-zoom'
     })
 
-    await onGameMoved(mockGame as never, '/games/new-zoom')
+    mockedCreateGameSymlink.mockReturnValue({
+      linkPath: '/home/user/.local/share/rakun/games/new-zoom'
+    })
+
+    onGameMoved(mockGame as never, '/games/new-zoom')
 
     expect(mockedUnlinkSync).toHaveBeenCalledWith(
       expect.stringContaining('rakun/games/old-zoom')
     )
-    expect(mockedSymlinkSync).toHaveBeenCalledWith(
-      '/games/new-zoom',
-      expect.stringContaining('rakun/games/new-zoom')
-    )
+    expect(mockedCreateGameSymlink).toHaveBeenCalledWith('/games/new-zoom')
     expect(mockedAddShortcut).toHaveBeenCalledWith(
       'ZoomGame',
       'zoom_app',

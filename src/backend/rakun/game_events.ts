@@ -1,4 +1,4 @@
-import { existsSync, unlinkSync, mkdirSync, symlinkSync } from 'fs'
+import { existsSync, unlinkSync } from 'fs'
 import { Game } from 'common/types/game_manager'
 import { GameInfo } from 'common/types'
 import { basename, join } from 'path'
@@ -47,26 +47,17 @@ function refreshInstallPath(gameInfo: GameInfo): string {
   return gameInfo.install.install_path ?? ''
 }
 
-async function installLinuxNative(
+/**
+ * Adds what `runnerPath` runs to Steam and keeps its shortcut: the rest of the
+ * work (`prepare`, the prefix of a Windows game) is done once Steam gave its id.
+ */
+async function registerInSteam(
   gameInfo: GameInfo,
-  appName: string,
-  resolvedPath: string
+  resolvedPath: string,
+  runnerPath: string,
+  prepare?: (steamAppId: number) => Promise<void>
 ): Promise<AddGameToSteamResult> {
-  logInfo(`Installing Linux native game: "${gameInfo.title}"`, LOG_PREFIX)
-
-  const symlink = createGameSymlink(resolvedPath)
-  if ('error' in symlink) {
-    return { success: false, error: symlink.error }
-  }
-
-  const runnerPath = join(symlink.linkPath, 'start.sh')
-  if (!existsSync(runnerPath)) {
-    logWarning(
-      `start.sh not found in "${resolvedPath}". Steam may not launch the game correctly.`,
-      LOG_PREFIX
-    )
-  }
-
+  const appName = gameInfo.app_name
   const result = await addGameToSteam({
     gameName: gameInfo.title,
     runnerPath,
@@ -90,14 +81,36 @@ async function installLinuxNative(
       resolvedPath,
       runnerPath
     )
-
+    await prepare?.(result.steamAppId)
     await downloadGrids(gameInfo, result.steamAppId)
-
+    // Not again for a game that was already there
     if (!result.existed)
       void openExternal(`steam://gameproperties/${result.steamAppId}`)
   }
 
   return result
+}
+
+async function installLinuxNative(
+  gameInfo: GameInfo,
+  resolvedPath: string
+): Promise<AddGameToSteamResult> {
+  logInfo(`Installing Linux native game: "${gameInfo.title}"`, LOG_PREFIX)
+
+  const symlink = createGameSymlink(resolvedPath)
+  if ('error' in symlink) {
+    return { success: false, error: symlink.error }
+  }
+
+  const runnerPath = join(symlink.linkPath, 'start.sh')
+  if (!existsSync(runnerPath)) {
+    logWarning(
+      `start.sh not found in "${resolvedPath}". Steam may not launch the game correctly.`,
+      LOG_PREFIX
+    )
+  }
+
+  return registerInSteam(gameInfo, resolvedPath, runnerPath)
 }
 
 /**
@@ -125,7 +138,7 @@ async function integrateInSteam(
   }
 
   if (gameInfo.install?.platform === 'linux') {
-    return installLinuxNative(gameInfo, appName, resolvedPath)
+    return installLinuxNative(gameInfo, resolvedPath)
   }
 
   const runnerFile = createRunnerFile(gameInfo, resolvedPath)
@@ -133,40 +146,9 @@ async function integrateInSteam(
     return { success: false, error: runnerFile.error }
   }
 
-  const result = await addGameToSteam({
-    gameName: gameInfo.title,
-    runnerPath: runnerFile.path,
-    steamAppId: findShortcut(appName)?.steamAppId
-  })
-
-  if (!result.success) {
-    logError(
-      `Failed to add "${gameInfo.title}" to Steam: ${result.error}`,
-      LOG_PREFIX
-    )
-    return result
-  }
-
-  if (result.steamAppId) {
-    addShortcut(
-      gameInfo.title,
-      appName,
-      gameInfo.runner,
-      result.steamAppId,
-      resolvedPath,
-      runnerFile.path
-    )
-
-    await preparePrefix(gameInfo, result.steamAppId, resolvedPath)
-
-    await downloadGrids(gameInfo, result.steamAppId)
-
-    // Not again for a game that was already there
-    if (!result.existed)
-      void openExternal(`steam://gameproperties/${result.steamAppId}`)
-  }
-
-  return result
+  return registerInSteam(gameInfo, resolvedPath, runnerFile.path, (id) =>
+    preparePrefix(gameInfo, id, resolvedPath)
+  )
 }
 
 /** Rakun knows the game; is the shortcut with its id still in Steam? */
@@ -193,10 +175,6 @@ export async function onGameInstalled(
   return integrateInSteam(game, installPath)
 }
 
-export async function onGameImported(game: Game): Promise<void> {
-  await onGameInstalled(game)
-}
-
 /** Repeats the whole integration, even if the game was already added to Steam */
 export async function onGameRepaired(game: Game): Promise<void> {
   const { title, app_name: appName } = game.getGameInfo()
@@ -217,11 +195,8 @@ export async function onGameRepaired(game: Game): Promise<void> {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/require-await -- one of the 4 rakun entry points, all uniformly async
-export async function onGameMoved(
-  game: Game,
-  newInstallPath: string
-): Promise<void> {
+/** Points rakun's link of the game at its new folder and keeps the new path */
+export function onGameMoved(game: Game, newInstallPath: string): void {
   const gameInfo = game.getGameInfo()
   const appName = gameInfo.app_name
 
@@ -236,25 +211,10 @@ export async function onGameMoved(
 
   const oldLink = join(rakunGamesPath, basename(known.installPath))
   const newLink = join(rakunGamesPath, basename(newInstallPath))
+  // The same name is replaced by createGameSymlink
+  if (oldLink !== newLink) removeLink(oldLink)
 
-  try {
-    unlinkSync(oldLink)
-    logInfo(`Removed old symlink: ${oldLink}`, LOG_PREFIX)
-  } catch (e) {
-    logError(
-      `Failed to remove old symlink ${oldLink}: ${String(e)}`,
-      LOG_PREFIX
-    )
-  }
-
-  try {
-    mkdirSync(rakunGamesPath, { recursive: true })
-    symlinkSync(newInstallPath, newLink)
-    logInfo(`Created symlink: ${newLink} -> ${newInstallPath}`, LOG_PREFIX)
-  } catch (e) {
-    logError(`Failed to create symlink ${newLink}: ${String(e)}`, LOG_PREFIX)
-    return
-  }
+  if ('error' in createGameSymlink(newInstallPath)) return
 
   addShortcut(
     known.gameName,
@@ -266,8 +226,19 @@ export async function onGameMoved(
   )
 }
 
-// eslint-disable-next-line @typescript-eslint/require-await -- one of the 4 rakun entry points, all uniformly async
-export async function onGameUninstalled(game: Game) {
+function removeLink(linkPath: string): void {
+  try {
+    unlinkSync(linkPath)
+    logInfo(`Removed old symlink: ${linkPath}`, LOG_PREFIX)
+  } catch (e) {
+    logError(
+      `Failed to remove old symlink ${linkPath}: ${String(e)}`,
+      LOG_PREFIX
+    )
+  }
+}
+
+export function onGameUninstalled(game: Game): void {
   const gameInfo = game.getGameInfo()
   const appName = gameInfo.app_name
 

@@ -81,7 +81,9 @@ describe('uninstallGameCallback', () => {
 
   test('a failure in Steam does not undo the uninstall', async () => {
     uninstall.mockResolvedValue({ stdout: '', stderr: '' })
-    jest.mocked(onGameUninstalled).mockRejectedValue(new Error('no Steam'))
+    jest.mocked(onGameUninstalled).mockImplementation(() => {
+      throw new Error('no Steam')
+    })
 
     await uninstallGameCallback(null, 'g1', 'gog', true)
 

@@ -19,7 +19,7 @@ import { callAbortController } from 'backend/utils/aborthandler/aborthandler'
 import { autoUpdate, libraryManagerMap } from 'backend/storeManagers'
 import { legendaryInstalled } from 'backend/storeManagers/legendary/constants'
 import {
-  onGameImported,
+  onGameInstalled,
   onGameMoved,
   onGameRepaired
 } from 'backend/rakun/game_events'
@@ -195,9 +195,11 @@ addHandler(
     if (moveRes.status === 'done') {
       logInfo(`Finished moving ${appName} to ${path}.`, LogPrefix.Backend)
       if (moveRes.installPath) {
-        void onGameMoved(game, moveRes.installPath).catch((err) =>
+        try {
+          onGameMoved(game, moveRes.installPath)
+        } catch (err) {
           logError(err, LogPrefix.Backend)
-        )
+        }
       }
     }
 
@@ -249,7 +251,7 @@ addHandler(
       status: 'done'
     })
     logInfo(`imported ${title}`, LogPrefix.Backend)
-    void onGameImported(game).catch((err) => logError(err, LogPrefix.Backend))
+    void onGameInstalled(game).catch((err) => logError(err, LogPrefix.Backend))
     return { status: 'done' }
   }
 )
