@@ -27,6 +27,10 @@ jest.mock('backend/config')
 jest.mock('backend/utils/open_external', () => ({
   openExternal: jest.fn()
 }))
+const mockGogUserData = jest.fn()
+jest.mock('backend/storeManagers/gog/stores', () => ({
+  configStore: { get_nodefault: () => mockGogUserData() }
+}))
 jest.mock('../steam_helpers', () => ({
   findShortcutInAllUsers: jest.fn(),
   getShortcutId: jest.fn(),
@@ -339,6 +343,13 @@ describe('createRakunBat', () => {
     expect(content).toContain('set "IDGAME=gog123"')
     expect(content).toContain(`set "GAMEFOLDER=${basename(tmpDir.name)}"`)
     expect(content).toContain('set "GOGUSER="')
+  })
+
+  test('the user of Comet is the one GOG saved at login', () => {
+    mockGogUserData.mockReturnValue({ username: 'franje' })
+    const runnerPath = createRakunBat(tmpDir.name, 'GogGame', 'gog', 'gog123')
+
+    expect(lines(runnerPath)).toContain('set "GOGUSER=franje"')
   })
 
   test('has no logic of its own: that is in the runner', () => {

@@ -208,3 +208,14 @@ describe('moveInstall', () => {
     expect(onGameMoved).not.toHaveBeenCalled()
   })
 })
+
+describe('a store a client names', () => {
+  test('one that is not a store is refused with a readable error', async () => {
+    await expect(invokeHandler('getGameInfo', 'g1', 'steam')).rejects.toThrow(
+      'Unknown store "steam"'
+    )
+    await expect(
+      invokeHandler('getGameInfo', 'g1', 'constructor')
+    ).rejects.toThrow('Unknown store "constructor"')
+  })
+})

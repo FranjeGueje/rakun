@@ -3,7 +3,6 @@ import {
   lstatSync,
   mkdirSync,
   mkdtempSync,
-  readFileSync,
   rmSync,
   symlinkSync,
   unlinkSync,
@@ -13,11 +12,8 @@ import { tmpdir } from 'os'
 import { basename, dirname, join } from 'path'
 import { logError, logInfo } from 'backend/logger'
 import { openExternal } from 'backend/utils/open_external'
-import {
-  rakunRunnerPath,
-  rakunGamesPath,
-  userDataPath
-} from 'backend/constants/paths'
+import { rakunRunnerPath, rakunGamesPath } from 'backend/constants/paths'
+import { configStore as gogConfigStore } from 'backend/storeManagers/gog/stores'
 import {
   findShortcutInAllUsers,
   getShortcutId,
@@ -53,14 +49,7 @@ export function createRunnerFile(
 }
 
 function getGogUsername(): string {
-  try {
-    const configPath = join(userDataPath, 'gog_store', 'config.json')
-    const raw = readFileSync(configPath, 'utf-8')
-    const config = JSON.parse(raw)
-    return config.userData?.username ?? ''
-  } catch {
-    return ''
-  }
+  return gogConfigStore.get_nodefault('userData')?.username ?? ''
 }
 
 /**

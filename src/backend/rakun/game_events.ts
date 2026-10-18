@@ -2,7 +2,7 @@ import { existsSync, unlinkSync } from 'fs'
 import { Game } from 'common/types/game_manager'
 import { GameInfo } from 'common/types'
 import { basename, join } from 'path'
-import { libraryManagerMap } from 'backend/storeManagers'
+import { libraryOf } from 'backend/storeManagers/library_of'
 import { rakunGamesPath } from 'backend/constants/paths'
 import { logError, logInfo, logWarning } from 'backend/logger'
 import { openExternal } from 'backend/utils/open_external'
@@ -26,15 +26,9 @@ const LOG_PREFIX = 'Rakun'
 
 function refreshInstallPath(gameInfo: GameInfo): string {
   try {
-    const manager = libraryManagerMap[gameInfo.runner] as unknown as {
-      getGameInfo?: (
-        appName: string,
-        forceReload: boolean
-      ) => GameInfo | undefined
-      refreshInstalled?: () => void
-    }
-    manager.refreshInstalled?.()
-    const freshInfo = manager.getGameInfo?.(gameInfo.app_name, true)
+    const library = libraryOf(gameInfo.runner)
+    library.refreshInstalled()
+    const freshInfo = library.getGameInfo(gameInfo.app_name, true)
     if (freshInfo) {
       return freshInfo.install.install_path ?? ''
     }

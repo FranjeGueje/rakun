@@ -37,11 +37,11 @@ jest.mock('backend/logger', () => ({
 
 jest.mock('backend/storeManagers', () => ({
   libraryManagerMap: {
-    legendary: { getGameInfo: jest.fn() },
-    gog: { getGameInfo: jest.fn() },
-    nile: { getGameInfo: jest.fn() },
-    zoom: {},
-    itch: { getGameInfo: jest.fn() }
+    legendary: { getGameInfo: jest.fn(), refreshInstalled: jest.fn() },
+    gog: { getGameInfo: jest.fn(), refreshInstalled: jest.fn() },
+    nile: { getGameInfo: jest.fn(), refreshInstalled: jest.fn() },
+    zoom: { getGameInfo: jest.fn(), refreshInstalled: jest.fn() },
+    itch: { getGameInfo: jest.fn(), refreshInstalled: jest.fn() }
   }
 }))
 

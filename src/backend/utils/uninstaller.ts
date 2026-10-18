@@ -1,6 +1,6 @@
 import { GlobalConfig } from 'backend/config'
 import { logError, logInfo, LogPrefix, logWarning } from 'backend/logger'
-import { libraryManagerMap } from 'backend/storeManagers'
+import { libraryOf } from 'backend/storeManagers/library_of'
 import { sendGameStatusUpdate } from 'backend/utils'
 import { onGameUninstalled } from 'backend/rakun/game_events'
 import { Runner } from 'common/types'
@@ -26,7 +26,7 @@ export function isSharedFolder(folder: string, defaultInstallPath: string) {
 
 /** What the store did not remove of a game (Legendary and Nile leave what the game wrote in its folder) */
 const removeGameFolder = (appName: string, runner: Runner) => {
-  const game = libraryManagerMap[runner].getGame(appName)
+  const game = libraryOf(runner).getGame(appName)
   const { install } = game.getGameInfo()
 
   if (!install?.install_path) {
@@ -63,7 +63,7 @@ export const uninstallGameCallback = async (
     status: 'uninstalling'
   })
 
-  const game = libraryManagerMap[runner].getGame(appName)
+  const game = libraryOf(runner).getGame(appName)
 
   let uninstalled = false
 

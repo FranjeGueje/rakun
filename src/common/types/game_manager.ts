@@ -56,6 +56,8 @@ export interface LibraryManager {
   listUpdateableGames: () => Promise<string[]>
   changeGameInstallPath: (appName: string, newPath: string) => Promise<void>
   changeVersionPinnedStatus: (appName: string, status: boolean) => void
+  /** Reads again which games are installed, from what the store keeps on the disk */
+  refreshInstalled: () => void
   /**
    * Why an operation cannot start now (nothing: it can). A store may also get
    * its ground ready here.

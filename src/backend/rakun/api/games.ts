@@ -43,7 +43,7 @@ async function checkGameUpdates(): Promise<string[]> {
     // update for now: the stores after it are still asked
     let gamesToUpdate: string[] = []
     try {
-      gamesToUpdate = await libraryManagerMap[runner].listUpdateableGames()
+      gamesToUpdate = await libraryOf(runner).listUpdateableGames()
     } catch (error) {
       logError(
         [`Could not list the updates of ${runner}:`, error],
@@ -61,7 +61,7 @@ async function checkGameUpdates(): Promise<string[]> {
 
 addHandler('isGameAvailable', async (e, args) => {
   const { appName, runner } = args
-  return libraryManagerMap[runner].getGame(appName).isGameAvailable()
+  return libraryOf(runner).getGame(appName).isGameAvailable()
 })
 
 /**
@@ -75,7 +75,7 @@ addHandler('getGameInfo', async (event, appName, runner) => {
   if (notInStore(runner, appName)) return null
   // A game that is in none of the user's lists (itch.io) is added by its id
   await libraryOf(runner).ensureGame?.(appName)
-  const tempGameInfo = libraryManagerMap[runner].getGame(appName).getGameInfo()
+  const tempGameInfo = libraryOf(runner).getGame(appName).getGameInfo()
   // The game managers return an empty object if they couldn't fetch the game
   // info, since most of the backend assumes getting it can never fail (and
   // an empty object is a little easier to work with than `null`)
@@ -87,7 +87,7 @@ addHandler('getGameInfo', async (event, appName, runner) => {
 
 addHandler('getExtraInfo', async (event, appName, runner) => {
   if (notInStore(runner, appName)) return null
-  return libraryManagerMap[runner].getGame(appName).getExtraInfo()
+  return libraryOf(runner).getGame(appName).getExtraInfo()
 })
 
 addHandler('getGOGLinuxInstallersLangs', async (event, appName) =>
@@ -98,7 +98,7 @@ addHandler(
   'getInstallInfo',
   async (event, appName, runner, installPlatform, build, branch) => {
     try {
-      const info = await libraryManagerMap[runner].getInstallInfo(
+      const info = await libraryOf(runner).getInstallInfo(
         appName,
         installPlatform,
         {
@@ -154,7 +154,7 @@ addHandler('repair', async (event, appName, runner) => {
     status: 'repairing'
   })
 
-  const game = libraryManagerMap[runner].getGame(appName)
+  const game = libraryOf(runner).getGame(appName)
 
   try {
     const res = await game.repair()
@@ -221,7 +221,7 @@ addHandler(
   async (event, { appName, path, runner, platform }): StatusPromise => {
     if (await isRefused(runner, 'import', appName)) return { status: 'error' }
 
-    const { title } = libraryManagerMap[runner].getGame(appName).getGameInfo()
+    const { title } = libraryOf(runner).getGame(appName).getGameInfo()
     sendGameStatusUpdate({
       appName,
       runner,
@@ -266,9 +266,9 @@ addHandler('kill', async (event, appName, runner) => {
     throw new Error(`Invalid app name '${appName}'`)
   }
   callAbortController(appName)
-  return libraryManagerMap[runner].getGame(appName).stop()
+  return libraryOf(runner).getGame(appName).stop()
 })
 
 addListener('changeGameVersionPinnedStatus', (e, appName, runner, status) => {
-  libraryManagerMap[runner].changeVersionPinnedStatus(appName, status)
+  libraryOf(runner).changeVersionPinnedStatus(appName, status)
 })
