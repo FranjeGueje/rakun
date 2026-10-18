@@ -39,6 +39,8 @@ A new store, itch.io, and the first one that is not run by a client of its own: 
 - `pnpm check-helper-binaries` compares butler with the latest one of itch's server.
 - Helper programs that change: if a store's tool prints something rakun does not understand, rakun says so (in the log, `rakunctl status` and `rakunctl helpers`) and keeps what it had instead of deleting it. At start it also warns when a helper is not the version rakun was tested with. Tests built from what the pinned helpers really print fail on purpose when a helper is bumped without checking it again (`scripts/capture-helper-fixtures.sh`, see `docs/Helper-Binaries.md`).
 - Code cleanup: dead code removed, files with a misleading name renamed, and the big `utils.ts` and Zoom's install split into smaller pieces. Nothing changes for the user.
+- Adding a game to Steam is one path in the code (`registerInSteam`), the queue elements of install, DLCs and updates come from one builder, the token and the itch.io `state` are compared with one `safeEqual`, and the Steam integration reaches the libraries without casts. A client that sends a name that is not a store now gets a readable error instead of a `TypeError`. `steamgriddb.setApiKey` is gone (it only repeated `setSetting`). Nothing else changes for the user.
+- The wiki (`docs/`) is brought in line: `gio` is a requirement, the SteamGridDB key is write-only, and what the third argument of uninstall removes.
 
 ### Removed
 
@@ -47,6 +49,10 @@ A new store, itch.io, and the first one that is not run by a client of its own: 
 
 ### Fixed
 
+- `requestAppSettings` no longer returns the SteamGridDB key: it is written and never read back, because with the web open to the network anyone could read it. The web and `rakunctl config` show whether there is one with `steamgriddb.hasApiKey`.
+- `steam://` links (the properties page of a game) are opened with `gio open`, with `xdg-open` as the fallback, as the add to Steam already did: without the desktop variables (rakun as a systemd service) `xdg-open` failed silently.
+- The output of a helper called through the runner is kept whole: stdout was cut to its last 50 chunks, each one trimmed, so a JSON cut on a space or longer than that could not be parsed.
+- Uninstalling a game no longer removes the root, the home folder, the install folder or a folder that holds it (a trailing slash got past the old check).
 - Uninstalling a Zoom game that the web still showed as installed did nothing (the installed list no longer had it, and the saved library kept the green mark). It now clears the mark, in the saved library too, so it survives a restart without network.
 - A failed install, update, repair or uninstall was reported as done when the store's tool ended with an error (for example GOG without disk space): the game was saved as installed and added to Steam with no files. Now the error is shown and nothing is saved. GOG also needs files in the game folder, and Amazon needs `nile` to have recorded the install.
 - Sessions are safer. Without a network no session is lost. Pasting a wrong login in Zoom no longer replaces the good session. A login only counts when there is a real session behind it. A broken account file no longer hides the other accounts. Logging out of Epic or Amazon now says so when it did not really happen. `nile` can no longer empty its list of installed games when a game is moved, and secrets are hidden better in the logs.
