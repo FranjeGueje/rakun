@@ -50,8 +50,16 @@ async function listLines(ctx: Ctx, settings: AppSettings) {
   return lines.join('\n')
 }
 
-export const config: Command = async (ctx, args) => {
+/** rakun never sends the SteamGridDB key back: it is shown as whether there is one */
+async function readSettings(ctx: Ctx): Promise<AppSettings> {
   const settings = await ctx.api.call<AppSettings>('requestAppSettings')
+  if (!('steamGridDbApiKey' in settings)) return settings
+  const hasKey = await ctx.api.call<boolean>('steamgriddb.hasApiKey')
+  return { ...settings, steamGridDbApiKey: hasKey ? '(set)' : '(not set)' }
+}
+
+export const config: Command = async (ctx, args) => {
+  const settings = await readSettings(ctx)
   if (!args[0])
     return ctx.log(
       ctx.json

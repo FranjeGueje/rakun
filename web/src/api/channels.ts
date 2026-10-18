@@ -29,6 +29,8 @@ export type CallMap = {
   refreshLibrary: { args: [Runner | 'all']; result: null }
   checkGameUpdates: { args: []; result: string[] }
   requestAppSettings: { args: []; result: AppSettings }
+  // rakun never sends the key back: only whether there is one
+  'steamgriddb.hasApiKey': { args: []; result: boolean }
   getRakunVersion: { args: []; result: string }
   install: { args: [InstallParams]; result: null }
   updateGame: { args: [UpdateParams]; result: null }

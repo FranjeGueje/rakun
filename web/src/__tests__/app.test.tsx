@@ -69,6 +69,7 @@ function setup(
     /** Called when a game is imported from a folder */
     onImport?: () => void
     helpers?: HelperInfo[]
+    hasSteamGridDbKey?: boolean
   } = {}
 ) {
   const rakun = fakeRakun(
@@ -84,6 +85,7 @@ function setup(
         return { status: 'done' }
       },
       requestAppSettings: settings(options.settings),
+      'steamgriddb.hasApiKey': options.hasSteamGridDbKey ?? false,
       getRakunVersion: '1.2.3',
       getDMQueueInformation: options.queue ?? emptyQueue,
       getAccounts: options.accounts ?? signedIn,
@@ -845,10 +847,10 @@ describe('settings in the menu', () => {
   const open = async (options: Parameters<typeof setup>[0] = {}, entry = 0) => {
     current = settings({
       protonPath: '/p/GE-Proton',
-      steamGridDbApiKey: 'secret',
       ...options?.settings
     })
     const rakun = setup({
+      hasSteamGridDbKey: true,
       ...options,
       settings: current
     })

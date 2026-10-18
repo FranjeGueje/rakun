@@ -1,7 +1,7 @@
 import { dispatchListener, invokeHandler } from 'backend/ipc'
 import { GlobalConfig } from 'backend/config'
 import { writeConfig } from 'backend/utils'
-import './../settings'
+import { withoutSecrets } from './../settings'
 
 jest.mock('backend/config', () => ({ GlobalConfig: { get: jest.fn() } }))
 jest.mock('backend/utils', () => ({ writeConfig: jest.fn() }))
@@ -16,7 +16,26 @@ beforeEach(() => {
 
 describe('settings handlers', () => {
   test('requestAppSettings answers the global settings', async () => {
-    expect(await invokeHandler('requestAppSettings')).toEqual(settings)
+    expect(await invokeHandler('requestAppSettings')).toEqual({
+      ...settings,
+      steamGridDbApiKey: ''
+    })
+  })
+
+  test('requestAppSettings never gives the SteamGridDB key back', async () => {
+    globalConfig.getSettings.mockReturnValue({
+      ...settings,
+      steamGridDbApiKey: 'secret'
+    })
+    expect(await invokeHandler('requestAppSettings')).toEqual({
+      ...settings,
+      steamGridDbApiKey: ''
+    })
+  })
+
+  test('withoutSecrets empties only the key', () => {
+    const all = { ...settings, steamGridDbApiKey: 'k' } as never
+    expect(withoutSecrets(all)).toEqual({ ...settings, steamGridDbApiKey: '' })
   })
 
   test('setSetting changes one global setting', () => {

@@ -60,7 +60,7 @@ rakun's own web (`web/` in the repository, built by `pnpm build` into `build/web
 
 **Artwork:** `steamgriddb.hasApiKey` → boolean and `steamgriddb.setApiKey(key)`. Without a SteamGridDB key rakun skips the grid images when it adds a game to Steam (it is stored in `config.json`, so a game installed before setting it has to be reinstalled to get them).
 
-**Settings:** `requestAppSettings` returns them all; `setSetting({key, value})` changes one and `writeConfig(partial)` several. They are global (rakun does not launch games, so there are no per-game settings) and **validated**: an unknown key, a value of another type or one that breaks its rule answers `500` with the reason and saves nothing. `rakunctl config [key [value]]` wraps them.
+**Settings:** `requestAppSettings` returns them all (but `steamGridDbApiKey`, which is written and never read back: it always comes empty, and `steamgriddb.hasApiKey` says whether there is one); `setSetting({key, value})` changes one and `writeConfig(partial)` several. They are global (rakun does not launch games, so there are no per-game settings) and **validated**: an unknown key, a value of another type or one that breaks its rule answers `500` with the reason and saves nothing. `rakunctl config [key [value]]` wraps them.
 
 | Key                                            | Rule                                                                         |
 | ---------------------------------------------- | ---------------------------------------------------------------------------- |

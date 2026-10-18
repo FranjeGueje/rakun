@@ -1154,6 +1154,22 @@ describe('config', () => {
     ])
   })
 
+  test('shows whether there is a SteamGridDB key, never the key', async () => {
+    const set = fakeCtx({
+      requestAppSettings: { steamGridDbApiKey: '' },
+      'steamgriddb.hasApiKey': true
+    })
+    await config(set.ctx, [], opts)
+    expect(set.lines).toEqual(['steamGridDbApiKey = (set)'])
+
+    const unset = fakeCtx({
+      requestAppSettings: { steamGridDbApiKey: '' },
+      'steamgriddb.hasApiKey': false
+    })
+    await config(unset.ctx, ['steamGridDbApiKey'], opts)
+    expect(unset.lines).toEqual(['(not set)'])
+  })
+
   test('says a setting read at start applies when rakun restarts', async () => {
     const { ctx, lines } = fakeCtx({
       requestAppSettings: { ...settings, webAccess: 'local' }

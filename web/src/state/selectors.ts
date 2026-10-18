@@ -230,9 +230,12 @@ export type MenuEntry =
   | 'language'
 
 /** What the menu shows next to an entry: the setting as it is now (the key is never shown) */
+/** The settings the menu shows: rakun never sends the SteamGridDB key, only whether there is one */
+export type MenuSettings = AppSettings & { hasSteamGridDbKey: boolean }
+
 export function menuValue(
   entry: MenuEntry,
-  settings: AppSettings,
+  settings: MenuSettings,
   t: (
     key: 'menu.automatic' | 'menu.configured' | 'menu.notConfigured'
   ) => string,
@@ -241,7 +244,7 @@ export function menuValue(
   if (entry === 'downloadPath') return settings.defaultInstallPath
   if (entry === 'protonPath') return settings.protonPath || t('menu.automatic')
   if (entry === 'steamGridDb')
-    return settings.steamGridDbApiKey
+    return settings.hasSteamGridDbKey
       ? t('menu.configured')
       : t('menu.notConfigured')
   if (entry === 'language') return languageName(settings.language)

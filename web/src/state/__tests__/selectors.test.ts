@@ -375,7 +375,8 @@ describe('menuValue', () => {
     language: 'es',
     defaultInstallPath: '/games',
     protonPath: '',
-    steamGridDbApiKey: 'secret'
+    steamGridDbApiKey: '',
+    hasSteamGridDbKey: true
   }
   const t = (key: string) => key
   const name = (code: string) => `name:${code}`
@@ -393,7 +394,12 @@ describe('menuValue', () => {
   test('never shows the key, only whether there is one', () => {
     expect(menuValue('steamGridDb', settings, t, name)).toBe('menu.configured')
     expect(
-      menuValue('steamGridDb', { ...settings, steamGridDbApiKey: '' }, t, name)
+      menuValue(
+        'steamGridDb',
+        { ...settings, hasSteamGridDbKey: false },
+        t,
+        name
+      )
     ).toBe('menu.notConfigured')
   })
 })
