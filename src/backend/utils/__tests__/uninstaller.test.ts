@@ -1,9 +1,9 @@
 import { libraryManagerMap } from 'backend/storeManagers'
 import { sendGameStatusUpdate } from 'backend/utils'
 import { onGameUninstalled } from 'backend/rakun/game_events'
-import { uninstallGameCallback } from '../uninstaller'
+import { isSharedFolder, uninstallGameCallback } from '../uninstaller'
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'fs'
-import { tmpdir } from 'os'
+import { homedir, tmpdir } from 'os'
 import { join } from 'path'
 
 jest.mock('backend/logger')
@@ -98,5 +98,26 @@ describe('uninstallGameCallback', () => {
       runner: 'gog',
       status: 'done'
     })
+  })
+})
+
+describe('isSharedFolder', () => {
+  const games = '/home/user/Games/Rakun'
+
+  test('a game folder inside the install folder can be removed', () => {
+    expect(isSharedFolder('/home/user/Games/Rakun/Beat Cop', games)).toBe(false)
+    expect(isSharedFolder('/mnt/sd/Beat Cop', games)).toBe(false)
+  })
+
+  test('the install folder itself, written in any way, is kept', () => {
+    expect(isSharedFolder(games, games)).toBe(true)
+    expect(isSharedFolder(`${games}/`, games)).toBe(true)
+    expect(isSharedFolder(`${games}/x/..`, games)).toBe(true)
+  })
+
+  test('a folder that holds the install folder, the home and the root are kept', () => {
+    expect(isSharedFolder('/home/user/Games', games)).toBe(true)
+    expect(isSharedFolder(homedir(), games)).toBe(true)
+    expect(isSharedFolder('/', games)).toBe(true)
   })
 })
