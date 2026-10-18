@@ -75,13 +75,9 @@ You can do all of this in the web too: open `http://127.0.0.1:17370` in a browse
 ## Requirements
 
 - Linux and Steam
-- `curl`, `xdg-open` and `unzip`
+- `curl`, `unzip` and `gio` (from GLib, to hand the `steam://` links to Steam; `xdg-open` works as the fallback)
 - For Windows games, GE-Proton in `~/.local/share/Steam/compatibilitytools.d` (rakun picks the first `*proton*` folder; change it with `rakunctl config protonPath <folder>`)
 - For Zoom Platform's **Windows** games, a screen (`DISPLAY`) only if you install them interactively: the installer is a normal Windows wizard, and rakun refuses at once without a screen, or in Steam's game mode. The default, **add to Steam**, needs no screen: the wizard opens the first time you play. Zoom support is experimental; its Linux installers do not need a screen.
-
----
-
-Next: [User guide](User-Guide.md) · [Commands](Commands.md)
 
 ## Updating rakun
 
@@ -93,3 +89,7 @@ rakunctl self-update             # install it (restarts rakun if it was running)
 It downloads the newest release, checks its `.sha256` and replaces `~/.local/opt/rakun`; your logins, settings and helper binaries stay. See [`self-update`](Commands.md#self-update) for the details.
 
 `self-update` exists from the first release that includes it. With an older one (0.2.0), run the quick install of [step 1](#1-install) once; from then on `self-update` is enough. To update your games, not rakun, use `rakunctl update` ([User guide](User-Guide.md#update-repair-uninstall)).
+
+---
+
+Next: [User guide](User-Guide.md) · [Commands](Commands.md)

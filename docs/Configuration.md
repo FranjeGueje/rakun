@@ -12,17 +12,17 @@ Values are validated by rakun before they are saved; a wrong one is refused with
 
 ## Settings
 
-| Setting                                        | Default                 | Meaning                                                                                 |
-| ---------------------------------------------- | ----------------------- | --------------------------------------------------------------------------------------- |
-| `defaultInstallPath`                           | `~/Games/Rakun`         | Where games are installed (absolute path)                                               |
-| `protonPath`                                   | first `*proton*` folder | GE-Proton used to prepare prefixes. Empty = automatic. Must contain the `proton` script |
-| `language`                                     | `en`                    | Default install language **for GOG** only. rakun itself has no translations             |
-| `maxWorkers`                                   | `0`                     | Download workers; `0` lets the store tools decide. Integer up to your CPU count         |
-| `autoUpdateGames`                              | `true`                  | Update games automatically                                                              |
-| `steamGridDbApiKey`                            | empty                   | Key for the covers, see [User guide](User-Guide.md#steam-covers)                        |
-| `defaultSteamPath`                             | `~/.steam/steam`        | Steam folder rakun reads (`userdata`) when it adds a game to Steam                      |
-| `webAccess`                                    | `local`                 | Who can open the web, see below. Applies **when rakun restarts**                        |
-| `altLegendaryBin`, `altGogdlBin`, `altNileBin` | empty                   | Use another helper program instead of the downloaded one (empty or an existing file)    |
+| Setting                                        | Default                 | Meaning                                                                                                                                                    |
+| ---------------------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defaultInstallPath`                           | `~/Games/Rakun`         | Where games are installed (absolute path)                                                                                                                  |
+| `protonPath`                                   | first `*proton*` folder | GE-Proton used to prepare prefixes. Empty = automatic. Must contain the `proton` script                                                                    |
+| `language`                                     | `en`                    | Default install language **for GOG** only. rakun itself has no translations                                                                                |
+| `maxWorkers`                                   | `0`                     | Download workers; `0` lets the store tools decide. Integer up to your CPU count                                                                            |
+| `autoUpdateGames`                              | `true`                  | Update games automatically                                                                                                                                 |
+| `steamGridDbApiKey`                            | empty                   | Key for the covers, see [User guide](User-Guide.md#steam-covers). Written only: rakun never sends it back (`rakunctl config` shows `(set)` or `(not set)`) |
+| `defaultSteamPath`                             | `~/.steam/steam`        | Steam folder rakun reads (`userdata`) when it adds a game to Steam                                                                                         |
+| `webAccess`                                    | `local`                 | Who can open the web, see below. Applies **when rakun restarts**                                                                                           |
+| `altLegendaryBin`, `altGogdlBin`, `altNileBin` | empty                   | Use another helper program instead of the downloaded one (empty or an existing file)                                                                       |
 
 `rakunctl config` shows the complete list for your version.
 

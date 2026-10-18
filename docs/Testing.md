@@ -168,14 +168,15 @@ Without a SteamGridDB key rakun does not download the images when it adds a game
 ```bash
 scripts/smoke.sh steamgriddb.hasApiKey                  # {"result":false} if missing
 scripts/smoke.sh setSetting '[{"key":"steamGridDbApiKey","value":"YOUR_KEY"}]'
+scripts/smoke.sh requestAppSettings | grep -o '"steamGridDbApiKey":"[^"]*"'   # always "": the key is never sent back
 ```
 
-A game installed before setting the key has to be reinstalled to get them.
+A game installed before setting the key needs a `repair` to get them.
 
 ## 6. Uninstall, repair and other actions
 
 ```bash
-scripts/smoke.sh uninstall "[\"$APP\",\"$RUNNER\",false]"   # true also deletes the game's folder
+scripts/smoke.sh uninstall "[\"$APP\",\"$RUNNER\",false]"   # the store deletes the files; true also removes what it leaves in the folder
 scripts/smoke.sh repair "[\"$APP\",\"$RUNNER\"]"
 scripts/smoke.sh kill "[\"$APP\",\"$RUNNER\"]"            # aborts whatever it is doing
 scripts/smoke.sh pauseCurrentDownload
@@ -183,6 +184,8 @@ scripts/smoke.sh resumeCurrentDownload
 ```
 
 Zoom (experimental): **Windows** games open the installer wizard in a window, and there are two ways to run it (`rakunctl install zoom <id> --mode interactive|steam`; steam is the default). **Interactive**: rakun runs the installer now, so it has to be started with a screen (desktop mode) and with `protonPath` set; without them the install ends in error, and the installer stays downloaded to try again. **steam**: rakun only downloads the installer and adds the game to Steam; the first Play opens the wizard (choose GE-Proton in the game's Steam properties first), and the Play after that starts the game. Cancelling the wizard keeps the installer for another try. The Linux games do not need a screen.
+
+With `true`, rakun also removes what the store left in the game's folder (Epic and Amazon leave what the game wrote there), but never the install folder, the home folder or one that holds them.
 
 A shortcut added to Steam is **not removed** on uninstall: remove it by hand from the Steam library.
 

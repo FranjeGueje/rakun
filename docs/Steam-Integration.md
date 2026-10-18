@@ -1,8 +1,6 @@
 # Steam integration
 
-How a finished install becomes a game in Steam. rakun never launches games: Steam does.
-
-rakun never launches games. Every game is added to Steam as a non-Steam shortcut, and the user launches everything from Steam.
+How a finished install becomes a game in Steam. rakun never launches games: every game is added to Steam as a non-Steam shortcut, and the user launches everything from Steam.
 
 ## Installation flow
 
@@ -15,7 +13,7 @@ Game install completed
   No
   │
   ▼
-  ┌─ is it a Linux native game? (GOG, itch.io)
+  ┌─ is it a Linux native game? (GOG, Zoom, itch.io)
   │
   ├── Yes (Linux native) ──────────────────────── No (Windows/Proton)
   │                                                  │
@@ -99,7 +97,7 @@ The `.bat` of each game does not change when rakun updates, so the options of th
 
 The log is named after the game's title, with `\ / : * ? " < > | %` replaced by `_`. A game added before this option existed has no `GAMENAME` and its log is `<store>-<id>.log`; repairing the game regenerates its `.bat` with the name.
 
-For Linux native GOG games, there is no `.bat`. rakun uses the `start.sh` script that GOG ships with the game. Steam runs the shell script natively. For Linux native itch.io games rakun writes that `start.sh` itself: it goes to the folder of the executable that butler found and runs it.
+For Linux native GOG games, there is no `.bat`. rakun uses the `start.sh` script that GOG ships with the game. Steam runs the shell script natively. Zoom's Linux games ship a `start.sh` too. For Linux native itch.io games rakun writes that `start.sh` itself: it goes to the folder of the executable that butler found and runs it.
 
 ## Symlink structure
 
@@ -124,6 +122,8 @@ For Windows games, rakun creates a Wine prefix inside `compatdata/<steamAppId>/d
 drive_c/Launchers/  → ~/.local/share/rakun/mount/
 drive_c/games/  → ~/.local/share/rakun/games/
 ```
+
+A Zoom Windows game is the exception: its installer builds the prefix inside the game's own folder, so `compatdata/<steamAppId>` is a symlink to that folder (through `~/.local/share/rakun/games/<name>`), and uninstalling the game removes that link.
 
 If a GE-Proton is available, rakun runs `umu-run exit` to initialize the prefix. The `protonPath` setting empty means **automatic**: the first `*proton*` folder of `~/.local/share/Steam/compatibilitytools.d` that exists _when it is needed_ (so a GE-Proton installed after rakun was first run is found too). Without any, the prefix is left as plain folders and Steam's Proton creates it on the first launch.
 

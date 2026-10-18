@@ -32,6 +32,14 @@ In `network` mode, settings, folders, logs and a few more channels only answer t
 
 Force GE-Proton in the game's Steam properties (rakun does not set the compatibility tool) and check the prefix in `compatdata/<id>`.
 
+### `… was not added to Steam in time`
+
+rakun asked Steam to add the game and the shortcut did not appear within 15 seconds. Steam has to be running (and logged in). If Steam adds it later, `rakunctl repair <store> <app>` links it; nothing is downloaded again.
+
+### `Failed to open steam:// URL`
+
+rakun hands the `steam://` link to `gio open`, or to `xdg-open` when there is no `gio`, and neither worked. Install GLib (`gio`) or `xdg-utils` with your package manager, and check that Steam is the handler of `steam://` links.
+
 ### The runner's window closes too fast to read it
 
 Set `LOG_TO_FILE=1` in `~/.local/share/rakun/mount/scripts/Launcher_games.ini` and launch the game again: the output of the runner is in `C:\logs\<game name>.log` of the game's own prefix (`~/.steam/steam/steamapps/compatdata/<steam id>/drive_c/logs/`; for Zoom, `drive_c/logs` inside the game's folder). Comet's log of a GOG game, `comet.log`, is in the same folder. See [Steam integration](Steam-Integration.md#runner-options-launcher_gamesini).

@@ -58,7 +58,7 @@ rakun's own web (`web/` in the repository, built by `pnpm build` into `build/web
 
 **Folders:** `listFolders(path?)` → `{path, parent, folders}`: the folders inside `path` (the home folder when omitted), hidden ones too, sorted; `parent` is `null` at the root. `path` has to be absolute; one that cannot be read answers `500` with the reason. It is for a client that lets the user pick a folder.
 
-**Artwork:** `steamgriddb.hasApiKey` → boolean; the key is saved with `setSetting({ key: 'steamGridDbApiKey', value })`. Without a SteamGridDB key rakun skips the grid images when it adds a game to Steam (it is stored in `config.json`, so a game installed before setting it has to be reinstalled to get them).
+**Artwork:** `steamgriddb.hasApiKey` → boolean; the key is saved with `setSetting({ key: 'steamGridDbApiKey', value })`. Without a SteamGridDB key rakun skips the grid images when it adds a game to Steam (it is stored in `config.json`, so a game installed before setting it needs a `repair` to get them).
 
 **Settings:** `requestAppSettings` returns them all (but `steamGridDbApiKey`, which is written and never read back: it always comes empty, and `steamgriddb.hasApiKey` says whether there is one); `setSetting({key, value})` changes one and `writeConfig(partial)` several. They are global (rakun does not launch games, so there are no per-game settings) and **validated**: an unknown key, a value of another type or one that breaks its rule answers `500` with the reason and saves nothing. `rakunctl config [key [value]]` wraps them.
 
