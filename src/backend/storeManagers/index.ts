@@ -6,8 +6,9 @@ import { zoom } from 'backend/storeManagers/zoom/store'
 
 import { logError, logInfo, RunnerToLogPrefixMap } from 'backend/logger'
 import { addToQueue } from 'backend/downloadmanager/downloadqueue'
+import { updateElement } from 'backend/downloadmanager/queue_element'
 
-import type { DMQueueElement, GameInfo, Runner } from 'common/types'
+import type { Runner } from 'common/types'
 import type { Store } from './store'
 
 /**
@@ -33,27 +34,6 @@ export const libraryManagerMap = Object.fromEntries(
   Object.values(stores).map((store) => [store.id, store.library])
 ) as { [R in Runner]: (typeof stores)[R]['library'] }
 
-function getDMElement(gameInfo: GameInfo, appName: string) {
-  const {
-    install: { install_path, platform },
-    runner
-  } = gameInfo
-  const dmQueueElement: DMQueueElement = {
-    params: {
-      appName,
-      gameInfo,
-      runner,
-      path: install_path!,
-      platformToInstall: platform!
-    },
-    type: 'update',
-    addToQueueTime: Date.now(),
-    endTime: 0,
-    startTime: 0
-  }
-  return dmQueueElement
-}
-
 /** Queues the update of one game; false when it could not be queued */
 async function queueUpdate(runner: Runner, appName: string): Promise<boolean> {
   const logPrefix = RunnerToLogPrefixMap[runner]
@@ -66,8 +46,9 @@ async function queueUpdate(runner: Runner, appName: string): Promise<boolean> {
     }
     logInfo(`Auto-Updating ${gameInfo.title}`, logPrefix)
     // Queueing asks the store for the download size: do not wait for it here
-    addToQueue(getDMElement(gameInfo, appName)).catch((error: unknown) =>
-      logError([`Could not queue ${appName}:`, error], logPrefix)
+    addToQueue(updateElement({ appName, runner, gameInfo })).catch(
+      (error: unknown) =>
+        logError([`Could not queue ${appName}:`, error], logPrefix)
     )
     return true
   } catch (error) {

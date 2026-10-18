@@ -12,7 +12,8 @@ import {
 import { stores } from 'backend/storeManagers'
 import { libraryOf } from 'backend/storeManagers/library_of'
 import { INSTALL_MODES } from 'common/types'
-import type { DMQueueElement, InstallParams } from 'common/types'
+import type { InstallParams } from 'common/types'
+import { queueElement, updateElement } from './queue_element'
 
 /** Installing over an installed game would download it all again and nothing else */
 function refuseIfInstalled({ appName, runner }: InstallParams) {
@@ -35,15 +36,7 @@ function refuseUnknownInstallMode({ installMode }: InstallParams) {
 addHandler('install', async (_e, args) => {
   refuseIfInstalled(args)
   refuseUnknownInstallMode(args)
-  const dmQueueElement: DMQueueElement = {
-    params: args,
-    type: 'install',
-    addToQueueTime: Date.now(),
-    endTime: 0,
-    startTime: 0
-  }
-
-  await addToQueue(dmQueueElement)
+  await addToQueue(queueElement('install', args))
 
   // Add Dlcs to the queue
   if (
@@ -52,37 +45,13 @@ addHandler('install', async (_e, args) => {
     libraryOf(args.runner).queuesDlcs
   ) {
     for (const dlc of args.installDlcs) {
-      const dlcQueueElement: DMQueueElement = {
-        params: {
-          ...args,
-          appName: dlc
-        },
-        type: 'install',
-        addToQueueTime: Date.now(),
-        endTime: 0,
-        startTime: 0
-      }
-      await addToQueue(dlcQueueElement)
+      await addToQueue(queueElement('install', { ...args, appName: dlc }))
     }
   }
 })
 
 addHandler('updateGame', async (_e, args) => {
-  const {
-    gameInfo: {
-      install: { platform, install_path }
-    }
-  } = args
-
-  const dmQueueElement: DMQueueElement = {
-    params: { ...args, path: install_path!, platformToInstall: platform! },
-    type: 'update',
-    addToQueueTime: Date.now(),
-    endTime: 0,
-    startTime: 0
-  }
-
-  await addToQueue(dmQueueElement)
+  await addToQueue(updateElement(args))
 })
 
 addListener('removeFromDMQueue', (e, appName, runner) =>
