@@ -1,4 +1,5 @@
-import { createHash, randomBytes, timingSafeEqual } from 'crypto'
+import { createHash, randomBytes } from 'crypto'
+import { safeEqual } from 'backend/utils/safe_equal'
 import {
   ITCH_AUTHORIZE_URL,
   ITCH_CALLBACK_PATH,
@@ -55,12 +56,6 @@ export function authorizeUrl({ verifier, state, redirectUri }: PendingLogin) {
   return `${ITCH_AUTHORIZE_URL}?${query.toString()}`
 }
 
-function sameState(a: string, b: string): boolean {
-  const left = Buffer.from(a)
-  const right = Buffer.from(b)
-  return left.length === right.length && timingSafeEqual(left, right)
-}
-
 /** Whether `state` belongs to this login, which has not run out */
 export function matchesPending(
   pending: PendingLogin | undefined,
@@ -71,7 +66,7 @@ export function matchesPending(
     !!pending &&
     !!state &&
     now <= pending.expires &&
-    sameState(pending.state, state)
+    safeEqual(pending.state, state)
   )
 }
 

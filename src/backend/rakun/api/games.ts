@@ -1,4 +1,4 @@
-import type { StatusPromise } from 'common/types'
+import type { Runner, StatusPromise } from 'common/types'
 import { existsSync, watch } from 'fs'
 import { addHandler, addListener } from 'backend/ipc'
 import { GlobalConfig } from 'backend/config'
@@ -64,9 +64,15 @@ addHandler('isGameAvailable', async (e, args) => {
   return libraryManagerMap[runner].getGame(appName).isGameAvailable()
 })
 
+/**
+ * A fast «no» for an id of another store: a client may ask for a GOG game as
+ * Legendary because it does not know yet which store it is
+ */
+const notInStore = (runner: Runner, appName: string) =>
+  libraryOf(runner).hasGame?.(appName) === false
+
 addHandler('getGameInfo', async (event, appName, runner) => {
-  // Fastpath since we sometimes have to request info for a GOG game as Legendary because we don't know it's a GOG game yet
-  if (libraryOf(runner).hasGame?.(appName) === false) return null
+  if (notInStore(runner, appName)) return null
   // A game that is in none of the user's lists (itch.io) is added by its id
   await libraryOf(runner).ensureGame?.(appName)
   const tempGameInfo = libraryManagerMap[runner].getGame(appName).getGameInfo()
@@ -80,8 +86,7 @@ addHandler('getGameInfo', async (event, appName, runner) => {
 })
 
 addHandler('getExtraInfo', async (event, appName, runner) => {
-  // Fastpath since we sometimes have to request info for a GOG game as Legendary because we don't know it's a GOG game yet
-  if (libraryOf(runner).hasGame?.(appName) === false) return null
+  if (notInStore(runner, appName)) return null
   return libraryManagerMap[runner].getGame(appName).getExtraInfo()
 })
 

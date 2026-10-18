@@ -1,4 +1,3 @@
-import { timingSafeEqual } from 'crypto'
 import type { AddressInfo } from 'net'
 import {
   createServer,
@@ -14,6 +13,7 @@ import {
 } from 'backend/ipc'
 import { logError, logInfo, logWarning, LogPrefix } from 'backend/logger'
 import { rakunVersion } from 'backend/constants/others'
+import { safeEqual } from 'backend/utils/safe_equal'
 import type { WebAccess } from 'common/rakun/web'
 import { exposedChannels, exposedEvents } from './allowlist'
 import { allowedHosts, isBlockedFromNetwork, isOwnOrigin } from './access'
@@ -59,11 +59,7 @@ function readBody(req: IncomingMessage): Promise<string> {
 }
 
 function hasValidToken(req: IncomingMessage, token: string): boolean {
-  const received = Buffer.from(String(req.headers['x-rakun-token'] ?? ''))
-  const expected = Buffer.from(token)
-  return (
-    received.length === expected.length && timingSafeEqual(received, expected)
-  )
+  return safeEqual(String(req.headers['x-rakun-token'] ?? ''), token)
 }
 
 /** Why a request is refused before anything else: its `Host` or its `Origin` is not rakun's own */
