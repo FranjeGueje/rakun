@@ -13,7 +13,7 @@ jest.mock('backend/online_monitor', () => ({
   runOnceWhenOnline: jest.fn()
 }))
 
-jest.mock('../electronStores', () => ({
+jest.mock('../stores', () => ({
   libraryStore: { get: jest.fn(), set: jest.fn() },
   installedGamesStore: { get: jest.fn(), set: jest.fn() },
   installInfoStore: { get: jest.fn(), set: jest.fn(), has: jest.fn() },
@@ -52,7 +52,7 @@ jest.mock('../user', () => ({
 jest.mock('../games')
 jest.mock('../../index', () => ({ libraryManagerMap: {} }))
 
-import { libraryStore, installInfoStore } from '../electronStores'
+import { libraryStore, installInfoStore } from '../stores'
 const mockedLibraryStore = jest.mocked(libraryStore)
 const mockedInstallInfoStore = jest.mocked(installInfoStore)
 
@@ -85,6 +85,27 @@ describe('GOGLibraryManager.getInstallInfo', () => {
     expect(result).toBeUndefined()
     expect(manager.runRunnerCommand).toHaveBeenCalledTimes(1)
   })
+
+  it.each([
+    ['another shape', '{"message":"gogdl changed"}'],
+    ['no languages', '{"size":{},"dlcs":[],"folder_name":"G"}'],
+    ['not JSON', 'Traceback (most recent call last):']
+  ])(
+    'output with %s is not taken for a game: no info, no TypeError, nothing saved',
+    async (_, stdout) => {
+      manager.runRunnerCommand = jest.fn().mockResolvedValue({
+        stdout,
+        stderr: '',
+        error: undefined,
+        abort: false
+      })
+
+      await expect(
+        manager.getInstallInfo('test-game', 'windows')
+      ).resolves.toBeUndefined()
+      expect(mockedInstallInfoStore.set).not.toHaveBeenCalled()
+    }
+  )
 
   it('should return install info when stdout has valid JSON', async () => {
     const validInfo = {

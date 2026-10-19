@@ -12,8 +12,18 @@ jest.mock('backend/logger', () => ({
 const mockedSpawn = jest.mocked(spawn)
 const mockedLogError = jest.mocked(logError)
 
-function fakeChild() {
-  return new EventEmitter()
+/** Each opener, in the order they are run, ends like this: an exit code, or `missing` (not installed) */
+function openers(...outcomes: (number | 'missing')[]) {
+  for (const outcome of outcomes)
+    mockedSpawn.mockImplementationOnce((() => {
+      const child = new EventEmitter()
+      setImmediate(() =>
+        outcome === 'missing'
+          ? child.emit('error', new Error('ENOENT'))
+          : child.emit('close', outcome)
+      )
+      return child
+    }) as never)
 }
 
 beforeEach(() => {
@@ -21,77 +31,48 @@ beforeEach(() => {
 })
 
 describe('openExternal', () => {
-  test('hands the target to xdg-open', async () => {
-    const child = fakeChild()
-    mockedSpawn.mockReturnValue(child as never)
+  test('hands the target to gio open first', async () => {
+    openers(0)
 
-    const promise = openExternal('https://example.com')
-    child.emit('close', 0)
-    await promise
+    await expect(openExternal('steam://gameproperties/42')).resolves.toBe(true)
 
+    expect(mockedSpawn).toHaveBeenCalledTimes(1)
     expect(mockedSpawn).toHaveBeenCalledWith(
-      'xdg-open',
-      ['https://example.com'],
+      'gio',
+      ['open', 'steam://gameproperties/42'],
       { stdio: 'ignore' }
     )
     expect(mockedLogError).not.toHaveBeenCalled()
   })
 
-  test('passes a steam:// url through untouched', async () => {
-    const child = fakeChild()
-    mockedSpawn.mockReturnValue(child as never)
+  test('falls back to xdg-open when gio is not installed', async () => {
+    openers('missing', 0)
 
-    const promise = openExternal('steam://gameproperties/42')
-    child.emit('close', 0)
-    await promise
+    await expect(openExternal('/home/user/Games')).resolves.toBe(true)
 
-    expect(mockedSpawn).toHaveBeenCalledWith(
-      'xdg-open',
-      ['steam://gameproperties/42'],
-      expect.anything()
-    )
-  })
-
-  test('passes a local path through untouched', async () => {
-    const child = fakeChild()
-    mockedSpawn.mockReturnValue(child as never)
-
-    const promise = openExternal('/home/user/Games')
-    child.emit('close', 0)
-    await promise
-
-    expect(mockedSpawn).toHaveBeenCalledWith(
+    expect(mockedSpawn).toHaveBeenLastCalledWith(
       'xdg-open',
       ['/home/user/Games'],
-      expect.anything()
+      { stdio: 'ignore' }
     )
+    expect(mockedLogError).not.toHaveBeenCalled()
   })
 
-  test('logs a non-zero exit without rejecting', async () => {
-    const child = fakeChild()
-    mockedSpawn.mockReturnValue(child as never)
+  test('falls back to xdg-open when gio fails', async () => {
+    openers(4, 0)
 
-    const promise = openExternal('/nope')
-    child.emit('close', 3)
-
-    await expect(promise).resolves.toBeUndefined()
-    expect(mockedLogError).toHaveBeenCalledWith(
-      expect.stringContaining('exited with code 3'),
-      'Backend'
-    )
+    await expect(openExternal('https://example.com')).resolves.toBe(true)
+    expect(mockedSpawn).toHaveBeenCalledTimes(2)
   })
 
-  test('logs a spawn failure without rejecting', async () => {
-    // xdg-open missing from PATH must not take the caller down with it
-    const child = fakeChild()
-    mockedSpawn.mockReturnValue(child as never)
+  test('answers false and logs once when neither works, without rejecting', async () => {
+    openers(1, 'missing')
 
-    const promise = openExternal('https://example.com')
-    child.emit('error', new Error('ENOENT'))
+    await expect(openExternal('/nope')).resolves.toBe(false)
 
-    await expect(promise).resolves.toBeUndefined()
+    expect(mockedLogError).toHaveBeenCalledTimes(1)
     expect(mockedLogError).toHaveBeenCalledWith(
-      [expect.stringContaining('Failed to run xdg-open'), expect.any(Error)],
+      expect.stringContaining('Could not open "/nope"'),
       'Backend'
     )
   })

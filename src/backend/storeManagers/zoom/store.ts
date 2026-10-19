@@ -3,12 +3,9 @@ import type { Store } from '../store'
 import { withInstallInfo } from '../library_view'
 import ZoomLibraryManager from './library'
 import { ZoomUser } from './user'
-import {
-  configStore,
-  installedGamesStore,
-  libraryStore
-} from './electronStores'
+import { configStore, installedGamesStore, libraryStore } from './stores'
 import { tokenPath } from './constants'
+import { isSessionExpired } from '../session_state'
 
 const zoomLoginUrl =
   'https://www.zoom-platform.com/login?li=relic&return_li_token=true'
@@ -31,7 +28,14 @@ export const zoom: Store<ZoomLibraryManager> = {
       loggedIn: existsSync(tokenPath) && !!configStore.get('isLoggedIn', false),
       name: configStore.get_nodefault('username')
     }),
-    logout: () => Promise.resolve(ZoomUser.logout())
+    logout: () => Promise.resolve(ZoomUser.logout()),
+    // A token Zoom refused marks the session expired; an answer that never
+    // came (offline, Zoom down) says nothing
+    check: async () => {
+      if (!existsSync(tokenPath)) return false
+      if (await ZoomUser.getUserDetails()) return true
+      return isSessionExpired('zoom') ? false : undefined
+    }
   },
   login: {
     urlParam: 'li_token',
@@ -44,10 +48,15 @@ export const zoom: Store<ZoomLibraryManager> = {
       }),
     submit: async (code) => {
       const callback = `${ZOOM_CALLBACK}?li_token=${encodeURIComponent(code)}`
-      if (ZoomUser.login(callback).status !== 'done') {
+      const { status } = await ZoomUser.loginVerified(callback)
+      if (status === 'rejected')
+        return {
+          ok: false,
+          error:
+            'Zoom did not accept that login: your session was kept as it was'
+        }
+      if (status !== 'done')
         return { ok: false, error: 'The store rejected the login' }
-      }
-      await ZoomUser.getUserDetails()
       return { ok: true }
     }
   }

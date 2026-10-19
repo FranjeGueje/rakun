@@ -2,9 +2,11 @@ import type {
   AppSettings,
   GameInfo,
   GameStatus,
+  InstallMode,
   InstallParams,
   InstallPlatform,
   Runner,
+  StoreCaps,
   StoreInfo
 } from '../api/types'
 import type { Ownership } from '../api/bridge'
@@ -101,6 +103,8 @@ export const isBusy = (status?: GameStatus): boolean =>
 export type GameAction =
   | 'install'
   | 'installWindows'
+  | 'installInteractive'
+  | 'installSteam'
   | 'installLinux'
   | 'importFolder'
   | 'update'
@@ -113,51 +117,84 @@ export type GameAction =
 export type Build = 'windows' | 'linux'
 
 /** A Linux build next to a Windows one: the user chooses (a stale library has no `is_windows_native`: assume it) */
-export const hasBothBuilds = (game: GameInfo): boolean =>
+const hasBothBuilds = (game: GameInfo): boolean =>
   !!game.is_linux_native && game.is_windows_native !== false
+
+/** What installs a game that is not installed: the build to choose, and for Zoom's Windows one, where its installer runs */
+function installActions(game: GameInfo, caps: StoreCaps): GameAction[] {
+  const windows: GameAction[] = caps.installModes
+    ? ['installSteam', 'installInteractive']
+    : ['installWindows']
+  if (hasBothBuilds(game)) return [...windows, 'installLinux']
+  if (caps.installModes && !game.is_linux_native) return windows
+  return ['install']
+}
 
 /** What can be done with a game now. Nothing, while another operation holds it. */
 export function actionsFor(
   game: GameInfo,
   status: GameStatus | undefined,
-  needsUpdate: boolean
+  needsUpdate: boolean,
+  caps: StoreCaps
 ): GameAction[] {
   if (status?.status === 'queued') return ['removeFromQueue']
   if (status && DOWNLOADING.has(status.status)) return ['cancel']
   if (isBusy(status)) return []
   if (!game.is_installed) {
-    const install: GameAction[] = hasBothBuilds(game)
-      ? ['installWindows', 'installLinux']
-      : ['install']
-    // Zoom has no way to register a game that is already on the disk
-    return game.runner === 'zoom' ? install : [...install, 'importFolder']
+    const install = installActions(game, caps)
+    return caps.import ? [...install, 'importFolder'] : install
   }
-  return needsUpdate
-    ? ['update', 'repair', 'uninstall']
-    : ['repair', 'uninstall']
+  const manage: GameAction[] = []
+  if (caps.update && needsUpdate) manage.push('update')
+  if (caps.repair) manage.push('repair')
+  return [...manage, 'uninstall']
 }
 
-const windowsFor = (game: GameInfo): InstallPlatform =>
-  game.runner === 'gog' || game.runner === 'zoom' ? 'windows' : 'Windows'
+const windowsFor = (caps: StoreCaps): InstallPlatform =>
+  caps.lowercasePlatform ? 'windows' : 'Windows'
+
+/** What a store can do; for one rakun did not report, the usual: manage the game but not import it */
+export function capsOf(
+  stores: StoreInfo[],
+  runner: GameInfo['runner']
+): StoreCaps {
+  return (
+    stores.find((store) => store.id === runner)?.caps ?? {
+      import: false,
+      update: true,
+      repair: true,
+      lowercasePlatform: false,
+      directLaunch: false,
+      installModes: false
+    }
+  )
+}
 
 /** The one asked for; otherwise, as `rakunctl` does, a native Linux game gets its Linux build */
-export function platformFor(game: GameInfo, build?: Build): InstallPlatform {
-  if (build === 'windows') return windowsFor(game)
+export function platformFor(
+  game: GameInfo,
+  caps: StoreCaps,
+  build?: Build
+): InstallPlatform {
+  if (build === 'windows') return windowsFor(caps)
   if (build === 'linux' || game.is_linux_native) return 'linux'
-  return windowsFor(game)
+  return windowsFor(caps)
 }
 
 export function installParams(
   game: GameInfo,
   path: string,
-  build?: Build
+  caps: StoreCaps,
+  build?: Build,
+  installMode?: InstallMode
 ): InstallParams {
   return {
     appName: game.app_name,
     runner: game.runner,
     gameInfo: game,
     path,
-    platformToInstall: platformFor(game, build)
+    platformToInstall: platformFor(game, caps, build),
+    ...(installMode ? { installMode } : {})
   }
 }
 
@@ -193,9 +230,12 @@ export type MenuEntry =
   | 'language'
 
 /** What the menu shows next to an entry: the setting as it is now (the key is never shown) */
+/** The settings the menu shows: rakun never sends the SteamGridDB key, only whether there is one */
+export type MenuSettings = AppSettings & { hasSteamGridDbKey: boolean }
+
 export function menuValue(
   entry: MenuEntry,
-  settings: AppSettings,
+  settings: MenuSettings,
   t: (
     key: 'menu.automatic' | 'menu.configured' | 'menu.notConfigured'
   ) => string,
@@ -204,7 +244,7 @@ export function menuValue(
   if (entry === 'downloadPath') return settings.defaultInstallPath
   if (entry === 'protonPath') return settings.protonPath || t('menu.automatic')
   if (entry === 'steamGridDb')
-    return settings.steamGridDbApiKey
+    return settings.hasSteamGridDbKey
       ? t('menu.configured')
       : t('menu.notConfigured')
   if (entry === 'language') return languageName(settings.language)

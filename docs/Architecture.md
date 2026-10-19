@@ -12,24 +12,26 @@ rakun/server  ──►  ipc.ts  (registry of handlers and events, no Electron)
                      │
   storeManagers · downloadmanager · utils · rakun/ (Steam integration)
                      │
-        helper programs: legendary, gogdl, nile, comet, umu
+        helper programs: legendary, gogdl, nile, comet, umu, butler
 ```
 
 ## Source layout
 
-| Path                                                                                              | What it is                                                               |
-| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `src/backend/rakun/main.ts`, `daemon.ts`                                                          | Startup: logger, stores, server, download queue                          |
-| `src/backend/ipc.ts`                                                                              | `addHandler` / `addListener` / `sendFrontendMessage` over in-memory maps |
-| `src/backend/rakun/server/`                                                                       | HTTP server, token, web access rules, `allowlist.ts`, static web         |
-| `src/backend/rakun/api/`                                                                          | The handlers every client uses (including the windowless login)          |
-| `src/backend/storeManagers/<store>/`                                                              | One folder per store: library, games, user, store descriptor             |
-| `src/backend/downloadmanager/`                                                                    | The download queue                                                       |
-| `src/backend/rakun/steam_shortcuts/`, `steamgrid/`, `prefix.ts`, `windowify.ts`, `game_events.ts` | Steam integration, see [Steam integration](Steam-Integration.md)         |
-| `src/backend/rakun/helpers/`                                                                      | Helper binaries: tested versions, `sha256`, download and locations       |
-| `src/rakunctl/`                                                                                   | The command line client; it only speaks HTTP and is bundled separately   |
-| `src/common/`                                                                                     | Types shared by all of them                                              |
-| `web/`                                                                                            | rakun's own web (React), its own tsconfig and tests                      |
+| Path                                                                                              | What it is                                                                             |
+| ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `src/backend/rakun/main.ts`, `daemon.ts`                                                          | Startup: logger, stores, server, download queue                                        |
+| `src/backend/ipc.ts`                                                                              | `addHandler` / `addListener` / `sendFrontendMessage` over in-memory maps               |
+| `src/backend/rakun/server/`                                                                       | HTTP server, token, web access rules, `allowlist.ts`, static web                       |
+| `src/backend/rakun/api/`                                                                          | The handlers every client uses (including the windowless login)                        |
+| `src/backend/storeManagers/<store>/`                                                              | One folder per store: library, games, user, store descriptor                           |
+| `src/backend/downloadmanager/`                                                                    | The download queue                                                                     |
+| `src/backend/rakun/steam_shortcuts/`, `steamgrid/`, `prefix.ts`, `windowify.ts`, `game_events.ts` | Steam integration, see [Steam integration](Steam-Integration.md)                       |
+| `src/backend/rakun/runner_script.ts`, `runner/`                                                   | The runner of the prefixes: `Launcher_games.bat` and one `store_<store>.bat` per store |
+| `src/backend/utils/`                                                                              | Disks, processes, opening `steam://` links (`open_external.ts`), the uninstaller       |
+| `src/backend/rakun/helpers/`                                                                      | Helper binaries: tested versions, `sha256`, download and locations                     |
+| `src/rakunctl/`                                                                                   | The command line client; it only speaks HTTP and is bundled separately                 |
+| `src/common/`                                                                                     | Types shared by all of them                                                            |
+| `web/`                                                                                            | rakun's own web (React), its own tsconfig and tests                                    |
 
 ## Rules the code follows
 
@@ -49,10 +51,6 @@ A store is a folder plus one line in the registry.
 5. Run `pnpm test`: the "store contract" test (`storeManagers/__tests__/store_adapters.test.ts`) checks every store in the registry.
 6. Review by hand what compares `runner` with `===` or `switch`: the Steam integration, the download queue, `runner_call.ts`, `utils.ts` and `rakun/api/games.ts`. `grep -rn "runner ===" src/backend` finds them.
 
----
-
-Next: [Development](Development.md) · [API](../API.md)
-
 ## The web and its host
 
 The web (`web/`) does not import anything from the backend: it talks to rakun only through `window.rakun`, a bridge object (`RakunBridge` in `web/src/api/bridge.ts`). In a browser the page builds that bridge itself over `fetch` and the token that came with `index.html`. A desktop app that embeds the web can provide its own bridge instead.
@@ -68,3 +66,7 @@ Five members are always there: `call`, `connection`, `onEvent`, `onConnection` a
 | `loginPaste`   | the paste flow (the default in a browser, where it is provided)  |
 
 Without the optional members the web behaves as a plain browser page.
+
+---
+
+Next: [Development](Development.md) · [API](../API.md)

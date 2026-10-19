@@ -1,12 +1,19 @@
 import {
+  installModeOr,
+  installZoomInteractively,
+  writeZoomInstallerInf,
+  zoomInstallerFolder
+} from './windows_install'
+import {
   getFileSize,
   parseSize,
   spawnAsync,
   sendProgressUpdate,
   moveOnUnix
 } from '../../utils'
-import { join, relative, dirname } from 'node:path'
+import { join } from 'node:path'
 import * as fs from 'fs'
+import type { SpawnOptions } from 'child_process'
 import axios, { AxiosProgressEvent } from 'axios'
 import { saveStreamToFile } from './download'
 import {
@@ -15,10 +22,10 @@ import {
   ExecResult,
   InstallArgs,
   InstalledInfo,
+  InstallMode,
   InstallProgress
 } from 'common/types'
-import { existsSync, rmSync } from 'fs'
-import { installedGamesStore, libraryStore } from './electronStores'
+import { installedGamesStore, libraryStore } from './stores'
 import {
   logError,
   logInfo,
@@ -27,76 +34,20 @@ import {
   logDebug
 } from 'backend/logger'
 
-import {
-  onGameInstalled,
-  onGameMoved,
-  onGameUninstalled
-} from 'backend/rakun/game_events'
-import { helperFile } from 'backend/rakun/helpers/locations'
-import { GlobalConfig } from 'backend/config'
 import { ZoomInstallPlatform, ZoomDownloadFile } from 'common/types/zoom'
 import { showDialogBoxModalAuto } from '../../dialog/dialog'
 import { sendFrontendMessage } from '../../ipc'
-import { Game } from 'common/types/game_manager'
-import { displayForInstaller } from './display'
+import { Game, InstallResult } from 'common/types/game_manager'
 import { removeInstalled, upsertInstalled } from '../installed_list'
 import { libraryManagerMap } from '..'
 
-import { rm } from 'node:fs/promises'
+import { createAbortController } from 'backend/utils/aborthandler/aborthandler'
 
 export default class ZoomGame implements Game {
   private readonly id: string
 
   constructor(id: string) {
     this.id = id
-  }
-
-  private async findDosboxExecutable(dir: string): Promise<string | undefined> {
-    let list: fs.Dirent[]
-    try {
-      list = await fs.promises.readdir(dir, { withFileTypes: true })
-    } catch (error) {
-      logError(
-        `Error reading directory ${dir} for dosbox.exe: ${String(error)}`,
-        LogPrefix.Zoom
-      )
-      return undefined // Cannot read dir, so stop here for this branch
-    }
-
-    for (const file of list) {
-      const fullPath = join(dir, file.name)
-      if (file.isDirectory()) {
-        const result = await this.findDosboxExecutable(fullPath)
-        if (result) {
-          return result
-        }
-      } else if (file.name.toLowerCase() === 'dosbox.exe') {
-        return fullPath
-      }
-    }
-
-    return undefined
-  }
-
-  private async findConfFiles(dir: string): Promise<string[]> {
-    let confFiles: string[] = []
-    try {
-      const list = await fs.promises.readdir(dir, { withFileTypes: true })
-      for (const file of list) {
-        const fullPath = join(dir, file.name)
-        if (file.isDirectory()) {
-          confFiles = confFiles.concat(await this.findConfFiles(fullPath))
-        } else if (file.name.toLowerCase().endsWith('.conf')) {
-          confFiles.push(fullPath)
-        }
-      }
-    } catch (error) {
-      logError(
-        `Error finding .conf files in ${dir}: ${String(error)}`,
-        LogPrefix.Zoom
-      )
-    }
-    return confFiles
   }
 
   async getExtraInfo(): Promise<ExtraInfo> {
@@ -191,63 +142,14 @@ export default class ZoomGame implements Game {
     })
   }
 
-  async install({
-    path,
-    platformToInstall,
-    installLanguage
-  }: InstallArgs): Promise<{
-    status: 'done' | 'error' | 'abort'
-    error?: string
-  }> {
-    logInfo(
-      `Installing ${this.id} to ${path} for platform ${platformToInstall}`,
-      LogPrefix.Zoom
-    )
-    logInfo(`Installation path: ${path}`, LogPrefix.Zoom)
-
-    const gameInfo = this.getGameInfo()
-    if (!gameInfo || !gameInfo.folder_name) {
-      logError(`Game info not found for ${this.id}`, LogPrefix.Zoom)
-      return { status: 'error', error: 'Game info not found' }
-    }
-
-    const installPlatform =
-      platformToInstall.toLowerCase() as ZoomInstallPlatform
-    let finalInstallPlatform = installPlatform
-
-    // Fetch installer URL
-    const installers: ZoomDownloadFile[] = await libraryManagerMap[
-      'zoom'
-    ].getInstallers(installPlatform, this.id)
-    if (installers.length === 0 || !installers[0].url) {
-      logError(
-        `No installer found for ${this.id} on ${installPlatform}`,
-        LogPrefix.Zoom
-      )
-      return { status: 'error', error: 'No installer found' }
-    }
-
-    if (installPlatform === 'windows') {
-      const display = displayForInstaller()
-      if (!display.ok) {
-        logError(`Not downloading: ${display.reason}`, LogPrefix.Zoom)
-        return {
-          status: 'error',
-          error: `${display.reason}. Zoom's Windows installers open a window: start rakun from a desktop session and try again`
-        }
-      }
-    }
-
-    const installPath = join(path, gameInfo.folder_name)
-    const downloadRoot = join(path, '.zoom-download')
-
-    fs.mkdirSync(installPath, { recursive: true })
-
-    const totalSize = installers
-      .map((file) => parseSize(file.size))
-      .reduce((acc, num) => acc + num, 0)
+  /** Downloads each installer into `downloadRoot` (those already there are kept); `undefined` when all are in place */
+  private async downloadInstallers(
+    installers: ZoomDownloadFile[],
+    downloadRoot: string,
+    signal: AbortSignal,
+    totalSize: number
+  ): Promise<InstallResult | undefined> {
     let downloaded = 0
-
     for (const file of installers) {
       const downloadPath = join(downloadRoot, file.filename)
       let fileDownloaded = 0
@@ -261,10 +163,11 @@ export default class ZoomGame implements Game {
         LogPrefix.Zoom
       )
 
-      if (!existsSync(downloadPath)) {
+      if (!fs.existsSync(downloadPath)) {
         try {
           const response = await axios.get(file.url!, {
             responseType: 'stream',
+            signal,
             onDownloadProgress: (progressEvent: AxiosProgressEvent) => {
               let percent: undefined | number
               if (progressEvent.bytes) {
@@ -287,6 +190,7 @@ export default class ZoomGame implements Game {
 
           downloaded = downloaded + parseSize(file.size)
         } catch (error) {
+          if (signal.aborted) return { status: 'abort' }
           logError(['Failed to download installer:', error], LogPrefix.Zoom)
           return {
             status: 'error',
@@ -297,218 +201,11 @@ export default class ZoomGame implements Game {
         logDebug(`File already exists ${downloadPath}, skipping`)
       }
     }
+    return undefined
+  }
 
-    // Execute the installer
-    let installResult: ExecResult
-    const confFilesBefore: string[] = []
-    let executable: string = ''
-
-    if (installPlatform === 'linux') {
-      const downloadPath = join(installPath, installers[0].filename)
-
-      if (downloadPath.endsWith('.tar.xz')) {
-        logInfo(`Extracting ${downloadPath}...`, LogPrefix.Zoom)
-        installResult = await spawnAsync('tar', [
-          '-xf',
-          downloadPath,
-          '-C',
-          installPath
-        ])
-        let gamePath = installPath
-        const files = await fs.promises.readdir(installPath)
-        const gameDir = files.find((f) =>
-          fs.statSync(join(path, gameInfo.folder_name!, f)).isDirectory()
-        )
-        if (gameDir) {
-          gamePath = join(installPath, gameDir)
-        }
-
-        const exe = join(gamePath, 'start.sh')
-        if (existsSync(exe)) {
-          executable = exe
-          await fs.promises.chmod(executable, '755')
-        }
-      } else {
-        await fs.promises.chmod(executable, '755')
-        installResult = await spawnAsync(executable, [], {
-          cwd: installPath
-        })
-      }
-    } else {
-      const downloadPath = join(downloadRoot, installers[0].filename)
-      const protonPath = GlobalConfig.get().getProtonPath()
-      const zoomPlatformScript = helperFile(join('zoom', 'zoom-platform.sh'))
-      if (!protonPath) {
-        logWarning(
-          'No GE-Proton configured for Windows installer. Set it with: rakunctl config protonPath <folder>',
-          LogPrefix.Zoom
-        )
-        installResult = {
-          stdout: '',
-          stderr: 'No GE-Proton configured',
-          error: 'No GE-Proton configured'
-        }
-      } else if (!existsSync(zoomPlatformScript)) {
-        const error = `zoom-platform.sh is not installed (${zoomPlatformScript}). Run: rakunctl helpers update`
-        logError(error, LogPrefix.Zoom)
-        installResult = { stdout: '', stderr: error, error }
-      } else {
-        logInfo(
-          `Running zoom-platform.sh: PROTONPATH=${protonPath} ${zoomPlatformScript} -i ${downloadPath} -d ${installPath}`,
-          LogPrefix.Zoom
-        )
-        const scriptResult = await spawnAsync(
-          'bash',
-          [zoomPlatformScript, '-i', downloadPath, '-d', installPath],
-          {
-            env: { ...process.env, PROTONPATH: protonPath }
-          }
-        )
-        installResult = {
-          stdout: scriptResult.stdout,
-          stderr: scriptResult.stderr
-        }
-        if (scriptResult.code === 0) {
-          logInfo('Windows installer completed successfully', LogPrefix.Zoom)
-          finalInstallPlatform = 'windows'
-        } else {
-          logError(
-            ['Windows installer failed:', scriptResult.stderr],
-            LogPrefix.Zoom
-          )
-          installResult.error = `zoom-platform.sh failed (code ${scriptResult.code})`
-        }
-      }
-    }
-
-    if (installResult.error) {
-      logError(
-        ['Installer execution failed:', installResult.error],
-        LogPrefix.Zoom
-      )
-      await rm(downloadRoot, { recursive: true, force: true })
-      return {
-        status: 'error',
-        error: `Installer execution failed: ${installResult.error}`
-      }
-    }
-
-    await rm(downloadRoot, { recursive: true, force: true })
-
-    // After successful installation, we need to determine the actual executable path
-    let isDosbox = false
-    let finalExecutable = ''
-
-    if (installPlatform === 'windows') {
-      logInfo(`Searching for executable in ${installPath}`, LogPrefix.Zoom)
-
-      const confFilesAfter = await this.findConfFiles(installPath)
-      const newConfFiles = confFilesAfter.filter(
-        (f) => !confFilesBefore.includes(f)
-      )
-
-      if (newConfFiles.length > 0) {
-        const gameDirectory = dirname(newConfFiles[0])
-        const dosboxExePath = await this.findDosboxExecutable(gameDirectory)
-        if (dosboxExePath) {
-          isDosbox = true
-          finalExecutable = 'dosbox'
-          finalInstallPlatform = 'linux'
-          const sourceDir = gameDirectory
-          const destDir = join(path, gameInfo.folder_name)
-          logInfo(
-            `Copying DOSBox game files from ${sourceDir} to ${destDir}`,
-            LogPrefix.Zoom
-          )
-          const items = await fs.promises.readdir(sourceDir)
-          for (const item of items) {
-            await fs.promises.cp(join(sourceDir, item), join(destDir, item), {
-              recursive: true
-            })
-          }
-        }
-      }
-
-      if (!isDosbox) {
-        const findExes = async (dir: string): Promise<string[]> => {
-          let exes: string[] = []
-          try {
-            const list = await fs.promises.readdir(dir, { withFileTypes: true })
-            for (const file of list) {
-              const fullPath = join(dir, file.name)
-              if (file.isDirectory()) {
-                exes = exes.concat(await findExes(fullPath))
-              } else if (file.name.toLowerCase().endsWith('.exe')) {
-                exes.push(fullPath)
-              }
-            }
-          } catch (error) {
-            logError(
-              `Error finding .exe files in ${dir}: ${String(error)}`,
-              LogPrefix.Zoom
-            )
-          }
-          return exes
-        }
-        const exes = (await findExes(installPath))
-          .map((f) => relative(installPath, f))
-          .filter((name) => !/setup|unins|redist/i.test(name))
-
-        if (exes.length === 1) {
-          finalExecutable = exes[0]
-        } else if (exes.length > 1) {
-          const gameName = gameInfo.title
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, '')
-          const bestMatch = exes.find((exe) =>
-            exe
-              .toLowerCase()
-              .replace(/[^a-z0-9]/g, '')
-              .includes(gameName)
-          )
-          if (bestMatch) {
-            finalExecutable = bestMatch
-          } else {
-            let largestSize = 0
-            for (const exe of exes) {
-              const exePath = join(installPath, exe)
-              const stats = fs.statSync(exePath)
-              if (stats.size > largestSize) {
-                largestSize = stats.size
-                finalExecutable = exe
-              }
-            }
-          }
-        }
-      }
-    } else {
-      finalExecutable = executable
-    }
-    if (!finalExecutable) {
-      logError(['Could not find executable for', this.id], LogPrefix.Zoom)
-      showDialogBoxModalAuto({
-        title: 'Executable not found',
-        message:
-          'Rakun could not find the executable for this game. Please set it manually in the game settings.',
-        type: 'ERROR'
-      })
-      return { status: 'error', error: 'Executable not found' }
-    }
-
-    const installedData: InstalledInfo = {
-      platform: finalInstallPlatform,
-      executable: finalExecutable.replace('{app}', installPath),
-      install_path: installPath,
-      install_size: getFileSize(totalSize), // This might need to be the actual installed size, not just installer size
-      is_dlc: false,
-      version: '1.0', // Placeholder, ideally extracted from installer or API
-      appName: this.id,
-      installedDLCs: [],
-      language: installLanguage,
-      versionEtag: '',
-      buildId: '',
-      pinnedVersion: false
-    }
+  /** Saves the game as installed, in the installed list and in the library */
+  private recordInstalled(installedData: InstalledInfo) {
     installedGamesStore.set(
       'installed',
       upsertInstalled(installedGamesStore.get('installed', []), installedData)
@@ -526,15 +223,177 @@ export default class ZoomGame implements Game {
           .map((g) => (g.app_name === this.id ? libraryGame : g))
       )
     }
-
-    logInfo(`Installation of ${this.id} completed.`, LogPrefix.Zoom)
-    await onGameInstalled(this, installPath)
-    return { status: 'done' }
   }
 
-  async moveInstall(
-    newInstallPath: string
-  ): Promise<{ status: 'done' } | { status: 'error'; error: string }> {
+  /** Extracts or runs a native installer; the executable it leaves, or why it failed */
+  private async installNative(
+    installer: ZoomDownloadFile,
+    downloadRoot: string,
+    installPath: string,
+    signal: AbortSignal
+  ): Promise<{ executable: string } | InstallResult> {
+    const downloadPath = join(downloadRoot, installer.filename)
+    const run = (command: string, args: string[], options: SpawnOptions = {}) =>
+      spawnAsync(command, args, { ...options, signal }).catch((error) => {
+        if (!signal.aborted) throw error
+        return { code: null, stdout: '', stderr: 'Aborted' }
+      })
+
+    let installResult: ExecResult
+    let executable = ''
+    if (downloadPath.endsWith('.tar.xz')) {
+      logInfo(`Extracting ${downloadPath}...`, LogPrefix.Zoom)
+      installResult = await run('tar', ['-xf', downloadPath, '-C', installPath])
+      const files = await fs.promises.readdir(installPath)
+      const gameDir = files.find((f) =>
+        fs.statSync(join(installPath, f)).isDirectory()
+      )
+      const exe = join(
+        gameDir ? join(installPath, gameDir) : installPath,
+        'start.sh'
+      )
+      if (fs.existsSync(exe)) {
+        executable = exe
+        await fs.promises.chmod(executable, '755')
+      }
+    } else {
+      executable = downloadPath
+      await fs.promises.chmod(executable, '755')
+      installResult = await run(executable, [], { cwd: installPath })
+    }
+
+    // Aborted (paused): the downloaded installers stay, so resuming does not download them again
+    if (signal.aborted) return { status: 'abort' }
+    await fs.promises.rm(downloadRoot, { recursive: true, force: true })
+    if (installResult.error) {
+      logError(
+        ['Installer execution failed:', installResult.error],
+        LogPrefix.Zoom
+      )
+      return {
+        status: 'error',
+        error: `Installer execution failed: ${installResult.error}`
+      }
+    }
+    return { executable }
+  }
+
+  /** The installers of the platform, or why there are none */
+  private async installersFor(
+    platform: ZoomInstallPlatform
+  ): Promise<ZoomDownloadFile[] | InstallResult> {
+    const installers: ZoomDownloadFile[] = await libraryManagerMap[
+      'zoom'
+    ].getInstallers(platform, this.id)
+    if (installers.length > 0 && installers[0].url) return installers
+    logError(`No installer found for ${this.id} on ${platform}`, LogPrefix.Zoom)
+    return { status: 'error', error: 'No installer found' }
+  }
+
+  /**
+   * A Windows installer stays in the prefix for the runner (`.bat`): here it is
+   * only prepared, and run now when the mode is `interactive`. The executable
+   * of the record is the installer until the runner finds the game's.
+   */
+  private async prepareWindowsInstaller(
+    installer: ZoomDownloadFile,
+    installPath: string,
+    mode: InstallMode
+  ): Promise<{ executable: string } | InstallResult> {
+    writeZoomInstallerInf(zoomInstallerFolder(installPath))
+    if (mode === 'interactive') {
+      const { error } = await installZoomInteractively(
+        this.id,
+        installPath,
+        installer.filename
+      )
+      if (error) return { status: 'error', error }
+    }
+    return { executable: installer.filename }
+  }
+
+  async install({
+    path,
+    platformToInstall,
+    installLanguage,
+    installMode
+  }: InstallArgs): Promise<InstallResult> {
+    logInfo(
+      `Installing ${this.id} to ${path} for platform ${platformToInstall}`,
+      LogPrefix.Zoom
+    )
+    const gameInfo = this.getGameInfo()
+    if (!gameInfo?.folder_name) {
+      logError(`Game info not found for ${this.id}`, LogPrefix.Zoom)
+      return { status: 'error', error: 'Game info not found' }
+    }
+    const platform = platformToInstall.toLowerCase() as ZoomInstallPlatform
+    const installers = await this.installersFor(platform)
+    if (!Array.isArray(installers)) return installers
+
+    const installPath = join(path, gameInfo.folder_name)
+    const windows = platform === 'windows'
+    const downloadRoot = windows
+      ? zoomInstallerFolder(installPath)
+      : join(path, '.zoom-download')
+    fs.mkdirSync(installPath, { recursive: true })
+    // Pausing or cancelling aborts this controller (the queue calls it by game id)
+    const { signal } = createAbortController(this.id)
+    const totalSize = installers.reduce((sum, f) => sum + parseSize(f.size), 0)
+
+    const failed = await this.downloadInstallers(
+      installers,
+      downloadRoot,
+      signal,
+      totalSize
+    )
+    if (failed) return failed
+
+    const prepared = windows
+      ? await this.prepareWindowsInstaller(
+          installers[0],
+          installPath,
+          installModeOr(installMode)
+        )
+      : await this.installNative(
+          installers[0],
+          downloadRoot,
+          installPath,
+          signal
+        )
+    if (!('executable' in prepared)) return prepared
+    if (!prepared.executable) return this.noExecutable()
+
+    this.recordInstalled({
+      platform,
+      executable: prepared.executable,
+      install_path: installPath,
+      install_size: getFileSize(totalSize),
+      is_dlc: false,
+      version: '1.0', // Zoom's API gives no version
+      appName: this.id,
+      installedDLCs: [],
+      language: installLanguage,
+      versionEtag: '',
+      buildId: '',
+      pinnedVersion: false
+    })
+    logInfo(`Installation of ${this.id} completed.`, LogPrefix.Zoom)
+    return { status: 'done', installPath }
+  }
+
+  private noExecutable(): InstallResult {
+    logError(['Could not find executable for', this.id], LogPrefix.Zoom)
+    showDialogBoxModalAuto({
+      title: 'Executable not found',
+      message:
+        'Rakun could not find the executable for this game. Please set it manually in the game settings.',
+      type: 'ERROR'
+    })
+    return { status: 'error', error: 'Executable not found' }
+  }
+
+  async moveInstall(newInstallPath: string): Promise<InstallResult> {
     const gameInfo = this.getGameInfo()
     logInfo(`Moving ${gameInfo.title} to ${newInstallPath}`, LogPrefix.Zoom)
 
@@ -564,35 +423,55 @@ export default class ZoomGame implements Game {
     installedGamesStore.set('installed', array)
     void libraryManagerMap['zoom'].refresh()
 
-    await onGameMoved(this, moveResult.installPath)
-
-    return { status: 'done' }
+    return { status: 'done', installPath: moveResult.installPath }
   }
 
   async repair(): Promise<ExecResult> {
     logWarning(`Repair not implemented for Zoom: ${this.id}`, LogPrefix.Zoom)
-    return { stdout: '', stderr: 'Repair not implemented' }
+    // An error, so that nobody takes it for a repair that worked (Steam would be told)
+    const error = 'Repair is not supported for Zoom games'
+    return { stdout: '', stderr: error, error }
+  }
+
+  /**
+   * Drops the game from the installed list and from the saved library, so that
+   * it shows as not installed also after a restart that cannot reach Zoom.
+   */
+  private markUninstalled(array: InstalledInfo[]) {
+    installedGamesStore.set('installed', removeInstalled(array, this.id))
+    libraryManagerMap['zoom'].refreshInstalled()
+    const gameInfo = this.getGameInfo()
+    gameInfo.is_installed = false
+    gameInfo.install = { is_dlc: false }
+    libraryStore.set(
+      'games',
+      libraryStore
+        .get('games', [])
+        .map((g) => (g.app_name === this.id ? gameInfo : g))
+    )
+    sendFrontendMessage('pushGameToLibrary', gameInfo)
   }
 
   async uninstall(): Promise<ExecResult> {
     const array = installedGamesStore.get('installed', [])
     const object = array.find((game) => game.appName === this.id)
     if (!object) {
-      throw Error("Game isn't installed")
+      // The library says installed but the list does not know it: there is
+      // nothing to remove, only the stale mark to clear
+      logWarning(
+        `${this.id} is not in the installed list: clearing its mark`,
+        LogPrefix.Zoom
+      )
+      this.markUninstalled(array)
+      return { stdout: 'Uninstalled', stderr: '' }
     }
 
     logInfo(['Removing', object.install_path], LogPrefix.Zoom)
 
-    if (existsSync(object.install_path)) {
-      rmSync(object.install_path, { recursive: true })
+    if (fs.existsSync(object.install_path)) {
+      fs.rmSync(object.install_path, { recursive: true })
     }
-    installedGamesStore.set('installed', removeInstalled(array, this.id))
-    void libraryManagerMap['zoom'].refresh()
-    const gameInfo = this.getGameInfo()
-    gameInfo.is_installed = false
-    gameInfo.install = { is_dlc: false }
-    await onGameUninstalled(this)
-    sendFrontendMessage('pushGameToLibrary', gameInfo)
+    this.markUninstalled(array)
     return { stdout: 'Uninstalled', stderr: '' }
   }
 
@@ -602,23 +481,12 @@ export default class ZoomGame implements Game {
   }
 
   async forceUninstall(): Promise<void> {
-    const installed = installedGamesStore.get('installed', [])
-    const newInstalled = installed.filter((g) => g.appName !== this.id)
-    installedGamesStore.set('installed', newInstalled)
-    void libraryManagerMap['zoom'].refresh()
-    const gameInfo = this.getGameInfo()
-    gameInfo.is_installed = false
-    gameInfo.install = { is_dlc: false }
-    sendFrontendMessage('pushGameToLibrary', gameInfo)
+    this.markUninstalled(installedGamesStore.get('installed', []))
   }
 
   async stop(): Promise<void> {
-    logWarning(
-      `Stop not fully implemented for Zoom: ${this.id}`,
-      LogPrefix.Zoom
-    )
-    // For now, we don't have a specific process to stop for Zoom games
-    // If wine is used, it will be handled by the launcher's wine cleanup.
+    // Nothing to kill by name: pausing and cancelling go through the abort
+    // controller of the install (see install())
   }
 
   async isGameAvailable(): Promise<boolean> {
@@ -626,6 +494,6 @@ export default class ZoomGame implements Game {
     if (!info || !info.is_installed || !info.install.install_path) {
       return false
     }
-    return existsSync(info.install.install_path)
+    return fs.existsSync(info.install.install_path)
   }
 }

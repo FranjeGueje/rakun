@@ -71,7 +71,6 @@ describe('isBlockedFromNetwork', () => {
       'setSetting',
       'resetRakun',
       'stopRakun',
-      'steamgriddb.setApiKey',
       'getLogContent',
       'listFolders',
       'importGame',

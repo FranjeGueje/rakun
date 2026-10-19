@@ -1,0 +1,8 @@
+{
+  "helper": "legendary",
+  "case": "version",
+  "args": ["--version"],
+  "exit": 0,
+  "stdout": "legendary version \"0.21.1\", codename \"Lowlife\"\n",
+  "stderr": ""
+}

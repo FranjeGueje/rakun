@@ -5,7 +5,7 @@ jest.mock('backend/logger', () => ({
   logInfo: jest.fn(),
   logWarning: jest.fn()
 }))
-jest.mock('../electronStores', () => ({
+jest.mock('../stores', () => ({
   installStore: { get: jest.fn(), set: jest.fn() },
   libraryStore: { get: jest.fn(), set: jest.fn() }
 }))
@@ -39,6 +39,10 @@ jest.mock('fs', () => ({
 }))
 
 import NileLibraryManager from '../library'
+import { callRunner } from 'backend/runner_call'
+import { existsSync, readFileSync, writeFileSync } from 'fs'
+import { getNileBin } from 'backend/utils'
+import { clearSessionExpired, isSessionExpired } from '../../session_state'
 import { NileUser } from '../user'
 
 // The backend jest config sets resetMocks, so implementations have to be
@@ -104,5 +108,182 @@ describe('NileLibraryManager.refresh', () => {
       'read-installed',
       'read-library'
     ])
+  })
+})
+
+describe('NileLibraryManager and a token Amazon will not renew', () => {
+  let manager: NileLibraryManager
+
+  beforeEach(() => {
+    clearSessionExpired('nile')
+    jest.mocked(getNileBin).mockReturnValue({ dir: '/tmp', bin: 'nile' })
+    manager = new NileLibraryManager()
+    mockedIsLoggedIn.mockReturnValue({} as never)
+    jest.spyOn(manager, 'refreshInstalled').mockImplementation(() => undefined)
+    jest
+      .spyOn(manager, 'loadGamesInAccount')
+      .mockImplementation(() => undefined)
+  })
+
+  test('a command whose output says nile could not renew the token marks the session', async () => {
+    jest.mocked(callRunner).mockResolvedValue({
+      stdout: '',
+      stderr: 'ERROR [AUTH]:\t Failed to refresh the token {"error":"x"}'
+    })
+
+    await manager.runRunnerCommand(['library', 'sync'])
+
+    expect(isSessionExpired('nile')).toBe(true)
+  })
+
+  test('the same words over a dead connection do not', async () => {
+    jest.mocked(callRunner).mockResolvedValue({
+      stdout: '',
+      stderr:
+        'Failed to refresh the token\nrequests.exceptions.ConnectionError: Max retries exceeded'
+    })
+
+    await manager.runRunnerCommand(['library', 'sync'])
+
+    expect(isSessionExpired('nile')).toBe(false)
+  })
+
+  test('a library sync that goes through clears the mark', async () => {
+    jest.mocked(callRunner).mockResolvedValueOnce({
+      stdout: '',
+      stderr: 'Failed to refresh the token'
+    })
+    await manager.refresh()
+    expect(isSessionExpired('nile')).toBe(true)
+
+    jest.mocked(callRunner).mockResolvedValue({ stdout: '', stderr: '' })
+    await manager.refresh()
+
+    expect(isSessionExpired('nile')).toBe(false)
+  })
+})
+
+describe('NileLibraryManager.updateInstalledPathInJSON and a file it cannot read', () => {
+  // The config resets the mocks before each test: the file is there
+  beforeEach(() => {
+    jest.mocked(existsSync).mockReturnValue(true)
+  })
+
+  const update = (manager: NileLibraryManager) =>
+    (
+      manager as unknown as {
+        updateInstalledPathInJSON: (appName: string, path: string) => void
+      }
+    ).updateInstalledPathInJSON('g1', '/new/path')
+
+  test('installed.json is rewritten with the new path when it can be read', () => {
+    jest
+      .mocked(readFileSync)
+      .mockReturnValue(JSON.stringify([{ id: 'g1', path: '/old' }]))
+    const manager = new NileLibraryManager()
+
+    update(manager)
+
+    expect(writeFileSync).toHaveBeenCalledWith(
+      expect.stringContaining('installed.json'),
+      JSON.stringify([{ id: 'g1', path: '/new/path' }]),
+      'utf-8'
+    )
+  })
+
+  test('a file nile wrote in another shape is not written back empty', () => {
+    jest.mocked(readFileSync).mockReturnValue('{"not":"an array"}')
+    const manager = new NileLibraryManager()
+
+    update(manager)
+
+    expect(writeFileSync).not.toHaveBeenCalled()
+  })
+
+  test('nor is a file that is cut short', () => {
+    jest.mocked(readFileSync).mockReturnValue('[{"id":"g1","pa')
+    const manager = new NileLibraryManager()
+
+    update(manager)
+
+    expect(writeFileSync).not.toHaveBeenCalled()
+  })
+
+  test('a game that is not in it does not rewrite the file either', () => {
+    jest
+      .mocked(readFileSync)
+      .mockReturnValue(JSON.stringify([{ id: 'other', path: '/x' }]))
+    const manager = new NileLibraryManager()
+
+    update(manager)
+
+    expect(writeFileSync).not.toHaveBeenCalled()
+  })
+})
+
+describe('NileLibraryManager and output of nile that rakun does not know', () => {
+  const manager = () => {
+    const library = new NileLibraryManager()
+    mockedIsLoggedIn.mockReturnValue({} as never)
+    jest.mocked(getNileBin).mockReturnValue({ dir: '/tmp', bin: 'nile' })
+    return library
+  }
+
+  test('a list of updates in another shape is an error that names the command, not «no updates»', async () => {
+    jest.mocked(callRunner).mockResolvedValue({
+      stdout: '{"updates":["g1"]}',
+      stderr: '',
+      code: 0
+    })
+
+    await expect(manager().listUpdateableGames()).rejects.toThrow(
+      'list-updates'
+    )
+  })
+
+  test('a good list of updates comes back as it is', async () => {
+    jest.mocked(callRunner).mockResolvedValue({
+      stdout: '["g1","g2"]',
+      stderr: '',
+      code: 0
+    })
+
+    expect(await manager().listUpdateableGames()).toEqual(['g1', 'g2'])
+  })
+
+  test('a library.json that is not a list leaves the library as it was', () => {
+    jest.mocked(existsSync).mockReturnValue(true)
+    jest.mocked(readFileSync).mockReturnValue('{"games":[]}')
+    const library = manager()
+    const set = jest.spyOn(
+      (library as unknown as { library: Map<string, unknown> }).library,
+      'set'
+    )
+
+    expect(() => library.loadGamesInAccount()).not.toThrow()
+    expect(set).not.toHaveBeenCalled()
+  })
+
+  test('a game that is not in the shape rakun reads is left out, the others are kept', () => {
+    jest.mocked(existsSync).mockReturnValue(true)
+    jest.mocked(readFileSync).mockReturnValue(
+      JSON.stringify([
+        { product: { id: 'bad' } },
+        {
+          product: {
+            id: 'good',
+            title: 'Good',
+            productDetail: { details: {}, iconUrl: 'i' }
+          }
+        }
+      ])
+    )
+    const library = manager()
+
+    library.loadGamesInAccount()
+
+    const held = (library as unknown as { library: Map<string, unknown> })
+      .library
+    expect([...held.keys()]).toEqual(['good'])
   })
 })

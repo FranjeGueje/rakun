@@ -57,10 +57,9 @@ describe('the manifest', () => {
     for (const asset of ASSETS) expect(asset.sha256).toMatch(/^[0-9a-f]{64}$/)
   })
 
-  test('every helper that is downloaded from GitHub has its assets, except Zoom (a script)', () => {
-    for (const helper of HELPERS.filter((h) => h !== 'zoom-platform'))
+  test('every helper has its assets', () => {
+    for (const helper of HELPERS)
       expect(assetsOf(helper, ['x64', 'arm64']).length).toBeGreaterThan(0)
-    expect(assetsOf('zoom-platform', ['x64'])).toEqual([])
   })
 
   test('the Linux tools of the other architecture are not downloaded', () => {
@@ -82,9 +81,11 @@ describe('the manifest', () => {
       { root: 'bin', file: 'arm64/linux/legendary' },
       { root: 'win', file: 'legendary.exe' }
     ])
-    expect(expectedFiles('comet', 'x64').map((e) => e.file)).toContain(
-      'install-dummy-service.bat'
-    )
+    expect(expectedFiles('comet', 'x64').map((e) => e.file)).toEqual([
+      'comet.exe',
+      'GalaxyCommunication.exe',
+      'update-permissions.exe'
+    ])
   })
 })
 
@@ -120,15 +121,20 @@ describe('helperStates', () => {
     expect(byName.legendary.state).toBe('ok')
   })
 
-  test("Zoom's script is ok with whatever version it says: it cannot be told apart", () => {
+  test('butler is ok only with its program and the two libraries it loads from next to itself', () => {
     const l = layout()
     installAll(l)
-    recordTag(l.binRoot, 'zoom-platform', 'v9.9.9')
+    const state = () =>
+      helperStates(l, { arch: 'x64' }).find((s) => s.helper === 'butler')?.state
 
-    const zoom = helperStates(l, { arch: 'x64' }).find(
-      (s) => s.helper === 'zoom-platform'
-    )
-    expect(zoom).toMatchObject({ state: 'ok', installed: 'v9.9.9' })
+    expect(state()).toBe('ok')
+    for (const file of ['7z.so', 'libc7zip.so', 'butler']) {
+      const path = join(l.binRoot, 'x64', 'linux', 'butler', file)
+      const kept = readFileSync(path)
+      rmSync(path)
+      expect(state()).toBe('missing')
+      writeFileSync(path, kept)
+    }
   })
 
   test('the Linux tools of a full tarball count, with its tags', () => {
@@ -194,14 +200,10 @@ describe('installFromBundle', () => {
 describe('downloadHelpers', () => {
   const payload = Buffer.from('a binary')
 
-  /** Answers every url with `payload`, and the Zoom script with its own */
+  /** Answers every url with `payload` */
   function fakeFetch(body: Buffer = payload, status = 200) {
-    return jest.fn((url: string | URL | Request) =>
-      Promise.resolve(
-        String(url).includes('zoom-platform.sh')
-          ? new Response('INSTALLER_VERSION="2.0"\n')
-          : new Response(new Uint8Array(body), { status })
-      )
+    return jest.fn(() =>
+      Promise.resolve(new Response(new Uint8Array(body), { status }))
     ) as unknown as typeof fetch
   }
 
@@ -268,17 +270,12 @@ describe('downloadHelpers', () => {
 
   test('a failure does not stop the other helpers', async () => {
     const l = layout()
-    const progress: string[] = []
     const failures = await downloadHelpers(l, {
-      only: ['epic-integration', 'zoom-platform'],
-      fetchFn: fakeFetch(),
-      onProgress: (line) => progress.push(line)
+      only: ['epic-integration', 'nile'],
+      fetchFn: fakeFetch()
     })
 
-    expect(failures.map((f) => f.helper)).toEqual(['epic-integration'])
-    expect(existsSync(join(l.binRoot, 'zoom', 'zoom-platform.sh'))).toBe(true)
-    // The Zoom script has no pin: the version it says is the one noted
-    expect(readTags(l.binRoot)['zoom-platform']).toBe('2.0')
+    expect(failures.map((f) => f.helper)).toEqual(['epic-integration', 'nile'])
   })
 
   test('by default only what is missing or of another version is downloaded', async () => {

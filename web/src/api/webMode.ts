@@ -1,5 +1,5 @@
 /** rakun tells the page how the web was opened (a `<meta>` it adds to the page): `local`, `network` or `off` */
-export function readWebMode(): string | null {
+function readWebMode(): string | null {
   return (
     document.querySelector('meta[name="rakun-web"]')?.getAttribute('content') ??
     null

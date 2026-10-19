@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { AppSettings, HelperInfo, SettingKey } from '../api/types'
+import type { HelperInfo, SettingKey } from '../api/types'
 import type { Translate } from '../i18n'
 import { CloseButton } from './CloseButton'
 import { useLayer } from '../input/useInput'
-import { menuValue, type MenuEntry } from '../state/selectors'
+import {
+  menuValue,
+  type MenuEntry,
+  type MenuSettings
+} from '../state/selectors'
 import type { Actions } from '../state/useRakun'
 import { Accounts } from './Accounts'
 import { FolderPicker } from './FolderPicker'
@@ -47,11 +51,15 @@ export function Menu({
 }) {
   const [focus, setFocus] = useState(0)
   const [open, setOpen] = useState<Entry | null>(null)
-  const [settings, setSettings] = useState<AppSettings | null>(null)
+  const [settings, setSettings] = useState<MenuSettings | null>(null)
   const [version, setVersion] = useState('')
 
   const load = useCallback(async () => {
-    setSettings(await window.rakun.call('requestAppSettings'))
+    const [current, hasSteamGridDbKey] = await Promise.all([
+      window.rakun.call('requestAppSettings'),
+      window.rakun.call('steamgriddb.hasApiKey')
+    ])
+    setSettings({ ...current, hasSteamGridDbKey: !!hasSteamGridDbKey })
   }, [])
   useEffect(() => {
     load().catch(() => undefined)
@@ -145,7 +153,7 @@ export function Menu({
       {open === 'steamGridDb' && settings && (
         <TextField
           title={title}
-          initial={settings.steamGridDbApiKey}
+          initial=""
           t={t}
           intro={
             <>

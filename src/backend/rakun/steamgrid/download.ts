@@ -39,11 +39,7 @@ export async function downloadGrids(
 }
 
 function getApiKey(): string | null {
-  const stored = GlobalConfig.get().getSettings().steamGridDbApiKey
-  // A stray "sgdb:v1:..." value is a leftover from the brief window where
-  // this was encrypted (see steamgrid/ipc_handler.ts); it isn't a usable key.
-  if (!stored || stored.startsWith('sgdb:v1:')) return null
-  return stored
+  return GlobalConfig.get().getSettings().steamGridDbApiKey || null
 }
 
 async function fetchGridImages(apiKey: string, gameId: number) {

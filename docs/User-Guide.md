@@ -1,6 +1,6 @@
 # User guide
 
-Everyday tasks. Every example has a button in the web as well; the command is the same thing from the terminal. Stores are `epic`, `gog`, `amazon` and `zoom`.
+Everyday tasks. Every example has a button in the web as well; the command is the same thing from the terminal. Stores are `epic`, `gog`, `amazon`, `zoom` and `itch`.
 
 ## Library
 
@@ -35,7 +35,7 @@ rakunctl install gog <appName> --build ID       # or --branch NAME
 rakunctl update gog <appName> --build ID        # move an installed game
 ```
 
-A pinned version is not moved by a plain `rakunctl update`. Epic, Amazon and Zoom always use the latest.
+A pinned version is not moved by a plain `rakunctl update`. Epic, Amazon, Zoom and itch.io always use the latest.
 
 ### A game that is already on the disk
 
@@ -43,7 +43,7 @@ A pinned version is not moved by a plain `rakunctl update`. Epic, Amazon and Zoo
 rakunctl import gog <appName> /path/to/folder [--platform windows|linux]
 ```
 
-Registers it without downloading it and adds it to Steam. Not available for Zoom.
+Registers it without downloading it and adds it to Steam. Not available for Zoom or itch.io.
 
 ## Update, repair, uninstall
 
@@ -69,9 +69,11 @@ rakunctl cancel [--remove-files] # --remove-files deletes what was fetched
 rakunctl queue clear             # empty the finished list
 ```
 
+On itch.io, pausing or cancelling stops butler and removes what it had written; resuming starts that download again from the beginning, because butler keeps nothing of a cancelled install.
+
 ## Steam covers
 
-Covers (header, portrait, hero, logo, icon) come from SteamGridDB and need your own key: paste it in the web settings, or call `rakunctl call steamgriddb.setApiKey '["YOUR_KEY"]'`. Without a key rakun adds the game to Steam without images. A game installed before setting the key needs a `repair` to get them.
+Covers (header, portrait, hero, logo, icon) come from SteamGridDB and need your own key: paste it in the web settings, or call `rakunctl config steamGridDbApiKey YOUR_KEY`. Without a key rakun adds the game to Steam without images. A game installed before setting the key needs a `repair` to get them.
 
 ## The web
 

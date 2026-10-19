@@ -113,54 +113,41 @@ export async function callRunner(
       signal: abortController.signal
     })
 
-    const stdout = memoryLog()
+    // stdout is parsed (JSON): it is kept whole and as it came. Of stderr, the
+    // progress of a download, only the last chunks matter
+    const stdout: string[] = []
     const stderr = memoryLog()
 
-    child.stdout.setEncoding('utf-8')
-    child.stdout.on('data', (data: string) => {
+    const forward = (data: string) => {
       const stringToLog = options?.logSanitizer
         ? options.logSanitizer(data)
         : data
-
       options?.logWriters?.forEach((writer) => writer.writeString(stringToLog))
+      options?.onOutput?.(data, child)
+    }
 
-      if (options?.onOutput) {
-        options.onOutput(data, child)
-      }
-
-      stdout.push(data.trim())
+    child.stdout.setEncoding('utf-8')
+    child.stdout.on('data', (data: string) => {
+      forward(data)
+      stdout.push(data)
     })
 
     child.stderr.setEncoding('utf-8')
     child.stderr.on('data', (data: string) => {
-      const stringToLog = options?.logSanitizer
-        ? options.logSanitizer(data)
-        : data
-
-      options?.logWriters?.forEach((writer) => writer.writeString(stringToLog))
-
-      if (options?.onOutput) {
-        options.onOutput(data, child)
-      }
-
-      stderr.push(data.trim())
+      forward(data)
+      stderr.push(data)
     })
 
     child.on('close', (code, signal) => {
-      void errorHandler(
-        `${stdout.join().concat(stderr.join())}`,
-        appName,
-        runner.name
-      )
+      const output = stdout.join('').trim()
+      const errors = stderr.join().trim()
+      void errorHandler(`${output}${errors}`, appName, runner.name)
 
       if (signal && !child.killed) {
         rej(new Error(`Process terminated with signal ${signal}`))
       }
 
-      res({
-        stdout: stdout.join(),
-        stderr: stderr.join('\n')
-      })
+      res({ stdout: output, stderr: errors, code })
     })
 
     child.on('error', (error) => {
@@ -169,8 +156,14 @@ export async function callRunner(
   })
 
   promise = promise
-    .then(({ stdout, stderr }) => {
-      return { stdout, stderr, fullCommand: safeCommand }
+    .then(({ stdout, stderr, code }) => {
+      if (code) {
+        logWarning(
+          ['Command exited with code', code, `"${safeCommand}"`],
+          runner.logPrefix
+        )
+      }
+      return { stdout, stderr, code, fullCommand: safeCommand }
     })
     .catch((error) => {
       if (abortController.signal.aborted) {
@@ -214,6 +207,32 @@ export async function callRunner(
   return promise
 }
 
+const POWERSHELL_SENSITIVE_ARGS = [
+  '--code',
+  '--token',
+  '--code-verifier',
+  '--serial',
+  '--client-id'
+]
+
+// A flag that carries a secret, by what it is called: a helper that renames or
+// adds one (--refresh-token, --code=…) must not start to show it in the log
+const SENSITIVE_FLAG =
+  /^--[\w-]*(?:token|secret|code|serial|client-id|password|verifier)[\w-]*(=.*)?$/i
+
+/** Hides the value of every sensitive flag, written `--flag value` or `--flag=value` */
+function redactSensitiveFlags(command: string[]) {
+  command.forEach((part, index) => {
+    const match = SENSITIVE_FLAG.exec(part)
+    if (!match) return
+    if (match[1] !== undefined) {
+      command[index] = `${part.slice(0, part.indexOf('='))}=<redacted>`
+    } else if (index + 1 < command.length) {
+      command[index + 1] = '<redacted>'
+    }
+  })
+}
+
 function getRunnerCallWithoutCredentials(
   command: string[] | LegendaryCommand,
   env: Record<string, string> | NodeJS.ProcessEnv = {},
@@ -223,8 +242,8 @@ function getRunnerCallWithoutCredentials(
     command = libraryManagerMap['legendary'].commandToArgsArray(command)
 
   const modifiedCommand = [...command]
-  for (const sensitiveArg of ['--code', '--token']) {
-    if (runnerPath === 'powershell') {
+  if (runnerPath === 'powershell') {
+    for (const sensitiveArg of POWERSHELL_SENSITIVE_ARGS) {
       const argumentListIndex = modifiedCommand.indexOf('-ArgumentList') + 1
       if (!argumentListIndex) continue
       modifiedCommand[argumentListIndex] = modifiedCommand[
@@ -233,13 +252,9 @@ function getRunnerCallWithoutCredentials(
         new RegExp(`"${sensitiveArg}","(.*?)"`),
         `"${sensitiveArg}","<redacted>"`
       )
-    } else {
-      const sensitiveArgIndex = modifiedCommand.indexOf(sensitiveArg)
-      if (sensitiveArgIndex === -1) {
-        continue
-      }
-      modifiedCommand[sensitiveArgIndex + 1] = '<redacted>'
     }
+  } else {
+    redactSensitiveFlags(modifiedCommand)
   }
 
   const formattedEnvVars: string[] = []

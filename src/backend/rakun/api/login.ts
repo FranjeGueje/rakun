@@ -3,6 +3,7 @@ import type { LoginResult } from 'common/rakun/login'
 import { addHandler } from 'backend/ipc'
 import { logError, LogPrefix } from 'backend/logger'
 import { getStore } from 'backend/storeManagers'
+import { clearSessionExpired } from 'backend/storeManagers/session_state'
 import { extractLoginCode } from './login_input'
 import { startRefresh } from './refresh'
 
@@ -17,13 +18,14 @@ async function submitLogin(
   }
 
   try {
-    const result = await login.submit(code)
+    const result = await login.submit(code, pasted)
     if (!result.ok) return result
   } catch (error) {
     logError([`Login to ${runner} failed:`, error], LogPrefix.Backend)
     return { ok: false, error: String(error) }
   }
 
+  clearSessionExpired(runner)
   startRefresh(runner)
   return { ok: true }
 }

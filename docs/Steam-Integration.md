@@ -1,8 +1,6 @@
 # Steam integration
 
-How a finished install becomes a game in Steam. rakun never launches games: Steam does.
-
-rakun never launches games. Every game is added to Steam as a non-Steam shortcut, and the user launches everything from Steam.
+How a finished install becomes a game in Steam. rakun never launches games: every game is added to Steam as a non-Steam shortcut, and the user launches everything from Steam.
 
 ## Installation flow
 
@@ -15,7 +13,7 @@ Game install completed
   No
   │
   ▼
-  ┌─ is it a Linux native game? (GOG)
+  ┌─ is it a Linux native game? (GOG, Zoom, itch.io)
   │
   ├── Yes (Linux native) ──────────────────────── No (Windows/Proton)
   │                                                  │
@@ -85,21 +83,21 @@ call "C:\Launchers\scripts\Launcher_games.bat" %*
 exit /b %errorlevel%
 ```
 
-The file also sets `GAMENAME`, the title of the game as a file name (it names the log, see below). A GOG game also sets `GAMEFOLDER` (its folder in `c:\games`) and `GOGUSER` (the user Comet logs in with). The runner, `Launcher_games.bat` (**FranjeGueje runner**, with its version on the first line it prints), sets the environment, jumps to the block of the store (`legendary`, `gog` or `nile`), checks its tools and launches the game through the store's CLI. rakun writes it into `mount/scripts/` at every start, so a new version reaches every game without regenerating their `.bat` files. The EOS Overlay script lives next to it.
+The file also sets `GAMENAME`, the title of the game as a file name (it names the log, see below). A GOG game also sets `GAMEFOLDER` (its folder in `c:\games`) and `GOGUSER` (the user Comet logs in with). An itch.io game has no tool of its own to run it, so its `IDGAME` is its executable, `<folder>\<path>` under `c:\games` (for example `pacapong\pacapong.exe`): the `itch` block of the runner checks that it is there, goes to its folder and runs it, waiting for it to close. An update of the game that moves the executable makes rakun write the `.bat` again. The runner, `Launcher_games.bat` (**FranjeGueje runner**, with its version on the first line it prints), sets the environment and calls the script of the store (`store_legendary.bat`, `store_gog.bat`, `store_nile.bat`, `store_itch.bat` or `store_zoom.bat`), which checks its tools and launches the game through the store's CLI. rakun writes them into `mount/scripts/` at every start, so a new version reaches every game without regenerating their `.bat` files. The EOS Overlay script lives next to it.
 
 ### Runner options: `Launcher_games.ini`
 
 The `.bat` of each game does not change when rakun updates, so the options of the runner live in `~/.local/share/rakun/mount/scripts/Launcher_games.ini` (`C:\Launchers\scripts\Launcher_games.ini` inside a prefix). rakun creates it the first time it starts and **never overwrites it**, unlike the runner, which it rewrites at every start. A plain `key=value` file: `#` starts a comment, there are no sections and no spaces around the value. Edit it and the next launch of a game uses it; there is no need to restart rakun. A key that is missing keeps its default, so a new version of rakun can add keys without breaking your file.
 
-| Key             | Default | What it does                                                                                                                                    |
-| --------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SHOW_HEADER`   | `1`     | Prints the name and version of the runner (`FranjeGueje runner v1`) at the start. `0` hides it.                                                 |
-| `SHOW_VERSIONS` | `0`     | Prints the versions of `comet`, `gogdl` and `nile` and the status of `legendary` before the game. Each one starts a Wine process: it is slower. |
-| `LOG_TO_FILE`   | `0`     | `1` sends the whole output of the runner to `mount/logs/<game name>.log` (overwritten at each launch) and the window shows nothing.             |
+| Key             | Default | What it does                                                                                                                                                        |
+| --------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SHOW_HEADER`   | `1`     | Prints the name and version of the runner (`FranjeGueje runner v1`) at the start. `0` hides it.                                                                     |
+| `SHOW_VERSIONS` | `0`     | Prints the versions of `comet`, `gogdl` and `nile` and the status of `legendary` before the game. Each one starts a Wine process: it is slower.                     |
+| `LOG_TO_FILE`   | `0`     | `1` sends the whole output of the runner to `C:\logs\<game name>.log`, a folder of the game's own prefix (overwritten at each launch) and the window shows nothing. |
 
 The log is named after the game's title, with `\ / : * ? " < > | %` replaced by `_`. A game added before this option existed has no `GAMENAME` and its log is `<store>-<id>.log`; repairing the game regenerates its `.bat` with the name.
 
-For Linux native GOG games, there is no `.bat`. rakun uses the `start.sh` script that GOG ships with the game. Steam runs the shell script natively.
+For Linux native GOG games, there is no `.bat`. rakun uses the `start.sh` script that GOG ships with the game. Steam runs the shell script natively. Zoom's Linux games ship a `start.sh` too. For Linux native itch.io games rakun writes that `start.sh` itself: it goes to the folder of the executable that butler found and runs it.
 
 ## Symlink structure
 
@@ -125,6 +123,8 @@ drive_c/Launchers/  → ~/.local/share/rakun/mount/
 drive_c/games/  → ~/.local/share/rakun/games/
 ```
 
+A Zoom Windows game is the exception: its installer builds the prefix inside the game's own folder, so `compatdata/<steamAppId>` is a symlink to that folder (through `~/.local/share/rakun/games/<name>`), and uninstalling the game removes that link.
+
 If a GE-Proton is available, rakun runs `umu-run exit` to initialize the prefix. The `protonPath` setting empty means **automatic**: the first `*proton*` folder of `~/.local/share/Steam/compatibilitytools.d` that exists _when it is needed_ (so a GE-Proton installed after rakun was first run is found too). Without any, the prefix is left as plain folders and Steam's Proton creates it on the first launch.
 
 > [!IMPORTANT]
@@ -134,7 +134,7 @@ If a GE-Proton is available, rakun runs `umu-run exit` to initialize the prefix.
 
 rakun uses the `steam://addnonsteamgame/` protocol to add games to Steam. It never writes directly to `shortcuts.vdf`. The process:
 
-1. Writes a temporary `.desktop` in `/tmp` (`Name` = game title, `Exec` = runner path) so the shortcut gets the game's name instead of the runner's filename, then opens `steam://addnonsteamgame/<desktop-path>` via xdg-open
+1. Writes a temporary `.desktop` in `/tmp` (`Name` = game title, `Exec` = runner path) so the shortcut gets the game's name instead of the runner's filename, then opens `steam://addnonsteamgame/<desktop-path>` with `gio open` (`xdg-open` as the fallback)
 2. Steam adds the shortcut by itself, with no dialog
 3. rakun polls `shortcuts.vdf` every 1.5s for up to 15s, looking for a shortcut whose `Exe` is the runner
 4. Once it appears, it reads the assigned `steamAppId`
@@ -163,7 +163,7 @@ If the repair completes without error, rakun repeats the whole Steam integration
 
 When a game is uninstalled, rakun:
 
-1. Deletes the `.bat` runner file (Windows games only)
+1. Deletes the `.bat` runner file (Windows games only; itch.io Windows games too)
 2. Removes the symlink from `~/.local/share/rakun/games/`
 3. Removes the Zoom prefix symlink (Zoom games only)
 4. Deletes all 5 grid artwork files

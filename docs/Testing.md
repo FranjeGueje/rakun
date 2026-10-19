@@ -37,13 +37,13 @@ With rakun installed, `rakunctl` (or `pnpm start:ctl` from the repository) saves
 | start / stop rakun                 | `rakunctl start` / `rakunctl stop [--force]`                                                                                  |
 | choose web and port                | `rakunctl start --web local\|network\|off --port N` (or `config webAccess`)                                                   |
 | see if it is alive                 | `rakunctl status` (says "rakun is stopped" if it is not)                                                                      |
-| log in                             | `rakunctl login gog` (epic, gog, amazon, zoom)                                                                                |
+| log in                             | `rakunctl login gog` (epic, gog, amazon, zoom, itch)                                                                          |
 | list the library                   | `rakunctl library [store] [--installed]`                                                                                      |
 | refresh it and wait                | `rakunctl refresh [store]`                                                                                                    |
 | install                            | `rakunctl install gog <appName> [--path DIR] [--lang CODE] [--skip-dlcs] [--platform windows\|linux]`                         |
 | see / download the helper binaries | `rakunctl helpers` / `rakunctl helpers update [--latest]` (the pinned versions, checked by sha256; `--latest` is not checked) |
 | list the versions of a game        | `rakunctl versions gog <appName>` (GOG only: builds, branches, the current one marked)                                        |
-| import a game from a folder        | `rakunctl import <store> <appName> <folder> [--platform windows\|linux]` (not Zoom)                                           |
+| import a game from a folder        | `rakunctl import <store> <appName> <folder> [--platform windows\|linux]` (not Zoom or itch)                                   |
 | update rakun itself                | `rakunctl self-update [--check] [--force]` (only an install made by `install.sh`; x64)                                        |
 | update                             | `rakunctl update [store [appName]]`: one game, a store's games or every game with a new version (Zoom is not updated)         |
 | repair                             | `rakunctl repair <store> <appName>`                                                                                           |
@@ -84,7 +84,7 @@ It must show the version, the queue as `idle`, the library (`[]` if there is no 
 Ask for the login URL and open it in the browser:
 
 ```bash
-scripts/smoke.sh getLoginInfo '["gog"]'     # also: legendary, nile, zoom (see getStores)
+scripts/smoke.sh getLoginInfo '["gog"]'     # also: legendary, nile, zoom, itch (see getStores)
 ```
 
 Log in and paste what the browser leaves at the end:
@@ -95,12 +95,13 @@ scripts/smoke.sh submitLogin '["gog","https://embed.gog.com/on_login_success?...
 
 It must answer `{"result":{"ok":true}}`.
 
-| Store              | What to paste                                             |
-| ------------------ | --------------------------------------------------------- |
-| `legendary` (Epic) | the JSON the page shows (or just the `authorizationCode`) |
-| `gog`              | the final address, even if the page looks blank           |
-| `nile` (Amazon)    | the final address; call `getLoginInfo '["nile"]'` first   |
-| `zoom`             | the final address with `li_token`, or the bare token      |
+| Store              | What to paste                                                                                             |
+| ------------------ | --------------------------------------------------------------------------------------------------------- |
+| `legendary` (Epic) | the JSON the page shows (or just the `authorizationCode`)                                                 |
+| `gog`              | the final address, even if the page looks blank                                                           |
+| `nile` (Amazon)    | the final address; call `getLoginInfo '["nile"]'` first                                                   |
+| `zoom`             | the final address with `li_token`, or the bare token                                                      |
+| `itch`             | nothing: authorize in the browser and it comes back by itself (or paste the final address, or an API key) |
 
 Check the session:
 
@@ -166,22 +167,25 @@ Without a SteamGridDB key rakun does not download the images when it adds a game
 
 ```bash
 scripts/smoke.sh steamgriddb.hasApiKey                  # {"result":false} if missing
-scripts/smoke.sh steamgriddb.setApiKey '["YOUR_KEY"]'
+scripts/smoke.sh setSetting '[{"key":"steamGridDbApiKey","value":"YOUR_KEY"}]'
+scripts/smoke.sh requestAppSettings | grep -o '"steamGridDbApiKey":"[^"]*"'   # always "": the key is never sent back
 ```
 
-A game installed before setting the key has to be reinstalled to get them.
+A game installed before setting the key needs a `repair` to get them.
 
 ## 6. Uninstall, repair and other actions
 
 ```bash
-scripts/smoke.sh uninstall "[\"$APP\",\"$RUNNER\",false]"   # true also deletes the game's folder
+scripts/smoke.sh uninstall "[\"$APP\",\"$RUNNER\",false]"   # the store deletes the files; true also removes what it leaves in the folder
 scripts/smoke.sh repair "[\"$APP\",\"$RUNNER\"]"
 scripts/smoke.sh kill "[\"$APP\",\"$RUNNER\"]"            # aborts whatever it is doing
 scripts/smoke.sh pauseCurrentDownload
 scripts/smoke.sh resumeCurrentDownload
 ```
 
-Zoom (experimental): **Windows** games open the installer wizard in a window, so rakun has to be started with a screen (desktop mode) and with `protonPath` set; without them the install ends in error. rakun checks it **before downloading** (with no `DISPLAY`, with the graphical server down or in game mode it fails at once and `rakunctl install` says why); it is a best-effort check: after switching between desktop and game mode, restart rakun. The Linux ones do not need a screen.
+Zoom (experimental): **Windows** games open the installer wizard in a window, and there are two ways to run it (`rakunctl install zoom <id> --mode interactive|steam`; steam is the default). **Interactive**: rakun runs the installer now, so it has to be started with a screen (desktop mode) and with `protonPath` set; without them the install ends in error, and the installer stays downloaded to try again. **steam**: rakun only downloads the installer and adds the game to Steam; the first Play opens the wizard (choose GE-Proton in the game's Steam properties first), and the Play after that starts the game. Cancelling the wizard keeps the installer for another try. The Linux games do not need a screen.
+
+With `true`, rakun also removes what the store left in the game's folder (Epic and Amazon leave what the game wrote there), but never the install folder, the home folder or one that holds them.
 
 A shortcut added to Steam is **not removed** on uninstall: remove it by hand from the Steam library.
 

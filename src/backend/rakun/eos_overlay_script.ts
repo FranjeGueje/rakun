@@ -1,4 +1,4 @@
-import { missingTool, section } from './runner_script'
+import { missingTool, section } from './runner/bat'
 
 export const EOS_OVERLAY_NAME = 'FranjeGueje EOS Overlay Installer'
 export const EOS_OVERLAY_VERSION = 1

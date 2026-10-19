@@ -201,6 +201,25 @@ button {
   height: 100%;
 }
 
+/* A picture of another shape than the box is shown whole, over a blurred copy of itself: nothing is stretched or zoomed */
+.coverBox.whole {
+  position: relative;
+  overflow: hidden;
+}
+
+.coverBox.whole::before {
+  content: '';
+  position: absolute;
+  inset: -12%;
+  background: var(--art) center / cover;
+  filter: blur(18px) brightness(0.55);
+}
+
+.coverBox.whole img {
+  position: relative;
+  object-fit: contain;
+}
+
 .noImage {
   display: grid;
   place-items: center;
@@ -513,6 +532,10 @@ kbd {
   color: inherit;
   font: inherit;
   cursor: pointer;
+}
+
+.loginWay {
+  margin-bottom: 14px;
 }
 
 .loginLink {

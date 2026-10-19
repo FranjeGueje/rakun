@@ -1,25 +1,55 @@
-import type { StatusPromise } from 'common/types'
+import type { Runner, StatusPromise } from 'common/types'
 import { existsSync, watch } from 'fs'
 import { addHandler, addListener } from 'backend/ipc'
 import { GlobalConfig } from 'backend/config'
-import { isEpicServiceOffline, sendGameStatusUpdate } from 'backend/utils'
+import { sendGameStatusUpdate } from 'backend/utils'
+import { isRefused } from 'backend/storeManagers/preflight'
+import { libraryOf } from 'backend/storeManagers/library_of'
 import { uninstallGameCallback } from 'backend/utils/uninstaller'
-import { logError, logInfo, LogPrefix, logWarning } from 'backend/logger'
+import {
+  logError,
+  logInfo,
+  LogPrefix,
+  logWarning,
+  RunnerToLogPrefixMap
+} from 'backend/logger'
 import { isOnline } from 'backend/online_monitor'
 import { showDialogBoxModalAuto } from 'backend/dialog/dialog'
 import { callAbortController } from 'backend/utils/aborthandler/aborthandler'
 import { autoUpdate, libraryManagerMap } from 'backend/storeManagers'
 import { legendaryInstalled } from 'backend/storeManagers/legendary/constants'
-import { onGameRepaired } from 'backend/rakun/game_events'
+import {
+  onGameInstalled,
+  onGameMoved,
+  onGameRepaired
+} from 'backend/rakun/game_events'
 import { refreshingRunners, startRefresh } from './refresh'
+import { shareInFlight } from 'backend/utils/inflight'
 
-addHandler('checkGameUpdates', async (): Promise<string[]> => {
+/** The web asks again each time a store reports a refresh: those asking while a check runs share it */
+const updateChecks = new Map<string, Promise<string[]>>()
+
+addHandler('checkGameUpdates', () =>
+  shareInFlight(updateChecks, 'all', checkGameUpdates)
+)
+
+async function checkGameUpdates(): Promise<string[]> {
   let oldGames: string[] = []
   const { autoUpdateGames } = GlobalConfig.get().getSettings()
   for (const runner of Object.keys(
     libraryManagerMap
   ) as (keyof typeof libraryManagerMap)[]) {
-    let gamesToUpdate = await libraryManagerMap[runner].listUpdateableGames()
+    // A store whose helper answers in a way rakun does not know has nothing to
+    // update for now: the stores after it are still asked
+    let gamesToUpdate: string[] = []
+    try {
+      gamesToUpdate = await libraryOf(runner).listUpdateableGames()
+    } catch (error) {
+      logError(
+        [`Could not list the updates of ${runner}:`, error],
+        LogPrefix.Backend
+      )
+    }
     if (autoUpdateGames) {
       gamesToUpdate = await autoUpdate(runner, gamesToUpdate)
     }
@@ -27,22 +57,25 @@ addHandler('checkGameUpdates', async (): Promise<string[]> => {
   }
 
   return oldGames
-})
+}
 
 addHandler('isGameAvailable', async (e, args) => {
   const { appName, runner } = args
-  return libraryManagerMap[runner].getGame(appName).isGameAvailable()
+  return libraryOf(runner).getGame(appName).isGameAvailable()
 })
 
-addHandler('getGameInfo', (event, appName, runner) => {
-  // Fastpath since we sometimes have to request info for a GOG game as Legendary because we don't know it's a GOG game yet
-  if (
-    runner === 'legendary' &&
-    !libraryManagerMap['legendary'].hasGame(appName)
-  ) {
-    return null
-  }
-  const tempGameInfo = libraryManagerMap[runner].getGame(appName).getGameInfo()
+/**
+ * A fast «no» for an id of another store: a client may ask for a GOG game as
+ * Legendary because it does not know yet which store it is
+ */
+const notInStore = (runner: Runner, appName: string) =>
+  libraryOf(runner).hasGame?.(appName) === false
+
+addHandler('getGameInfo', async (event, appName, runner) => {
+  if (notInStore(runner, appName)) return null
+  // A game that is in none of the user's lists (itch.io) is added by its id
+  await libraryOf(runner).ensureGame?.(appName)
+  const tempGameInfo = libraryOf(runner).getGame(appName).getGameInfo()
   // The game managers return an empty object if they couldn't fetch the game
   // info, since most of the backend assumes getting it can never fail (and
   // an empty object is a little easier to work with than `null`)
@@ -53,14 +86,8 @@ addHandler('getGameInfo', (event, appName, runner) => {
 })
 
 addHandler('getExtraInfo', async (event, appName, runner) => {
-  // Fastpath since we sometimes have to request info for a GOG game as Legendary because we don't know it's a GOG game yet
-  if (
-    runner === 'legendary' &&
-    !libraryManagerMap['legendary'].hasGame(appName)
-  ) {
-    return null
-  }
-  return libraryManagerMap[runner].getGame(appName).getExtraInfo()
+  if (notInStore(runner, appName)) return null
+  return libraryOf(runner).getGame(appName).getExtraInfo()
 })
 
 addHandler('getGOGLinuxInstallersLangs', async (event, appName) =>
@@ -71,7 +98,7 @@ addHandler(
   'getInstallInfo',
   async (event, appName, runner, installPlatform, build, branch) => {
     try {
-      const info = await libraryManagerMap[runner].getInstallInfo(
+      const info = await libraryOf(runner).getInstallInfo(
         appName,
         installPlatform,
         {
@@ -82,14 +109,7 @@ addHandler(
       if (info === undefined) return null
       return info
     } catch (error) {
-      logError(
-        error,
-        runner === 'legendary'
-          ? LogPrefix.Legendary
-          : runner === 'nile'
-            ? LogPrefix.Nile
-            : LogPrefix.Gog
-      )
+      logError(error, RunnerToLogPrefixMap[runner])
       return null
     }
   }
@@ -126,6 +146,7 @@ addHandler('repair', async (event, appName, runner) => {
     )
     return
   }
+  if (await isRefused(runner, 'repair', appName)) return
 
   sendGameStatusUpdate({
     appName,
@@ -133,7 +154,7 @@ addHandler('repair', async (event, appName, runner) => {
     status: 'repairing'
   })
 
-  const game = libraryManagerMap[runner].getGame(appName)
+  const game = libraryOf(runner).getGame(appName)
 
   try {
     const res = await game.repair()
@@ -161,9 +182,8 @@ addHandler(
       status: 'moving'
     })
 
-    const moveRes = await libraryManagerMap[runner]
-      .getGame(appName)
-      .moveInstall(path)
+    const game = libraryOf(runner).getGame(appName)
+    const moveRes = await game.moveInstall(path)
     if (moveRes.status === 'error') {
       logError(
         `Error while moving ${appName} to ${path}: ${moveRes.error} `,
@@ -179,6 +199,13 @@ addHandler(
 
     if (moveRes.status === 'done') {
       logInfo(`Finished moving ${appName} to ${path}.`, LogPrefix.Backend)
+      if (moveRes.installPath) {
+        try {
+          onGameMoved(game, moveRes.installPath)
+        } catch (err) {
+          logError(err, LogPrefix.Backend)
+        }
+      }
     }
 
     sendGameStatusUpdate({
@@ -192,20 +219,9 @@ addHandler(
 addHandler(
   'importGame',
   async (event, { appName, path, runner, platform }): StatusPromise => {
-    if (runner === 'legendary') {
-      const epicOffline = await isEpicServiceOffline()
-      if (epicOffline) {
-        showDialogBoxModalAuto({
-          title: 'Warning',
-          message:
-            'Epic Servers are having major outage right now, the game cannot be imported!',
-          type: 'ERROR'
-        })
-        return { status: 'error' }
-      }
-    }
+    if (await isRefused(runner, 'import', appName)) return { status: 'error' }
 
-    const { title } = libraryManagerMap[runner].getGame(appName).getGameInfo()
+    const { title } = libraryOf(runner).getGame(appName).getGameInfo()
     sendGameStatusUpdate({
       appName,
       runner,
@@ -220,10 +236,9 @@ addHandler(
       })
     }
 
+    const game = libraryOf(runner).getGame(appName)
     try {
-      const { abort, error } = await libraryManagerMap[runner]
-        .getGame(appName)
-        .importGame(path, platform)
+      const { abort, error } = await game.importGame(path, platform)
       if (abort || error) {
         abortMessage()
         // An abort is not a failure: whoever asked for it knows
@@ -241,15 +256,19 @@ addHandler(
       status: 'done'
     })
     logInfo(`imported ${title}`, LogPrefix.Backend)
+    void onGameInstalled(game).catch((err) => logError(err, LogPrefix.Backend))
     return { status: 'done' }
   }
 )
 
 addHandler('kill', async (event, appName, runner) => {
+  if (!/^[\w.-]+$/.test(appName)) {
+    throw new Error(`Invalid app name '${appName}'`)
+  }
   callAbortController(appName)
-  return libraryManagerMap[runner].getGame(appName).stop()
+  return libraryOf(runner).getGame(appName).stop()
 })
 
 addListener('changeGameVersionPinnedStatus', (e, appName, runner, status) => {
-  libraryManagerMap[runner].changeVersionPinnedStatus(appName, status)
+  libraryOf(runner).changeVersionPinnedStatus(appName, status)
 })

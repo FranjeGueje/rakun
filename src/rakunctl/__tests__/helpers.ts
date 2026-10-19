@@ -2,11 +2,33 @@ import type { Api, ApiEvent } from '../client'
 import type { StoreInfo } from 'common/rakun/stores'
 import type { Ctx } from '../context'
 
+const UPPER = {
+  import: true,
+  update: true,
+  repair: true,
+  lowercasePlatform: false,
+  directLaunch: false,
+  installModes: false
+}
+const LOWER = { ...UPPER, lowercasePlatform: true }
+
 export const STORES: StoreInfo[] = [
-  { id: 'legendary', name: 'epic', label: 'Epic' },
-  { id: 'gog', name: 'gog', label: 'GOG' },
-  { id: 'nile', name: 'amazon', label: 'Amazon' },
-  { id: 'zoom', name: 'zoom', label: 'Zoom' }
+  { id: 'legendary', name: 'epic', label: 'Epic', caps: UPPER },
+  { id: 'gog', name: 'gog', label: 'GOG', caps: LOWER },
+  { id: 'nile', name: 'amazon', label: 'Amazon', caps: UPPER },
+  {
+    id: 'zoom',
+    name: 'zoom',
+    label: 'Zoom',
+    caps: {
+      ...LOWER,
+      import: false,
+      update: false,
+      repair: false,
+      directLaunch: true,
+      installModes: true
+    }
+  }
 ]
 
 export type Call = [string, unknown[]]

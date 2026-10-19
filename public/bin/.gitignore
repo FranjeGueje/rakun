@@ -4,13 +4,15 @@
 **/gogdl.exe
 **/nile
 **/nile.exe
+**/butler
+**/7z.so
+**/libc7zip.so
 **/comet
 **/comet.exe
 **/GalaxyCommunication.exe
 **/EpicGamesLauncher.exe
 **/update-permissions.exe
 **/install-dummy-service.bat
-**/zoom-platform.sh
 **/umu-run
 **/umu_run.py
 .release_tags

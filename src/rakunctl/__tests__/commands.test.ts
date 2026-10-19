@@ -1,7 +1,7 @@
 import { resolve } from 'path'
 import { CliError } from '../client'
 import { parseStore } from '../stores'
-import { libraryText, table } from '../format'
+import { libraryText, loginText, table } from '../format'
 import { login, logout, status } from '../commands/accounts'
 import { library, refresh } from '../commands/library'
 import {
@@ -90,6 +90,71 @@ describe('accounts commands', () => {
     expect(lines[0]).toContain('Helpers: all installed')
   })
 
+  test('status --check asks the stores and says what they answered', async () => {
+    const { ctx, lines, calls } = fakeCtx({
+      getAccounts: {
+        legendary: { loggedIn: true, name: 'ann' },
+        gog: { loggedIn: true, name: 'bob' },
+        nile: { loggedIn: false },
+        zoom: { loggedIn: true, name: 'cy' }
+      },
+      checkAccounts: {
+        legendary: { loggedIn: true, verified: false },
+        gog: { loggedIn: true, verified: true },
+        nile: { loggedIn: false, verified: true },
+        zoom: { loggedIn: false, verified: true }
+      },
+      getDMQueueInformation: { elements: [], finished: [] },
+      getHelpers: []
+    })
+
+    await status(ctx, [], { ...opts, check: true })
+
+    expect(lines[0]).toContain('Epic: logged in (ann)\n')
+    expect(lines[0]).toContain('GOG: logged in (bob), verified')
+    expect(lines[0]).toContain('Amazon: not logged in')
+    expect(lines[0]).toContain('Zoom: session expired, log in again')
+    expect(calls.map(([channel]) => channel)).toContain('checkAccounts')
+  })
+
+  test('status says a session the store refused is expired, without --check', async () => {
+    const { ctx, lines } = fakeCtx({
+      getAccounts: {
+        legendary: { loggedIn: true, name: 'ann' },
+        gog: { loggedIn: true, name: 'bob', expired: true },
+        nile: { loggedIn: false },
+        zoom: { loggedIn: false }
+      },
+      getDMQueueInformation: { elements: [], finished: [] },
+      getHelpers: []
+    })
+
+    await status(ctx, [], opts)
+
+    expect(lines[0]).toContain('Epic: logged in (ann)\n')
+    expect(lines[0]).toContain(
+      'GOG: session expired, log in again (the games are kept)'
+    )
+  })
+
+  test('status without --check does not ask the stores', async () => {
+    const signedOut = { loggedIn: false }
+    const { ctx, calls } = fakeCtx({
+      getAccounts: {
+        legendary: signedOut,
+        gog: signedOut,
+        nile: signedOut,
+        zoom: signedOut
+      },
+      getDMQueueInformation: { elements: [], finished: [] },
+      getHelpers: []
+    })
+
+    await status(ctx, [], opts)
+
+    expect(calls.map(([channel]) => channel)).not.toContain('checkAccounts')
+  })
+
   test('status says which helpers are missing and what to do', async () => {
     const signedOut = { loggedIn: false }
     const { ctx, lines } = fakeCtx({
@@ -131,6 +196,132 @@ describe('accounts commands', () => {
       ['getLoginInfo', ['nile']],
       ['submitLogin', ['nile', 'pasted']]
     ])
+  })
+
+  describe('login that the browser finishes by itself', () => {
+    const info = { url: 'http://x', instructions: 'do it', callback: true }
+    const loggedIn = {
+      legendary: { loggedIn: false },
+      itch: { loggedIn: true }
+    }
+    const signedOut = {
+      legendary: { loggedIn: false },
+      itch: { loggedIn: false }
+    }
+
+    beforeEach(() => jest.useFakeTimers())
+    afterEach(() => jest.useRealTimers())
+
+    /** The store these tests log in to: the shared fake ones are the four that exist elsewhere */
+    const withItch = (ctx: ReturnType<typeof fakeCtx>['ctx']) => ({
+      ...ctx,
+      stores: () =>
+        Promise.resolve([
+          ...STORES,
+          {
+            id: 'itch' as const,
+            name: 'itch',
+            label: 'itch.io',
+            caps: { ...STORES[0].caps, import: false, lowercasePlatform: true }
+          }
+        ])
+    })
+
+    /** An `ask` that stays open until it is taken back, as the real one does */
+    const pendingAsk = () => {
+      const aborted = jest.fn()
+      const ask = (_question: string, signal?: AbortSignal) =>
+        new Promise<string>((_resolve, reject) =>
+          signal?.addEventListener('abort', () => {
+            aborted()
+            reject(new Error('aborted'))
+          })
+        )
+      return { ask, aborted }
+    }
+
+    test('waits for the session, asks for nothing more and takes the question back', async () => {
+      const answers = [signedOut, signedOut, loggedIn]
+      const { ctx, calls } = fakeCtx({
+        getLoginInfo: info,
+        getAccounts: () => answers.shift() ?? loggedIn
+      })
+      const { ask, aborted } = pendingAsk()
+
+      const done = login({ ...withItch(ctx), ask }, ['itch'], opts)
+      await jest.advanceTimersByTimeAsync(5000)
+      await done
+
+      expect(calls.map(([channel]) => channel)).not.toContain('submitLogin')
+      expect(aborted).toHaveBeenCalled()
+    })
+
+    test('a paste wins if it comes first, and goes to submitLogin', async () => {
+      const { ctx, calls } = fakeCtx({
+        getLoginInfo: info,
+        getAccounts: signedOut,
+        submitLogin: { ok: true }
+      })
+
+      await login(
+        { ...withItch(ctx), ask: () => Promise.resolve('the-address') },
+        ['itch'],
+        opts
+      )
+
+      expect(calls.at(-1)).toEqual(['submitLogin', ['itch', 'the-address']])
+    })
+
+    test('with a session already there only the paste counts', async () => {
+      const { ctx, calls } = fakeCtx({
+        getLoginInfo: info,
+        getAccounts: loggedIn,
+        submitLogin: { ok: true }
+      })
+
+      await login(withItch(ctx), ['itch'], opts)
+
+      expect(calls.at(-1)).toEqual(['submitLogin', ['itch', 'pasted']])
+    })
+
+    test('gives up after five minutes', async () => {
+      const { ctx } = fakeCtx({ getLoginInfo: info, getAccounts: signedOut })
+      const { ask } = pendingAsk()
+
+      const done = expect(
+        login({ ...withItch(ctx), ask }, ['itch'], opts)
+      ).rejects.toThrow('Timed out waiting for the login')
+      await jest.advanceTimersByTimeAsync(5 * 60 * 1000 + 2000)
+      await done
+    })
+  })
+
+  describe('loginText', () => {
+    const base = {
+      runner: 'itch' as const,
+      url: 'https://one',
+      instructions: 'Do the first.'
+    }
+
+    test('one way is the instructions and the address, as always', () => {
+      expect(loginText({ ...base, instructions: 'Log in.' })).toBe(
+        'Log in.\n\nhttps://one\n'
+      )
+    })
+
+    test('two ways are numbered, each with its own address', () => {
+      const text = loginText({
+        ...base,
+        alternative: {
+          url: 'https://two',
+          label: 'x',
+          instructions: 'Do the second.'
+        }
+      })
+      expect(text).toContain('There are two ways to log in')
+      expect(text).toMatch(/1\) Do the first\.\n\s+https:\/\/one/)
+      expect(text).toMatch(/2\) Do the second\.\n\s+https:\/\/two/)
+    })
   })
 
   test('login fails with the store error', async () => {
@@ -192,13 +383,14 @@ describe('library commands', () => {
 
 describe('game commands', () => {
   test('platformFor follows the store naming', () => {
-    expect(platformFor(game({ runner: 'gog' }))).toBe('windows')
-    expect(platformFor(game({ runner: 'zoom' }))).toBe('windows')
-    expect(platformFor(game({ runner: 'legendary' }))).toBe('Windows')
-    expect(platformFor(game({ runner: 'nile' }))).toBe('Windows')
-    expect(platformFor(game({ runner: 'gog', is_linux_native: true }))).toBe(
-      'linux'
-    )
+    const lower = { lowercasePlatform: true }
+    const upper = { lowercasePlatform: false }
+    expect(platformFor(game({ runner: 'gog' }), lower)).toBe('windows')
+    expect(platformFor(game({ runner: 'legendary' }), upper)).toBe('Windows')
+    expect(
+      platformFor(game({ runner: 'gog', is_linux_native: true }), lower)
+    ).toBe('linux')
+    expect(platformFor(game({ runner: 'gog' }), lower, 'linux')).toBe('linux')
   })
 
   test('install uses the default path and waits until done', async () => {
@@ -549,6 +741,37 @@ describe('game commands', () => {
     ).toBeUndefined()
   })
 
+  test('install --mode sends the mode of a store that has them', async () => {
+    const { ctx, calls } = fakeCtx(
+      {
+        getGameInfo: game({ runner: 'zoom' }),
+        requestAppSettings: { defaultInstallPath: '/games' },
+        getDMQueueInformation: { finished: [] }
+      },
+      [update1('done')]
+    )
+
+    await install(ctx, ['zoom', 'g1'], { ...opts, mode: 'steam' })
+
+    expect(calls[2][1]).toMatchObject([{ installMode: 'steam' }])
+  })
+
+  test('install --mode is refused for a bad value and for a store without modes', async () => {
+    const replies = {
+      getGameInfo: game(),
+      requestAppSettings: { defaultInstallPath: '/games' }
+    }
+    await expect(
+      install(fakeCtx(replies).ctx, ['gog', 'g1'], { ...opts, mode: 'fast' })
+    ).rejects.toThrow('--mode must be interactive or steam')
+    await expect(
+      install(fakeCtx(replies).ctx, ['gog', 'g1'], {
+        ...opts,
+        mode: 'steam'
+      })
+    ).rejects.toThrow('gog has no install modes')
+  })
+
   test('install of an unknown game fails before queueing', async () => {
     const { ctx, calls } = fakeCtx({ getGameInfo: null })
 
@@ -756,6 +979,19 @@ describe('game commands', () => {
     expect(removed.calls).toEqual([['uninstall', ['g1', 'legendary', true]]])
   })
 
+  test('repair and update refuse a store that has neither', async () => {
+    const { ctx, calls } = fakeCtx({ getGameInfo: game({ runner: 'zoom' }) })
+
+    await expect(repair(ctx, ['zoom', 'g1'], opts)).rejects.toThrow(
+      'Repairing is not supported for Zoom games'
+    )
+    await expect(update(ctx, ['zoom', 'g1'], opts)).rejects.toThrow(
+      'Updating is not supported for Zoom games'
+    )
+    expect(calls.map(([channel]) => channel)).not.toContain('repair')
+    expect(calls.map(([channel]) => channel)).not.toContain('updateGame')
+  })
+
   test('progress is printed once per whole percent', async () => {
     const progress = (percent: number) => ({
       event: 'progressUpdate',
@@ -803,7 +1039,9 @@ describe('stores of rakun', () => {
   test('an unknown store lists the names rakun reports', async () => {
     const { ctx } = fakeCtx()
     ctx.stores = () =>
-      Promise.resolve([{ id: 'legendary', name: 'epic', label: 'Epic' }])
+      Promise.resolve([
+        { id: 'legendary', name: 'epic', label: 'Epic', caps: STORES[0].caps }
+      ])
 
     await expect(login(ctx, ['steam'], opts)).rejects.toThrow(
       'Unknown store "steam" (epic)'
@@ -813,7 +1051,14 @@ describe('stores of rakun', () => {
   test('a store rakun added later works without changing rakunctl', async () => {
     const { ctx, calls } = fakeCtx()
     ctx.stores = () =>
-      Promise.resolve([{ id: 'itch' as never, name: 'itch', label: 'itch.io' }])
+      Promise.resolve([
+        {
+          id: 'itch' as never,
+          name: 'itch',
+          label: 'itch.io',
+          caps: STORES[0].caps
+        }
+      ])
 
     await logout(ctx, ['itch'], opts)
 
@@ -837,6 +1082,12 @@ describe('cli', () => {
       },
       json: true
     })
+  })
+
+  test('parses --mode', () => {
+    expect(
+      parseCli(['install', 'zoom', 'g1', '--mode', 'steam']).opts.mode
+    ).toBe('steam')
   })
 
   test('parses --skip-dlcs', () => {
@@ -901,6 +1152,22 @@ describe('config', () => {
       'setSetting',
       [{ key: 'defaultInstallPath', value: '/mnt/sd' }]
     ])
+  })
+
+  test('shows whether there is a SteamGridDB key, never the key', async () => {
+    const set = fakeCtx({
+      requestAppSettings: { steamGridDbApiKey: '' },
+      'steamgriddb.hasApiKey': true
+    })
+    await config(set.ctx, [], opts)
+    expect(set.lines).toEqual(['steamGridDbApiKey = (set)'])
+
+    const unset = fakeCtx({
+      requestAppSettings: { steamGridDbApiKey: '' },
+      'steamgriddb.hasApiKey': false
+    })
+    await config(unset.ctx, ['steamGridDbApiKey'], opts)
+    expect(unset.lines).toEqual(['(not set)'])
   })
 
   test('says a setting read at start applies when rakun restarts', async () => {

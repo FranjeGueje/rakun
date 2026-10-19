@@ -11,8 +11,8 @@ export type HelperName =
   | 'nile'
   | 'comet'
   | 'epic-integration'
-  | 'zoom-platform'
   | 'umu'
+  | 'butler'
 
 export type Arch = 'x64' | 'arm64'
 
@@ -28,8 +28,8 @@ export const HELPERS: HelperName[] = [
   'nile',
   'comet',
   'epic-integration',
-  'zoom-platform',
-  'umu'
+  'umu',
+  'butler'
 ]
 
 /** The versions rakun was tested with. A new one is a change of rakun */
@@ -39,12 +39,13 @@ export const RELEASE_TAGS: Record<HelperName, string> = {
   nile: 'v1.2.0',
   comet: 'v0.3.2',
   'epic-integration': 'v0.4',
-  'zoom-platform': 'v1.0.1',
   // NOTE: umu-launcher tags have no `v` prefix
-  umu: '1.4.4'
+  umu: '1.4.4',
+  // itch's butler comes from their own server, not GitHub
+  butler: '15.32.0'
 }
 
-/** GitHub repos the helpers come from. zoom-platform is not on GitHub */
+/** GitHub repos the helpers come from. butler is not on GitHub */
 export const REPOS: Partial<Record<HelperName, string>> = {
   legendary: 'legendary-gl/legendary',
   gogdl: 'Heroic-Games-Launcher/heroic-gogdl',
@@ -53,8 +54,6 @@ export const REPOS: Partial<Record<HelperName, string>> = {
   'epic-integration': 'BananaWorks07/heroic-epic-integration',
   umu: 'Open-Wine-Components/umu-launcher'
 }
-
-export const ZOOM_SCRIPT_URL = 'https://zoom-platform.sh/zoom-platform.sh'
 
 /**
  * `file`: saved as `target`. `zip`: unpacked into the win root. `tar`: unpacked
@@ -66,7 +65,7 @@ export type Asset = {
   asset: (tag: string) => string
   kind: 'file' | 'zip' | 'tar'
   root: Root
-  /** Relative to the root (the `file` kind) */
+  /** Relative to the root: where the file goes (`file`) or the folder the archive is unpacked into (`zip`) */
   target?: string
   /** Only the binaries of this architecture (Windows ones: always x64) */
   arch?: Arch
@@ -165,7 +164,7 @@ export const ASSETS: Asset[] = [
     sha256: '181f9a3644eabbdf396037de135583e92cf4a08029be30c9ee4e2479ff11ae8c'
   },
   {
-    // GalaxyCommunication.exe, install-dummy-service.bat and update-permissions.exe
+    // GalaxyCommunication.exe and update-permissions.exe (the zip has more files, unused)
     helper: 'comet',
     asset: fixed('dummy-service.zip'),
     kind: 'zip',
@@ -186,10 +185,29 @@ export const ASSETS: Asset[] = [
     kind: 'tar',
     root: 'bin',
     sha256: 'eb590691841f7fad3fc3ad8fd5db4ccb87849fe7948e62b28ece7a4ee48cc851'
+  },
+  {
+    // `asset` is the broth channel; the zip holds butler, 7z.so and libc7zip.so, which must stay together
+    helper: 'butler',
+    asset: fixed('linux-amd64'),
+    kind: 'zip',
+    root: 'bin',
+    arch: 'x64',
+    target: 'x64/linux/butler',
+    sha256: '2335971394ef6596f95ded0833e85ee28755e13761716ef4c91d6b11f69162f5'
+  },
+  {
+    helper: 'butler',
+    asset: fixed('linux-arm64'),
+    kind: 'zip',
+    root: 'bin',
+    arch: 'arm64',
+    target: 'arm64/linux/butler',
+    sha256: '4f2da37785fd9cbc15052427490e4e4f5cd735a019f21554d6273fa9a3490152'
   }
 ]
 
-export type Expected = { root: Root; file: string }
+type Expected = { root: Root; file: string }
 
 /** The files that tell a helper is there, for the tools of `arch` */
 export function expectedFiles(helper: HelperName, arch: Arch): Expected[] {
@@ -206,15 +224,17 @@ export function expectedFiles(helper: HelperName, arch: Arch): Expected[] {
       return [
         win('comet.exe'),
         win('GalaxyCommunication.exe'),
-        win('install-dummy-service.bat'),
         win('update-permissions.exe')
       ]
     case 'epic-integration':
       return [win('EpicGamesLauncher.exe')]
-    case 'zoom-platform':
-      return [bin('zoom/zoom-platform.sh')]
     case 'umu':
       return [bin('umu/umu-run')]
+    case 'butler':
+      // The program loads the two libraries from next to itself: without them it starts and then fails
+      return ['butler', '7z.so', 'libc7zip.so'].map((file) =>
+        bin(`${arch}/linux/butler/${file}`)
+      )
   }
 }
 
@@ -231,5 +251,7 @@ export function releaseUrl(
   tag: string,
   asset: Asset
 ): string {
+  if (helper === 'butler')
+    return `https://broth.itch.zone/butler/${asset.asset(tag)}/${tag}/archive/default`
   return `https://github.com/${REPOS[helper]}/releases/download/${tag}/${asset.asset(tag)}`
 }

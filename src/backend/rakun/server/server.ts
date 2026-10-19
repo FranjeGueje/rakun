@@ -1,4 +1,4 @@
-import { timingSafeEqual } from 'crypto'
+import type { AddressInfo } from 'net'
 import {
   createServer,
   type IncomingMessage,
@@ -13,10 +13,18 @@ import {
 } from 'backend/ipc'
 import { logError, logInfo, logWarning, LogPrefix } from 'backend/logger'
 import { rakunVersion } from 'backend/constants/others'
+import { safeEqual } from 'backend/utils/safe_equal'
 import type { WebAccess } from 'common/rakun/web'
 import { exposedChannels, exposedEvents } from './allowlist'
 import { allowedHosts, isBlockedFromNetwork, isOwnOrigin } from './access'
 import { defaultWebDir, webFile, webHeaders } from './web'
+import { setApiPort } from './listening'
+import {
+  callbackHeaders,
+  callbackPage,
+  itchCallback
+} from '../api/login_callback'
+import { ITCH_CALLBACK_PATH } from '../../storeManagers/itch/constants'
 
 const MAX_BODY_BYTES = 1024 * 1024
 const HEARTBEAT_MS = 25_000
@@ -51,11 +59,7 @@ function readBody(req: IncomingMessage): Promise<string> {
 }
 
 function hasValidToken(req: IncomingMessage, token: string): boolean {
-  const received = Buffer.from(String(req.headers['x-rakun-token'] ?? ''))
-  const expected = Buffer.from(token)
-  return (
-    received.length === expected.length && timingSafeEqual(received, expected)
-  )
+  return safeEqual(String(req.headers['x-rakun-token'] ?? ''), token)
 }
 
 /** Why a request is refused before anything else: its `Host` or its `Origin` is not rakun's own */
@@ -117,6 +121,13 @@ async function handleCall(
   }
 }
 
+/** The browser comes back from itch.io: no token (it is the user's browser, not a client), the `state` is the proof */
+async function handleItchCallback(res: ServerResponse, url: URL) {
+  const reply = await itchCallback(url.searchParams)
+  res.writeHead(reply.status, callbackHeaders)
+  res.end(callbackPage(reply))
+}
+
 function handleEvents(req: IncomingMessage, res: ServerResponse) {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
@@ -141,14 +152,24 @@ function handleEvents(req: IncomingMessage, res: ServerResponse) {
  * Local HTTP API of the daemon:
  *   GET  /health            no token
  *   POST /api/<channel>     body {"args": [...]} -> {"result": ...}
+ *   GET  /itch/callback     where itch.io sends the browser back (no token: the `state` is the proof)
  *   GET  /events            Server-Sent Events (see allowlist.ts)
  *   GET  /<file>            rakun's own web, if there is one (no token: it carries it)
  * Everything but /health needs the `x-rakun-token` header.
  */
-export type ServerSetup = {
+type ServerSetup = {
   /** Who can open the web (the API is always on this machine unless it is `network`) */
   web?: WebAccess
   webDir?: string
+}
+
+/** The path of a request URL, or undefined when it does not parse */
+function pathOf(url = '/'): string | undefined {
+  try {
+    return new URL(url, 'http://localhost').pathname
+  } catch {
+    return undefined
+  }
 }
 
 export function createApiServer(
@@ -159,7 +180,10 @@ export function createApiServer(
     const refused = refusal(req, web)
     if (refused) return sendJson(res, 403, { error: refused })
 
-    const { pathname } = new URL(req.url ?? '/', 'http://localhost')
+    const pathname = pathOf(req.url)
+    if (pathname === undefined) {
+      return sendJson(res, 400, { error: 'Bad request' })
+    }
 
     if (req.method === 'GET' && pathname === '/health') {
       return sendJson(res, 200, {
@@ -167,6 +191,13 @@ export function createApiServer(
         version: rakunVersion,
         web
       })
+    }
+
+    if (req.method === 'GET' && pathname === ITCH_CALLBACK_PATH) {
+      return void handleItchCallback(
+        res,
+        new URL(req.url ?? '/', 'http://localhost')
+      )
     }
 
     if (req.method === 'GET' && web !== 'off') {
@@ -205,6 +236,7 @@ export function listenApiServer(
   return new Promise((resolve, reject) => {
     server.once('error', reject)
     server.listen(port, address, () => {
+      setApiPort((server.address() as AddressInfo).port)
       logInfo(
         `API listening on ${address}:${port} (web: ${mode})`,
         LogPrefix.Backend

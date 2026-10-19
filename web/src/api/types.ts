@@ -3,15 +3,35 @@
  * these are copied, not imported, so the project stands on its own.
  */
 
-export type Runner = 'legendary' | 'gog' | 'nile' | 'zoom'
+export type Runner = 'legendary' | 'gog' | 'nile' | 'zoom' | 'itch'
 
-export type LoginInfo = { runner: Runner; url: string; instructions: string }
+export type LoginInfo = {
+  runner: Runner
+  url: string
+  instructions: string
+  callback?: boolean
+  alternative?: { url: string; label: string; instructions: string }
+}
 
 export type LoginResult = { ok: boolean; error?: string }
 
-export type AccountStatus = { loggedIn: boolean; name?: string }
+export type AccountStatus = {
+  loggedIn: boolean
+  name?: string
+  expired?: boolean
+}
 
 export type AccountsStatus = Record<Runner, AccountStatus>
+
+/** What a store can do and how it differs from the others */
+export type StoreCaps = {
+  import: boolean
+  update: boolean
+  repair: boolean
+  lowercasePlatform: boolean
+  directLaunch: boolean
+  installModes: boolean
+}
 
 /** What a client needs to list and name a store */
 export type StoreInfo = {
@@ -19,9 +39,10 @@ export type StoreInfo = {
   /** Short name to type or show: `epic`, `gog`, `amazon`, `zoom` */
   name: string
   label: string
+  caps: StoreCaps
 }
 
-/** One helper binary (legendary, gogdl, nile, comet, epic-integration, zoom-platform, umu) */
+/** One helper binary (legendary, gogdl, nile, comet, epic-integration, umu, butler) */
 export type HelperInfo = {
   helper: string
   /** The version rakun was tested with */
@@ -30,6 +51,8 @@ export type HelperInfo = {
   installed: string
   /** `ok`, `missing`, or `other` (another version, for instance after «latest») */
   state: 'ok' | 'missing' | 'other'
+  /** What the helper printed that rakun did not understand */
+  warning?: string
 }
 
 export type HelpersUpdate = {
@@ -100,6 +123,9 @@ export type GameStatus = {
 export type DMStatus = 'done' | 'error' | 'abort' | 'paused'
 export type DownloadManagerState = 'idle' | 'running' | 'paused' | 'stopped'
 
+/** Zoom's Windows games: install now with the installer's window, or on the first launch from Steam */
+export type InstallMode = 'interactive' | 'steam'
+
 export type InstallParams = {
   appName: string
   runner: Runner
@@ -109,6 +135,7 @@ export type InstallParams = {
   installLanguage?: string
   /** Omitted: every DLC */
   installDlcs?: string[]
+  installMode?: InstallMode
 }
 
 /** A game that is already on the disk, in `path`, to be registered */

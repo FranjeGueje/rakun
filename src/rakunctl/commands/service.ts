@@ -50,10 +50,7 @@ type Launched = {
   exited: () => number | null | undefined
 }
 
-export function launchRakun(
-  dir = __dirname,
-  extraArgs: string[] = []
-): Launched {
+function launchRakun(dir = __dirname, extraArgs: string[] = []): Launched {
   const { cmd, args } = rakunCommand(dir)
   const child = spawn(cmd, [...args, ...extraArgs], {
     detached: true,

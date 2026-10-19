@@ -8,6 +8,7 @@ import { libraryManagerMap } from '..'
 import { LegendaryCommand } from './commands'
 import { NonEmptyString } from './commands/base'
 import { legendaryUserInfo } from './constants'
+import { exitFailure } from '../helper_result'
 
 export class LegendaryUser {
   public static async login(
@@ -39,11 +40,15 @@ export class LegendaryUser {
         return errorMessage(res.stderr)
       }
 
+      res.error ??= exitFailure(res)
       if (res.error || res.abort) {
         return errorMessage(res.error ?? 'abort by user')
       }
 
+      // A login is a session: if legendary left no user.json (or kept an old
+      // one that is not this login's), nobody is logged in whatever it said
       const userInfo = this.getUserInfo()
+      if (!userInfo) return errorMessage('legendary saved no session')
       return { status: 'done', data: userInfo }
     } catch (error) {
       return errorMessage(`${String(error)}`)
@@ -58,12 +63,16 @@ export class LegendaryUser {
       logMessagePrefix: 'Logging out'
     })
 
+    res.error ??= exitFailure(res)
+    // The command may end well and the session still be there: that is what
+    // the client must not be told is a logout
+    if (!res.error && !res.abort && existsSync(legendaryUserInfo)) {
+      res.error = 'the session file is still there'
+    }
     if (res.error || res.abort) {
-      logError(
-        ['Failed to logout:', res.error ?? 'abort by user'],
-        LogPrefix.Legendary
-      )
-      return
+      const reason = res.error ?? 'abort by user'
+      logError(['Failed to logout:', reason], LogPrefix.Legendary)
+      throw new Error(`Could not log out of Epic: ${reason}`)
     }
 
     clearCache('legendary')

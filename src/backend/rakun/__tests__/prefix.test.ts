@@ -1,6 +1,7 @@
 jest.mock('fs', () => ({
   ...jest.requireActual('fs'),
   existsSync: jest.fn(),
+  lstatSync: jest.fn(),
   mkdirSync: jest.fn(),
   rmSync: jest.fn(),
   symlinkSync: jest.fn(),
@@ -45,9 +46,18 @@ jest.mock('backend/config', () => ({
   }
 }))
 
-import { existsSync, mkdirSync, rmSync, symlinkSync, unlinkSync } from 'fs'
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  rmSync,
+  symlinkSync,
+  unlinkSync
+} from 'fs'
 
 const mockedExistsSync = jest.mocked(existsSync)
+const mockedLstatSync = jest.mocked(lstatSync)
+const link = { isSymbolicLink: () => true } as never
 const mockedMkdirSync = jest.mocked(mkdirSync)
 const mockedRmSync = jest.mocked(rmSync)
 const mockedSymlinkSync = jest.mocked(symlinkSync)
@@ -92,16 +102,16 @@ describe('symlinkPrefix', () => {
 
     expect(result).toBe(true)
     expect(mockedMkdirSync).toHaveBeenCalled()
-    expect(mockedRmSync).not.toHaveBeenCalled()
     expect(mockedSymlinkSync).toHaveBeenCalledWith(
       '/games/test',
       '/steam/steamapps/compatdata/123'
     )
   })
 
-  test('removes existing directory before creating symlink', () => {
+  test('removes what is there, also a link whose target is gone, before creating the symlink', () => {
     const { symlinkPrefix } = freshPrefix()
-    mockedExistsSync.mockReturnValue(true)
+    // existsSync says false for a dangling link: the removal does not depend on it
+    mockedExistsSync.mockReturnValue(false)
 
     symlinkPrefix(789, '/games/existing')
 
@@ -135,9 +145,10 @@ describe('symlinkPrefix', () => {
 })
 
 describe('removePrefixSymlink', () => {
-  test('removes compatdata symlink when it exists', () => {
+  test('removes compatdata symlink when it exists, also when its target is gone', () => {
     const { removePrefixSymlink } = freshPrefix()
-    mockedExistsSync.mockReturnValue(true)
+    mockedExistsSync.mockReturnValue(false)
+    mockedLstatSync.mockReturnValue(link)
 
     removePrefixSymlink(456)
 
@@ -157,7 +168,7 @@ describe('removePrefixSymlink', () => {
   test('logs error but does not throw on failure', () => {
     const { removePrefixSymlink } = freshPrefix()
 
-    mockedExistsSync.mockReturnValue(true)
+    mockedLstatSync.mockReturnValue(link)
     mockedUnlinkSync.mockImplementation(() => {
       throw new Error('permission denied')
     })
@@ -171,12 +182,8 @@ describe('removePrefixSymlink', () => {
 })
 
 describe('preparePrefix', () => {
-  test('zoom: symlinks the prefix to the rakun game symlink, not the raw install path', async () => {
+  test('zoom: the prefix is the rakun link to the game folder, and it has no games link of its own', async () => {
     const { preparePrefix } = freshPrefix()
-    createGameSymlink = jest.mocked(
-      require('../steam_shortcuts/add_game').createGameSymlink
-    )
-    createGameSymlink.mockReturnValue({ linkPath: '/games/zoom' })
 
     await preparePrefix(
       { title: 'ZoomGame', app_name: 'zoom_app', runner: 'zoom' } as never,
@@ -184,11 +191,18 @@ describe('preparePrefix', () => {
       '/mnt/disk2/ZoomGame'
     )
 
-    expect(createGameSymlink).toHaveBeenCalledWith('/mnt/disk2/ZoomGame')
-    expect(mockedMkdirSync).toHaveBeenCalled()
+    expect(createGameSymlink).not.toHaveBeenCalled()
     expect(mockedSymlinkSync).toHaveBeenCalledWith(
-      '/games/zoom',
+      '/games/ZoomGame',
       '/steam/steamapps/compatdata/123'
+    )
+    expect(mockedSymlinkSync).toHaveBeenCalledWith(
+      '/mount',
+      '/steam/steamapps/compatdata/123/drive_c/Launchers'
+    )
+    expect(mockedSymlinkSync).not.toHaveBeenCalledWith(
+      '/games',
+      expect.stringContaining('drive_c/games')
     )
   })
 
@@ -232,27 +246,7 @@ describe('preparePrefix', () => {
     expect(logError).not.toHaveBeenCalled()
   })
 
-  test('zoom: does not symlink the prefix when the game symlink fails', async () => {
-    const { preparePrefix } = freshPrefix()
-    createGameSymlink = jest.mocked(
-      require('../steam_shortcuts/add_game').createGameSymlink
-    )
-    createGameSymlink.mockReturnValue({ error: 'permission denied' })
-
-    await preparePrefix(
-      { title: 'ZoomGame', app_name: 'zoom_app', runner: 'zoom' } as never,
-      123,
-      '/mnt/disk2/ZoomGame'
-    )
-
-    expect(mockedSymlinkSync).not.toHaveBeenCalled()
-    expect(logError).toHaveBeenCalledWith(
-      expect.stringContaining('Failed to prepare Zoom prefix'),
-      'Rakun'
-    )
-  })
-
-  test('calls windowify for non-zoom games', async () => {
+  test('calls windowify for every game', async () => {
     const { preparePrefix } = freshPrefix()
 
     await preparePrefix(
@@ -262,6 +256,31 @@ describe('preparePrefix', () => {
     )
 
     expect(windowify).toHaveBeenCalled()
+  })
+
+  test('itch has a prefix of its own, never the folder of the game', async () => {
+    const { preparePrefix } = freshPrefix()
+
+    await preparePrefix(
+      { title: 'ItchGame', app_name: '21301', runner: 'itch' } as never,
+      880,
+      '/games/itchgame'
+    )
+
+    expect(windowify).toHaveBeenCalled()
+    const compat = '/steam/steamapps/compatdata/880'
+    expect(mockedSymlinkSync).toHaveBeenCalledWith(
+      '/mount',
+      `${compat}/drive_c/Launchers`
+    )
+    expect(mockedSymlinkSync).toHaveBeenCalledWith(
+      '/games',
+      `${compat}/drive_c/games`
+    )
+    expect(mockedSymlinkSync).not.toHaveBeenCalledWith(
+      expect.anything(),
+      compat
+    )
   })
 })
 
@@ -289,6 +308,17 @@ describe('EOS Overlay setup', () => {
 
     // the overlay script is in place
     mockedExistsSync.mockReturnValue(true)
+  })
+
+  test('itch: umu prepares its prefix as store itchio, with no overlay', async () => {
+    jest.mocked(require('../umu').getUmuStoreLabel).mockReturnValue('itchio')
+
+    await prepare('itch')
+
+    expect(launchUmu).toHaveBeenCalledTimes(1)
+    expect(launchUmu).toHaveBeenCalledWith(
+      expect.objectContaining({ store: 'itchio', executable: 'exit' })
+    )
   })
 
   async function prepare(runner: string) {

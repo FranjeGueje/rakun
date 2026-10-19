@@ -1,13 +1,11 @@
 import { libraryManagerMap } from 'backend/storeManagers'
 import { logError, LogPrefix, logWarning } from 'backend/logger'
-import { isEpicServiceOffline, sendGameStatusUpdate } from '../utils'
+import { sendGameStatusUpdate } from '../utils'
+import { onGameInstalled } from 'backend/rakun/game_events'
+import { isRefused } from 'backend/storeManagers/preflight'
+import { libraryOf } from 'backend/storeManagers/library_of'
 import { DMStatus, InstallParams } from 'common/types'
-import { showDialogBoxModalAuto } from '../dialog/dialog'
 import { isOnline } from '../online_monitor'
-import pathModule from 'path'
-import { existsSync, rmSync } from 'fs'
-
-import { gogdlConfigPath } from 'backend/storeManagers/gog/constants'
 
 async function installQueueElement(params: InstallParams): Promise<{
   status: DMStatus
@@ -22,7 +20,8 @@ async function installQueueElement(params: InstallParams): Promise<{
     installLanguage,
     platformToInstall,
     build,
-    branch
+    branch,
+    installMode
   } = params
   const { title } = libraryManagerMap[runner].getGame(appName).getGameInfo()
 
@@ -34,25 +33,7 @@ async function installQueueElement(params: InstallParams): Promise<{
     return { status: 'error' }
   }
 
-  if (runner === 'legendary') {
-    const epicOffline = await isEpicServiceOffline()
-    if (epicOffline) {
-      showDialogBoxModalAuto({
-        title: 'Warning',
-        message:
-          'Epic Servers are having major outage right now, the game cannot be installed!',
-        type: 'ERROR'
-      })
-      return { status: 'error' }
-    }
-  }
-
-  if (runner === 'gog') {
-    // Sometimes, a game manifest file already exists and that makes the installation
-    // end as soon as it's started. We have to delete the file to prevent that issue.
-    const manifestPath = pathModule.join(gogdlConfigPath, 'manifests', appName)
-    if (existsSync(manifestPath)) rmSync(manifestPath)
-  }
+  if (await isRefused(runner, 'install', appName)) return { status: 'error' }
 
   sendGameStatusUpdate({
     appName,
@@ -69,20 +50,27 @@ async function installQueueElement(params: InstallParams): Promise<{
   }
 
   try {
-    const { status, error } = await libraryManagerMap[runner]
-      .getGame(appName)
-      .install({
-        path: path.replaceAll("'", ''),
-        installDlcs,
-        sdlList: sdlList.filter((el) => el !== ''),
-        platformToInstall,
-        installLanguage,
-        build,
-        branch
-      })
+    const game = libraryOf(runner).getGame(appName)
+    const { status, error, installPath } = await game.install({
+      path: path.replaceAll("'", ''),
+      installDlcs,
+      sdlList: sdlList.filter((el) => el !== ''),
+      platformToInstall,
+      installLanguage,
+      build,
+      branch,
+      installMode
+    })
 
     if (status === 'error') {
       errorMessage(error ?? '')
+    }
+
+    // Steam is not the install: a failure there is logged, it does not undo a game that is on the disk
+    if (status === 'done') {
+      void onGameInstalled(game, installPath).catch((err) =>
+        logError(err, LogPrefix.DownloadManager)
+      )
     }
 
     return { status, error }
@@ -113,18 +101,7 @@ async function updateQueueElement(params: InstallParams): Promise<{
     return { status: 'error' }
   }
 
-  if (runner === 'legendary') {
-    const epicOffline = await isEpicServiceOffline()
-    if (epicOffline) {
-      showDialogBoxModalAuto({
-        title: 'Warning',
-        message:
-          'Epic Servers are having major outage right now, the game cannot be updated!',
-        type: 'ERROR'
-      })
-      return { status: 'error' }
-    }
-  }
+  if (await isRefused(runner, 'update', appName)) return { status: 'error' }
 
   sendGameStatusUpdate({
     appName,

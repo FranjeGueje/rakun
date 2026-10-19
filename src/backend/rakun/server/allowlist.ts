@@ -36,6 +36,7 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   // Accounts
   'getStores',
   'getAccounts',
+  'checkAccounts',
   'listFolders',
   'logout',
   'getLoginInfo',
@@ -49,7 +50,6 @@ export const exposedChannels: ReadonlySet<string> = new Set([
   'resetRakun',
   'stopRakun',
   'steamgriddb.hasApiKey',
-  'steamgriddb.setApiKey',
   'getRakunVersion',
   'getLogContent'
 ])

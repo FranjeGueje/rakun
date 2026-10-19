@@ -1,3 +1,4 @@
+import { basename } from 'path'
 import { hasDuplicates, uniqueInstalled } from '../installed_list'
 import { sendFrontendMessage } from '../../ipc'
 import { ZoomUser } from './user'
@@ -21,11 +22,7 @@ import {
 } from 'backend/logger'
 import { parseSize } from '../../utils'
 import CacheStore from '../../cache'
-import {
-  libraryStore,
-  installedGamesStore,
-  installInfoStore
-} from './electronStores'
+import { libraryStore, installedGamesStore, installInfoStore } from './stores'
 import { isOnline } from '../../online_monitor'
 import { apiUrl } from './constants'
 import { LibraryManager } from 'common/types/game_manager'
@@ -35,6 +32,11 @@ const library: Map<string, GameInfo> = new Map()
 const installedGames: Map<string, InstalledInfo> = new Map()
 
 export default class ZoomLibraryManager implements LibraryManager {
+  clearCache() {
+    installInfoStore.clear()
+    libraryStore.clear()
+  }
+
   async init() {
     await this.refresh()
   }
@@ -167,10 +169,9 @@ export default class ZoomLibraryManager implements LibraryManager {
       return
     }
     const installedInfo = installedGames.get(game.app_name)
-    if (installedInfo) {
-      game.is_installed = true
-      game.install = installedInfo
-    }
+    // The saved library can be older than the installed list: the list decides
+    game.is_installed = !!installedInfo
+    game.install = installedInfo ?? { is_dlc: false }
 
     return game
   }
@@ -279,7 +280,8 @@ export default class ZoomLibraryManager implements LibraryManager {
 
         returnValue.push({
           url: downloadRequest.url,
-          filename: file.name,
+          // Only a name: it becomes a file in the download folder
+          filename: basename(file.name),
           total_size: parseSize(file.size),
           id: file.id,
           name: file.name,
@@ -346,7 +348,7 @@ export default class ZoomLibraryManager implements LibraryManager {
   }
 
   async listUpdateableGames(): Promise<string[]> {
-    logWarning('listUpdateableGames not implemented for Zoom', LogPrefix.Zoom)
+    logDebug('listUpdateableGames not implemented for Zoom', LogPrefix.Zoom)
     return []
   }
 

@@ -37,7 +37,7 @@ import {
   installedGamesStore,
   installInfoStore,
   apiInfoCache
-} from './electronStores'
+} from './stores'
 import { callRunner } from '../../runner_call'
 import { isOnline, runOnceWhenOnline } from '../../online_monitor'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
@@ -46,8 +46,10 @@ import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { gogdlConfigPath } from './constants'
 import { userDataPath } from 'backend/constants/paths'
 import GOGGame from './games'
-import type { LibraryManager } from 'common/types/game_manager'
+import type { LibraryManager, PreflightOp } from 'common/types/game_manager'
 import { shareInFlight } from 'backend/utils/inflight'
+import { parseHelperJson } from '../helper_output'
+import { isGogInfo } from './output'
 import { hasDuplicates, uniqueInstalled } from '../installed_list'
 import { GlobalConfig } from 'backend/config'
 
@@ -66,6 +68,19 @@ const installInfoInFlight = new Map<
 
 export default class GOGLibraryManager implements LibraryManager {
   private readonly gameCache: Map<string, GOGGame> = new Map()
+
+  clearCache() {
+    libraryStore.clear()
+    installInfoStore.clear()
+    apiInfoCache.clear()
+  }
+
+  // A manifest left by an earlier try makes the install end as soon as it starts
+  async preflight(op: PreflightOp, appName: string): Promise<undefined> {
+    const manifest = join(gogdlConfigPath, 'manifests', appName)
+    if (op === 'install' && existsSync(manifest)) rmSync(manifest)
+    return undefined
+  }
 
   async init() {
     await this.refresh()
@@ -528,7 +543,7 @@ export default class GOGLibraryManager implements LibraryManager {
 
     let gogInfo: GOGDLInstallInfo
     try {
-      gogInfo = JSON.parse(res.stdout)
+      gogInfo = parseHelperJson('gogdl', 'info', res.stdout, isGogInfo)
     } catch (error) {
       logError(
         ['Error when parsing JSON file on getInstallInfo', error],

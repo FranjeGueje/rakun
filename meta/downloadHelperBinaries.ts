@@ -4,7 +4,6 @@
  * at the versions rakun was tested with. `RAKUN_CHECK=1` only compares those
  * versions with the latest ones.
  */
-import { readFile } from 'fs/promises'
 import { join } from 'path'
 import {
   downloadHelpers,
@@ -28,18 +27,20 @@ const layout: Layout = {
   winRoot: join('public', 'bin', 'x64', 'win32')
 }
 
-/** zoom-platform is not on GitHub: its version lives inside the script itself */
-async function zoomScriptVersion(): Promise<string> {
-  const script = await readFile(
-    join(layout.binRoot, 'zoom', 'zoom-platform.sh'),
-    'utf-8'
-  ).catch(() => '')
-  return /INSTALLER_VERSION="([^"]+)"/.exec(script)?.[1] ?? 'no file'
+/** butler is not on GitHub: itch's server says which is the latest one */
+async function butlerLatest(): Promise<string> {
+  const response = await fetch(
+    'https://broth.itch.zone/butler/linux-amd64/LATEST'
+  )
+  if (!response.ok) throw new Error(`HTTP ${response.status} (broth.itch.zone)`)
+  return (await response.text()).trim()
 }
 
 async function upstreamTag(helper: HelperName): Promise<string> {
+  if (helper === 'butler') return butlerLatest()
   const repo = REPOS[helper]
-  return repo ? latestTag(repo) : zoomScriptVersion()
+  if (!repo) throw new Error(`No repository for ${helper}`)
+  return latestTag(repo)
 }
 
 /** Read-only: compares each pinned tag with the latest upstream one */

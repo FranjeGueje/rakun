@@ -1,7 +1,7 @@
 import { parseArgs } from 'util'
 import { isWebAccess, WEB_ACCESS_MODES, type WebAccess } from 'common/rakun/web'
 
-export type ServerOptions = {
+type ServerOptions = {
   web: WebAccess
   /** Only when asked for (`--port` or `RAKUN_PORT`); otherwise `api.json` decides */
   port: number | undefined

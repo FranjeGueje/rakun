@@ -6,7 +6,7 @@ import { join } from 'path'
 /** An expected failure: its message is shown as is, without a stack */
 export class CliError extends Error {}
 
-export type Credentials = { port: number; token: string }
+type Credentials = { port: number; token: string }
 
 export type ApiEvent = { event: string; args: unknown[] }
 

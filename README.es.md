@@ -4,7 +4,7 @@
 
 [English](README.md)
 
-**rakun instala tus juegos de PC en Linux y los pone en Steam.** Inicia sesión en Epic Games, GOG, Amazon Games o Zoom Platform, elige un juego y, cuando termina la descarga, aparece en tu biblioteca de Steam listo para jugar. Nació pensando en la Steam Deck, pero funciona en cualquier Linux con Steam.
+**rakun instala tus juegos de PC en Linux y los pone en Steam.** Inicia sesión en Epic Games, GOG, Amazon Games, Zoom Platform o itch.io, elige un juego y, cuando termina la descarga, aparece en tu biblioteca de Steam listo para jugar. Nació pensando en la Steam Deck, pero funciona en cualquier Linux con Steam.
 
 rakun **no es un lanzador**. Nunca ejecuta tus juegos: lo hace Steam. Lo suyo es todo lo anterior: iniciar sesión, descargar, actualizar, reparar, desinstalar y conectar el juego con Steam.
 
@@ -14,7 +14,7 @@ rakun **no es un lanzador**. Nunca ejecuta tus juegos: lo hace Steam. Lo suyo es
 
 ## Qué hace
 
-- Inicia sesión en **Epic, GOG, Amazon y Zoom** (pegas el código en el que acaba tu navegador; no hay navegador embebido)
+- Inicia sesión en **Epic, GOG, Amazon, Zoom e itch.io** (pegas el código en el que acaba tu navegador; en itch.io el navegador vuelve solo a rakun, o pegas una API key; no hay navegador embebido)
 - Muestra tu **biblioteca** y una **cola de descargas** que puedes pausar, reanudar y cancelar
 - **Instala, actualiza, repara y desinstala** juegos, elige la versión de Windows o Linux y puede adoptar un juego que ya está en tu disco
 - Añade cada juego a **Steam** (acceso directo, prefijo de Proton, carátulas) al terminar la instalación
@@ -31,7 +31,7 @@ rakun es un pequeño servicio en segundo plano, sin ventana. Hablas con él desd
                         └────► Steam (acceso directo, prefijo, carátulas)
 ```
 
-Todo pasa por una API HTTP local en `127.0.0.1:17370`, protegida con un token. Ver [API.md](API.md).
+Todo pasa por una API HTTP local en `127.0.0.1:17370`, protegida con un token. Ver [API.md](API.md), que también explica quién puede leer ese token en tu máquina.
 
 ## En qué se basa
 
@@ -61,7 +61,7 @@ El paquete lleva su propio Node, así que en SteamOS no hace falta nada más.
 ```bash
 rakunctl start                # arranca rakun en segundo plano
 rakunctl helpers update       # descarga las herramientas de las tiendas (una vez)
-rakunctl login gog            # o epic, amazon, zoom
+rakunctl login gog            # o epic, amazon, zoom, itch
 rakunctl library gog          # mira tus juegos
 rakunctl install gog <nombre> # instala uno: aparece en Steam
 ```
@@ -72,7 +72,7 @@ Para actualizar rakun más adelante: `rakunctl self-update` (`--check` solo dice
 
 ![Instalar un juego desde la web: versión de Windows o de Linux, o importar una carpeta](docs/images/install.png)
 
-Para juegos de Windows, instala [GE-Proton](https://github.com/GloriousEggroll/proton-ge-custom) y, una vez por juego, elígelo en las propiedades del juego en Steam → Compatibilidad. Los instaladores de Windows de Zoom necesitan una sesión de escritorio.
+Para juegos de Windows, instala [GE-Proton](https://github.com/GloriousEggroll/proton-ge-custom) y, una vez por juego, elígelo en las propiedades del juego en Steam → Compatibilidad. Los juegos de Windows de Zoom se pueden instalar de forma interactiva (necesita una sesión de escritorio) o añadir a Steam, donde el instalador se abre la primera vez que juegas.
 
 ## Compilar
 

@@ -61,6 +61,7 @@ const mockedStatSync = jest.mocked(statSync)
 const mockedWriteFileSync = jest.mocked(writeFileSync)
 
 let logWarning: jest.Mock
+let logInfo: jest.Mock
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -72,6 +73,7 @@ beforeEach(() => {
   >)
 
   logWarning = jest.mocked(require('backend/logger').logWarning)
+  logInfo = jest.mocked(require('backend/logger').logInfo)
 })
 
 function freshWindowify() {
@@ -94,19 +96,23 @@ describe('windowify', () => {
     expect(mockedMkdirSync).toHaveBeenCalled()
   })
 
-  test('warns for unsupported zoom runner', () => {
-    const { windowify } = freshWindowify()
+  test.each(['zoom', 'itch'])(
+    '%s has nothing to translate: it says so, without a warning',
+    (runner) => {
+      const { windowify } = freshWindowify()
 
-    windowify(
-      { title: 'Zoom', app_name: 'zoom', runner: 'zoom' } as never,
-      '/games/zoom'
-    )
+      windowify(
+        { title: 'Game', app_name: '1', runner } as never,
+        '/games/game'
+      )
 
-    expect(logWarning).toHaveBeenCalledWith(
-      expect.stringContaining('windowify not implemented'),
-      'Rakun'
-    )
-  })
+      expect(logInfo).toHaveBeenCalledWith(
+        expect.stringContaining('nothing to translate'),
+        'Rakun'
+      )
+      expect(logWarning).not.toHaveBeenCalled()
+    }
+  )
 
   test('warns when installed.json is missing', () => {
     const { windowify } = freshWindowify()

@@ -10,7 +10,10 @@ import {
 } from './downloadqueue'
 
 import { stores } from 'backend/storeManagers'
-import type { DMQueueElement, InstallParams } from 'common/types'
+import { libraryOf } from 'backend/storeManagers/library_of'
+import { INSTALL_MODES } from 'common/types'
+import type { InstallParams } from 'common/types'
+import { queueElement, updateElement } from './queue_element'
 
 /** Installing over an installed game would download it all again and nothing else */
 function refuseIfInstalled({ appName, runner }: InstallParams) {
@@ -22,59 +25,38 @@ function refuseIfInstalled({ appName, runner }: InstallParams) {
   if (installed) throw new Error('already installed: use repair or update')
 }
 
+/** `installMode` is one of the two there are, or not there */
+function refuseUnknownInstallMode({ installMode }: InstallParams) {
+  if (installMode && !INSTALL_MODES.includes(installMode))
+    throw new Error(
+      `unknown install mode "${String(installMode)}": use ${INSTALL_MODES.join(' or ')}`
+    )
+}
+
 addHandler('install', async (_e, args) => {
   refuseIfInstalled(args)
-  const dmQueueElement: DMQueueElement = {
-    params: args,
-    type: 'install',
-    addToQueueTime: Date.now(),
-    endTime: 0,
-    startTime: 0
-  }
-
-  await addToQueue(dmQueueElement)
+  refuseUnknownInstallMode(args)
+  await addToQueue(queueElement('install', args))
 
   // Add Dlcs to the queue
   if (
     Array.isArray(args.installDlcs) &&
     args.installDlcs.length > 0 &&
-    args.runner === 'legendary'
+    libraryOf(args.runner).queuesDlcs
   ) {
     for (const dlc of args.installDlcs) {
-      const dlcQueueElement: DMQueueElement = {
-        params: {
-          ...args,
-          appName: dlc
-        },
-        type: 'install',
-        addToQueueTime: Date.now(),
-        endTime: 0,
-        startTime: 0
-      }
-      await addToQueue(dlcQueueElement)
+      await addToQueue(queueElement('install', { ...args, appName: dlc }))
     }
   }
 })
 
 addHandler('updateGame', async (_e, args) => {
-  const {
-    gameInfo: {
-      install: { platform, install_path }
-    }
-  } = args
-
-  const dmQueueElement: DMQueueElement = {
-    params: { ...args, path: install_path!, platformToInstall: platform! },
-    type: 'update',
-    addToQueueTime: Date.now(),
-    endTime: 0,
-    startTime: 0
-  }
-
-  await addToQueue(dmQueueElement)
+  await addToQueue(updateElement(args))
 })
 
-addListener('removeFromDMQueue', (e, appName) => removeFromQueue(appName))
+addListener('removeFromDMQueue', (e, appName, runner) =>
+  removeFromQueue(appName, runner)
+)
 addListener('clearFinishedDMQueue', () => clearFinished())
 addListener('resumeCurrentDownload', () => resumeCurrentDownload())
 addListener('pauseCurrentDownload', () => pauseCurrentDownload())

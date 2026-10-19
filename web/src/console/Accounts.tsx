@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { AccountsStatus, LoginInfo, StoreInfo } from '../api/types'
 import type { RakunBridge } from '../api/bridge'
 import type { Translate } from '../i18n'
@@ -8,8 +8,49 @@ import type { Actions } from '../state/useRakun'
 import { ConfirmDialog } from './ConfirmDialog'
 import { TextField } from './TextField'
 
+const LOGIN_POLL_MS = 1500
+
+/** The ways to log in: each with its page and what it gives, numbered when there are two so they are told apart */
+function LoginWays({ info, t }: { info: LoginInfo; t: Translate }) {
+  const ways = [
+    { url: info.url, label: t('login.open'), text: info.instructions },
+    ...(info.alternative
+      ? [
+          {
+            url: info.alternative.url,
+            label: info.alternative.label,
+            text: info.alternative.instructions
+          }
+        ]
+      : [])
+  ]
+  return (
+    <>
+      {ways.map((way, index) => (
+        <div className="loginWay" key={way.url}>
+          <p>
+            {ways.length > 1 && (
+              <strong>{t('login.option', { n: index + 1 })} </strong>
+            )}
+            {way.text}
+          </p>
+          <a
+            className="loginLink"
+            href={way.url}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {way.label}
+          </a>
+        </div>
+      ))}
+    </>
+  )
+}
+
 function stateText(t: Translate, account: AccountsStatus[StoreInfo['id']]) {
   if (!account.loggedIn) return t('accounts.signedOut')
+  if (account.expired) return t('accounts.expired')
   return account.name
     ? t('accounts.signedIn', { name: account.name })
     : t('accounts.signedInNoName')
@@ -47,6 +88,29 @@ export function Accounts({
   useEffect(() => {
     load().catch((e: unknown) => setError(String(e)))
   }, [load])
+
+  // The effect below must not restart each time `actions` is a new object
+  const reloadStore = useRef(actions.reloadStore)
+  reloadStore.current = actions.reloadStore
+
+  /** The browser comes back to rakun by itself: look for the session instead of waiting for a paste */
+  useEffect(() => {
+    if (!pasting?.info.callback) return
+    const { store } = pasting
+    const timer = setInterval(() => {
+      window.rakun
+        .call('getAccounts')
+        .then((status) => {
+          // An expired session still counts as one: wait for the new login
+          if (!status[store.id].loggedIn || status[store.id].expired) return
+          setPasting(null)
+          setAccounts(status)
+          reloadStore.current(store.id)
+        })
+        .catch(() => undefined)
+    }, LOGIN_POLL_MS)
+    return () => clearInterval(timer)
+  }, [pasting])
 
   /** The host logs in in a window of its own and finishes it (a desktop app) */
   const signInInWindow = async (
@@ -96,7 +160,9 @@ export function Accounts({
 
   const activate = (store: StoreInfo | undefined) => {
     if (!store || !accounts || waiting) return
-    if (accounts[store.id].loggedIn) setAskLogout(store)
+    // An expired session is not signed out: select to sign in again
+    const { loggedIn, expired } = accounts[store.id]
+    if (loggedIn && !expired) setAskLogout(store)
     else void signIn(store)
   }
 
@@ -137,19 +203,7 @@ export function Accounts({
           title={t('login.title', { store: pasting.store.label })}
           initial=""
           t={t}
-          intro={
-            <>
-              <p>{pasting.info.instructions}</p>
-              <a
-                className="loginLink"
-                href={pasting.info.url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {t('login.open')}
-              </a>
-            </>
-          }
+          intro={<LoginWays info={pasting.info} t={t} />}
           hint={t('login.hint')}
           paste={{ label: t('login.paste'), unreadable: t('login.unreadable') }}
           failed={(error) => t('accounts.failed', { error })}

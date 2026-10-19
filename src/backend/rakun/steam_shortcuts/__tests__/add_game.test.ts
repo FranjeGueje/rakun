@@ -8,10 +8,15 @@ import {
 import { tmpdir } from 'os'
 import { basename, dirname, join } from 'path'
 import { DirResult, dirSync } from '../../../__tests__/tmp_dir'
-import { addGameToSteam, createRakunBat, createRunnerFile } from '../add_game'
+import {
+  addGameToSteam,
+  batFileName,
+  createRakunBat,
+  createRunnerFile
+} from '../add_game'
 import { GameInfo } from 'common/types'
 import * as steamHelpers from '../steam_helpers'
-import { spawnAsync } from 'backend/utils'
+import { openExternal } from 'backend/utils/open_external'
 
 jest.mock('backend/logger', () => ({
   logInfo: jest.fn(),
@@ -19,8 +24,12 @@ jest.mock('backend/logger', () => ({
   logWarning: jest.fn()
 }))
 jest.mock('backend/config')
-jest.mock('backend/utils', () => ({
-  spawnAsync: jest.fn()
+jest.mock('backend/utils/open_external', () => ({
+  openExternal: jest.fn()
+}))
+const mockGogUserData = jest.fn()
+jest.mock('backend/storeManagers/gog/stores', () => ({
+  configStore: { get_nodefault: () => mockGogUserData() }
 }))
 jest.mock('../steam_helpers', () => ({
   findShortcutInAllUsers: jest.fn(),
@@ -60,7 +69,7 @@ describe('addGameToSteam', () => {
   })
 
   test('returns error when steam:// URL fails to open', async () => {
-    jest.mocked(spawnAsync).mockRejectedValue(new Error('xdg-open not found'))
+    jest.mocked(openExternal).mockResolvedValue(false)
 
     const result = await addGameToSteam({
       gameName: 'MyGame',
@@ -87,7 +96,7 @@ describe('addGameToSteam', () => {
       success: false,
       error: 'No Steam userdata directories found in /x'
     })
-    expect(spawnAsync).not.toHaveBeenCalled()
+    expect(openExternal).not.toHaveBeenCalled()
   })
 
   test('a shortcut without a usable id does not count as added', async () => {
@@ -96,9 +105,7 @@ describe('addGameToSteam', () => {
       .mockReturnValueOnce({ entry: null, found: false })
       .mockReturnValue({ entry: { Exe: '/tmp/MyGame.bat' }, found: true })
     mockedGetShortcutId.mockReturnValue(0)
-    jest
-      .mocked(spawnAsync)
-      .mockResolvedValue({ code: 0, stdout: '', stderr: '' })
+    jest.mocked(openExternal).mockResolvedValue(true)
 
     const pending = addGameToSteam({
       gameName: 'MyGame',
@@ -132,14 +139,14 @@ describe('addGameToSteam', () => {
     const desktopPathFromUrl = (url: string) =>
       decodeURIComponent(url.replace('steam://addnonsteamgame/', ''))
 
-    // Steam is mocked to "add" the game as soon as xdg-open is called; the
+    // Steam is mocked to "add" the game as soon as the URL is opened; the
     // .desktop is captured then because it is deleted when the call returns.
     function captureDesktop(): { path: string; content: string }[] {
       const captured: { path: string; content: string }[] = []
-      jest.mocked(spawnAsync).mockImplementation(async (_cmd, args) => {
-        const path = desktopPathFromUrl(args[0])
+      jest.mocked(openExternal).mockImplementation(async (url) => {
+        const path = desktopPathFromUrl(url)
         captured.push({ path, content: readFileSync(path, 'utf-8') })
-        return { code: 0, stdout: '', stderr: '' }
+        return true
       })
       mockedFindShortcutInAllUsers
         .mockReturnValueOnce({ entry: null, found: false })
@@ -202,11 +209,11 @@ describe('addGameToSteam', () => {
       expect(existsSync(dirname(captured[0].path))).toBe(false)
     })
 
-    test('removes the temporary .desktop when xdg-open fails', async () => {
+    test('removes the temporary .desktop when the URL cannot be opened', async () => {
       let desktopPath = ''
-      jest.mocked(spawnAsync).mockImplementation(async (_cmd, args) => {
-        desktopPath = desktopPathFromUrl(args[0])
-        throw new Error('xdg-open not found')
+      jest.mocked(openExternal).mockImplementation(async (url) => {
+        desktopPath = desktopPathFromUrl(url)
+        return false
       })
 
       const result = await addGameToSteam({
@@ -231,7 +238,7 @@ describe('addGameToSteam', () => {
       })
 
       expect(result).toEqual({ success: true, steamAppId: 7, existed: true })
-      expect(spawnAsync).not.toHaveBeenCalled()
+      expect(openExternal).not.toHaveBeenCalled()
     })
 
     test('looks for the shortcut by id and by what it runs, not by title', async () => {
@@ -261,6 +268,21 @@ describe('addGameToSteam', () => {
         exe: '/tmp/a.bat'
       })
     })
+  })
+})
+
+describe('batFileName', () => {
+  test('keeps a title as it is, so that a game already in Steam keeps its file', () => {
+    expect(batFileName('Half-Life: Alyx (VR) & More')).toBe(
+      'Half-Life: Alyx (VR) & More'
+    )
+  })
+
+  test('never lets a title be a path', () => {
+    expect(batFileName('../../etc/evil')).toBe('.._.._etc_evil')
+    expect(batFileName('a/b')).toBe('a_b')
+    expect(batFileName('..')).toBe('_')
+    expect(batFileName('')).toBe('_')
   })
 })
 
@@ -323,6 +345,13 @@ describe('createRakunBat', () => {
     expect(content).toContain('set "GOGUSER="')
   })
 
+  test('the user of Comet is the one GOG saved at login', () => {
+    mockGogUserData.mockReturnValue({ username: 'franje' })
+    const runnerPath = createRakunBat(tmpDir.name, 'GogGame', 'gog', 'gog123')
+
+    expect(lines(runnerPath)).toContain('set "GOGUSER=franje"')
+  })
+
   test('has no logic of its own: that is in the runner', () => {
     const content = readFileSync(
       createRakunBat(tmpDir.name, 'G', 'legendary', 'a'),
@@ -331,10 +360,21 @@ describe('createRakunBat', () => {
     expect(content).not.toMatch(/legendary launch|gogdl|goto|if not exist/)
   })
 
-  test('Zoom has no runner', () => {
-    expect(() =>
-      createRakunBat('/some/path/ZoomGame', 'ZoomGame', 'zoom', '')
-    ).toThrow('There is no runner for the store "zoom"')
+  test('the file of a game with a slash in its title stays in the runner folder', () => {
+    const path = createRakunBat(tmpDir.name, 'AC/DC: Live', 'legendary', 'a')
+    expect(path).toBe(join(mockRakunRunnerPath, 'AC_DC: Live.bat'))
+    expect(existsSync(path)).toBe(true)
+  })
+
+  test('Zoom: the .bat carries the file name of the installer', () => {
+    const path = createRakunBat(
+      tmpDir.name,
+      'ZoomGame',
+      'zoom',
+      'guid',
+      'Setup.exe'
+    )
+    expect(readFileSync(path, 'utf-8')).toContain('set "INSTALLER=Setup.exe"')
   })
 
   test('overwrites existing file with new content', () => {
@@ -375,34 +415,22 @@ describe('createRunnerFile', () => {
     runnerDir.removeCallback()
   })
 
-  test('zoom: symlinks the install path into rakunGamesPath and points at the executable through it', () => {
+  test('zoom: a Windows game goes through the runner .bat like the rest', () => {
     const gameInfo = {
       runner: 'zoom',
-      install: { executable: 'drive_c/Game/game.exe' }
+      title: 'ZoomGame',
+      app_name: 'guid',
+      install: { executable: 'Setup.exe', platform: 'windows' }
     } as unknown as GameInfo
 
     const result = createRunnerFile(gameInfo, installDir.name)
 
-    expect('path' in result).toBe(true)
-    const linkPath = join(gamesDir.name, basename(installDir.name))
-    expect(existsSync(linkPath)).toBe(true)
     expect((result as { path: string }).path).toBe(
-      join(linkPath, 'drive_c/Game/game.exe')
+      join(mockRakunRunnerPath, 'ZoomGame.bat')
     )
   })
 
-  test('zoom: returns an error when there is no executable', () => {
-    const gameInfo = {
-      runner: 'zoom',
-      install: { executable: '' }
-    } as unknown as GameInfo
-
-    const result = createRunnerFile(gameInfo, installDir.name)
-
-    expect(result).toEqual({ error: 'No executable found for Zoom game' })
-  })
-
-  test('non-zoom: creates a .bat runner file', () => {
+  test('creates a .bat runner file', () => {
     const gameInfo = {
       runner: 'legendary',
       title: 'LegGame',
@@ -415,5 +443,43 @@ describe('createRunnerFile', () => {
     expect((result as { path: string }).path).toBe(
       join(mockRakunRunnerPath, 'LegGame.bat')
     )
+  })
+
+  test('itch: creates a .bat runner that names its executable, not a shortcut to it', () => {
+    const gameInfo = {
+      runner: 'itch',
+      title: 'ItchGame',
+      app_name: '21301',
+      install: { executable: 'bin/Game.exe' }
+    } as unknown as GameInfo
+
+    const result = createRunnerFile(gameInfo, installDir.name)
+
+    const path = (result as { path: string }).path
+    expect(path).toBe(join(mockRakunRunnerPath, 'ItchGame.bat'))
+    const content = readFileSync(path, 'utf-8')
+    expect(content).toContain('set "STORE=itch"')
+    expect(content).toContain(
+      `set "IDGAME=${basename(installDir.name)}\\bin\\Game.exe"`
+    )
+    expect(existsSync(join(gamesDir.name, basename(installDir.name)))).toBe(
+      false
+    )
+  })
+
+  test('itch: with no executable there is no .bat and an error says why', () => {
+    const gameInfo = {
+      runner: 'itch',
+      title: 'NoExeGame',
+      app_name: '1',
+      install: { executable: '' }
+    } as unknown as GameInfo
+
+    const result = createRunnerFile(gameInfo, installDir.name)
+
+    expect(result).toEqual({
+      error: expect.stringContaining('has no executable to run')
+    })
+    expect(existsSync(join(mockRakunRunnerPath, 'NoExeGame.bat'))).toBe(false)
   })
 })

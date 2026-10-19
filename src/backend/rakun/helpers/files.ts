@@ -20,7 +20,7 @@ import {
 /** What `getHelpers` answers, with the helper as one of the known names */
 export type HelperEntry = HelperInfo & { helper: HelperName }
 
-export const TAGS_FILE = '.release_tags'
+const TAGS_FILE = '.release_tags'
 
 export const machineArch = (): Arch =>
   process.arch === 'arm64' ? 'arm64' : 'x64'
@@ -69,11 +69,9 @@ export function helperStates(
     )
     const installed = own[helper] ?? bundled[helper] ?? ''
     const pinned = RELEASE_TAGS[helper]
-    // Zoom's script has no version in its address: whatever is there is the one
-    // that is there, and it cannot be told apart from «the tested one»
     const state: HelperState = !present
       ? 'missing'
-      : installed === pinned || helper === 'zoom-platform'
+      : installed === pinned
         ? 'ok'
         : 'other'
     return { helper, pinned, installed: present ? installed : '', state }

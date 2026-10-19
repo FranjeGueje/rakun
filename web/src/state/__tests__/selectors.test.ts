@@ -1,17 +1,67 @@
-import type { GameInfo, GameStatus } from '../../api/types'
+import type { GameInfo, GameStatus, StoreCaps } from '../../api/types'
 import {
-  actionsFor,
+  actionsFor as actionsWith,
   coverSources,
   cycle,
-  installParams,
+  installParams as installParamsWith,
   isBusy,
   menuValue,
   moveInGrid,
-  platformFor,
+  platformFor as platformWith,
   quitMessageKey,
   storeTabs,
   visibleGames
 } from '../selectors'
+
+// The capabilities each store reports, by the runner of the game under test
+const CAPS: Record<'gog' | 'zoom' | 'legendary' | 'nile', StoreCaps> = {
+  gog: {
+    import: true,
+    update: true,
+    repair: true,
+    lowercasePlatform: true,
+    directLaunch: false,
+    installModes: false
+  },
+  zoom: {
+    import: false,
+    update: false,
+    repair: false,
+    lowercasePlatform: true,
+    directLaunch: true,
+    installModes: true
+  },
+  legendary: {
+    import: true,
+    update: true,
+    repair: true,
+    lowercasePlatform: false,
+    directLaunch: false,
+    installModes: false
+  },
+  nile: {
+    import: true,
+    update: true,
+    repair: true,
+    lowercasePlatform: false,
+    directLaunch: false,
+    installModes: false
+  }
+}
+const capsOf = (g: GameInfo) => (CAPS as Record<string, StoreCaps>)[g.runner]
+const actionsFor = (
+  g: GameInfo,
+  s: GameStatus | undefined,
+  needsUpdate: boolean
+) => actionsWith(g, s, needsUpdate, capsOf(g))
+const platformFor = (g: GameInfo, build?: 'windows' | 'linux') =>
+  platformWith(g, capsOf(g), build)
+const installParams = (
+  g: GameInfo,
+  path: string,
+  build?: 'windows' | 'linux',
+  mode?: 'interactive' | 'steam'
+) => installParamsWith(g, path, capsOf(g), build, mode)
 
 const game = (app_name: string, extra: Partial<GameInfo> = {}): GameInfo => ({
   runner: 'gog',
@@ -63,9 +113,9 @@ describe('visibleGames', () => {
 
 describe('stores', () => {
   const stores = [
-    { id: 'legendary', name: 'epic', label: 'Epic' },
-    { id: 'gog', name: 'gog', label: 'GOG' },
-    { id: 'zoom', name: 'zoom', label: 'Zoom' }
+    { id: 'legendary', name: 'epic', label: 'Epic', caps: CAPS.legendary },
+    { id: 'gog', name: 'gog', label: 'GOG', caps: CAPS.gog },
+    { id: 'zoom', name: 'zoom', label: 'Zoom', caps: CAPS.zoom }
   ] as const
 
   test('tabs: the stores with games, and those still being read', () => {
@@ -83,7 +133,15 @@ describe('stores', () => {
     // nile arrived empty: no tab; a store not read yet shows with «loading»
     const reading = storeTabs(
       games,
-      [...stores, { id: 'nile', name: 'amazon', label: 'Amazon' }],
+      [
+        ...stores,
+        {
+          id: 'nile',
+          name: 'amazon',
+          label: 'Amazon',
+          caps: CAPS.nile
+        }
+      ],
       {
         gog: true,
         legendary: true,
@@ -114,6 +172,30 @@ describe('actionsFor', () => {
       'install',
       'importFolder'
     ])
+  })
+
+  test("Zoom's Windows game is installed now or from Steam; a native Linux one has no choice", () => {
+    expect(actionsFor(game('a', { runner: 'zoom' }), undefined, false)).toEqual(
+      ['installSteam', 'installInteractive']
+    )
+    expect(
+      actionsFor(
+        game('a', { runner: 'zoom', is_linux_native: true }),
+        undefined,
+        false
+      )
+    ).toEqual(['installSteam', 'installInteractive', 'installLinux'])
+    expect(
+      actionsFor(
+        game('a', {
+          runner: 'zoom',
+          is_linux_native: true,
+          is_windows_native: false
+        }),
+        undefined,
+        false
+      )
+    ).toEqual(['install'])
   })
 
   test('an installed one can be repaired or uninstalled, updated first if it needs it', () => {
@@ -152,6 +234,14 @@ describe('actionsFor', () => {
         false
       )
     ).toEqual([])
+  })
+
+  test('a store that cannot repair or update does not offer it', () => {
+    const zoom = game('a', { runner: 'zoom', is_installed: true })
+    expect(actionsFor(zoom, undefined, true)).toEqual(['uninstall'])
+    expect(
+      actionsFor(game('a', { is_installed: true }), undefined, true)
+    ).toEqual(['update', 'repair', 'uninstall'])
   })
 
   test('isBusy', () => {
@@ -200,7 +290,7 @@ describe('installing', () => {
       'importFolder'
     ])
     expect(actionsFor(game('a', { runner: 'zoom' }), undefined, false)).toEqual(
-      ['install']
+      ['installSteam', 'installInteractive']
     )
     expect(
       actionsFor(game('a', { is_installed: true }), undefined, false)
@@ -228,6 +318,15 @@ describe('installing', () => {
       path: '/juegos',
       platformToInstall: 'Windows'
     })
+  })
+
+  test('the mode of a Zoom install goes with them, and no mode adds nothing', () => {
+    const g = game('a', { runner: 'zoom' })
+    expect(installParams(g, '/g', 'windows', 'steam')).toMatchObject({
+      platformToInstall: 'windows',
+      installMode: 'steam'
+    })
+    expect(installParams(g, '/g', 'windows')).not.toHaveProperty('installMode')
   })
 })
 
@@ -276,7 +375,8 @@ describe('menuValue', () => {
     language: 'es',
     defaultInstallPath: '/games',
     protonPath: '',
-    steamGridDbApiKey: 'secret'
+    steamGridDbApiKey: '',
+    hasSteamGridDbKey: true
   }
   const t = (key: string) => key
   const name = (code: string) => `name:${code}`
@@ -294,7 +394,12 @@ describe('menuValue', () => {
   test('never shows the key, only whether there is one', () => {
     expect(menuValue('steamGridDb', settings, t, name)).toBe('menu.configured')
     expect(
-      menuValue('steamGridDb', { ...settings, steamGridDbApiKey: '' }, t, name)
+      menuValue(
+        'steamGridDb',
+        { ...settings, hasSteamGridDbKey: false },
+        t,
+        name
+      )
     ).toBe('menu.notConfigured')
   })
 })

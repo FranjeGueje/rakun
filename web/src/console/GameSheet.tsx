@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { GameInfo, GameStatus } from '../api/types'
+import type { GameInfo, GameStatus, StoreCaps } from '../api/types'
 import type { Translate } from '../i18n'
 import type { StringKey } from '../i18n/strings'
 import { useLayer } from '../input/useInput'
@@ -12,6 +12,8 @@ import { FolderPicker } from './FolderPicker'
 const LABELS: Record<GameAction, StringKey> = {
   install: 'sheet.install',
   installWindows: 'sheet.installWindows',
+  installInteractive: 'sheet.installInteractive',
+  installSteam: 'sheet.installSteam',
   installLinux: 'sheet.installLinux',
   importFolder: 'sheet.importFolder',
   update: 'sheet.update',
@@ -40,6 +42,7 @@ type Props = {
   game: GameInfo
   status: GameStatus | undefined
   needsUpdate: boolean
+  caps: StoreCaps
   defaultInstallPath: string
   actions: Actions
   t: Translate
@@ -50,12 +53,13 @@ export function GameSheet({
   game,
   status,
   needsUpdate,
+  caps,
   defaultInstallPath,
   actions,
   t,
   onClose
 }: Props) {
-  const available = actionsFor(game, status, needsUpdate)
+  const available = actionsFor(game, status, needsUpdate, caps)
   const [focus, setFocus] = useState(0)
   const [asking, setAsking] = useState<GameAction | null>(null)
   const [picking, setPicking] = useState(false)
@@ -67,13 +71,15 @@ export function GameSheet({
     const doIt: Record<GameAction, () => void> = {
       install: () => actions.install(game),
       installWindows: () => actions.install(game, 'windows'),
+      installInteractive: () => actions.install(game, 'windows', 'interactive'),
+      installSteam: () => actions.install(game, 'windows', 'steam'),
       installLinux: () => actions.install(game, 'linux'),
       importFolder: () => undefined, // picks a folder first: see `choose`
       update: () => actions.update(game),
       repair: () => actions.repair(game),
       uninstall: () => actions.uninstall(game),
       cancel: () => actions.cancelCurrent(),
-      removeFromQueue: () => actions.removeFromQueue(game.app_name)
+      removeFromQueue: () => actions.removeFromQueue(game)
     }
     doIt[action]()
     onClose()

@@ -3,6 +3,7 @@ import type { Runner } from 'common/types'
 import { addHandler } from 'backend/ipc'
 import { logError, RunnerToLogPrefixMap } from 'backend/logger'
 import { RUNNERS, stores } from 'backend/storeManagers'
+import { shareInFlight } from 'backend/utils/inflight'
 
 /** The games of one store (or all of them) as last refreshed, with install state */
 addHandler('getLibrary', (_e, library = 'all') => {
@@ -24,7 +25,11 @@ async function updateableIn(runner: Runner): Promise<UpdateableGame[]> {
   }
 }
 
+const updateableChecks = new Map<string, Promise<UpdateableGame[]>>()
+
 /** Unlike `checkGameUpdates` it names the store and queues nothing */
-addHandler('getUpdateableGames', async () =>
-  (await Promise.all(RUNNERS.map(updateableIn))).flat()
+addHandler('getUpdateableGames', () =>
+  shareInFlight(updateableChecks, 'all', async () =>
+    (await Promise.all(RUNNERS.map(updateableIn))).flat()
+  )
 )

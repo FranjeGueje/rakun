@@ -12,15 +12,29 @@ import { emptyQueue, fakeRakun, game, settings } from './fakeRakun'
 
 /** The page run by a desktop app (Relic): it can quit, start rakun and log in in a window */
 
+const CAPS = {
+  import: true,
+  update: true,
+  repair: true,
+  lowercasePlatform: false,
+  directLaunch: false,
+  installModes: false
+}
 const stores: StoreInfo[] = [
-  { id: 'legendary', name: 'epic', label: 'Epic' },
-  { id: 'gog', name: 'gog', label: 'GOG' }
+  { id: 'legendary', name: 'epic', label: 'Epic', caps: CAPS },
+  {
+    id: 'gog',
+    name: 'gog',
+    label: 'GOG',
+    caps: { ...CAPS, lowercasePlatform: true }
+  }
 ]
 const accounts = {
   legendary: { loggedIn: true, name: 'Ana' },
   gog: { loggedIn: false },
   nile: { loggedIn: false },
-  zoom: { loggedIn: false }
+  zoom: { loggedIn: false },
+  itch: { loggedIn: false }
 }
 const library = [
   game('alpha', { title: 'Alpha', runner: 'gog' }),

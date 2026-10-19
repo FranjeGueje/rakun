@@ -1,9 +1,8 @@
 import {
   chmodSync,
-  existsSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
-  readFileSync,
   rmSync,
   symlinkSync,
   unlinkSync,
@@ -12,12 +11,9 @@ import {
 import { tmpdir } from 'os'
 import { basename, dirname, join } from 'path'
 import { logError, logInfo } from 'backend/logger'
-import { spawnAsync } from 'backend/utils'
-import {
-  rakunRunnerPath,
-  rakunGamesPath,
-  userDataPath
-} from 'backend/constants/paths'
+import { openExternal } from 'backend/utils/open_external'
+import { rakunRunnerPath, rakunGamesPath } from 'backend/constants/paths'
+import { configStore as gogConfigStore } from 'backend/storeManagers/gog/stores'
 import {
   findShortcutInAllUsers,
   getShortcutId,
@@ -37,26 +33,13 @@ export function createRunnerFile(
   gameInfo: GameInfo,
   installPath: string
 ): { path: string } | { error: string } {
-  if (gameInfo.runner === 'zoom') {
-    const executable = gameInfo.install.executable
-    if (!executable) {
-      return { error: 'No executable found for Zoom game' }
-    }
-
-    const symlink = createGameSymlink(installPath)
-    if ('error' in symlink) {
-      return { error: symlink.error }
-    }
-
-    return { path: join(symlink.linkPath, executable) }
-  }
-
   try {
     const runnerPath = createRakunBat(
       installPath,
       gameInfo.title,
       gameInfo.runner,
-      gameInfo.app_name
+      gameInfo.app_name,
+      gameInfo.install.executable
     )
     return { path: runnerPath }
   } catch (e) {
@@ -66,14 +49,16 @@ export function createRunnerFile(
 }
 
 function getGogUsername(): string {
-  try {
-    const configPath = join(userDataPath, 'gog_store', 'config.json')
-    const raw = readFileSync(configPath, 'utf-8')
-    const config = JSON.parse(raw)
-    return config.userData?.username ?? ''
-  } catch {
-    return ''
-  }
+  return gogConfigStore.get_nodefault('userData')?.username ?? ''
+}
+
+/**
+ * The name of the `.bat` of a game: its title, but never a path (a `/` in it would write
+ * somewhere else or fail). Nothing else changes, so a game that is already in Steam keeps its file.
+ */
+export function batFileName(title: string): string {
+  const name = title.replace(/[/\0]/g, '_')
+  return name === '' || name === '.' || name === '..' ? '_' : name
 }
 
 /** The `.bat` the Steam shortcut of a game runs: its variables and a call to the runner of the mount */
@@ -81,9 +66,10 @@ export function createRakunBat(
   installPath: string,
   gameName: string,
   runner: GameRunner,
-  appName: string
+  appName: string,
+  executable?: string
 ): string {
-  const runnerPath = join(rakunRunnerPath, `${gameName}.bat`)
+  const runnerPath = join(rakunRunnerPath, `${batFileName(gameName)}.bat`)
 
   mkdirSync(rakunRunnerPath, { recursive: true })
 
@@ -92,7 +78,8 @@ export function createRakunBat(
     appName,
     title: gameName,
     folder: basename(installPath),
-    username: runner === 'gog' ? getGogUsername() : undefined
+    username: runner === 'gog' ? getGogUsername() : undefined,
+    executable
   })
   writeFileSync(runnerPath, content, 'utf-8')
 
@@ -108,7 +95,8 @@ export function createGameSymlink(
   }
   const linkPath = join(rakunGamesPath, basename(installPath))
   try {
-    if (existsSync(linkPath)) {
+    // A link whose target is gone does not «exist» for existsSync: look at the link itself
+    if (lstatSync(linkPath, { throwIfNoEntry: false })?.isSymbolicLink()) {
       unlinkSync(linkPath)
     }
     mkdirSync(rakunGamesPath, { recursive: true })
@@ -200,20 +188,6 @@ export async function addGameToSteam(
   }
 }
 
-// `xdg-open` picks its handler from the desktop environment variables, and the
-// daemon may not have them (e.g. no KDE_SESSION_VERSION when started from a
-// systemd user service): it then fails silently with exit code 0. `gio open`
-// goes straight to the registered steam:// handler.
-async function openSteamUrl(steamUrl: string): Promise<void> {
-  try {
-    const { code } = await spawnAsync('gio', ['open', steamUrl])
-    if (code === 0) return
-  } catch {
-    // gio is not installed: fall back to xdg-open
-  }
-  await spawnAsync('xdg-open', [steamUrl])
-}
-
 async function sendToSteam(
   gameName: string,
   runnerPath: string,
@@ -221,16 +195,9 @@ async function sendToSteam(
 ): Promise<AddGameToSteamResult> {
   const steamUrl = `steam://addnonsteamgame/${encodeURIComponent(desktopPath)}`
 
-  try {
-    await openSteamUrl(steamUrl)
-    logInfo(`Opened ${steamUrl}`, LOG_PREFIX)
-  } catch (error) {
-    logError(`Failed to open steam:// URL: ${String(error)}`, LOG_PREFIX)
-    return {
-      success: false,
-      error: `Failed to open steam:// URL: ${String(error)}`
-    }
-  }
+  if (!(await openExternal(steamUrl)))
+    return { success: false, error: `Failed to open steam:// URL ${steamUrl}` }
+  logInfo(`Opened ${steamUrl}`, LOG_PREFIX)
 
   logInfo(`Waiting for "${gameName}" to be added to Steam...`, LOG_PREFIX)
 

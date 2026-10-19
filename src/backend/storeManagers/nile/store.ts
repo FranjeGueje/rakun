@@ -3,7 +3,7 @@ import type { Store } from '../store'
 import { withLiveInfo } from '../library_view'
 import NileLibraryManager from './library'
 import { NileUser } from './user'
-import { libraryStore } from './electronStores'
+import { libraryStore } from './stores'
 
 const library = new NileLibraryManager()
 

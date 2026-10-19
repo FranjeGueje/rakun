@@ -4,8 +4,16 @@ import { GlobalConfig } from 'backend/config'
 import { clearCache, handleExit, writeConfig } from 'backend/utils'
 import { resetAndStop, stopAfterReply } from '../reset'
 import { validateSetting, validateSettings } from '../settings_validation'
+import type { AppSettings } from 'common/types'
 
-addHandler('requestAppSettings', () => GlobalConfig.get().getSettings())
+/** The settings as a client sees them: the SteamGridDB key is written, never read back (`steamgriddb.hasApiKey` says if there is one) */
+export function withoutSecrets(settings: AppSettings): AppSettings {
+  return { ...settings, steamGridDbApiKey: '' }
+}
+
+addHandler('requestAppSettings', () =>
+  withoutSecrets(GlobalConfig.get().getSettings())
+)
 
 addHandler('getMaxCpus', () => cpus().length)
 

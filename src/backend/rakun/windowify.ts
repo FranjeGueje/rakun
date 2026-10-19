@@ -27,7 +27,7 @@ import { gogdlConfigPath } from 'backend/storeManagers/gog/constants'
 import { GameInfo } from 'common/types'
 import type { GameRunner } from './steam_shortcuts/types'
 import { createGameSymlink } from './steam_shortcuts/add_game'
-import { SCRIPTS_DIR } from './runner_script'
+import { SCRIPTS_DIR } from './runner/bat'
 import { eosOverlayScriptText } from './eos_overlay_script'
 
 const LOG_PREFIX = 'Rakun'
@@ -90,7 +90,9 @@ const STORE_CONFIGS: Record<GameRunner, StoreConfig> = {
       }))
     }
   },
-  zoom: { configDir: '', installedFile: '', mountDir: '', transform: (d) => d }
+  zoom: { configDir: '', installedFile: '', mountDir: '', transform: (d) => d },
+  // butler keeps its own records of the installs: there is nothing to translate
+  itch: { configDir: '', installedFile: '', mountDir: '', transform: (d) => d }
 }
 
 // ── Public API ──
@@ -102,8 +104,8 @@ export function windowify(gameInfo: GameInfo, installPath: string): void {
 
   const config = STORE_CONFIGS[gameInfo.runner]
   if (!config || !config.installedFile) {
-    logWarning(
-      `windowify not implemented for runner: ${gameInfo.runner}`,
+    logInfo(
+      `windowify: nothing to translate for ${gameInfo.runner}`,
       LOG_PREFIX
     )
     return

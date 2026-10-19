@@ -20,13 +20,12 @@ import {
   Layout,
   RELEASE_TAGS,
   releaseUrl,
-  REPOS,
-  ZOOM_SCRIPT_URL
+  REPOS
 } from './manifest'
 
 const USER_AGENT = 'RakunBinaryUpdater/1.0'
 
-export type DownloadOptions = {
+type DownloadOptions = {
   /** The latest release of each helper instead of the version rakun was tested with: nothing is checked */
   latest?: boolean
   /** The architectures whose tools are downloaded (the Windows ones are always x64) */
@@ -137,16 +136,11 @@ async function installAsset(
       asset.root === 'bin' ? 0o755 : undefined
     )
   } else if (asset.kind === 'zip' || asset.kind === 'tar') {
-    unpack(asset.kind, data, root)
+    unpack(asset.kind, data, join(root, asset.target ?? ''))
     if (helper === 'umu') chmodSync(join(root, 'umu', 'umu-run'), 0o755)
+    if (helper === 'butler')
+      chmodSync(join(root, asset.target ?? '', 'butler'), 0o755)
   }
-}
-
-/** The Zoom installer is a script on its own site, with no versions: its own line says which one it is */
-async function installZoomScript(layout: Layout, fetchFn: typeof fetch) {
-  const data = await getBuffer(fetchFn, ZOOM_SCRIPT_URL)
-  writeAtomic(join(layout.binRoot, 'zoom', 'zoom-platform.sh'), data, 0o755)
-  return /INSTALLER_VERSION="([^"]+)"/.exec(data.toString('utf-8'))?.[1]
 }
 
 async function installHelper(
@@ -157,13 +151,6 @@ async function installHelper(
   fetchFn: typeof fetch
 ) {
   const { latest = false, onProgress } = options
-  if (helper === 'zoom-platform') {
-    onProgress?.(`Downloading ${helper} from ${ZOOM_SCRIPT_URL}`)
-    const version = await installZoomScript(layout, fetchFn)
-    // Not pinned by hash (the script changes in its place): its version is what is recorded
-    recordTag(layout.binRoot, helper, version ?? RELEASE_TAGS[helper])
-    return
-  }
   const repo = REPOS[helper]
   const tag =
     latest && repo ? await latestTag(repo, fetchFn) : RELEASE_TAGS[helper]

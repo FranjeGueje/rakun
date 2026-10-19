@@ -1,19 +1,19 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react'
 import { HELPERS_DONE, type RakunEvent } from '../api/channels'
-import type { GameInfo, GameStatus, Runner } from '../api/types'
+import type { GameInfo, GameStatus, InstallMode, Runner } from '../api/types'
 import { mark } from '../perf'
 import { initialState, reducer, type State } from './reducer'
-import { installParams, platformFor, type Build } from './selectors'
+import { capsOf, installParams, platformFor, type Build } from './selectors'
 
 export type Actions = {
-  install: (game: GameInfo, build?: Build) => void
+  install: (game: GameInfo, build?: Build, mode?: InstallMode) => void
   /** Registers a game that is already in `path`, without downloading it */
   importFolder: (game: GameInfo, path: string) => void
   update: (game: GameInfo) => void
   repair: (game: GameInfo) => void
   uninstall: (game: GameInfo) => void
   cancelCurrent: () => void
-  removeFromQueue: (appName: string) => void
+  removeFromQueue: (game: GameInfo) => void
   pause: () => void
   resume: () => void
   clearFinished: () => void
@@ -199,11 +199,17 @@ export function useRakun(): { state: State; actions: Actions } {
   )
 
   const actions: Actions = {
-    install: (game, build) =>
+    install: (game, build, mode) =>
       run(() =>
         window.rakun.call(
           'install',
-          installParams(game, stateRef.current.defaultInstallPath, build)
+          installParams(
+            game,
+            stateRef.current.defaultInstallPath,
+            capsOf(stateRef.current.stores, game.runner),
+            build,
+            mode
+          )
         )
       ),
     importFolder: (game, path) =>
@@ -212,7 +218,10 @@ export function useRakun(): { state: State; actions: Actions } {
           appName: game.app_name,
           runner: game.runner,
           path,
-          platform: platformFor(game)
+          platform: platformFor(
+            game,
+            capsOf(stateRef.current.stores, game.runner)
+          )
         })
         const games = await window.rakun.call('getLibrary', game.runner)
         await loadLibrary(game.runner)
@@ -236,8 +245,10 @@ export function useRakun(): { state: State; actions: Actions } {
       }),
     // Like `rakunctl cancel --remove-files`: what was half downloaded is deleted
     cancelCurrent: () => run(() => window.rakun.call('cancelDownload', true)),
-    removeFromQueue: (appName) =>
-      run(() => window.rakun.call('removeFromDMQueue', appName)),
+    removeFromQueue: (game) =>
+      run(() =>
+        window.rakun.call('removeFromDMQueue', game.app_name, game.runner)
+      ),
     pause: () => run(() => window.rakun.call('pauseCurrentDownload')),
     resume: () => run(() => window.rakun.call('resumeCurrentDownload')),
     clearFinished: () =>
