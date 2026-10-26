@@ -37,7 +37,7 @@ export const RELEASE_TAGS: Record<HelperName, string> = {
   legendary: '0.21.1',
   gogdl: 'v1.3.1',
   nile: 'v1.2.0',
-  comet: 'v0.3.2',
+  comet: 'v0.4.0',
   'epic-integration': 'v0.4',
   // NOTE: umu-launcher tags have no `v` prefix
   umu: '1.4.4',
@@ -161,7 +161,7 @@ export const ASSETS: Asset[] = [
     kind: 'file',
     root: 'win',
     target: 'comet.exe',
-    sha256: '181f9a3644eabbdf396037de135583e92cf4a08029be30c9ee4e2479ff11ae8c'
+    sha256: '868733fb5b9dd55c54c8e9b601d5fc0443be91963c20ab2f73a80d606a5c50b6'
   },
   {
     // GalaxyCommunication.exe and update-permissions.exe (the zip has more files, unused)
@@ -169,7 +169,7 @@ export const ASSETS: Asset[] = [
     asset: fixed('dummy-service.zip'),
     kind: 'zip',
     root: 'win',
-    sha256: '7fc5facd1fce4d516cd3ce527e7e4dbe0bfd17649cea805e8ea7c37d4ba58d9a'
+    sha256: '4a3bb0889662a976fb84445c46eafbe44f7b9c8ea761a5761266f451e4dfcaf7'
   },
   {
     helper: 'epic-integration',
