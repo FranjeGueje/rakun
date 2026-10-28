@@ -2,6 +2,13 @@
 
 The history of rakun before its first release (the Heroic cleanup and Relic) lives in the `upstream` repository. The detailed notes of the versions before this first release are in the git history of this file.
 
+## 0.4.1 — Helpers
+
+### Changed
+
+- The helper `gogdl` is v1.3.1 (it was v1.3.0).
+- The helper `comet` is v0.4.1 (it was v0.3.2). Version 0.4.0 added events to external applications, workarounds for achievements and a cache of achievements; 0.4.1 removes its pinned CA bundle. rakun installs the same files as before.
+
 ## 0.4.0 — itch.io
 
 A new store, itch.io, and the first one that is not run by a client of its own: it goes through butler, itch's own tool. This version also carries what 0.3.2 prepared, which was never tagged.

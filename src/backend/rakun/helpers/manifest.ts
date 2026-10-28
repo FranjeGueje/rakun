@@ -35,9 +35,9 @@ export const HELPERS: HelperName[] = [
 /** The versions rakun was tested with. A new one is a change of rakun */
 export const RELEASE_TAGS: Record<HelperName, string> = {
   legendary: '0.21.1',
-  gogdl: 'v1.3.0',
+  gogdl: 'v1.3.1',
   nile: 'v1.2.0',
-  comet: 'v0.3.2',
+  comet: 'v0.4.1',
   'epic-integration': 'v0.4',
   // NOTE: umu-launcher tags have no `v` prefix
   umu: '1.4.4',
@@ -109,7 +109,7 @@ export const ASSETS: Asset[] = [
     root: 'bin',
     arch: 'x64',
     target: 'x64/linux/gogdl',
-    sha256: 'cba013d42767c808237c437335ab1d56f58405d07e8f37b3324d264ea5c49655'
+    sha256: '7a6f22da4943bdb4c00baf6250fcee7085c1104ba2ac401479e70ec96e722b59'
   },
   {
     helper: 'gogdl',
@@ -118,7 +118,7 @@ export const ASSETS: Asset[] = [
     root: 'bin',
     arch: 'arm64',
     target: 'arm64/linux/gogdl',
-    sha256: 'c49e1519146523ec94f33e2d21eedcc9a167004d7da218621e6d5fb84a7a0f4c'
+    sha256: '9c70af33f5ca74d08236b4d50ca5f54262d9b4712d4a34c479e4263792fe55fc'
   },
   {
     helper: 'gogdl',
@@ -126,7 +126,7 @@ export const ASSETS: Asset[] = [
     kind: 'file',
     root: 'win',
     target: 'gogdl.exe',
-    sha256: '69ea54467371803f681d6c39805992e3a4b8ddccb44ac8a1de7b1e3c80deaeec'
+    sha256: '1866e0ead43a4f5a02f1d750c79a69a1d285c09dc05b6fdce3b28c84bb2a4c5f'
   },
   {
     helper: 'nile',
@@ -161,7 +161,7 @@ export const ASSETS: Asset[] = [
     kind: 'file',
     root: 'win',
     target: 'comet.exe',
-    sha256: '181f9a3644eabbdf396037de135583e92cf4a08029be30c9ee4e2479ff11ae8c'
+    sha256: '35c8b1a7d82b9a03839bca9238ed1e68d1c2718ebeb1a0530b26c5f89885b876'
   },
   {
     // GalaxyCommunication.exe and update-permissions.exe (the zip has more files, unused)
@@ -169,7 +169,7 @@ export const ASSETS: Asset[] = [
     asset: fixed('dummy-service.zip'),
     kind: 'zip',
     root: 'win',
-    sha256: '7fc5facd1fce4d516cd3ce527e7e4dbe0bfd17649cea805e8ea7c37d4ba58d9a'
+    sha256: 'e89e837fb33d11e4757fe4ff46255ea35d95e1ed32750ef804a28bee8ef7de53'
   },
   {
     helper: 'epic-integration',
