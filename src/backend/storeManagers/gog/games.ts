@@ -27,6 +27,7 @@ import {
   createGameLogWriter
 } from 'backend/logger'
 import { GOGUser } from './user'
+import { writerFailureWatcher } from './output'
 
 import { GogInstallPlatform } from 'common/types/gog'
 import { sendFrontendMessage } from '../../ipc'
@@ -269,7 +270,9 @@ export default class GOGGame implements Game {
       maxWorkers
     })
 
+    const writer = writerFailureWatcher()
     const onOutput = (data: string) => {
+      writer.watch(data)
       this.onInstallOrUpdateOutput('installing', data)
     }
 
@@ -285,7 +288,7 @@ export default class GOGGame implements Game {
       return { status: 'abort' }
     }
 
-    const failure = res.error ?? exitFailure(res)
+    const failure = res.error ?? exitFailure(res) ?? writer.failure()
     if (failure) {
       logError(['Failed to install', `${this.id}:`, failure], LogPrefix.Gog)
       return { status: 'error', error: failure }
@@ -424,14 +427,16 @@ export default class GOGGame implements Game {
       ...workers
     ]
 
+    const writer = writerFailureWatcher()
     const repairLogWriter = createGameLogWriter(this.id, 'gog', 'repair')
     const res = await libraryManagerMap['gog'].runRunnerCommand(commandParts, {
       abortId: this.id,
       logWriters: [repairLogWriter],
+      onOutput: writer.watch,
       logMessagePrefix: `Repairing ${this.id}`
     })
 
-    const failure = res.error ?? exitFailure(res)
+    const failure = res.error ?? exitFailure(res) ?? writer.failure()
     if (failure) {
       res.error = failure
       logError(['Failed to repair', `${this.id}:`, failure], LogPrefix.Gog)
@@ -539,7 +544,9 @@ export default class GOGGame implements Game {
       ...overwrittenBuild,
       ...overwrittenBranch
     ]
+    const writer = writerFailureWatcher()
     const onOutput = (data: string) => {
+      writer.watch(data)
       this.onInstallOrUpdateOutput('updating', data)
     }
 
@@ -555,7 +562,7 @@ export default class GOGGame implements Game {
       return { status: 'abort' }
     }
 
-    const failure = res.error ?? exitFailure(res)
+    const failure = res.error ?? exitFailure(res) ?? writer.failure()
     if (failure) {
       logError(['Failed to update', `${this.id}:`, failure], LogPrefix.Gog)
       return { status: 'error', error: failure }
