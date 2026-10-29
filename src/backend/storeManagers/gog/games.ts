@@ -1,6 +1,6 @@
 import { libraryManagerMap } from '..'
 import { removeInstalled, upsertInstalled } from '../installed_list'
-import { exitFailure, hasFiles } from '../helper_result'
+import { exitFailure, failureWatcher, hasFiles } from '../helper_result'
 import { join } from 'path'
 import { GlobalConfig } from '../../config'
 import {
@@ -27,7 +27,6 @@ import {
   createGameLogWriter
 } from 'backend/logger'
 import { GOGUser } from './user'
-import { writerFailureWatcher } from './output'
 
 import { GogInstallPlatform } from 'common/types/gog'
 import { sendFrontendMessage } from '../../ipc'
@@ -40,6 +39,9 @@ import {
   gogSupportPath
 } from './constants'
 import { isLinux } from 'backend/constants/environment'
+
+/** gogdl stops when it cannot write a file, as if it was canceled */
+const gogdlFailureWatcher = () => failureWatcher('gogdl', /Task writer failed/)
 
 export default class GOGGame implements Game {
   private readonly id: string
@@ -270,7 +272,7 @@ export default class GOGGame implements Game {
       maxWorkers
     })
 
-    const writer = writerFailureWatcher()
+    const writer = gogdlFailureWatcher()
     const onOutput = (data: string) => {
       writer.watch(data)
       this.onInstallOrUpdateOutput('installing', data)
@@ -427,7 +429,7 @@ export default class GOGGame implements Game {
       ...workers
     ]
 
-    const writer = writerFailureWatcher()
+    const writer = gogdlFailureWatcher()
     const repairLogWriter = createGameLogWriter(this.id, 'gog', 'repair')
     const res = await libraryManagerMap['gog'].runRunnerCommand(commandParts, {
       abortId: this.id,
@@ -544,7 +546,7 @@ export default class GOGGame implements Game {
       ...overwrittenBuild,
       ...overwrittenBranch
     ]
-    const writer = writerFailureWatcher()
+    const writer = gogdlFailureWatcher()
     const onOutput = (data: string) => {
       writer.watch(data)
       this.onInstallOrUpdateOutput('updating', data)

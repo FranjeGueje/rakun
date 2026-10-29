@@ -30,7 +30,7 @@ import { isOnline } from '../../online_monitor'
 import { Catalog, Product } from 'common/types/epic-graphql'
 import { sendFrontendMessage } from '../../ipc'
 import { Game, InstallResult } from 'common/types/game_manager'
-import { exitFailure } from '../helper_result'
+import { exitFailure, failureWatcher } from '../helper_result'
 import {
   LegendaryAppName,
   LegendaryPlatform,
@@ -40,6 +40,10 @@ import { LegendaryCommand } from './commands'
 import { installCommand } from './install_command'
 import { Path } from 'backend/schemas'
 import { legendaryInstalled } from './constants'
+
+/** legendary says a file could not be written and goes on, the game saved as installed */
+const legendaryFailureWatcher = () =>
+  failureWatcher('legendary', /Writing for [^\n]* failed!/)
 
 export default class LegendaryGame implements Game {
   private readonly appName: LegendaryAppName
@@ -441,7 +445,9 @@ export default class LegendaryGame implements Game {
     }
     if (maxWorkers) command['--max-workers'] = PositiveInteger.parse(maxWorkers)
 
+    const writer = legendaryFailureWatcher()
     const onOutput = (data: string) => {
+      writer.watch(data)
       this.onInstallOrUpdateOutput(
         'updating',
         data,
@@ -461,7 +467,7 @@ export default class LegendaryGame implements Game {
       logMessagePrefix: `Updating ${this.appName}`
     })
 
-    res.error ??= exitFailure(res)
+    res.error ??= exitFailure(res) ?? writer.failure()
 
     if (res.abort) {
       return { status: 'abort' }
@@ -512,7 +518,9 @@ export default class LegendaryGame implements Game {
       maxWorkers
     })
 
+    const writer = legendaryFailureWatcher()
     const onOutput = (data: string) => {
+      writer.watch(data)
       this.onInstallOrUpdateOutput(
         'installing',
         data,
@@ -542,7 +550,7 @@ export default class LegendaryGame implements Game {
       })
     }
 
-    res.error ??= exitFailure(res)
+    res.error ??= exitFailure(res) ?? writer.failure()
 
     if (res.abort) {
       return { status: 'abort' }
@@ -602,6 +610,7 @@ export default class LegendaryGame implements Game {
     }
     if (maxWorkers) command['--max-workers'] = PositiveInteger.parse(maxWorkers)
 
+    const writer = legendaryFailureWatcher()
     const repairLogWriter = createGameLogWriter(
       this.appName,
       'legendary',
@@ -610,10 +619,11 @@ export default class LegendaryGame implements Game {
     const res = await libraryManagerMap['legendary'].runRunnerCommand(command, {
       abortId: this.appName,
       logWriters: [repairLogWriter],
+      onOutput: writer.watch,
       logMessagePrefix: `Repairing ${this.appName}`
     })
 
-    res.error ??= exitFailure(res)
+    res.error ??= exitFailure(res) ?? writer.failure()
 
     if (res.error) {
       logError(
