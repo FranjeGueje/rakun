@@ -1,4 +1,4 @@
-import { exitFailure } from '../helper_result'
+import { exitFailure, failureWatcher } from '../helper_result'
 
 describe('exitFailure', () => {
   test('a helper that ended well, or whose code is not known, did not fail', () => {
@@ -35,5 +35,46 @@ describe('exitFailure', () => {
       (exitFailure({ stdout: '', stderr: 'x'.repeat(2000), code: 1 }) ?? '')
         .length
     ).toBeLessThanOrEqual(400)
+  })
+})
+
+describe('failureWatcher', () => {
+  const gogdl = () => failureWatcher('gogdl', /Task writer failed/)
+
+  test('progress alone is not a failure', () => {
+    const watcher = gogdl()
+    watcher.watch(
+      '[PROGRESS] INFO: = Progress: 27.04 13315414038/49245781625\n'
+    )
+
+    expect(watcher.failure()).toBeUndefined()
+  })
+
+  test('what the helper said is the failure, even with more output after it', () => {
+    const watcher = gogdl()
+    watcher.watch(
+      'source file too short\n[TASK_EXEC] CRITICAL: Task writer failed\n'
+    )
+    watcher.watch('[PROGRESS] INFO: = Downloaded: 724.49 MiB\n')
+
+    expect(watcher.failure()).toBe(
+      "gogdl said «Task writer failed»: see the game's log"
+    )
+  })
+
+  test('it is found when it comes split in two chunks', () => {
+    const watcher = gogdl()
+    watcher.watch('[TASK_EXEC] CRITICAL: Task wri')
+    watcher.watch('ter failed\n')
+
+    expect(watcher.failure()).toContain('Task writer failed')
+  })
+
+  test('the first failure is the one kept, with the file it names', () => {
+    const watcher = failureWatcher('nile', /Checksum error for [^\n]*/)
+    watcher.watch('Checksum error for /g/a.exe\nChecksum error for /g/b.pak\n')
+
+    expect(watcher.failure()).toContain('/g/a.exe')
+    expect(watcher.failure()).not.toContain('/g/b.pak')
   })
 })

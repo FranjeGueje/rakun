@@ -102,6 +102,22 @@ describe('LegendaryGame.update', () => {
     expect(result.error).toContain('code 2')
   })
 
+  test('exit 0 but legendary said a file could not be written: an error', async () => {
+    runRunnerCommand.mockImplementation(
+      (_: unknown, options: { onOutput: (data: string) => void }) => {
+        options.onOutput(
+          '[DLManager] CRITICAL: Writing for bin/game.exe failed!\n'
+        )
+        return Promise.resolve({ stdout: '', stderr: '', code: 0 })
+      }
+    )
+
+    const result = await game().update()
+
+    expect(result.status).toBe('error')
+    expect(result.error).toContain('Writing for bin/game.exe failed!')
+  })
+
   test('exit 0 is done, as before', async () => {
     runRunnerCommand.mockResolvedValue({ stdout: '', stderr: '', code: 0 })
 

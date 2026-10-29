@@ -77,6 +77,22 @@ describe('NileGame.install and the way nile ends', () => {
     expect(installState).not.toHaveBeenCalled()
   })
 
+  test('exit 0 but nile said a checksum did not match: an error, nothing marked installed', async () => {
+    runRunnerCommand.mockImplementation(
+      (_: string[], options: { onOutput: (data: string) => void }) => {
+        options.onOutput('Checksum error for /games/Game/game.exe\n')
+        return Promise.resolve({ stdout: '', stderr: '', code: 0 })
+      }
+    )
+    getInstallMetadata.mockReturnValue({ id: 'g1' })
+
+    const result = await install()
+
+    expect(result.status).toBe('error')
+    expect(result.error).toContain('Checksum error for /games/Game/game.exe')
+    expect(installState).not.toHaveBeenCalled()
+  })
+
   test('stopped on purpose is an abort', async () => {
     runRunnerCommand.mockResolvedValue({ stdout: '', stderr: '', abort: true })
 

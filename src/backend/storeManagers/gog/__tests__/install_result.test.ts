@@ -104,6 +104,22 @@ describe('GOGGame.install and the way gogdl ends', () => {
     expect(installedGamesStore.set).not.toHaveBeenCalled()
   })
 
+  test('exit 0 but gogdl said «Task writer failed»: an error, nothing is saved', async () => {
+    withFiles()
+    runRunnerCommand.mockImplementation(
+      (_: string[], options: { onOutput: (data: string) => void }) => {
+        options.onOutput('[TASK_EXEC] CRITICAL: Task writer failed\n')
+        return Promise.resolve({ stdout: '', stderr: '', code: 0 })
+      }
+    )
+
+    const result = await install()
+
+    expect(result.status).toBe('error')
+    expect(result.error).toContain('Task writer failed')
+    expect(installedGamesStore.set).not.toHaveBeenCalled()
+  })
+
   test('stopped on purpose is an abort, not an error', async () => {
     runRunnerCommand.mockResolvedValue({
       stdout: '',

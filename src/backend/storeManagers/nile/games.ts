@@ -6,7 +6,7 @@ import {
   InstallProgress
 } from 'common/types'
 import { Game, InstallResult } from 'common/types/game_manager'
-import { exitFailure } from '../helper_result'
+import { exitFailure, failureWatcher } from '../helper_result'
 import { libraryManagerMap } from '..'
 import {
   LogPrefix,
@@ -21,6 +21,10 @@ import { killPattern, moveOnUnix, sendProgressUpdate } from 'backend/utils'
 import { GlobalConfig } from 'backend/config'
 import { sendFrontendMessage } from '../../ipc'
 import { isLinux } from 'backend/constants/environment'
+
+/** nile says a file does not match its checksum and goes on, the game saved as installed */
+const nileFailureWatcher = () =>
+  failureWatcher('nile', /Checksum error for [^\n]*/)
 
 export default class NileGameManager implements Game {
   private readonly id: string
@@ -195,7 +199,9 @@ export default class NileGameManager implements Game {
 
     const commandParts = ['install', '--base-path', path, ...workers, this.id]
 
+    const writer = nileFailureWatcher()
     const onOutput = (data: string) => {
+      writer.watch(data)
       this.onInstallOrUpdateOutput('installing', data)
     }
 
@@ -211,7 +217,7 @@ export default class NileGameManager implements Game {
       return { status: 'abort' }
     }
 
-    res.error ??= exitFailure(res)
+    res.error ??= exitFailure(res) ?? writer.failure()
 
     if (res.error) {
       if (!res.error.includes('signal')) {
@@ -278,17 +284,19 @@ export default class NileGameManager implements Game {
     }
 
     logDebug([this.id, 'is installed at', install_path], LogPrefix.Nile)
+    const writer = nileFailureWatcher()
     const repairLogWriter = createGameLogWriter(this.id, 'nile', 'repair')
     const res = await libraryManagerMap['nile'].runRunnerCommand(
       ['verify', '--path', install_path, this.id],
       {
         abortId: this.id,
         logWriters: [repairLogWriter],
+        onOutput: writer.watch,
         logMessagePrefix: `Repairing ${this.id}`
       }
     )
 
-    res.error ??= exitFailure(res)
+    res.error ??= exitFailure(res) ?? writer.failure()
 
     if (res.error) {
       logError(['Failed to repair', `${this.id}:`, res.error], LogPrefix.Nile)
@@ -326,7 +334,9 @@ export default class NileGameManager implements Game {
 
     const commandParts = ['update', ...workers, this.id]
 
+    const writer = nileFailureWatcher()
     const onOutput = (data: string) => {
+      writer.watch(data)
       this.onInstallOrUpdateOutput('updating', data)
     }
 
@@ -342,7 +352,7 @@ export default class NileGameManager implements Game {
       return { status: 'abort' }
     }
 
-    res.error ??= exitFailure(res)
+    res.error ??= exitFailure(res) ?? writer.failure()
 
     if (res.error) {
       if (!res.error.includes('signal')) {

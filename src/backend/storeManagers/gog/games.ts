@@ -1,6 +1,6 @@
 import { libraryManagerMap } from '..'
 import { removeInstalled, upsertInstalled } from '../installed_list'
-import { exitFailure, hasFiles } from '../helper_result'
+import { exitFailure, failureWatcher, hasFiles } from '../helper_result'
 import { join } from 'path'
 import { GlobalConfig } from '../../config'
 import {
@@ -39,6 +39,9 @@ import {
   gogSupportPath
 } from './constants'
 import { isLinux } from 'backend/constants/environment'
+
+/** gogdl stops when it cannot write a file, as if it was canceled */
+const gogdlFailureWatcher = () => failureWatcher('gogdl', /Task writer failed/)
 
 export default class GOGGame implements Game {
   private readonly id: string
@@ -269,7 +272,9 @@ export default class GOGGame implements Game {
       maxWorkers
     })
 
+    const writer = gogdlFailureWatcher()
     const onOutput = (data: string) => {
+      writer.watch(data)
       this.onInstallOrUpdateOutput('installing', data)
     }
 
@@ -285,7 +290,7 @@ export default class GOGGame implements Game {
       return { status: 'abort' }
     }
 
-    const failure = res.error ?? exitFailure(res)
+    const failure = res.error ?? exitFailure(res) ?? writer.failure()
     if (failure) {
       logError(['Failed to install', `${this.id}:`, failure], LogPrefix.Gog)
       return { status: 'error', error: failure }
@@ -424,14 +429,16 @@ export default class GOGGame implements Game {
       ...workers
     ]
 
+    const writer = gogdlFailureWatcher()
     const repairLogWriter = createGameLogWriter(this.id, 'gog', 'repair')
     const res = await libraryManagerMap['gog'].runRunnerCommand(commandParts, {
       abortId: this.id,
       logWriters: [repairLogWriter],
+      onOutput: writer.watch,
       logMessagePrefix: `Repairing ${this.id}`
     })
 
-    const failure = res.error ?? exitFailure(res)
+    const failure = res.error ?? exitFailure(res) ?? writer.failure()
     if (failure) {
       res.error = failure
       logError(['Failed to repair', `${this.id}:`, failure], LogPrefix.Gog)
@@ -539,7 +546,9 @@ export default class GOGGame implements Game {
       ...overwrittenBuild,
       ...overwrittenBranch
     ]
+    const writer = gogdlFailureWatcher()
     const onOutput = (data: string) => {
+      writer.watch(data)
       this.onInstallOrUpdateOutput('updating', data)
     }
 
@@ -555,7 +564,7 @@ export default class GOGGame implements Game {
       return { status: 'abort' }
     }
 
-    const failure = res.error ?? exitFailure(res)
+    const failure = res.error ?? exitFailure(res) ?? writer.failure()
     if (failure) {
       logError(['Failed to update', `${this.id}:`, failure], LogPrefix.Gog)
       return { status: 'error', error: failure }
