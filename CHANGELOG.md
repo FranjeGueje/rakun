@@ -2,6 +2,12 @@
 
 The history of rakun before its first release (the Heroic cleanup and Relic) lives in the `upstream` repository. The detailed notes of the versions before this first release are in the git history of this file.
 
+## 0.4.2 — Helper failures
+
+### Fixed
+
+- An install, update or repair no longer ends as done when its helper failed on a file. gogdl, legendary and nile can fail to write a file (or, nile, write one that does not match its checksum), go on, save the game as installed and still exit with code 0. rakun now watches their output and ends the operation in error with what the helper said: «Task writer failed» (gogdl), «Writing for … failed!» (legendary) or «Checksum error for …» (nile). A repair of the game fixes it. A download that nile loses without saying anything is still not detected.
+
 ## 0.4.1 — Helpers
 
 ### Changed
