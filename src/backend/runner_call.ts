@@ -5,6 +5,7 @@ import { join, isAbsolute } from 'path'
 import { quoteIfNecessary, errorHandler, memoryLog } from './utils'
 import { logError, logInfo, logWarning, LogPrefix } from './logger'
 import { spawn } from 'child_process'
+import { killProcessGroup } from './utils/process_group'
 import { LegendaryCommand } from './storeManagers/legendary/commands'
 import { libraryManagerMap } from 'backend/storeManagers'
 
@@ -107,11 +108,20 @@ export async function callRunner(
   const abortController = createAbortController(abortId)
 
   let promise = new Promise<ExecResult>((res, rej) => {
+    // Its own process group, so that stopping it also stops its workers
     const child = spawn(bin, commandParts, {
       cwd: options?.cwd || runner.dir,
       env: { ...process.env, ...options?.env },
-      signal: abortController.signal
+      detached: true
     })
+    abortController.signal.addEventListener(
+      'abort',
+      () => {
+        killProcessGroup(child)
+        rej(new Error('Aborted'))
+      },
+      { once: true }
+    )
 
     // stdout is parsed (JSON): it is kept whole and as it came. Of stderr, the
     // progress of a download, only the last chunks matter

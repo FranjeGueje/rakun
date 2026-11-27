@@ -166,6 +166,31 @@ describe('callRunner', () => {
     expect(JSON.parse(result.stdout)).toEqual({ title: 'Half Life', size: 1 })
   })
 
+  test('stopping a download stops the helper with its whole process group', async () => {
+    const controller = new AbortController()
+    jest.mocked(createAbortController).mockImplementation(() => controller)
+    jest.mocked(spawn).mockImplementation((() =>
+      Object.assign(new EventEmitter(), {
+        stdout: Object.assign(new EventEmitter(), { setEncoding: jest.fn() }),
+        stderr: Object.assign(new EventEmitter(), { setEncoding: jest.fn() }),
+        killed: false,
+        pid: 4242
+      })) as never)
+    const kill = jest.spyOn(process, 'kill').mockImplementation(() => true)
+
+    const running = callRunner(['install', 'g1'], runner, {})
+    await new Promise(setImmediate)
+    controller.abort()
+    const result = await running
+
+    expect(jest.mocked(spawn).mock.calls[0][2]).toMatchObject({
+      detached: true
+    })
+    expect(kill).toHaveBeenCalledWith(-4242, 'SIGTERM')
+    expect(result.abort).toBe(true)
+    kill.mockRestore()
+  })
+
   test('a long output keeps its start', async () => {
     const chunks = Array.from({ length: 120 }, (_, i) => `${i},`)
     program({ stdout: ['[', ...chunks, '-1]'] })
