@@ -1,4 +1,5 @@
 import { existsSync, readdirSync } from 'fs'
+import type { ChildProcess } from 'child_process'
 import type { ExecResult } from 'common/types'
 
 const LAST_LINES = 3
@@ -42,15 +43,21 @@ const CHUNK_OVERLAP = 300
  * Some helpers say a file failed and still end with code 0, the game saved as
  * installed: gogdl («Task writer failed»), legendary («Writing for … failed!»),
  * nile («Checksum error for …»). Only the end of stderr is kept, so the output
- * is watched while it comes
+ * is watched while it comes. `onFailure` gets the helper's process every time
+ * it says something after the failure
  */
-export function failureWatcher(helper: string, pattern: RegExp) {
+export function failureWatcher(
+  helper: string,
+  pattern: RegExp,
+  onFailure?: (child: ChildProcess) => void
+) {
   let previous = ''
   let said: string | undefined
   return {
-    watch: (data: string) => {
+    watch: (data: string, child?: ChildProcess) => {
       said ??= (previous + data).match(pattern)?.[0]
       previous = data.slice(-CHUNK_OVERLAP)
+      if (said && child) onFailure?.(child)
     },
     failure: () =>
       said

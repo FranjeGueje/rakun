@@ -2,6 +2,8 @@ import { libraryManagerMap } from '..'
 import { removeInstalled, upsertInstalled } from '../installed_list'
 import { exitFailure, failureWatcher, hasFiles } from '../helper_result'
 import { join } from 'path'
+import type { ChildProcess } from 'child_process'
+import { killUnlessItEnds } from 'backend/utils/process_group'
 import { GlobalConfig } from '../../config'
 import {
   getFileSize,
@@ -40,8 +42,22 @@ import {
 } from './constants'
 import { isLinux } from 'backend/constants/environment'
 
-/** gogdl stops when it cannot write a file, as if it was canceled */
-const gogdlFailureWatcher = () => failureWatcher('gogdl', /Task writer failed/)
+/**
+ * How long gogdl gets to end by itself after «Task writer failed»: its own
+ * shutdown waits up to 10 s for the writer and 2 s for each download worker
+ */
+const GOGDL_EXIT_GRACE_MS = 60_000
+
+/**
+ * gogdl stops when it cannot write a file, as if it was canceled. It may then
+ * never end: its writer process still has results to send that nobody reads,
+ * and gogdl waits for it on exit (seen with gogdl v1.3.1 and v1.4.0). If it is
+ * still there after a while, it is killed with its workers
+ */
+const gogdlFailureWatcher = () =>
+  failureWatcher('gogdl', /Task writer failed/, (child) =>
+    killUnlessItEnds(child, GOGDL_EXIT_GRACE_MS)
+  )
 
 export default class GOGGame implements Game {
   private readonly id: string
@@ -273,8 +289,8 @@ export default class GOGGame implements Game {
     })
 
     const writer = gogdlFailureWatcher()
-    const onOutput = (data: string) => {
-      writer.watch(data)
+    const onOutput = (data: string, child: ChildProcess) => {
+      writer.watch(data, child)
       this.onInstallOrUpdateOutput('installing', data)
     }
 
@@ -290,7 +306,7 @@ export default class GOGGame implements Game {
       return { status: 'abort' }
     }
 
-    const failure = res.error ?? exitFailure(res) ?? writer.failure()
+    const failure = writer.failure() ?? res.error ?? exitFailure(res)
     if (failure) {
       logError(['Failed to install', `${this.id}:`, failure], LogPrefix.Gog)
       return { status: 'error', error: failure }
@@ -438,7 +454,7 @@ export default class GOGGame implements Game {
       logMessagePrefix: `Repairing ${this.id}`
     })
 
-    const failure = res.error ?? exitFailure(res) ?? writer.failure()
+    const failure = writer.failure() ?? res.error ?? exitFailure(res)
     if (failure) {
       res.error = failure
       logError(['Failed to repair', `${this.id}:`, failure], LogPrefix.Gog)
@@ -547,8 +563,8 @@ export default class GOGGame implements Game {
       ...overwrittenBranch
     ]
     const writer = gogdlFailureWatcher()
-    const onOutput = (data: string) => {
-      writer.watch(data)
+    const onOutput = (data: string, child: ChildProcess) => {
+      writer.watch(data, child)
       this.onInstallOrUpdateOutput('updating', data)
     }
 
@@ -564,7 +580,7 @@ export default class GOGGame implements Game {
       return { status: 'abort' }
     }
 
-    const failure = res.error ?? exitFailure(res) ?? writer.failure()
+    const failure = writer.failure() ?? res.error ?? exitFailure(res)
     if (failure) {
       logError(['Failed to update', `${this.id}:`, failure], LogPrefix.Gog)
       return { status: 'error', error: failure }

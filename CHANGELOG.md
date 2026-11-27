@@ -2,6 +2,13 @@
 
 The history of rakun before its first release (the Heroic cleanup and Relic) lives in the `upstream` repository. The detailed notes of the versions before this first release are in the git history of this file.
 
+## 0.4.3 — Stuck GOG updates
+
+### Fixed
+
+- A GOG install or update no longer hangs forever after gogdl says «Task writer failed» (for example when a patch does not match the files on disk). gogdl stops working but its process never exits; rakun now gives it 60 seconds and then kills it, and the operation ends in error with what gogdl said. A repair of the game fixes the files.
+- Canceling a download, or stopping rakun, now stops the whole helper (gogdl, legendary, nile) with all its child processes, instead of leaving orphans behind.
+
 ## 0.4.2 — Helper failures
 
 ### Fixed

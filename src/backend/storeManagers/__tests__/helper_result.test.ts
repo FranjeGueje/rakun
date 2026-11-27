@@ -1,3 +1,4 @@
+import type { ChildProcess } from 'child_process'
 import { exitFailure, failureWatcher } from '../helper_result'
 
 describe('exitFailure', () => {
@@ -76,5 +77,19 @@ describe('failureWatcher', () => {
 
     expect(watcher.failure()).toContain('/g/a.exe')
     expect(watcher.failure()).not.toContain('/g/b.pak')
+  })
+
+  test('after the failure, every output hands the helper to onFailure', () => {
+    const onFailure = jest.fn()
+    const watcher = failureWatcher('gogdl', /Task writer failed/, onFailure)
+    const child = {} as ChildProcess
+
+    watcher.watch('[PROGRESS] INFO: = Downloaded: 1 MiB\n', child)
+    expect(onFailure).not.toHaveBeenCalled()
+
+    watcher.watch('[TASK_EXEC] CRITICAL: Task writer failed\n', child)
+    watcher.watch('[PROGRESS] INFO: = Downloaded: 2 MiB\n', child)
+    expect(onFailure).toHaveBeenCalledTimes(2)
+    expect(onFailure).toHaveBeenCalledWith(child)
   })
 })
